@@ -1,5 +1,7 @@
 import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { join } from 'path';
 import { createLogger } from '../utils/logger.js';
 import { config } from '../config.js';
@@ -12,18 +14,82 @@ import alertsRouter from './routes/alerts.js';
 
 const logger = createLogger('API');
 
+// API token validation middleware
+function validateApiToken(req: Request, res: Response, next: NextFunction): void {
+  // Skip validation for health check and static files
+  if (req.path === '/api/health' || !req.path.startsWith('/api')) {
+    next();
+    return;
+  }
+
+  const token = req.headers['x-api-token'] || req.headers['authorization']?.replace('Bearer ', '');
+
+  if (!token || token !== config.security.secretToken) {
+    res.status(401).json({ error: 'Unauthorized: Invalid or missing API token' });
+    return;
+  }
+
+  next();
+}
+
+// Rate limiter for API routes
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 100, // 100 requests per minute per IP
+  message: { error: 'Too many requests, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Stricter rate limit for session creation (prevents CLI abuse)
+const sessionLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10, // 10 sessions per minute
+  message: { error: 'Too many session requests' },
+});
+
 export function createServer(): Express {
   const app = express();
 
-  // Middleware
-  app.use(cors());
-  app.use(express.json());
+  // Security middleware
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "unpkg.com"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "blob:"],
+        connectSrc: ["'self'", "ws:", "wss:"],
+        fontSrc: ["'self'"],
+      },
+    },
+    crossOriginEmbedderPolicy: false, // Allow xterm.js
+  }));
+
+  // CORS with restrictions
+  app.use(cors({
+    origin: process.env.NODE_ENV === 'production'
+      ? [/localhost/, /127\.0\.0\.1/]
+      : true,
+    credentials: true,
+  }));
+
+  app.use(express.json({ limit: '1mb' })); // Limit body size
 
   // Request logging
   app.use((req: Request, _res: Response, next: NextFunction) => {
     logger.debug(`${req.method} ${req.path}`);
     next();
   });
+
+  // Apply rate limiting to all API routes
+  app.use('/api', apiLimiter);
+
+  // Apply token validation to protected routes
+  app.use('/api', validateApiToken);
+
+  // Apply stricter rate limit to session creation
+  app.use('/api/sessions', sessionLimiter);
 
   // API routes
   app.use('/api/machines', machinesRouter);

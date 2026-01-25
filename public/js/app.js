@@ -1,5 +1,30 @@
 // PIA Dashboard Application
 
+// API token - in production, this should be securely managed
+const API_TOKEN = localStorage.getItem('pia_token') || 'dev-token-change-in-production';
+
+// Helper for authenticated fetch
+async function apiFetch(url, options = {}) {
+  const headers = {
+    'Content-Type': 'application/json',
+    'X-API-Token': API_TOKEN,
+    ...options.headers,
+  };
+
+  const response = await fetch(url, { ...options, headers });
+
+  if (response.status === 401) {
+    // Token expired or invalid - prompt for new one
+    const newToken = prompt('Enter API Token:');
+    if (newToken) {
+      localStorage.setItem('pia_token', newToken);
+      location.reload();
+    }
+  }
+
+  return response;
+}
+
 class PIADashboard {
   constructor() {
     this.ws = null;
@@ -65,24 +90,24 @@ class PIADashboard {
   async loadData() {
     try {
       // Load stats
-      const statsRes = await fetch('/api/stats');
+      const statsRes = await apiFetch('/api/stats');
       const stats = await statsRes.json();
       this.updateStats(stats);
 
       // Load machines
-      const machinesRes = await fetch('/api/machines');
+      const machinesRes = await apiFetch('/api/machines');
       const machines = await machinesRes.json();
       machines.forEach(m => this.machines.set(m.id, m));
       this.updateMachineFilter();
 
       // Load agents
-      const agentsRes = await fetch('/api/agents');
+      const agentsRes = await apiFetch('/api/agents');
       const agents = await agentsRes.json();
       agents.forEach(a => this.agents.set(a.id, a));
       this.renderAgents();
 
       // Load alerts
-      const alertsRes = await fetch('/api/alerts?unacknowledged=true');
+      const alertsRes = await apiFetch('/api/alerts?unacknowledged=true');
       this.alerts = await alertsRes.json();
       this.renderAlerts();
 
@@ -234,7 +259,7 @@ class PIADashboard {
 
   async acknowledgeAlert(id) {
     try {
-      await fetch(`/api/alerts/${id}/ack`, { method: 'POST' });
+      await apiFetch(`/api/alerts/${id}/ack`, { method: 'POST' });
       this.alerts = this.alerts.filter(a => a.id !== id);
       this.renderAlerts();
       this.loadData(); // Refresh stats
@@ -388,7 +413,7 @@ class PIADashboard {
 
   async loadSessions() {
     try {
-      const res = await fetch('/api/sessions');
+      const res = await apiFetch('/api/sessions');
       const sessions = await res.json();
 
       const select = document.getElementById('session-select');
@@ -420,7 +445,7 @@ class PIADashboard {
 
     // Acknowledge all alerts
     document.getElementById('btn-ack-all').addEventListener('click', async () => {
-      await fetch('/api/alerts/ack-all', { method: 'POST' });
+      await apiFetch('/api/alerts/ack-all', { method: 'POST' });
       this.alerts = [];
       this.renderAlerts();
       this.loadData();
@@ -462,13 +487,12 @@ class PIADashboard {
       const command = prompt('Command to run:', 'claude');
       if (!command) return;
 
-      const res = await fetch('/api/sessions', {
+      const res = await apiFetch('/api/sessions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           machine_id: machine.id,
           command,
-          cwd: process.cwd?.() || '.'
+          cwd: '.'
         })
       });
 
