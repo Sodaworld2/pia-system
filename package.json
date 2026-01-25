@@ -1,0 +1,59 @@
+{
+  "name": "pia-system",
+  "version": "1.0.0",
+  "description": "Project Intelligence Agent - Control 43+ AI agents across multiple machines",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "vitest",
+    "test:e2e": "vitest run --config vitest.e2e.config.ts",
+    "lint": "eslint src --ext .ts",
+    "typecheck": "tsc --noEmit",
+    "db:migrate": "tsx src/db/migrate.ts"
+  },
+  "keywords": [
+    "ai",
+    "agents",
+    "orchestration",
+    "claude",
+    "multi-agent",
+    "fleet-management"
+  ],
+  "author": "SodaWorld",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Sodaworld2/pia-system.git"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.7.0",
+    "chokidar": "^4.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "nanoid": "^5.0.9",
+    "node-pty": "^1.0.0",
+    "socket.io": "^4.8.1",
+    "ws": "^8.18.0",
+    "xterm": "^5.3.0",
+    "xterm-addon-fit": "^0.8.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.7",
+    "@types/ws": "^8.5.13",
+    "eslint": "^9.18.0",
+    "prettier": "^3.4.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
+  }
+}
