@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e"/>
+      <stop offset="100%" style="stop-color:#0a0a15"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="100" fill="url(#bg)"/>
+
+  <!-- Robot head outline -->
+  <rect x="140" y="120" width="232" height="200" rx="30" fill="#16213e" stroke="#00ff88" stroke-width="6"/>
+
+  <!-- Eyes -->
+  <circle cx="200" cy="200" r="35" fill="#0a0a15"/>
+  <circle cx="312" cy="200" r="35" fill="#0a0a15"/>
+
+  <!-- Eye glow -->
+  <circle cx="200" cy="200" r="20" fill="#00ff88"/>
+  <circle cx="312" cy="200" r="20" fill="#00ff88"/>
+
+  <!-- Eye highlights -->
+  <circle cx="208" cy="192" r="8" fill="#fff" opacity="0.8"/>
+  <circle cx="320" cy="192" r="8" fill="#fff" opacity="0.8"/>
+
+  <!-- Mouth/screen -->
+  <rect x="180" y="260" width="152" height="40" rx="8" fill="#0a0a15"/>
+  <rect x="190" y="270" width="20" height="20" rx="2" fill="#00ff88" opacity="0.8"/>
+  <rect x="220" y="270" width="20" height="20" rx="2" fill="#00ff88" opacity="0.6"/>
+  <rect x="250" y="270" width="20" height="20" rx="2" fill="#00ff88" opacity="0.9"/>
+  <rect x="280" y="270" width="20" height="20" rx="2" fill="#00ff88" opacity="0.5"/>
+  <rect x="310" y="270" width="12" height="20" rx="2" fill="#00ff88" opacity="0.7"/>
+
+  <!-- Antenna -->
+  <rect x="248" y="70" width="16" height="60" rx="8" fill="#16213e" stroke="#00ff88" stroke-width="4"/>
+  <circle cx="256" cy="60" r="20" fill="#00ff88"/>
+  <circle cx="256" cy="60" r="10" fill="#fff" opacity="0.5"/>
+
+  <!-- Body connector -->
+  <rect x="220" y="320" width="72" height="30" rx="5" fill="#16213e"/>
+
+  <!-- Body -->
+  <rect x="160" y="350" width="192" height="100" rx="20" fill="#16213e" stroke="#00ff88" stroke-width="4"/>
+
+  <!-- Status LEDs -->
+  <circle cx="200" cy="390" r="12" fill="#00ff88"/>
+  <circle cx="256" cy="390" r="12" fill="#f39c12"/>
+  <circle cx="312" cy="390" r="12" fill="#00ff88"/>
+
+  <!-- Arms -->
+  <rect x="100" y="360" width="50" height="16" rx="8" fill="#16213e" stroke="#00ff88" stroke-width="3"/>
+  <rect x="362" y="360" width="50" height="16" rx="8" fill="#16213e" stroke="#00ff88" stroke-width="3"/>
+</svg>

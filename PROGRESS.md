@@ -126,8 +126,10 @@ POST /api/alerts/ack-all      - Acknowledge all
 | PIA-013 | PIA Local Service | ✅ |
 | PIA-014 | Central Aggregation Server | ✅ |
 | PIA-015 | Global Alert System | ✅ |
+| PIA-016 | Mobile PWA Setup | ✅ |
+| PIA-017 | Mobile Dashboard UI | ✅ |
 
-**Total: 14/25 tickets complete (56%)**
+**Total: 16/25 tickets complete (64%)**
 
 ---
 
@@ -170,10 +172,10 @@ npm start
 - ~~PIA-014: Central Aggregation Server~~ ✅
 - ~~PIA-015: Global Alert System~~ ✅
 
-### Phase 4: Mobile + Auto-Healer
-- PIA-016: Mobile PWA Setup
-- PIA-017: Mobile Dashboard UI
-- PIA-018: Push Notifications
+### Phase 4: Mobile + Auto-Healer - IN PROGRESS
+- ~~PIA-016: Mobile PWA Setup~~ ✅
+- ~~PIA-017: Mobile Dashboard UI~~ ✅
+- PIA-018: Push Notifications ← NEXT
 - PIA-019: Folder Watcher
 - PIA-020: AI Assessment Engine
 - PIA-021: Documentation Auto-Update

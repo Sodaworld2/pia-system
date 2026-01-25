@@ -2,11 +2,26 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>PIA - Project Intelligence Agent</title>
-  <link rel="stylesheet" href="/css/styles.css">
+
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#00ff88">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PIA">
+  <meta name="description" content="Control your AI agent fleet from anywhere">
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <!-- Icons -->
+  <link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+
+  <!-- Manifest -->
   <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#0a0a15">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
   <div id="app">
@@ -117,5 +132,24 @@
   <script src="https://unpkg.com/xterm@5.3.0/lib/xterm.js"></script>
   <script src="https://unpkg.com/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
   <script type="module" src="/js/app.js"></script>
+
+  <!-- Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', async () => {
+        try {
+          const registration = await navigator.serviceWorker.register('/sw.js');
+          console.log('SW registered:', registration.scope);
+
+          // Check for updates every hour
+          setInterval(() => {
+            registration.update();
+          }, 60 * 60 * 1000);
+        } catch (error) {
+          console.error('SW registration failed:', error);
+        }
+      });
+    }
+  </script>
 </body>
 </html>
