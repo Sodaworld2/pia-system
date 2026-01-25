@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIA | Director View</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #050508;
+            --card-bg: #121216;
+            --accent: #9b4dca;
+            --success: #22c55e;
+            --text: #fff;
+            --text-dim: #888;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Outfit', sans-serif;
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        .header {
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin: 0 0 10px 0;
+            font-weight: 800;
+        }
+
+        .header p {
+            color: var(--text-dim);
+            font-size: 1.1rem;
+            margin: 0;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        /* ACTION CARD */
+        .card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid #222;
+            transition: transform 0.2s, background 0.2s;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 200px;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            background: #1a1a20;
+            border-color: var(--accent);
+        }
+
+        .icon {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+        }
+
+        .card-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .card-desc {
+            color: var(--text-dim);
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .status {
+            margin-top: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--success);
+        }
+
+        /* ACTIVE STATE (Simulation) */
+        .card.working {
+            border-color: var(--accent);
+        }
+
+        .card.working .status {
+            color: var(--accent);
+        }
+
+        .card.working .dot {
+            background: var(--accent);
+            box-shadow: 0 0 10px var(--accent);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <div class="header">
+            <h1>Director Panel</h1>
+            <p>What would you like the agents to do today?</p>
+        </div>
+
+        <div class="grid">
+
+            <!-- Card 1 -->
+            <div class="card">
+                <div>
+                    <div class="icon">🚀</div>
+                    <div class="card-title">Deploy Website</div>
+                    <div class="card-desc">Push the latest changes to the live sodaworld.tv site.</div>
+                </div>
+                <div class="status">
+                    <div class="dot"></div> Ready
+                </div>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="card working">
+                <div>
+                    <div class="icon">🐛</div>
+                    <div class="card-title">Fix "Login" Bug</div>
+                    <div class="card-desc">Agent is analyzing the error logs from last night.</div>
+                </div>
+                <div class="status">
+                    <div class="dot"></div> Working... (45%)
+                </div>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="card">
+                <div>
+                    <div class="icon">📝</div>
+                    <div class="card-title">Update Content</div>
+                    <div class="card-desc">Sync the latest event schedule from the Google Doc.</div>
+                </div>
+                <div class="status">
+                    <div class="dot"></div> Ready
+                </div>
+            </div>
+
+            <!-- Card 4 -->
+            <div class="card">
+                <div>
+                    <div class="icon">🔍</div>
+                    <div class="card-title">Research XR</div>
+                    <div class="card-desc">Find the latest WebXR hand-tracking capabilities.</div>
+                </div>
+                <div class="status">
+                    <div class="dot"></div> Ready
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
+
+</html>

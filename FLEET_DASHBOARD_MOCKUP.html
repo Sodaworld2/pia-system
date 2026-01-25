@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIA | Empire Fleet Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #050508;
+            --card-bg: #0f0f13;
+            --border: #222;
+            --accent: #9b4dca;
+            --success: #22c55e;
+            --warning: #facc15;
+            --error: #ef4444;
+            --text: #e2e8f0;
+            --text-dim: #64748b;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Outfit', sans-serif;
+            margin: 0;
+            padding: 20px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-weight: 800;
+            font-size: 1.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .logo {
+            color: var(--accent);
+            margin-right: 10px;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            font-size: 0.9rem;
+            color: var(--text-dim);
+        }
+
+        .stat-item strong {
+            color: var(--text);
+        }
+
+        /* GRID LAYOUT */
+        .fleet-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        /* AGENT CARD */
+        .agent-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+            height: 350px;
+        }
+
+        .agent-card:hover {
+            border-color: var(--accent);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transform: translateY(-2px);
+        }
+
+        /* HEADER */
+        .card-header {
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.03);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .agent-id {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-dim);
+        }
+
+        .status-active { background: var(--success); box-shadow: 0 0 8px var(--success); }
+        .status-busy { background: var(--warning); box-shadow: 0 0 8px var(--warning); }
+        .status-error { background: var(--error); box-shadow: 0 0 8px var(--error); }
+
+        .port-badge {
+            font-size: 0.7rem;
+            background: #222;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--text-dim);
+        }
+
+        /* TERMINAL VIEW */
+        .mini-terminal {
+            flex: 1;
+            background: #000;
+            padding: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            overflow: hidden;
+            color: #ccc;
+            opacity: 0.8;
+            position: relative;
+        }
+
+        .mini-terminal::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: linear-gradient(to top, #000, transparent);
+            pointer-events: none;
+        }
+
+        .line { margin-bottom: 2px; }
+        .line.user { color: var(--success); }
+        .line.ai { color: #fff; }
+        .line.system { color: var(--text-dim); }
+
+        /* ACTION BAR */
+        .card-actions {
+            padding: 12px;
+            display: flex;
+            gap: 10px;
+            background: rgba(0,0,0,0.2);
+        }
+
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        .quick-input {
+            width: 100%;
+            background: #111;
+            border: 1px solid #333;
+            color: #fff;
+            padding: 8px 10px;
+            padding-right: 30px;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            box-sizing: border-box;
+        }
+
+        .send-icon {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-dim);
+            cursor: pointer;
+        }
+
+        .btn-expand {
+            background: none;
+            border: 1px solid #333;
+            color: var(--text-dim);
+            border-radius: 6px;
+            padding: 0 10px;
+            cursor: pointer;
+        }
+
+        .btn-expand:hover { background: #222; color: #fff; }
+
+        /* SCROLLBAR */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div style="display: flex; align-items: center;">
+            <h1 class="logo">PIA</h1>
+            <h1>Empire Fleet Control</h1>
+        </div>
+        <div class="stats">
+            <div class="stat-item">Active Agents: <strong>6</strong></div>
+            <div class="stat-item">Total CPU: <strong>42%</strong></div>
+            <div class="stat-item">Memory: <strong>12GB</strong></div>
+            <div class="stat-item" style="color: var(--success);">Systolic Status: <strong>STABLE</strong></div>
+        </div>
+    </div>
+
+    <div class="fleet-grid">
+
+        <!-- AGENT 1: BACKEND FIX -->
+        <div class="agent-card">
+            <div class="card-header">
+                <div class="agent-id">
+                    <div class="status-dot status-active"></div>
+                    backend-fixer-01
+                </div>
+                <div class="port-badge">PORT 9001</div>
+            </div>
+            <div class="mini-terminal">
+                <div class="line system">[PIA] Connected to workspace 'sodaworld-backend'</div>
+                <div class="line user">> Check the auth logic in firebase functions</div>
+                <div class="line ai">Checking functions/index.ts...</div>
+                <div class="line ai">I found a missing validation in the onCreate trigger.</div>
+                <div class="line ai">Applying fix to line 45...</div>
+                <div class="line system">[PIA] File updated. Running tests...</div>
+                <div class="line ai">Tests passed. Ready to deploy?</div>
+            </div>
+            <div class="card-actions">
+                <div class="input-wrapper">
+                    <input type="text" class="quick-input" placeholder="Reply to agent..." value="Yes, deploy it">
+                    <span class="send-icon">↵</span>
+                </div>
+                <button class="btn-expand">↗</button>
+            </div>
+        </div>
+
+        <!-- AGENT 2: FRONTEND UI -->
+        <div class="agent-card">
+            <div class="card-header">
+                <div class="agent-id">
+                    <div class="status-dot status-busy"></div>
+                    ui-designer-02
+                </div>
+                <div class="port-badge">PORT 9002</div>
+            </div>
+            <div class="mini-terminal">
+                <div class="line system">[PIA] Connected to workspace 'sodaworld-frontend'</div>
+                <div class="line user">> Make the header transparent on scroll</div>
+                <div class="line ai">Analyzing Navbar.tsx...</div>
+                <div class="line ai">I need to add a scroll listener.</div>
+                <div class="line ai">Where should I store the scroll state?</div>
+                <div class="line user">> Use the existing UI store</div>
+                <div class="line ai">Understood. Updating store.ts...</div>
+                <div class="line ai status-busy">Thinking...</div>
+            </div>
+            <div class="card-actions">
+                <div class="input-wrapper">
+                    <input type="text" class="quick-input" placeholder="Reply to agent...">
+                    <span class="send-icon">↵</span>
+                </div>
+                <button class="btn-expand">↗</button>
+            </div>
+        </div>
+
+        <!-- AGENT 3: DATABASE MIGRATION -->
+        <div class="agent-card">
+            <div class="card-header">
+                <div class="agent-id">
+                    <div class="status-dot status-error"></div>
+                    db-migrator-03
+                </div>
+                <div class="port-badge">PORT 9003</div>
+            </div>
+            <div class="mini-terminal">
+                <div class="line system">[PIA] Connected to workspace 'sodaworld-db'</div>
+                <div class="line user">> Run the migration script 004_users.sql</div>
+                <div class="line ai">Executing migration...</div>
+                <div class="line system" style="color: var(--error)">Error: FATAL exclusion constraint violation</div>
+                <div class="line ai">The migration failed because duplicate emails exist.</div>
+                <div class="line ai">How should I handle duplicates?</div>
+            </div>
+            <div class="card-actions">
+                <div class="input-wrapper">
+                    <input type="text" class="quick-input" placeholder="Reply..." value="Delete duplicates">
+                    <span class="send-icon">↵</span>
+                </div>
+                <button class="btn-expand">↗</button>
+            </div>
+        </div>
+
+        <!-- AGENT 4: IDLE -->
+        <div class="agent-card">
+            <div class="card-header">
+                <div class="agent-id">
+                    <div class="status-dot"></div>
+                    docs-writer-04
+                </div>
+                <div class="port-badge">PORT 9004</div>
+            </div>
+            <div class="mini-terminal">
+                <div class="line system">[PIA] Connected to workspace 'sodaworld-docs'</div>
+                <div class="line system">Waiting for meaningful changes...</div>
+                <div class="line system">...</div>
+                <div class="line system">...</div>
+            </div>
+            <div class="card-actions">
+                <div class="input-wrapper">
+                    <input type="text" class="quick-input" placeholder="Wake up agent...">
+                    <span class="send-icon">↵</span>
+                </div>
+                <button class="btn-expand">↗</button>
+            </div>
+        </div>
+
+         <!-- AGENT 5: CI/CD -->
+         <div class="agent-card">
+            <div class="card-header">
+                <div class="agent-id">
+                    <div class="status-dot status-active"></div>
+                    deploy-bot-05
+                </div>
+                <div class="port-badge">PORT 9005</div>
+            </div>
+            <div class="mini-terminal">
+                <div class="line system">[PIA] Monitoring 'main' branch</div>
+                <div class="line ai">New commit detected: "Fix header bug"</div>
+                <div class="line ai">Running build...</div>
+                <div class="line system">Build success (4s)</div>
+                <div class="line ai">Deploying to staging...</div>
+                <div class="line ai">uploading 45MB...</div>
+            </div>
+            <div class="card-actions">
+                <div class="input-wrapper">
+                    <input type="text" class="quick-input" placeholder="Monitor only">
+                    <span class="send-icon">↵</span>
+                </div>
+                <button class="btn-expand">↗</button>
+            </div>
+        </div>
+
+         <!-- AGENT 6: RESEARCH -->
+         <div class="agent-card">
+            <div class="card-header">
+                <div class="agent-id">
+                    <div class="status-dot status-active"></div>
+                    researcher-06
+                </div>
+                <div class="port-badge">PORT 9006</div>
+            </div>
+            <div class="mini-terminal">
+                <div class="line system">[PIA] Web Browsing Mode</div>
+                <div class="line user">> Find latest WebXR hand tracking docs</div>
+                <div class="line ai">Searching MDN...</div>
+                <div class="line ai">Found 3 relevant articles.</div>
+                <div class="line ai">Summarizing differences for Quest 3...</div>
+                <div class="line ai">Reading spec draft...</div>
+            </div>
+            <div class="card-actions">
+                <div class="input-wrapper">
+                    <input type="text" class="quick-input" placeholder="Reply...">
+                    <span class="send-icon">↵</span>
+                </div>
+                <button class="btn-expand">↗</button>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

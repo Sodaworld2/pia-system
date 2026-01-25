@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIA Setup | The Mission</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #050508;
+            --accent: #9b4dca;
+            --success: #22c55e;
+            --text: #fff;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Outfit', sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .slide-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease-in-out;
+            padding: 40px;
+        }
+
+        .slide.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        h1 {
+            font-size: 4rem;
+            font-weight: 800;
+            margin: 0 0 20px 0;
+            text-transform: uppercase;
+            letter-spacing: -2px;
+            color: transparent;
+            -webkit-text-stroke: 2px var(--accent);
+            text-shadow: 0 0 20px var(--accent);
+        }
+
+        h2 {
+            font-size: 2rem;
+            color: var(--accent);
+            margin-bottom: 30px;
+        }
+
+        p {
+            font-size: 1.2rem;
+            max-width: 600px;
+            color: #ccc;
+            line-height: 1.6;
+        }
+
+        /* TERMINAL MOCKUP */
+        .terminal {
+            background: #000;
+            border: 2px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            text-align: left;
+            width: 600px;
+            margin: 30px 0;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        .terminal-header {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #222;
+            padding-bottom: 15px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #333;
+        }
+
+        .dot.r {
+            background: #ff5f56;
+        }
+
+        .dot.y {
+            background: #ffbd2e;
+        }
+
+        .dot.g {
+            background: #27c93f;
+        }
+
+        .cmd {
+            color: var(--success);
+            font-weight: bold;
+        }
+
+        .comment {
+            color: #666;
+            font-style: italic;
+        }
+
+        .output {
+            color: #888;
+            margin-top: 10px;
+            display: block;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 18px;
+            background: var(--success);
+            animation: blink 1s infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+
+        /* BUTTONS */
+        .nav-btn {
+            position: absolute;
+            bottom: 40px;
+            right: 40px;
+            background: var(--text);
+            color: var(--bg);
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: transform 0.2s;
+        }
+
+        .nav-btn:hover {
+            transform: scale(1.05);
+            background: var(--accent);
+            color: white;
+        }
+
+        .progress {
+            position: absolute;
+            bottom: 40px;
+            left: 40px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .pg-dot {
+            width: 12px;
+            height: 12px;
+            background: #222;
+            border-radius: 50%;
+        }
+
+        .pg-dot.active {
+            background: var(--accent);
+            box-shadow: 0 0 10px var(--accent);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="slide-container">
+
+        <!-- SLIDE 1: INTRO -->
+        <div class="slide active" id="slide-1">
+            <h1>Mission: Control</h1>
+            <p>You have an army of AI Agents. <br>Let's connect them to your Command Center.</p>
+            <div style="margin-top: 50px; font-size: 5rem;">🕹️ ⚡ 💻</div>
+            <button class="nav-btn" onclick="nextSlide()">Start Setup ></button>
+        </div>
+
+        <!-- SLIDE 2: STEP 1 SERVER -->
+        <div class="slide" id="slide-2">
+            <h2>Step 1: Power Up</h2>
+            <p>Open your first Terminal. This is the "Brain" that stays awake.</p>
+
+            <div class="terminal">
+                <div class="terminal-header">
+                    <div class="dot r"></div>
+                    <div class="dot y"></div>
+                    <div class="dot g"></div>
+                    <span style="margin-left:auto; color:#444; font-size:0.8rem">Terminal 1 - The Server</span>
+                </div>
+                <div style="line-height: 1.8;">
+                    <span class="comment"># Start the local controller</span><br>
+                    mic@pc:~$ <span class="cmd">npm run control:server</span><br>
+                    <span class="output">✓ SodaWorld Control Server running on port 3001...</span>
+                    <span class="output">✓ Ready for connections.</span>
+                </div>
+            </div>
+
+            <button class="nav-btn" onclick="nextSlide()">Next Step ></button>
+        </div>
+
+        <!-- SLIDE 3: STEP 2 AGENT -->
+        <div class="slide" id="slide-3">
+            <h2>Step 2: Jack In</h2>
+            <p>Open a new Terminal tab. This is your "Agent". Instead of running naked, we put it in a suit.</p>
+
+            <div class="terminal">
+                <div class="terminal-header">
+                    <div class="dot r"></div>
+                    <div class="dot y"></div>
+                    <div class="dot g"></div>
+                    <span style="margin-left:auto; color:#444; font-size:0.8rem">Terminal 2 - The Agent</span>
+                </div>
+                <div style="line-height: 1.8;">
+                    <span class="comment"># Connect the agent to the server</span><br>
+                    mic@pc:~$ <span class="cmd">node tools/pia-tunnel.mjs --port 9001</span><br>
+                    <span class="output">⚠ Wrapping shell...</span><br>
+                    <span class="output">⚡ Connected to Empire. ID: agent-9001</span><br>
+                    <span class="cmd">_</span><span class="cursor"></span>
+                </div>
+            </div>
+
+            <button class="nav-btn" onclick="nextSlide()">Final Step ></button>
+        </div>
+
+        <!-- SLIDE 4: STEP 3 DASHBOARD -->
+        <div class="slide" id="slide-4">
+            <h2>Step 3: Command</h2>
+            <p>Open your Browser. You now see your terminal on the screen.</p>
+
+            <div style="
+                background: #111; border: 1px solid var(--accent); width: 600px; height: 300px; border-radius: 12px;
+                display:flex; flex-direction: column; overflow: hidden; margin: 30px auto;
+            ">
+                <div
+                    style="background:var(--accent); color:white; padding: 10px; font-weight:bold; font-size:0.8rem; display:flex; justify-content:space-between;">
+                    <span>EMPIRE DASHBOARD</span>
+                    <span>ONLINE</span>
+                </div>
+                <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:20px;">
+                    <div
+                        style="width: 150px; height: 180px; background: #222; border: 2px solid var(--accent); border-radius: 8px; display:flex; align-items:center; justify-content:center; flex-direction:column;">
+                        <span style="font-size:3rem;">👾</span>
+                        <span style="color:var(--accent); font-weight:bold; margin-top:10px;">AGENT 1</span>
+                        <span style="color:#green; font-size:0.7rem; color:#4cd964">READY</span>
+                    </div>
+                    <div
+                        style="width: 150px; height: 180px; background: #1a1a1a; border: 2px solid #333; border-radius: 8px; display:flex; align-items:center; justify-content:center;">
+                        <span style="color:#444; font-size:2rem;">+</span>
+                    </div>
+                </div>
+            </div>
+
+            <button class="nav-btn" onclick="nextSlide()">Success!</button>
+        </div>
+
+        <!-- SLIDE 5: FINISH -->
+        <div class="slide" id="slide-5">
+            <h1>System Online</h1>
+            <p>You can now type in the terminal <b>OR</b> click buttons in the browser.</p>
+            <div style="margin-top: 40px;">
+                <a href="MASTER_DASHBOARD.html"
+                    style="color: var(--accent); text-decoration: none; border-bottom: 2px solid var(--accent); font-weight: bold;">Open
+                    Dashboard Now</a>
+            </div>
+            <br>
+            <button class="nav-btn" onclick="location.reload()"
+                style="background:transparent; border: 1px solid #333; color: #666;">Replay</button>
+        </div>
+
+        <!-- PROGRESS DOTS -->
+        <div class="progress">
+            <div class="pg-dot active" id="dot-1"></div>
+            <div class="pg-dot" id="dot-2"></div>
+            <div class="pg-dot" id="dot-3"></div>
+            <div class="pg-dot" id="dot-4"></div>
+            <div class="pg-dot" id="dot-5"></div>
+        </div>
+
+    </div>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 5;
+
+        function showSlide(n) {
+            // Hide all
+            document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.pg-dot').forEach(d => d.classList.remove('active'));
+
+            // Show current
+            document.getElementById('slide-' + n).classList.add('active');
+            document.getElementById('dot-' + n).classList.add('active');
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides) {
+                currentSlide++;
+                showSlide(currentSlide);
+            }
+        }
+
+        // Keyboard nav
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+            if (e.key === 'ArrowLeft') {
+                if (currentSlide > 1) {
+                    currentSlide--;
+                    showSlide(currentSlide);
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

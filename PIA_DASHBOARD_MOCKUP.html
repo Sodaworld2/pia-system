@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIA Command Center | Dashboard Mockup</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary: #9b4dca;
+            --secondary: #3b82f6;
+            --accent: #d946ef;
+            --success: #22c55e;
+            --warning: #eab308;
+            --danger: #ef4444;
+            --bg: #0d0d12;
+            --sidebar: #15151e;
+            --card: rgba(255, 255, 255, 0.04);
+            --border: rgba(255, 255, 255, 0.08);
+            --text: #f8fafc;
+            --text-dim: #94a3b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        aside {
+            width: 260px;
+            background: var(--sidebar);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 2rem 1.5rem;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo span {
+            color: var(--primary);
+        }
+
+        nav {
+            flex-grow: 1;
+        }
+
+        .nav-item {
+            padding: 0.8rem 1rem;
+            border-radius: 12px;
+            color: var(--text-dim);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 0.5rem;
+            transition: 0.3s;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background: rgba(155, 77, 202, 0.1);
+            color: var(--text);
+        }
+
+        .nav-item.active {
+            border-left: 3px solid var(--primary);
+        }
+
+        /* Main Content */
+        main {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 2.5rem;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+        }
+
+        .header-left h1 {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .header-left p {
+            color: var(--text-dim);
+        }
+
+        .system-status {
+            display: flex;
+            gap: 15px;
+        }
+
+        .status-pill {
+            padding: 6px 16px;
+            border-radius: 100px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        /* Grid Layout */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+
+        /* Active Feed Section */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .live-feed {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            height: 300px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+            opacity: 0;
+            animation: fadeIn 0.4s forwards;
+        }
+
+        .log-entry.info {
+            color: var(--text-dim);
+        }
+
+        .log-entry.success {
+            color: var(--success);
+        }
+
+        .log-entry.ai {
+            color: var(--accent);
+        }
+
+        .log-time {
+            color: var(--text-dim);
+            margin-right: 10px;
+            font-size: 0.75rem;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Doc Sync Status */
+        .sync-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .sync-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .sync-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--border);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sync-info {
+            flex-grow: 1;
+        }
+
+        .sync-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .sync-time {
+            color: var(--text-dim);
+            font-size: 0.7rem;
+        }
+
+        .sync-status {
+            font-size: 0.75rem;
+            color: var(--success);
+        }
+
+        /* Multi-Project View */
+        .project-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 1rem;
+        }
+
+        .p-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+        }
+
+        .p-name {
+            font-weight: 600;
+        }
+
+        .p-host {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        .pulse {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--success);
+            box-shadow: 0 0 10px var(--success);
+        }
+
+        /* Flow Visualization */
+        .flow-container {
+            height: 150px;
+            border: 1px dashed var(--border);
+            border-radius: 16px;
+            margin-top: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .flow-node {
+            width: 40px;
+            height: 40px;
+            background: var(--secondary);
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .flow-node::after {
+            content: '';
+            position: absolute;
+            width: 60px;
+            height: 2px;
+            background: var(--border);
+            right: -65px;
+            top: 19px;
+        }
+
+        .flow-node.active {
+            background: var(--accent);
+            box-shadow: 0 0 20px var(--accent);
+        }
+
+        /* Tab Handling */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Folders View */
+        .folder-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .folder-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            padding: 1.2rem;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .btn-add {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Logic View */
+        .logic-row {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .prompt-editor {
+            font-family: 'JetBrains Mono', monospace;
+            background: #000;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            color: var(--accent);
+            white-space: pre-wrap;
+            font-size: 0.8rem;
+        }
+
+        /* Matrix Specifics */
+        .matrix-tile {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px;
+            font-size: 0.65rem;
+            height: 90px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: 0.2s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .matrix-tile:hover {
+            background: rgba(155, 77, 202, 0.1);
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            z-index: 10;
+        }
+
+        .matrix-tile.waiting {
+            border-color: var(--warning);
+            background: rgba(234, 179, 8, 0.05);
+            animation: pulse-border 2s infinite;
+        }
+
+        @keyframes pulse-border {
+            0% { border-color: rgba(234, 179, 8, 0.2); }
+            50% { border-color: rgba(234, 179, 8, 1); }
+            100% { border-color: rgba(234, 179, 8, 0.2); }
+        }
+
+        .tile-id {
+            font-weight: 800;
+            color: var(--text-dim);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .tile-cli {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--success);
+            opacity: 0.7;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin: 4px 0;
+        }
+
+        .tile-progress {
+            height: 2px;
+            background: rgba(255,255,255,0.1);
+            width: 100%;
+            border-radius: 2px;
+        }
+
+        .tile-progress-fill {
+            height: 100%;
+            background: var(--primary);
+        }
+    </style>
+</head>
+
+<body>
+    <aside>
+        <div class="logo"><span>PIA</span> COMMAND</div>
+        <nav id="sidebar-nav">
+            <div class="nav-item active" data-tab="overview">📊 Overview</div>
+            <div class="nav-item" data-tab="folders">📁 Folders & Sources</div>
+            <div class="nav-item" data-tab="ai-logic">🤖 AI Logic Settings</div>
+            <div class="nav-item" data-tab="sitemap">🗺️ Sitemap & Flows</div>
+            <div class="nav-item" data-tab="fleet">🌍 Project Empire</div>
+        </nav>
+        <div class="nav-item" style="margin-top: auto;">⚙️ Settings</div>
+    </aside>
+
+    <main>
+        <header>
+            <div class="header-left">
+                <h1 id="view-title">Command Cockpit</h1>
+                <p id="view-desc">Monitoring 4 projects across 2 machines.</p>
+            </div>
+            <div class="system-status">
+                <div class="status-pill"><span class="pulse"></span> Watcher Active</div>
+                <div class="status-pill"
+                    style="color: var(--secondary); border-color: rgba(59, 130, 246, 0.2); background: rgba(59, 130, 246, 0.1);">
+                    🧠 AI Ready</div>
+            </div>
+        </header>
+
+        <!-- EMPIRE FLEET TAB -->
+        <div id="fleet" class="tab-content" style="display: none;">
+            <!-- PROJECT 1: SODAWORLD (MULTIPLE AGENTS) -->
+            <div class="card" style="grid-column: span 2;">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 2rem;">
+                    <div>
+                        <span style="font-weight: 800; color: var(--primary); font-size: 1.4rem;">SODAWORLD
+                            EMPIRE</span>
+                        <div style="font-size: 0.8rem; color: var(--text-dim);">6 Unit Active Cluster | MAIN-PC</div>
+                    </div>
+                    <span class="status-tag status-active"
+                        style="background: rgba(155, 77, 202, 0.2); color: var(--primary);">SYSTEM HEALTH: 98%</span>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;">
+                    <!-- Agent Unit 1 -->
+                    <div
+                        style="background: rgba(255,255,0,0.05); border: 1px solid rgba(255,255,0,0.2); border-radius: 20px; padding: 1.5rem; text-align: center; transition: 0.3s; position: relative;">
+                        <div
+                            style="width: 80px; height: 80px; background: radial-gradient(circle, #facc15 0%, #854d0e 100%); border-radius: 50%; margin: 0 auto 1rem; border: 3px solid #facc15; box-shadow: 0 0 15px rgba(250, 204, 21, 0.4); display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+                            🤖</div>
+                        <div style="font-weight: 800; font-size: 0.9rem; margin-bottom: 4px;">Unit Alpha</div>
+                        <div style="font-size: 0.7rem; color: #facc15; font-weight: 600; margin-bottom: 15px;">WAITING
+                            FOR MIC</div>
+                        <button onclick="jumpToConsole('Unit Alpha')"
+                            style="width: 100%; padding: 8px; background: #facc15; border: none; border-radius: 8px; color: #000; font-weight: 800; cursor: pointer; font-size: 0.75rem;">ANSWER
+                            AGENT</button>
+                    </div>
+
+                    <!-- Agent Unit 2 -->
+                    <div
+                        style="background: var(--border); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; text-align: center; transition: 0.3s;">
+                        <div
+                            style="width: 80px; height: 80px; background: radial-gradient(circle, #22c55e 0%, #14532d 100%); border-radius: 50%; margin: 0 auto 1rem; border: 3px solid #22c55e; box-shadow: 0 0 15px rgba(34, 197, 94, 0.4); display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+                            🦾</div>
+                        <div style="font-weight: 800; font-size: 0.9rem; margin-bottom: 4px;">Unit Beta</div>
+                        <div style="font-size: 0.7rem; color: #22c55e; font-weight: 600;">WORKING (65%)</div>
+                    </div>
+
+                    <!-- Agent Unit 3 -->
+                    <div
+                        style="background: var(--border); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; text-align: center; transition: 0.3s;">
+                        <div
+                            style="width: 80px; height: 80px; background: radial-gradient(circle, #3b82f6 0%, #1e3a8a 100%); border-radius: 50%; margin: 0 auto 1rem; border: 3px solid #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+                            🧠</div>
+                        <div style="font-weight: 800; font-size: 0.9rem; margin-bottom: 4px;">Unit Gamma</div>
+                        <div style="font-size: 0.7rem; color: #3b82f6; font-weight: 600;">THINKING...</div>
+                    </div>
+
+                    <!-- Agent Unit 4 -->
+                    <div
+                        style="background: var(--border); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; text-align: center; transition: 0.3s;">
+                        <div
+                            style="width: 80px; height: 80px; background: radial-gradient(circle, #a855f7 0%, #581c87 100%); border-radius: 50%; margin: 0 auto 1rem; border: 3px solid #a855f7; box-shadow: 0 0 15px rgba(168, 85, 247, 0.4); display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+                            💠</div>
+                        <div style="font-weight: 800; font-size: 0.9rem; margin-bottom: 4px;">Unit Delta</div>
+                        <div style="font-size: 0.7rem; color: #a855f7; font-weight: 600;">SYNCING DOCS</div>
+                    </div>
+
+                    <!-- Agent Unit 5 -->
+                    <div
+                        style="background: var(--border); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; text-align: center; transition: 0.3s;">
+                        <div
+                            style="width: 80px; height: 80px; background: radial-gradient(circle, #ec4899 0%, #831843 100%); border-radius: 50%; margin: 0 auto 1rem; border: 3px solid #ec4899; box-shadow: 0 0 15px rgba(236, 72, 153, 0.4); display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+                            📡</div>
+                        <div style="font-weight: 800; font-size: 0.9rem; margin-bottom: 4px;">Unit Epsilon</div>
+                        <div style="font-size: 0.7rem; color: #ec4899; font-weight: 600;">BROADCASTING</div>
+                    </div>
+
+                    <!-- Agent Unit 6 -->
+                    <div
+                        style="background: var(--border); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; text-align: center; transition: 0.3s;">
+                        <div
+                            style="width: 80px; height: 80px; background: radial-gradient(circle, #f97316 0%, #7c2d12 100%); border-radius: 50%; margin: 0 auto 1rem; border: 3px solid #f97316; box-shadow: 0 0 15px rgba(249, 115, 22, 0.4); display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+                            ⚡</div>
+                        <div style="font-weight: 800; font-size: 0.9rem; margin-bottom: 4px;">Unit Zeta</div>
+                        <div style="font-size: 0.7rem; color: #f97316; font-weight: 600;">IDLE</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GLOBAL STATS COLUMN -->
+            <div class="card">
+                <h3 style="margin-bottom: 1.5rem;">Empire Cluster Stats</h3>
+                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                    <div>
+                        <div
+                            style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px;">
+                            <span>Global Context Bandwidth</span>
+                            <span style="color: var(--warning);">82%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 82%; background: var(--warning);"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div
+                            style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px;">
+                            <span>Agent Coordination Sink</span>
+                            <span style="color: var(--success);">Optimal</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 15%; background: var(--success);"></div>
+                        </div>
+                    </div>
+                    <div
+                        style="padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid var(--border);">
+                        <div style="font-size: 0.7rem; color: var(--text-dim); margin-bottom: 5px;">LONGEST ACTIVE
+                            SESSION</div>
+                        <div style="font-size: 1.1rem; font-weight: 800;">Unit Beta (4h 12m)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 2rem;">
+                <h3>Global Activity Pulse</h3>
+                <div class="feed-item">
+                    <div class="feed-dot"></div>
+                    <div class="feed-content">
+                        <strong>[MAIN-PC]</strong> Claude-77 updated Project Plan in SodaWorld...
+                    </div>
+                </div>
+                <div class="feed-item">
+                    <div class="feed-dot" style="background: #4ade80;"></div>
+                    <div class="feed-content">
+                        <strong>[LAPTOP-SODA]</strong> Gemini finished audit for DAO V2...
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="overview" class="tab-content active">
+            <div class="dashboard-grid">
+                <div class="left-col">
+                    <!-- LIVE COMMAND CONSOLE -->
+                    <div class="card" style="grid-column: span 12; background: #000; border: 1px solid #333;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h2 style="font-size: 1.2rem;"><span style="color: #0f0;">●</span> Remote Master Console
+                                (Live)</h2>
+                            <div id="connection-status" style="font-size: 0.8rem; color: #ff0;">Connecting to Local
+                                PC...</div>
+                        </div>
+                        <div id="terminal-view"
+                            style="font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; color: #0f0; height: 300px; overflow-y: auto; padding: 1rem; background: #050505; border-radius: 10px; line-height: 1.4;">
+                            <div style="color: #666;">[Initializing Secure Tunnel...]</div>
+                            <div>> Bridge Active. Waiting for Claude output...</div>
+                        </div>
+                        <div style="margin-top: 1rem; display: flex; gap: 10px;">
+                            <input type="text" id="terminal-input" placeholder="Type command to send to Claude..."
+                                style="flex: 1; background: #111; border: 1px solid #444; color: #fff; padding: 0.8rem; border-radius: 5px; font-family: 'JetBrains Mono', monospace;">
+                            <button onclick="sendRemoteCommand()"
+                                style="background: var(--primary); border: none; color: white; padding: 0.8rem 1.5rem; border-radius: 5px; font-weight: bold; cursor: pointer;">Send</button>
+                        </div>
+                    </div>
+
+                    <!-- Live Automation Feed -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Live Intelligence Feed</h3>
+                            <div class="tag" style="font-size: 0.7rem; color: var(--text-dim);">TERMINAL MONITOR</div>
+                        </div>
+                        <div class="live-feed">
+                            <div class="log-entry info"><span class="log-time">07:16:01</span> Checking folders
+                                [SodaWorld,
+                                DAO-V1, SodaRoid]...</div>
+                            <div class="log-entry info"><span class="log-time">07:16:05</span> No changes detected.
+                            </div>
+                            <div class="log-entry success" style="animation-delay: 1s"><span
+                                    class="log-time">07:16:42</span> 📄 NEW FILE detected in
+                                /SodaWorld/agents/Refactor_Log.md</div>
+                            <div class="log-entry info" style="animation-delay: 1.5s"><span
+                                    class="log-time">07:16:42</span>
+                                Copying to central hub inbox... DONE.</div>
+                            <div class="log-entry ai" style="animation-delay: 2s"><span class="log-time">07:16:43</span>
+                                🧠
+                                AI ASSESSMENT: "Developer completed 'Venue screen camera refactor'. 2 new sub-pages
+                                found."
+                            </div>
+                            <div class="log-entry success" style="animation-delay: 2.5s"><span
+                                    class="log-time">07:16:45</span> 🔄 SYNCING: Updating SODAWORLD_SITEMAP.html...
+                                SUCCESS.
+                            </div>
+                            <div class="log-entry success" style="animation-delay: 3s"><span
+                                    class="log-time">07:16:46</span> 🔄 SYNCING: Updating PHASE_1_PROJECT_PLAN.md... [x]
+                                Task: Venue Camera.</div>
+                        </div>
+                    </div>
+
+                    <!-- Documentation Impact View -->
+                    <div style="margin-top: 2rem;" class="card">
+                        <h3>Documentation Impact</h3>
+                        <div class="flow-container">
+                            <div class="flow-node"></div>
+                            <div class="flow-node active" style="left: 100px;"></div>
+                            <div class="flow-node" style="left: 200px; opacity: 0.3;"></div>
+                            <div style="position: absolute; bottom: 20px; font-size: 0.8rem; color: var(--text-dim);">
+                                Automatic Sitemap Flow Generation</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="right-col">
+                    <!-- Multi-Project Status -->
+                    <div class="card" style="margin-bottom: 2rem;">
+                        <h3>Project Empire</h3>
+                        <div class="project-cards">
+                            <div class="p-card">
+                                <div>
+                                    <div class="p-name">SodaWorld</div>
+                                    <div class="p-host">Main Workstation</div>
+                                </div>
+                                <div class="pulse"></div>
+                            </div>
+                            <div class="p-card">
+                                <div>
+                                    <div class="p-name">DAO-V1</div>
+                                    <div class="p-host">MacBook Pro</div>
+                                </div>
+                                <div class="pulse"
+                                    style="background: var(--warning); box-shadow: 0 0 10px var(--warning);">
+                                </div>
+                            </div>
+                            <div class="p-card">
+                                <div>
+                                    <div class="p-name">SodaRoid</div>
+                                    <div class="p-host">Linux Server</div>
+                                </div>
+                                <div class="pulse"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Automations -->
+                    <div class="card">
+                        <h3>Recent Syncs</h3>
+                        <div class="sync-list">
+                            <div class="sync-item">
+                                <div class="sync-icon">📝</div>
+                                <div class="sync-info">
+                                    <div class="sync-name">Sitemap Update</div>
+                                    <div class="sync-time">4 mins ago</div>
+                                </div>
+                                <div class="sync-status">OK</div>
+                            </div>
+                            <div class="sync-item">
+                                <div class="sync-icon">🗺️</div>
+                                <div class="sync-info">
+                                    <div class="sync-name">Flow Diagram</div>
+                                    <div class="sync-time">12 mins ago</div>
+                                </div>
+                                <div class="sync-status">OK</div>
+                            </div>
+                            <div class="sync-item">
+                                <div class="sync-icon">📅</div>
+                                <div class="sync-info">
+                                    <div class="sync-name">Project Plan</div>
+                                    <div class="sync-time">1 hour ago</div>
+                                </div>
+                                <div class="sync-status">OK</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FOLDERS TAB -->
+        <div id="folders" class="tab-content">
+            <button class="btn-add">+ Add Folder to Listen</button>
+            <div class="folder-list">
+                <div class="folder-card">
+                    <div>
+                        <div class="p-name">C:\Users\mic\Downloads\sodaworld\agents</div>
+                        <div class="p-host">Project: SodaWorld (Local)</div>
+                    </div>
+                    <div class="tag">WATCHING</div>
+                </div>
+                <div class="folder-card">
+                    <div>
+                        <div class="p-name">D:\GitHub\DAO-V1\docs\updates</div>
+                        <div class="p-host">Project: DAO Extension</div>
+                    </div>
+                    <div class="tag">WATCHING</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI LOGIC TAB -->
+        <div id="ai-logic" class="tab-content">
+            <div class="card">
+                <h3>The Intelligence Model</h3>
+                <p style="margin-bottom: 2rem; color: var(--text-dim);">Configure how the Supervisor Agent assesses your
+                    team's files.</p>
+                <div class="logic-row">
+                    <div>
+                        <h4>Global Prompt</h4>
+                        <p style="font-size: 0.8rem; color: var(--text-dim);">The "Instructions" given to the local AI
+                            when a file is processed.</p>
+                    </div>
+                    <div class="prompt-editor">"Analyze the agent documentation provided. Identify completed tasks, new
+                        URL paths, and changes to the user journey. Update the sitemap accordingly."</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SITEMAP TAB -->
+        <div id="sitemap" class="tab-content">
+            <div class="card">
+                <h3>Dynamic Site Flow</h3>
+                <div class="flow-container" style="height: 400px; flex-direction: column;">
+                    <div style="display: flex; gap: 40px;">
+                        <div class="flow-node active">🏠</div>
+                        <div class="flow-node">🎫</div>
+                        <div class="flow-node">🎭</div>
+                    </div>
+                    <div style="margin-top: 40px; color: var(--success); font-weight: 600;">✨ NEWLY DISCOVERED:
+                        /venue/settings</div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        document.querySelectorAll('.nav-item[data-tab]').forEach(item => {
+            item.addEventListener('click', () => {
+                // Remove active classes
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+
+                // Add active class to clicked item
+                item.classList.add('active');
+
+                // Show relative tab
+                const tabId = item.getAttribute('data-tab');
+                document.getElementById(tabId).classList.add('active');
+
+                // Update header
+                const titles = {
+                    'overview': 'Command Cockpit',
+                    'folders': 'Folders & Sources',
+                    'ai-logic': 'AI Logic Settings',
+                    'sitemap': 'Sitemap & Flows',
+                    'empire': 'Project Empire'
+                };
+                const descriptions = {
+                    'overview': 'Monitoring 4 projects across 2 machines.',
+                    'folders': 'Manage and monitor your project folders.',
+                    'ai-logic': 'Configure the intelligence model for your agents.',
+                    'sitemap': 'Visualize the dynamic flow of your project sitemaps.',
+                    'empire': 'Overview of all your connected projects.'
+                };
+                document.getElementById('view-title').textContent = titles[tabId];
+                document.getElementById('view-desc').textContent = descriptions[tabId];
+            });
+        });
+
+        function jumpToConsole(projectName) {
+            // 1. Switch sidebar to Overview
+            document.querySelector('.nav-item[data-tab="overview"]').click();
+
+            // 2. Alert the terminal
+            logToTerminal(`<span style="color: #facc15;">[SYSTEM] Jumping to ${projectName} console...</span>`);
+            terminalInput.focus();
+        }
+        // WebSocket Connection for Remote CLI
+        const terminalView = document.getElementById('terminal-view');
+        const terminalInput = document.getElementById('terminal-input');
+        const statusEl = document.getElementById('connection-status');
+        let socket;
+
+        function connectToTunnel() {
+            socket = new WebSocket('ws://localhost:9001');
+
+            socket.onopen = () => {
+                statusEl.innerHTML = '<span style="color: #0f0;">● Connected to Local PC</span>';
+                statusEl.style.color = '#0f0';
+                logToTerminal('<span style="color: #fff">PIA:</span> Connection established. You are now controlling your home terminal.');
+            };
+
+            socket.onmessage = (event) => {
+                const msg = JSON.parse(event.data);
+                if (msg.type === 'output') {
+                    logToTerminal(msg.data);
+                } else if (msg.type === 'alert') {
+                    logToTerminal(`<div style="background: rgba(255,255,0,0.1); color: #ff0; padding: 5px; border-radius: 5px;">⚠️ ${msg.message}</div>`);
+                }
+            };
+
+            socket.onclose = () => {
+                statusEl.innerHTML = '<span style="color: #f00;">● Disconnected</span>';
+                statusEl.style.color = '#f00';
+                setTimeout(connectToTunnel, 5000); // Retry
+            };
+        }
+
+        function logToTerminal(text) {
+            const div = document.createElement('div');
+            div.innerHTML = text.replace(/\n/g, '<br>');
+            terminalView.appendChild(div);
+            terminalView.scrollTop = terminalView.scrollHeight;
+        }
+
+        function sendRemoteCommand() {
+            const val = terminalInput.value;
+            if (val && socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(val);
+                logToTerminal(`<span style="color: #9b4dca;">> ${val}</span>`);
+                terminalInput.value = '';
+            }
+        }
+
+        terminalInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendRemoteCommand();
+        });
+
+        // Initialize connection
+        connectToTunnel();
+
+        // GENERATE FLEET MATRIX (43 AGENTS)
+        const matrixContainer = document.getElementById('fleet-matrix');
+        const agentStates = [
+            { id: 'CLA-01', status: 'working', cli: 'Processing Venue_V2.html...' },
+            { id: 'CLA-02', status: 'waiting', cli: 'Awaiting User Input...' },
+            { id: 'GEM-01', status: 'syncing', cli: 'Updating Roadmap.md...' },
+            { id: 'CLA-03', status: 'idle', cli: 'Task Completed.' },
+            { id: 'GEM-02', status: 'working', cli: 'Analyzing structure...' }
+        ];
+
+        for (let i = 1; i <= 43; i++) {
+            const state = agentStates[i % agentStates.length];
+            const tile = document.createElement('div');
+            tile.className = `matrix-tile ${state.status === 'waiting' ? 'waiting' : ''}`;
+            tile.onclick = () => jumpToConsole(state.id);
+            
+            const progress = Math.floor(Math.random() * 100);
+            const statusColor = state.status === 'working' ? '#22c55e' : (state.status === 'waiting' ? '#eab308' : '#3b82f6');
+
+            tile.innerHTML = `
+                <div class="tile-id">
+                    <span>${state.id}-${i.toString().padStart(2, '0')}</span>
+                    <span style="color: ${statusColor}">●</span>
+                </div>
+                <div class="tile-cli">> ${state.cli}</div>
+                <div>
+                    <div style="font-size: 0.5rem; color: var(--text-dim); margin-bottom: 2px;">Progress: ${progress}%</div>
+                    <div class="tile-progress">
+                        <div class="tile-progress-fill" style="width: ${progress}%; background: ${statusColor}"></div>
+                    </div>
+                </div>
+            `;
+            matrixContainer.appendChild(tile);
+        }
+    </script>
+</body>
+
+</html>
+```
