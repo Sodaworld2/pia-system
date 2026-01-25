@@ -1,21 +1,24 @@
 # PIA - Project Intelligence Agent
 
-A supervisor system for managing fleets of AI agents (Claude, Gemini, etc.) across multiple machines.
+A supervisor system for controlling and monitoring 43+ AI coding agents across multiple machines from a single dashboard.
+
+## Quick Start
+
+**For agents starting implementation**: Read [START_HERE.md](START_HERE.md)
 
 ## What PIA Does
 
-- **Monitor** - Watch work logs from 43+ AI agents in real-time
-- **Assess** - Use local LLMs (RTX 5090 + Ollama) to evaluate agent progress
-- **Auto-Update** - Automatically maintain sitemaps, roadmaps, and project docs
-- **Remote Control** - CLI bridge to control agents from anywhere (phone, laptop)
-- **Fleet Dashboard** - High-density visualization of all agents across all machines
+- **Remote Control** - Control any Claude CLI from your phone
+- **Fleet Visibility** - See all 43 agents across all machines in one view
+- **Auto-Documentation** - AI automatically updates your sitemaps and roadmaps
+- **Zero Cost AI** - RTX 5090 + Ollama = free local inference
 
 ## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Your Phone / Laptop                       │
-│                   (Empire Dashboard)                         │
+│                    Your Phone / Browser                      │
+│                   (Fleet Dashboard + PWA)                    │
 └─────────────────────┬───────────────────────────────────────┘
                       │ WebSocket
 ┌─────────────────────▼───────────────────────────────────────┐
@@ -29,45 +32,65 @@ A supervisor system for managing fleets of AI agents (Claude, Gemini, etc.) acro
     ▼                 ▼                 ▼
 ┌─────────┐     ┌─────────┐       ┌─────────┐
 │ Main PC │     │ Laptop  │       │VR Station│
-│ 20 agents│    │ 15 agents│      │ 8 agents │
+│(RTX 5090)│    │         │       │          │
+│ 20 agents│    │15 agents│       │ 8 agents │
 └─────────┘     └─────────┘       └─────────┘
 ```
 
-## Status
+## Documentation
 
-| Phase | Component | Status |
-|-------|-----------|--------|
-| 1 | Design & Mockups | ✅ Complete |
-| 1 | Core Infrastructure | 🔴 Not Started |
-| 1 | Remote CLI Bridge | 🔴 Not Started |
-| 1 | Fleet Dashboard (functional) | 🔴 Not Started |
-| 2 | Central Hub | 🔴 Not Started |
-| 2 | Mobile PWA | 🔴 Not Started |
+| Document | Purpose |
+|----------|---------|
+| [START_HERE.md](START_HERE.md) | Quick start for agents building PIA |
+| [SPRINT_PLAN.md](SPRINT_PLAN.md) | Complete implementation guide (25 tickets) |
+| [TICKETS.md](TICKETS.md) | Track progress on each ticket |
+| [KNOWLEDGE_BASE.md](KNOWLEDGE_BASE.md) | Research on existing solutions |
+| [ANALYSIS_AND_RECOMMENDATIONS.md](ANALYSIS_AND_RECOMMENDATIONS.md) | Architecture decisions |
+
+## Tech Stack
+
+- **Orchestration**: Claude-Flow (60+ agents, swarm coordination)
+- **Backend**: Node.js, Express, Socket.IO, SQLite
+- **Terminal**: node-pty (CLI capture)
+- **Real-time**: WebSockets
+- **AI**: Ollama (local) + Claude API (fallback)
+- **Frontend**: Vanilla JS (custom dashboard)
 
 ## Mockups
 
-Open these HTML files in a browser to see the design:
+Open these HTML files to see the design:
 
-- `PIA_DASHBOARD_MOCKUP.html` - Main fleet monitoring view
-- `CLI_TUNNEL_MOCKUP.html` - Remote terminal control
-- `MASTER_DASHBOARD.html` - Central control panel
-- `FLEET_DASHBOARD_MOCKUP.html` - 43-agent matrix view
+- `PIA_DASHBOARD_MOCKUP.html` - Main dashboard
+- `FLEET_DASHBOARD_MOCKUP.html` - 43-agent matrix
+- `CLI_TUNNEL_MOCKUP.html` - Remote terminal
+- `MASTER_DASHBOARD.html` - Control panel
 
-## Tech Stack (Planned)
+## Project Status
 
-- **Runtime**: Node.js
-- **AI**: Ollama (local) + Claude/Gemini APIs (cloud fallback)
-- **Real-time**: WebSockets
-- **Terminal**: node-pty
-- **Frontend**: Vanilla JS (dashboards are self-contained HTML)
-- **Hardware**: Optimized for RTX 5090 local inference
+| Phase | Status |
+|-------|--------|
+| Design & Research | ✅ Complete |
+| Sprint Planning | ✅ Complete |
+| Implementation | 🔄 Ready to Start |
 
-## Documentation
+**Total**: 25 tickets, ~111 hours estimated
 
-- [Implementation Plan](implementation_plan.md) - Full technical architecture
-- [Feature Spec](FULL_FEATURE_SPEC.md) - Complete feature checklist
-- [Development Roadmap](DEVELOPMENT_ROADMAP.html) - Timeline and phases
-- [User Guide](USER_GUIDE.md) - How to use PIA
+## Getting Started (Development)
+
+```bash
+# Clone
+git clone https://github.com/Sodaworld2/pia-system.git
+cd pia-system
+
+# Install dependencies
+npm install
+
+# Start development
+npm run dev
+
+# Open dashboard
+open http://localhost:3000
+```
 
 ## License
 
