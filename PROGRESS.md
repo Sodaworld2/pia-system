@@ -37,6 +37,15 @@
 | **Local Service** | `src/local/service.ts` | Manages local agents, spawns CLIs, reports to hub |
 | **WebSocket Protocol** | `src/tunnel/websocket-server.ts` | Extended with machine:register, agent:update messages |
 
+### Phase 4: Auto-Healer System
+
+| Component | File | Description |
+|-----------|------|-------------|
+| **Folder Watcher** | `src/auto-healer/folder-watcher.ts` | Monitors file changes using chokidar |
+| **AI Assessor** | `src/auto-healer/ai-assessor.ts` | Uses Ollama for code/doc analysis |
+| **Doc Updater** | `src/auto-healer/doc-updater.ts` | Auto-updates CHANGELOG, README |
+| **Index** | `src/auto-healer/index.ts` | Module exports and initialization |
+
 ### Frontend (Vanilla JS)
 
 | Component | File | Description |
@@ -128,8 +137,11 @@ POST /api/alerts/ack-all      - Acknowledge all
 | PIA-015 | Global Alert System | ✅ |
 | PIA-016 | Mobile PWA Setup | ✅ |
 | PIA-017 | Mobile Dashboard UI | ✅ |
+| PIA-019 | Folder Watcher | ✅ |
+| PIA-020 | AI Assessment Engine | ✅ |
+| PIA-021 | Documentation Auto-Update | ✅ |
 
-**Total: 16/25 tickets complete (64%)**
+**Total: 19/25 tickets complete (76%)**
 
 ---
 
@@ -172,13 +184,13 @@ npm start
 - ~~PIA-014: Central Aggregation Server~~ ✅
 - ~~PIA-015: Global Alert System~~ ✅
 
-### Phase 4: Mobile + Auto-Healer - IN PROGRESS
+### Phase 4: Mobile + Auto-Healer - COMPLETE ✅
 - ~~PIA-016: Mobile PWA Setup~~ ✅
 - ~~PIA-017: Mobile Dashboard UI~~ ✅
-- PIA-018: Push Notifications ← NEXT
-- PIA-019: Folder Watcher
-- PIA-020: AI Assessment Engine
-- PIA-021: Documentation Auto-Update
+- PIA-018: Push Notifications (deferred - requires external service)
+- ~~PIA-019: Folder Watcher~~ ✅
+- ~~PIA-020: AI Assessment Engine~~ ✅
+- ~~PIA-021: Documentation Auto-Update~~ ✅
 
 ### Phase 5: Polish
 - PIA-022: End-to-End Testing

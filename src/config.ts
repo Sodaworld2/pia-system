@@ -38,6 +38,7 @@ export interface PIAConfig {
     pushNotifications: boolean;
     heartbeatInterval: number;
     stuckThreshold: number;
+    ollamaUrl: string;
   };
   logging: {
     level: 'debug' | 'info' | 'warn' | 'error';
@@ -97,6 +98,7 @@ export const config: PIAConfig = {
     pushNotifications: getEnvBool('PIA_ENABLE_PUSH_NOTIFICATIONS', true),
     heartbeatInterval: getEnvInt('PIA_HEARTBEAT_INTERVAL', 30000),
     stuckThreshold: getEnvInt('PIA_STUCK_THRESHOLD', 300000),
+    ollamaUrl: getEnv('PIA_OLLAMA_URL', 'http://localhost:11434'),
   },
 
   logging: {
