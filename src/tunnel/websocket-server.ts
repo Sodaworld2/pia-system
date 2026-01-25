@@ -14,18 +14,33 @@ interface Client {
 }
 
 interface IncomingMessage {
-  type: 'auth' | 'subscribe' | 'unsubscribe' | 'input' | 'resize' | 'ping';
+  type: 'auth' | 'subscribe' | 'unsubscribe' | 'input' | 'resize' | 'ping' |
+        'machine:register' | 'machine:heartbeat' | 'machine:status' |
+        'agent:register' | 'agent:update' | 'agent:remove' | 'pong';
   payload?: {
     token?: string;
     sessionId?: string;
     data?: string;
     cols?: number;
     rows?: number;
+    id?: string;
+    name?: string;
+    hostname?: string;
+    capabilities?: Record<string, unknown>;
+    agents?: unknown[];
+    resources?: Record<string, unknown>;
+    machineId?: string;
+    agentId?: string;
+    agent?: Record<string, unknown>;
+    status?: string;
+    progress?: number;
+    current_task?: string;
+    last_output?: string;
   };
 }
 
 interface OutgoingMessage {
-  type: 'auth' | 'output' | 'buffer' | 'exit' | 'error' | 'pong' | 'agent:update' | 'alert';
+  type: 'auth' | 'output' | 'buffer' | 'exit' | 'error' | 'pong' | 'agent:update' | 'alert' | 'machine:update' | 'command';
   success?: boolean;
   payload?: unknown;
   sessionId?: string;
@@ -113,6 +128,96 @@ export class TunnelWebSocketServer {
       case 'ping':
         this.send(ws, { type: 'pong' });
         break;
+
+      case 'pong':
+        // Response to our ping, connection is alive
+        break;
+
+      // Machine/Agent messages from PIA Local services
+      case 'machine:register':
+      case 'machine:heartbeat':
+      case 'machine:status':
+      case 'agent:register':
+      case 'agent:update':
+      case 'agent:remove':
+        if (!client.authenticated) {
+          this.send(ws, { type: 'error', payload: 'Not authenticated' });
+          return;
+        }
+        this.handleHubMessage(msg.type, msg.payload);
+        break;
+    }
+  }
+
+  private handleHubMessage(type: string, payload: IncomingMessage['payload']): void {
+    // Lazy import to avoid circular dependency
+    try {
+      const { getAggregator } = require('../hub/aggregator.js');
+      const aggregator = getAggregator();
+
+      switch (type) {
+        case 'machine:register':
+          if (payload?.id && payload?.name && payload?.hostname) {
+            aggregator.handleMachineRegister({
+              id: payload.id,
+              name: payload.name,
+              hostname: payload.hostname,
+              capabilities: payload.capabilities,
+            });
+          }
+          break;
+
+        case 'machine:heartbeat':
+          if (payload?.id) {
+            aggregator.handleMachineHeartbeat({
+              id: payload.id,
+              agents: payload.agents as Array<{ id: string; status: string; progress?: number; last_output?: string }>,
+              resources: payload.resources as { cpuUsage?: number; memoryUsage?: number; gpuUsage?: number },
+            });
+          }
+          break;
+
+        case 'agent:register':
+          if (payload?.machineId && payload?.agent) {
+            aggregator.handleAgentRegister({
+              machineId: payload.machineId,
+              agent: payload.agent as {
+                id: string;
+                name: string;
+                type: string;
+                status: string;
+                progress: number;
+                current_task?: string;
+                last_output?: string;
+              },
+            });
+          }
+          break;
+
+        case 'agent:update':
+          if (payload?.machineId && payload?.agentId) {
+            aggregator.handleAgentUpdate({
+              machineId: payload.machineId,
+              agentId: payload.agentId,
+              status: payload.status,
+              progress: payload.progress,
+              current_task: payload.current_task,
+              last_output: payload.last_output,
+            });
+          }
+          break;
+
+        case 'agent:remove':
+          if (payload?.machineId && payload?.agentId) {
+            aggregator.handleAgentRemove({
+              machineId: payload.machineId,
+              agentId: payload.agentId,
+            });
+          }
+          break;
+      }
+    } catch (error) {
+      logger.error(`Failed to handle hub message: ${error}`);
     }
   }
 

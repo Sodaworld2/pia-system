@@ -1,7 +1,7 @@
 # PIA Development Progress
 
 **Last Updated**: 2026-01-25
-**Status**: Phase 1 & 2 Complete - Core System Running
+**Status**: Phase 3 In Progress - Multi-Machine Support Added
 
 ---
 
@@ -26,6 +26,16 @@
 | **Sessions API** | `src/api/routes/sessions.ts` | /api/sessions endpoints |
 | **Alerts API** | `src/api/routes/alerts.ts` | /api/alerts endpoints |
 | **Logger** | `src/utils/logger.ts` | Colored console logging |
+
+### Phase 3: Multi-Machine Support
+
+| Component | File | Description |
+|-----------|------|-------------|
+| **Hub Aggregator** | `src/hub/aggregator.ts` | Receives machine registrations, heartbeats, agent updates |
+| **Alert Monitor** | `src/hub/alert-monitor.ts` | Auto-detects stuck agents, resource issues, creates alerts |
+| **Hub Client** | `src/local/hub-client.ts` | Connects worker machines to central hub |
+| **Local Service** | `src/local/service.ts` | Manages local agents, spawns CLIs, reports to hub |
+| **WebSocket Protocol** | `src/tunnel/websocket-server.ts` | Extended with machine:register, agent:update messages |
 
 ### Frontend (Vanilla JS)
 
@@ -112,21 +122,26 @@ POST /api/alerts/ack-all      - Acknowledge all
 | PIA-009 | Fleet Matrix Grid | ✅ |
 | PIA-010 | Real-time Updates | ✅ |
 | PIA-011 | CLI Tunnel Viewer | ✅ |
+| PIA-012 | Machine Registration Protocol | ✅ |
+| PIA-013 | PIA Local Service | ✅ |
+| PIA-014 | Central Aggregation Server | ✅ |
+| PIA-015 | Global Alert System | ✅ |
 
-**Total: 10/25 tickets complete (40%)**
+**Total: 14/25 tickets complete (56%)**
 
 ---
 
 ## How to Run
 
+### Hub Mode (Central Server)
 ```bash
 cd C:\Users\mic\Downloads\pia-system
 
-# Install dependencies (already done)
-npm install
+# Set mode (default is hub)
+export PIA_MODE=hub
 
-# Start development server
-npm run dev
+# Start hub server
+npm start
 
 # Opens at:
 # - Dashboard: http://localhost:3000
@@ -134,15 +149,26 @@ npm run dev
 # - WebSocket: ws://localhost:3001
 ```
 
+### Local Mode (Worker Machine)
+```bash
+# On each worker machine
+export PIA_MODE=local
+export HUB_URL=http://hub-ip:3000
+export MACHINE_NAME=my-machine
+
+npm start
+# Connects to central hub and registers
+```
+
 ---
 
 ## Remaining Work
 
-### Phase 3: Central Hub (Multi-Machine)
-- PIA-012: Machine Registration Protocol
-- PIA-013: PIA Local Service
-- PIA-014: Central Aggregation Server
-- PIA-015: Global Alert System
+### Phase 3: Central Hub (Multi-Machine) - COMPLETE ✅
+- ~~PIA-012: Machine Registration Protocol~~ ✅
+- ~~PIA-013: PIA Local Service~~ ✅
+- ~~PIA-014: Central Aggregation Server~~ ✅
+- ~~PIA-015: Global Alert System~~ ✅
 
 ### Phase 4: Mobile + Auto-Healer
 - PIA-016: Mobile PWA Setup
@@ -219,7 +245,7 @@ pia-system/
 ├── README.md
 │
 ├── src/
-│   ├── index.ts
+│   ├── index.ts              ← Supports hub and local modes
 │   ├── config.ts
 │   ├── api/
 │   │   ├── server.ts
@@ -235,9 +261,15 @@ pia-system/
 │   │       ├── agents.ts
 │   │       ├── sessions.ts
 │   │       └── alerts.ts
+│   ├── hub/
+│   │   ├── aggregator.ts     ← Central Hub aggregator
+│   │   └── alert-monitor.ts  ← NEW: Auto-detection of issues
+│   ├── local/
+│   │   ├── hub-client.ts     ← NEW: Connects to central Hub
+│   │   └── service.ts        ← NEW: PIA Local service
 │   ├── tunnel/
 │   │   ├── pty-wrapper.ts
-│   │   └── websocket-server.ts
+│   │   └── websocket-server.ts  ← Updated: handles machine/agent msgs
 │   └── utils/
 │       └── logger.ts
 │
