@@ -1,0 +1,95 @@
+name: Template CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  smoke-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: "Minimal"
+            extra_flags: "--data has_local_llm=false --data include_multi_model_overseer=false"
+          - name: "With Local LLM"
+            extra_flags: "--data has_local_llm=true --data include_multi_model_overseer=false"
+          - name: "Full"
+            extra_flags: "--data has_local_llm=true --data include_multi_model_overseer=true --data include_grok_agent=true"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Copier
+        run: pip install copier
+
+      - name: Run template smoke test (${{ matrix.name }})
+        run: |
+          TEMPLATE_DIR=$(pwd)/template
+          TEST_DIR=/tmp/smoke-test-$$
+          mkdir -p "$TEST_DIR"
+
+          copier copy "$TEMPLATE_DIR" "$TEST_DIR" \
+            --trust \
+            --data project_name=ci-test \
+            --data project_description="CI test project" \
+            --data admin_username=ci \
+            --data ollama_endpoint=http://localhost:11434 \
+            --data primary_coding_model=qwen2.5-coder:32b \
+            --data has_guardrails_proxy=false \
+            --data has_knowledge_graph=false \
+            --data include_debug_agent=true \
+            --data include_integration_check=true \
+            --data include_janitor=true \
+            --data include_devcontainer=false \
+            --data include_pre_commit=true \
+            --data enable_task_system=true \
+            --data enable_cost_tracking=true \
+            ${{ matrix.extra_flags }}
+
+          # Verify project was created
+          test -d "$TEST_DIR/ci-test"
+
+          # Verify key files exist
+          test -f "$TEST_DIR/ci-test/CLAUDE.md"
+          test -f "$TEST_DIR/ci-test/.claude/settings.json"
+          test -f "$TEST_DIR/ci-test/.claude/hooks/pre-tool-use.sh"
+
+          # Verify settings.json is valid JSON
+          jq . "$TEST_DIR/ci-test/.claude/settings.json" > /dev/null
+
+          echo "Smoke test passed for ${{ matrix.name }}"
+
+      - name: Run hook tests
+        run: |
+          cd /tmp/smoke-test-*/ci-test
+          ${{ github.workspace }}/template/tests/smoke/test_hooks.sh .
+
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Scan for secrets
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  yaml-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Lint YAML files
+        uses: ibiqlik/action-yamllint@v3
+        with:
+          file_or_dir: template/
+          config_file: .yamllint.yml
+        continue-on-error: true

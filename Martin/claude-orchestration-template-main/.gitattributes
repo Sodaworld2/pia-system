@@ -1,0 +1,20 @@
+# Force LF line endings for shell scripts
+*.sh text eol=lf
+*.bash text eol=lf
+
+# Force LF for other script types
+*.py text eol=lf
+*.js text eol=lf
+*.ts text eol=lf
+
+# Jinja templates should preserve line endings
+*.jinja text eol=lf
+*.j2 text eol=lf
+
+# Markdown
+*.md text eol=lf
+
+# JSON/YAML config
+*.json text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf

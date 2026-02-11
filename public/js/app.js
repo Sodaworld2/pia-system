@@ -1,7 +1,7 @@
 // PIA Dashboard Application
 
 // API token - in production, this should be securely managed
-const API_TOKEN = localStorage.getItem('pia_token') || 'dev-token-change-in-production';
+const API_TOKEN = localStorage.getItem('pia_token') || 'pia-local-dev-token-2024';
 
 // Helper for authenticated fetch
 async function apiFetch(url, options = {}) {
@@ -55,6 +55,20 @@ class PIADashboard {
     // Setup event listeners
     this.setupEventListeners();
 
+    // Setup MCP event listeners
+    this.setupMCPEventListeners();
+
+    // Load MCPs
+    await this.loadMCPs();
+
+    // Setup AI event listeners and load AI status
+    this.setupAIEventListeners();
+    await this.loadAIStatus();
+
+    // Setup Hooks view
+    this.setupHooksView();
+    await this.loadHookEvents();
+
     // Start polling for updates
     this.startPolling();
   }
@@ -91,25 +105,40 @@ class PIADashboard {
     try {
       // Load stats
       const statsRes = await apiFetch('/api/stats');
-      const stats = await statsRes.json();
-      this.updateStats(stats);
+      if (statsRes.ok) {
+        const stats = await statsRes.json();
+        this.updateStats(stats);
+      }
 
       // Load machines
       const machinesRes = await apiFetch('/api/machines');
-      const machines = await machinesRes.json();
-      machines.forEach(m => this.machines.set(m.id, m));
-      this.updateMachineFilter();
+      if (machinesRes.ok) {
+        const machines = await machinesRes.json();
+        if (Array.isArray(machines)) {
+          machines.forEach(m => this.machines.set(m.id, m));
+          this.updateMachineFilter();
+        }
+      }
 
       // Load agents
       const agentsRes = await apiFetch('/api/agents');
-      const agents = await agentsRes.json();
-      agents.forEach(a => this.agents.set(a.id, a));
-      this.renderAgents();
+      if (agentsRes.ok) {
+        const agents = await agentsRes.json();
+        if (Array.isArray(agents)) {
+          agents.forEach(a => this.agents.set(a.id, a));
+          this.renderAgents();
+        }
+      }
 
       // Load alerts
       const alertsRes = await apiFetch('/api/alerts?unacknowledged=true');
-      this.alerts = await alertsRes.json();
-      this.renderAlerts();
+      if (alertsRes.ok) {
+        const alerts = await alertsRes.json();
+        if (Array.isArray(alerts)) {
+          this.alerts = alerts;
+          this.renderAlerts();
+        }
+      }
 
       // Load sessions
       await this.loadSessions();
@@ -202,8 +231,146 @@ class PIADashboard {
   }
 
   focusAgent(agent) {
-    // TODO: Open detailed view or tunnel to this agent
-    console.log('Focus agent:', agent);
+    // Show agent detail modal
+    const machine = this.machines.get(agent.machine_id);
+    const machineName = machine?.name || 'Unknown';
+
+    // Create modal if it doesn't exist
+    let modal = document.getElementById('agent-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'agent-modal';
+      modal.className = 'modal';
+      modal.innerHTML = `
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 id="modal-agent-name">Agent Details</h2>
+            <button class="modal-close">&times;</button>
+          </div>
+          <div class="modal-body" id="modal-agent-body"></div>
+          <div class="modal-footer" id="modal-agent-footer"></div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      // Close handlers
+      modal.querySelector('.modal-close').onclick = () => modal.style.display = 'none';
+      modal.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
+    }
+
+    // Populate modal
+    document.getElementById('modal-agent-name').textContent = agent.name;
+    document.getElementById('modal-agent-body').innerHTML = `
+      <div class="agent-detail-grid">
+        <div class="detail-row">
+          <span class="detail-label">Type:</span>
+          <span class="detail-value">${agent.type}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Status:</span>
+          <span class="detail-value status-${agent.status}">${agent.status}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Machine:</span>
+          <span class="detail-value">${machineName}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Current Task:</span>
+          <span class="detail-value">${agent.current_task || 'None'}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Progress:</span>
+          <span class="detail-value">${agent.progress || 0}%</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Context Used:</span>
+          <span class="detail-value">${(agent.context_used || 0).toLocaleString()} tokens</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Last Activity:</span>
+          <span class="detail-value">${new Date(agent.last_activity * 1000).toLocaleString()}</span>
+        </div>
+      </div>
+      <div class="agent-output-section">
+        <h4>Last Output:</h4>
+        <pre class="agent-output">${this.escapeHtml(agent.last_output || 'No output yet')}</pre>
+      </div>
+    `;
+
+    document.getElementById('modal-agent-footer').innerHTML = `
+      <button class="btn btn-primary" onclick="app.openAgentTunnel('${agent.id}')">Open Terminal</button>
+      <button class="btn btn-secondary" onclick="app.updateAgentTask('${agent.id}')">Assign Task</button>
+      <button class="btn btn-danger" onclick="app.deleteAgent('${agent.id}')">Delete Agent</button>
+    `;
+
+    modal.style.display = 'flex';
+  }
+
+  async openAgentTunnel(agentId) {
+    // Close modal and switch to CLI Tunnel view
+    document.getElementById('agent-modal').style.display = 'none';
+    this.switchView('tunnel');
+
+    // Create a new session with cmd
+    try {
+      const res = await apiFetch('/api/sessions', {
+        method: 'POST',
+        body: JSON.stringify({ shell: 'cmd' }),
+      });
+      if (res.ok) {
+        const session = await res.json();
+        if (session.id) {
+          // Reload sessions list
+          await this.loadSessions();
+          // Select and connect to the new session
+          this.selectSession(session.id);
+          // Focus the terminal
+          setTimeout(() => {
+            if (this.terminal) {
+              this.terminal.focus();
+            }
+          }, 500);
+        }
+      } else {
+        // If API fails, just click the New Session button
+        const newBtn = document.getElementById('btn-new-session');
+        if (newBtn) newBtn.click();
+      }
+    } catch (err) {
+      console.error('Failed to create session:', err);
+      // Fallback: click New Session button
+      const newBtn = document.getElementById('btn-new-session');
+      if (newBtn) newBtn.click();
+    }
+  }
+
+  async updateAgentTask(agentId) {
+    const task = prompt('Enter new task for this agent:');
+    if (task) {
+      try {
+        await apiFetch(`/api/agents/${agentId}/task`, {
+          method: 'POST',
+          body: JSON.stringify({ task }),
+        });
+        await this.loadData();
+        document.getElementById('agent-modal').style.display = 'none';
+      } catch (err) {
+        console.error('Failed to assign task:', err);
+      }
+    }
+  }
+
+  async deleteAgent(agentId) {
+    if (confirm('Are you sure you want to delete this agent?')) {
+      try {
+        await apiFetch(`/api/agents/${agentId}`, { method: 'DELETE' });
+        this.agents.delete(agentId);
+        this.renderAgents();
+        document.getElementById('agent-modal').style.display = 'none';
+      } catch (err) {
+        console.error('Failed to delete agent:', err);
+      }
+    }
   }
 
   renderAlerts() {
@@ -279,7 +446,7 @@ class PIADashboard {
       // Authenticate
       this.ws.send(JSON.stringify({
         type: 'auth',
-        payload: { token: 'dev-token-change-in-production' }
+        payload: { token: API_TOKEN }
       }));
     };
 
@@ -330,6 +497,11 @@ class PIADashboard {
 
       case 'alert':
         this.handleNewAlert(msg.payload);
+        break;
+
+      case 'hook_event':
+      case 'agent_done':
+        this.handleHookEvent(msg.data);
         break;
     }
   }
@@ -450,6 +622,9 @@ class PIADashboard {
       this.renderAlerts();
       this.loadData();
     });
+
+    // Command Center event listeners
+    this.setupCommandCenter();
   }
 
   subscribeToSession(sessionId) {
@@ -516,12 +691,676 @@ class PIADashboard {
   startPolling() {
     // Poll for updates every 5 seconds
     setInterval(() => this.loadData(), 5000);
+
+    // Poll AI costs every 30 seconds
+    setInterval(() => this.loadAIStatus(), 30000);
   }
 
   escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+  }
+
+  // ============ MCP Management ============
+
+  async loadMCPs() {
+    try {
+      // Load installed MCPs
+      const installedRes = await apiFetch('/api/mcps');
+      const installed = await installedRes.json();
+      this.renderInstalledMCPs(installed.mcps || []);
+
+      // Load available MCPs
+      const availableRes = await apiFetch('/api/mcps/available');
+      const available = await availableRes.json();
+      this.availableMCPs = available.mcps || [];
+      this.renderAvailableMCPs(this.availableMCPs);
+    } catch (error) {
+      console.error('Failed to load MCPs:', error);
+    }
+  }
+
+  renderInstalledMCPs(mcps) {
+    const grid = document.getElementById('mcp-installed');
+    const empty = document.getElementById('mcp-empty');
+
+    // Clear existing cards
+    grid.querySelectorAll('.mcp-card').forEach(c => c.remove());
+
+    // Show/hide empty state
+    empty.style.display = mcps.length === 0 ? 'block' : 'none';
+
+    // Render cards
+    mcps.forEach(mcp => {
+      const card = document.createElement('div');
+      card.className = 'mcp-card installed';
+
+      const configDisplay = mcp.config.url
+        ? `URL: ${mcp.config.url}`
+        : `${mcp.config.command} ${(mcp.config.args || []).join(' ')}`;
+
+      card.innerHTML = `
+        <div class="mcp-card-header">
+          <span class="mcp-name">${this.escapeHtml(mcp.name)}</span>
+          <span class="mcp-source">${this.escapeHtml(mcp.source)}</span>
+        </div>
+        <div class="mcp-config">${this.escapeHtml(configDisplay)}</div>
+        ${mcp.config.env ? `<div class="mcp-requires">Env: ${Object.keys(mcp.config.env).join(', ')}</div>` : ''}
+        <div class="mcp-actions">
+          <button class="btn btn-small btn-secondary" onclick="app.testMCP('${mcp.name}', ${JSON.stringify(mcp.config).replace(/"/g, '&quot;')})">Test</button>
+          <button class="btn btn-small btn-secondary" onclick="app.removeMCP('${mcp.name}', '${mcp.source}')">Remove</button>
+        </div>
+      `;
+
+      grid.appendChild(card);
+    });
+  }
+
+  renderAvailableMCPs(mcps, category = 'all') {
+    const grid = document.getElementById('mcp-available');
+
+    // Clear existing cards
+    grid.innerHTML = '';
+
+    // Filter by category
+    const filtered = category === 'all'
+      ? mcps
+      : mcps.filter(m => m.category === category);
+
+    // Render cards
+    filtered.forEach(mcp => {
+      const card = document.createElement('div');
+      card.className = 'mcp-card';
+
+      card.innerHTML = `
+        <div class="mcp-card-header">
+          <span class="mcp-name">${this.escapeHtml(mcp.name)}</span>
+          <span class="mcp-category">${this.escapeHtml(mcp.category)}</span>
+        </div>
+        <div class="mcp-description">${this.escapeHtml(mcp.description)}</div>
+        ${mcp.requiresEnv ? `<div class="mcp-requires">Requires: ${mcp.requiresEnv.join(', ')}</div>` : ''}
+        <div class="mcp-actions">
+          <button class="btn btn-small btn-primary" onclick="app.quickInstallMCP('${mcp.name}', '${mcp.package || ''}', '${mcp.url || ''}', ${JSON.stringify(mcp.requiresEnv || [])})">
+            Install
+          </button>
+        </div>
+      `;
+
+      grid.appendChild(card);
+    });
+  }
+
+  setupMCPEventListeners() {
+    // Refresh button
+    document.getElementById('btn-refresh-mcps')?.addEventListener('click', () => this.loadMCPs());
+
+    // Install MCP button (opens modal)
+    document.getElementById('btn-install-mcp')?.addEventListener('click', () => {
+      document.getElementById('mcp-modal').classList.remove('hidden');
+    });
+
+    // Modal close buttons
+    document.getElementById('mcp-modal-close')?.addEventListener('click', () => {
+      document.getElementById('mcp-modal').classList.add('hidden');
+    });
+
+    document.getElementById('mcp-modal-cancel')?.addEventListener('click', () => {
+      document.getElementById('mcp-modal').classList.add('hidden');
+    });
+
+    // Modal install button
+    document.getElementById('mcp-modal-install')?.addEventListener('click', () => this.installMCPFromModal());
+
+    // Category filters
+    document.querySelectorAll('.mcp-filter').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.mcp-filter').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        this.renderAvailableMCPs(this.availableMCPs, e.target.dataset.category);
+      });
+    });
+
+    // Close modal on outside click
+    document.getElementById('mcp-modal')?.addEventListener('click', (e) => {
+      if (e.target.id === 'mcp-modal') {
+        e.target.classList.add('hidden');
+      }
+    });
+  }
+
+  async quickInstallMCP(name, packageName, url, requiresEnv) {
+    try {
+      // If requires env vars, prompt for them
+      let env = {};
+      if (requiresEnv && requiresEnv.length > 0) {
+        for (const envVar of requiresEnv) {
+          const value = prompt(`Enter value for ${envVar}:`);
+          if (value === null) return; // User cancelled
+          env[envVar] = value;
+        }
+      }
+
+      // URL-based MCP
+      if (url) {
+        const res = await apiFetch('/api/mcps', {
+          method: 'POST',
+          body: JSON.stringify({
+            name,
+            config: { url },
+            target: 'global'
+          })
+        });
+
+        if (!res.ok) {
+          const error = await res.json();
+          alert('Failed to add MCP: ' + error.error);
+          return;
+        }
+
+        alert(`MCP "${name}" added successfully!`);
+        this.loadMCPs();
+        return;
+      }
+
+      // Package-based MCP
+      const res = await apiFetch('/api/mcps/install', {
+        method: 'POST',
+        body: JSON.stringify({
+          package: packageName,
+          name,
+          target: 'global',
+          env: Object.keys(env).length > 0 ? env : undefined
+        })
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        alert('Failed to install MCP: ' + error.error);
+        return;
+      }
+
+      alert(`MCP "${name}" installed successfully!`);
+      this.loadMCPs();
+    } catch (error) {
+      console.error('Failed to install MCP:', error);
+      alert('Failed to install MCP');
+    }
+  }
+
+  async installMCPFromModal() {
+    const name = document.getElementById('mcp-name').value.trim();
+    const packageName = document.getElementById('mcp-package').value.trim();
+    const target = document.getElementById('mcp-target').value;
+    const envText = document.getElementById('mcp-env').value.trim();
+
+    if (!name) {
+      alert('MCP name is required');
+      return;
+    }
+
+    if (!packageName) {
+      alert('NPM package is required');
+      return;
+    }
+
+    let env = {};
+    if (envText) {
+      try {
+        env = JSON.parse(envText);
+      } catch (e) {
+        alert('Invalid JSON in environment variables');
+        return;
+      }
+    }
+
+    try {
+      const res = await apiFetch('/api/mcps/install', {
+        method: 'POST',
+        body: JSON.stringify({
+          package: packageName,
+          name,
+          target,
+          env: Object.keys(env).length > 0 ? env : undefined
+        })
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        alert('Failed to install MCP: ' + error.error);
+        return;
+      }
+
+      document.getElementById('mcp-modal').classList.add('hidden');
+      document.getElementById('mcp-name').value = '';
+      document.getElementById('mcp-package').value = '';
+      document.getElementById('mcp-env').value = '';
+
+      alert(`MCP "${name}" installed successfully!`);
+      this.loadMCPs();
+    } catch (error) {
+      console.error('Failed to install MCP:', error);
+      alert('Failed to install MCP');
+    }
+  }
+
+  async testMCP(name, config) {
+    try {
+      const res = await apiFetch(`/api/mcps/${name}/test`, {
+        method: 'POST',
+        body: JSON.stringify({ config })
+      });
+
+      const result = await res.json();
+      if (result.success) {
+        alert(`MCP "${name}" test passed!\n${result.note || result.output || 'OK'}`);
+      } else {
+        alert(`MCP "${name}" test failed:\n${result.error}`);
+      }
+    } catch (error) {
+      console.error('Failed to test MCP:', error);
+      alert('Failed to test MCP');
+    }
+  }
+
+  async removeMCP(name, source) {
+    if (!confirm(`Remove MCP "${name}" from ${source}?`)) {
+      return;
+    }
+
+    try {
+      const target = source.includes('Desktop') ? 'desktop' : 'global';
+      const res = await apiFetch(`/api/mcps/${name}?target=${target}`, {
+        method: 'DELETE'
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        alert('Failed to remove MCP: ' + error.error);
+        return;
+      }
+
+      alert(`MCP "${name}" removed`);
+      this.loadMCPs();
+    } catch (error) {
+      console.error('Failed to remove MCP:', error);
+      alert('Failed to remove MCP');
+    }
+  }
+
+  // ============ AI Management ============
+
+  async loadAIStatus() {
+    try {
+      // Load AI status
+      const statusRes = await apiFetch('/api/ai/status');
+      if (statusRes.ok) {
+        const status = await statusRes.json();
+        this.renderAIProviders(status);
+      }
+
+      // Load cost summary
+      const costsRes = await apiFetch('/api/ai/costs');
+      if (costsRes.ok) {
+        const costs = await costsRes.json();
+        this.renderAICosts(costs);
+      }
+
+      // Load recent usage
+      const usageRes = await apiFetch('/api/ai/usage?limit=20');
+      if (usageRes.ok) {
+        const usage = await usageRes.json();
+        this.renderAIUsage(usage);
+      }
+    } catch (error) {
+      console.error('Failed to load AI status:', error);
+    }
+  }
+
+  renderAIProviders(status) {
+    const providers = document.getElementById('ai-providers');
+    if (!providers) return;
+
+    const availability = status.availability || {};
+
+    providers.querySelectorAll('.provider-card').forEach(card => {
+      const provider = card.dataset.provider;
+      const isAvailable = availability[provider] === true;
+
+      card.dataset.status = isAvailable ? 'available' : 'unavailable';
+      const statusText = card.querySelector('.status-text');
+      if (statusText) {
+        statusText.textContent = isAvailable ? 'Available' : 'Not configured';
+      }
+    });
+  }
+
+  renderAICosts(costs) {
+    // Update header stat
+    const headerCost = document.getElementById('stat-ai-cost');
+    if (headerCost) {
+      headerCost.textContent = `$${(costs.today || 0).toFixed(2)}`;
+    }
+
+    // Update cost cards
+    const costToday = document.getElementById('cost-today');
+    const costWeek = document.getElementById('cost-week');
+    const costMonth = document.getElementById('cost-month');
+    const budgetRemaining = document.getElementById('budget-remaining');
+
+    if (costToday) costToday.textContent = `$${(costs.today || 0).toFixed(2)}`;
+    if (costWeek) costWeek.textContent = `$${(costs.thisWeek || 0).toFixed(2)}`;
+    if (costMonth) costMonth.textContent = `$${(costs.thisMonth || 0).toFixed(2)}`;
+    if (budgetRemaining) {
+      const remaining = costs.budgetRemaining?.daily || 0;
+      budgetRemaining.textContent = `$${remaining.toFixed(2)}`;
+      budgetRemaining.style.color = remaining < 2 ? 'var(--accent-warning)' : '';
+    }
+  }
+
+  renderAIUsage(usage) {
+    const tbody = document.getElementById('ai-usage-body');
+    if (!tbody) return;
+
+    if (!usage || usage.length === 0) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="6">No recent AI usage</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = usage.map(record => `
+      <tr>
+        <td>${this.escapeHtml(record.provider)}</td>
+        <td>${this.escapeHtml(record.model)}</td>
+        <td>${this.escapeHtml(record.taskType)}</td>
+        <td>${record.totalTokens?.toLocaleString() || 0}</td>
+        <td>$${(record.costUsd || 0).toFixed(4)}</td>
+        <td>${record.durationMs}ms</td>
+      </tr>
+    `).join('');
+  }
+
+  setupAIEventListeners() {
+    // Refresh AI status button
+    document.getElementById('btn-refresh-ai')?.addEventListener('click', () => this.loadAIStatus());
+
+    // Save budget button
+    document.getElementById('btn-save-budget')?.addEventListener('click', async () => {
+      const daily = parseFloat(document.getElementById('budget-daily')?.value) || 10;
+      const monthly = parseFloat(document.getElementById('budget-monthly')?.value) || 100;
+
+      try {
+        const res = await apiFetch('/api/ai/budget', {
+          method: 'POST',
+          body: JSON.stringify({ dailyLimit: daily, monthlyLimit: monthly })
+        });
+
+        if (res.ok) {
+          alert('Budget saved successfully!');
+          this.loadAIStatus();
+        } else {
+          const error = await res.json();
+          alert('Failed to save budget: ' + error.error);
+        }
+      } catch (error) {
+        console.error('Failed to save budget:', error);
+        alert('Failed to save budget');
+      }
+    });
+  }
+
+  // ============ Command Center ============
+
+  setupCommandCenter() {
+    const chatInput = document.getElementById('chat-input');
+    const sendBtn = document.getElementById('btn-send-message');
+    const quickActions = document.querySelectorAll('.quick-action');
+
+    // Send message on button click
+    sendBtn?.addEventListener('click', () => this.sendChatMessage());
+
+    // Send message on Enter (but Shift+Enter for new line)
+    chatInput?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        this.sendChatMessage();
+      }
+    });
+
+    // Quick action buttons
+    quickActions.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const command = btn.dataset.command;
+        if (command) {
+          chatInput.value = command;
+          this.sendChatMessage();
+        }
+      });
+    });
+
+    // Check orchestrator status
+    this.checkOrchestratorStatus();
+  }
+
+  async checkOrchestratorStatus() {
+    const statusEl = document.getElementById('orchestrator-status');
+    if (!statusEl) return;
+
+    try {
+      const res = await apiFetch('/api/orchestrator/status');
+      if (res.ok) {
+        const data = await res.json();
+        statusEl.className = 'connection-status connected';
+        statusEl.querySelector('.status-text').textContent = `Online - ${data.instances?.length || 0} instances`;
+      } else {
+        statusEl.className = 'connection-status error';
+        statusEl.querySelector('.status-text').textContent = 'Offline';
+      }
+    } catch (error) {
+      statusEl.className = 'connection-status error';
+      statusEl.querySelector('.status-text').textContent = 'Offline';
+    }
+  }
+
+  async sendChatMessage() {
+    const chatInput = document.getElementById('chat-input');
+    const message = chatInput?.value?.trim();
+
+    if (!message) return;
+
+    // Add user message to chat
+    this.addChatMessage(message, 'user');
+    chatInput.value = '';
+
+    // Show typing indicator
+    const typingId = this.addTypingIndicator();
+
+    try {
+      const res = await apiFetch('/api/orchestrator/message', {
+        method: 'POST',
+        body: JSON.stringify({ message })
+      });
+
+      // Remove typing indicator
+      this.removeTypingIndicator(typingId);
+
+      if (res.ok) {
+        const data = await res.json();
+        this.addChatMessage(data.response || 'No response', 'assistant');
+        this.checkOrchestratorStatus(); // Refresh status
+      } else {
+        const error = await res.json();
+        this.addChatMessage(`Error: ${error.error || 'Unknown error'}`, 'assistant');
+      }
+    } catch (error) {
+      this.removeTypingIndicator(typingId);
+      this.addChatMessage(`Connection error: ${error.message}`, 'assistant');
+    }
+  }
+
+  addChatMessage(content, type) {
+    const messagesContainer = document.getElementById('chat-messages');
+    if (!messagesContainer) return;
+
+    const messageEl = document.createElement('div');
+    messageEl.className = `chat-message ${type}`;
+
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    messageEl.innerHTML = `
+      <div class="message-content">${this.escapeHtml(content)}</div>
+      <span class="message-time">${timeStr}</span>
+    `;
+
+    messagesContainer.appendChild(messageEl);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  }
+
+  addTypingIndicator() {
+    const messagesContainer = document.getElementById('chat-messages');
+    if (!messagesContainer) return null;
+
+    const id = 'typing-' + Date.now();
+    const typingEl = document.createElement('div');
+    typingEl.id = id;
+    typingEl.className = 'chat-message assistant typing-indicator';
+    typingEl.innerHTML = '<span></span><span></span><span></span>';
+
+    messagesContainer.appendChild(typingEl);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+    return id;
+  }
+
+  removeTypingIndicator(id) {
+    if (!id) return;
+    const el = document.getElementById(id);
+    el?.remove();
+  }
+
+  // ===== Hooks View =====
+  setupHooksView() {
+    const refreshBtn = document.getElementById('btn-refresh-hooks');
+    const clearBtn = document.getElementById('btn-clear-hooks');
+    const filterType = document.getElementById('hooks-filter-type');
+
+    if (refreshBtn) refreshBtn.addEventListener('click', () => this.loadHookEvents());
+    if (clearBtn) clearBtn.addEventListener('click', () => {
+      document.getElementById('hooks-feed').innerHTML = '';
+      this.hookEvents = [];
+      this.updateHooksStats();
+    });
+    if (filterType) filterType.addEventListener('change', () => this.renderHookEvents());
+
+    this.hookEvents = [];
+    this.hooksPollInterval = setInterval(() => {
+      const hooksView = document.getElementById('view-hooks');
+      if (hooksView && hooksView.classList.contains('active')) {
+        this.loadHookEvents();
+      }
+    }, 3000);
+  }
+
+  async loadHookEvents() {
+    try {
+      const response = await fetch('/api/hooks/events?limit=100', {
+        headers: { 'Authorization': `Bearer ${this.apiToken}` }
+      });
+      if (!response.ok) return;
+      const events = await response.json();
+      this.hookEvents = events.reverse();
+      this.renderHookEvents();
+      this.updateHooksStats();
+    } catch (err) {
+      console.warn('Failed to load hook events:', err);
+    }
+  }
+
+  renderHookEvents() {
+    const feed = document.getElementById('hooks-feed');
+    const filterType = document.getElementById('hooks-filter-type');
+    if (!feed) return;
+
+    const filter = filterType?.value || '';
+    let events = this.hookEvents || [];
+    if (filter) {
+      events = events.filter(e => e.event_type === filter);
+    }
+
+    if (events.length === 0) {
+      feed.innerHTML = `<div class="empty-state"><p>No hook events yet</p><p class="text-muted">Events will appear here when Claude Code hooks fire</p></div>`;
+      return;
+    }
+
+    feed.innerHTML = events.map(event => {
+      const isBlocked = event.status === 'blocked';
+      const isDone = event.event_type === 'agent_done';
+      const badgeClass = isBlocked ? 'blocked' : event.event_type;
+      const eventClass = isBlocked ? 'blocked' : isDone ? 'done' : '';
+      const time = new Date(event.created_at * 1000).toLocaleTimeString();
+      const sessionShort = (event.session_id || 'unknown').slice(0, 12);
+
+      let detail = '';
+      if (event.tool_input) {
+        try {
+          const parsed = JSON.parse(event.tool_input);
+          if (parsed.command) detail = parsed.command;
+          else if (parsed.file_path) detail = parsed.file_path;
+          else if (parsed.pattern) detail = `grep: ${parsed.pattern}`;
+          else detail = event.tool_input.slice(0, 120);
+        } catch {
+          detail = event.tool_input.slice(0, 120);
+        }
+      }
+
+      return `
+        <div class="hook-event ${eventClass}">
+          <span class="hook-event-badge ${badgeClass}">${isBlocked ? 'BLOCKED' : event.event_type}</span>
+          <div class="hook-event-body">
+            <div class="hook-event-header">
+              <span class="hook-event-tool">${event.tool_name || event.event_type}</span>
+              <span class="hook-event-time">${time}</span>
+            </div>
+            <div class="hook-event-session">session: ${sessionShort}</div>
+            ${detail ? `<div class="hook-event-detail">${this.escapeHtml(detail)}</div>` : ''}
+            ${event.message ? `<div class="hook-event-message">${this.escapeHtml(event.message)}</div>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  updateHooksStats() {
+    const events = this.hookEvents || [];
+    const totalEl = document.getElementById('hooks-total');
+    const blockedEl = document.getElementById('hooks-blocked');
+    const completionsEl = document.getElementById('hooks-completions');
+    const lastEventEl = document.getElementById('hooks-last-event');
+
+    if (totalEl) totalEl.textContent = events.length;
+    if (blockedEl) blockedEl.textContent = events.filter(e => e.status === 'blocked').length;
+    if (completionsEl) completionsEl.textContent = events.filter(e => e.event_type === 'agent_done').length;
+    if (lastEventEl && events.length > 0) {
+      const last = events[events.length - 1];
+      const ago = Math.round((Date.now() / 1000) - last.created_at);
+      lastEventEl.textContent = ago < 60 ? `${ago}s ago` : ago < 3600 ? `${Math.round(ago/60)}m ago` : `${Math.round(ago/3600)}h ago`;
+    }
+  }
+
+  escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  handleHookEvent(event) {
+    if (!this.hookEvents) this.hookEvents = [];
+    this.hookEvents.push(event);
+    const hooksView = document.getElementById('view-hooks');
+    if (hooksView && hooksView.classList.contains('active')) {
+      this.renderHookEvents();
+      this.updateHooksStats();
+    }
   }
 }
 

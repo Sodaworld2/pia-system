@@ -171,6 +171,84 @@ function getMigrations(): Migration[] {
         CREATE INDEX IF NOT EXISTS idx_session_output_session ON session_output(session_id);
       `,
     },
+    {
+      name: '002_ai_cost_tracking',
+      sql: `
+        -- AI provider configurations
+        CREATE TABLE IF NOT EXISTS ai_providers (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL UNIQUE,
+          tier INTEGER NOT NULL CHECK(tier IN (0, 1, 2, 3)),
+          base_url TEXT,
+          is_local INTEGER DEFAULT 0,
+          is_configured INTEGER DEFAULT 0,
+          is_available INTEGER DEFAULT 0,
+          last_checked INTEGER,
+          created_at INTEGER DEFAULT (unixepoch())
+        );
+
+        -- AI usage tracking (per request)
+        CREATE TABLE IF NOT EXISTS ai_usage (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          provider TEXT NOT NULL,
+          model TEXT NOT NULL,
+          task_type TEXT NOT NULL,
+          input_tokens INTEGER DEFAULT 0,
+          output_tokens INTEGER DEFAULT 0,
+          total_tokens INTEGER DEFAULT 0,
+          cost_usd REAL DEFAULT 0,
+          duration_ms INTEGER DEFAULT 0,
+          session_id TEXT REFERENCES sessions(id) ON DELETE SET NULL,
+          agent_id TEXT REFERENCES agents(id) ON DELETE SET NULL,
+          success INTEGER DEFAULT 1,
+          error_message TEXT,
+          created_at INTEGER DEFAULT (unixepoch())
+        );
+
+        -- Daily cost aggregates (for quick dashboard queries)
+        CREATE TABLE IF NOT EXISTS ai_cost_daily (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          date TEXT NOT NULL,
+          provider TEXT NOT NULL,
+          request_count INTEGER DEFAULT 0,
+          total_tokens INTEGER DEFAULT 0,
+          total_cost_usd REAL DEFAULT 0,
+          avg_duration_ms INTEGER DEFAULT 0,
+          UNIQUE(date, provider)
+        );
+
+        -- Cost budget/limits
+        CREATE TABLE IF NOT EXISTS ai_budgets (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          daily_limit_usd REAL,
+          monthly_limit_usd REAL,
+          current_daily_usd REAL DEFAULT 0,
+          current_monthly_usd REAL DEFAULT 0,
+          alert_threshold REAL DEFAULT 0.8,
+          last_reset_daily INTEGER,
+          last_reset_monthly INTEGER,
+          created_at INTEGER DEFAULT (unixepoch())
+        );
+
+        -- Insert default providers
+        INSERT OR IGNORE INTO ai_providers (id, name, tier, is_local) VALUES
+          ('ollama', 'Ollama (Local)', 0, 1),
+          ('gemini', 'Google Gemini', 1, 0),
+          ('openai', 'OpenAI', 2, 0),
+          ('grok', 'xAI Grok', 3, 0);
+
+        -- Insert default budget
+        INSERT OR IGNORE INTO ai_budgets (id, name, daily_limit_usd, monthly_limit_usd)
+          VALUES ('default', 'Default Budget', 10.00, 100.00);
+
+        -- Indexes for AI tables
+        CREATE INDEX IF NOT EXISTS idx_ai_usage_provider ON ai_usage(provider);
+        CREATE INDEX IF NOT EXISTS idx_ai_usage_created ON ai_usage(created_at);
+        CREATE INDEX IF NOT EXISTS idx_ai_usage_session ON ai_usage(session_id);
+        CREATE INDEX IF NOT EXISTS idx_ai_cost_daily_date ON ai_cost_daily(date);
+      `,
+    },
   ];
 }
 

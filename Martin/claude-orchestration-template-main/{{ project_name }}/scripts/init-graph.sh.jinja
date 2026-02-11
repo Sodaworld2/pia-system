@@ -1,0 +1,61 @@
+#!/bin/bash
+# Initialize graph schema for fresh installs
+{% if has_knowledge_graph %}
+set -e
+
+PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+SCHEMA_FILE="$PROJECT_ROOT/graph/schema.cypher"
+MIGRATIONS_DIR="$PROJECT_ROOT/graph/migrations"
+APPLIED_FILE="$PROJECT_ROOT/.graph-migrations"
+MEMGRAPH_HOST="${MEMGRAPH_HOST:-{{ memgraph_host }}}"
+MEMGRAPH_PORT="${MEMGRAPH_PORT:-{{ memgraph_port }}}"
+
+echo "Initializing knowledge graph..."
+
+# Check if already initialized
+if [[ -f "$APPLIED_FILE" ]] && [[ -s "$APPLIED_FILE" ]]; then
+    echo "Graph already initialized. Use migrate-graph.sh for updates."
+    exit 0
+fi
+
+# Check Memgraph connectivity
+if ! nc -zw2 "$MEMGRAPH_HOST" "$MEMGRAPH_PORT" 2>/dev/null; then
+    echo "ERROR: Cannot connect to Memgraph at $MEMGRAPH_HOST:$MEMGRAPH_PORT"
+    exit 1
+fi
+
+echo "Applying full schema..."
+
+# Apply full schema
+if command -v mgconsole &> /dev/null; then
+    mgconsole --host "$MEMGRAPH_HOST" --port "$MEMGRAPH_PORT" < "$SCHEMA_FILE"
+else
+    python3 -c "
+from neo4j import GraphDatabase
+import sys
+
+try:
+    with GraphDatabase.driver('bolt://$MEMGRAPH_HOST:$MEMGRAPH_PORT') as driver:
+        with driver.session() as session:
+            with open('$SCHEMA_FILE') as f:
+                for statement in f.read().split(';'):
+                    statement = statement.strip()
+                    if statement and not statement.startswith('--'):
+                        session.run(statement)
+except Exception as e:
+    print(f'Schema init failed: {e}', file=sys.stderr)
+    sys.exit(1)
+"
+fi
+
+# Mark all migrations as applied (since schema is current)
+for migration in "$MIGRATIONS_DIR"/*.cypher; do
+    [[ -f "$migration" ]] || continue
+    basename "$migration" >> "$APPLIED_FILE"
+done
+
+echo "Graph initialized successfully"
+echo "Migrations marked as applied: $(wc -l < "$APPLIED_FILE" | tr -d ' ')"
+{% else %}
+echo "Knowledge graph not configured - skipping initialization"
+{% endif %}

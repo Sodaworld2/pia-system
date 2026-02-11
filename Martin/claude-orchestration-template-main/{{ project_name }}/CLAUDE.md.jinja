@@ -1,0 +1,279 @@
+# {{ project_name | title | replace('_', ' ') | replace('-', ' ') }}
+
+## Purpose
+
+{{ project_description }}
+
+{% if has_local_llm %}
+**Local LLM:** {{ ollama_endpoint }}
+{% if primary_coding_model %}**Primary Model:** {{ primary_coding_model }}{% endif %}
+{% endif %}
+{% if has_guardrails_proxy %}
+**LLM Access:** All requests route through guardrails proxy ({{ guardrails_endpoint }})
+{% endif %}
+
+## Critical Rules
+
+### Session Start Protocol
+
+At the start of every session:
+1. **Check infrastructure status**: Are required services running?
+{% if enable_task_system %}
+2. **Task Check**: Read `tasks/master.md` to align on priorities.
+{% endif %}
+3. **Review context**: Any issues to address from previous session?
+
+### Git Safety
+
+- **Never commit**: `.env`, API keys, credentials, `*.age` files
+- **Always commit**: Configuration changes, tasks updates
+
+### Agent Invocation Protocol
+
+**You are the Lead Engineer (Orchestrator).** You are FORBIDDEN from editing code files directly. You MUST delegate coding tasks to specialized agents.
+
+#### FORBIDDEN Actions (Hard Enforcement)
+- **DO NOT** use Edit/Write tools on code files (.sh, .py, .js, .ts, etc.) directly
+- **DO NOT** bypass delegation for "quick fixes" - delegate even small code changes
+{% if has_local_llm %}
+- **DO NOT** pass `model` parameter when calling `@local-coder` - this overrides Ollama and wastes Claude tokens
+{% endif %}
+- The `PreToolUse` hook will BLOCK direct code edits and remind you to delegate
+
+#### REQUIRED Workflow
+1. **Analyze** the user's request
+2. **Delegate** to the appropriate agent using `Task` tool
+3. **Review** the agent's output before presenting to user
+
+| Agent | When to Use | Cost |
+|-------|-------------|------|
+{% if has_local_llm %}
+| @local-coder | Code generation/drafting on local GPU | FREE (Ollama) |
+| @local-orchestrator | Route ambiguous tasks, detect stuck loops | FREE (Ollama) |
+| @lite-general | Simple tasks: file reading, test running, searches | FREE (Ollama) |
+{% endif %}
+{% if include_debug_agent %}
+| @debug | Deep-dive debugging: Autonomous test loops, hypothesis testing | FREE{% if has_local_llm %} (Ollama){% endif %} -> PAID escalation |
+{% endif %}
+{% if include_integration_check %}
+| @integration-check | Post-execution verification: Verify new code is imported/wired | FREE (local tools) |
+{% endif %}
+{% if include_janitor %}
+| @janitor | Directory/codebase cleanup: Phase-based cleanup with dry-run | FREE{% if has_local_llm %} (Ollama){% endif %} -> PAID escalation |
+{% endif %}
+| @code-sentinel | Multi-model security audit | PAID (security review) |
+{% if include_multi_model_overseer %}
+| @overseer | Multi-model architecture review: Gemini + OpenAI{% if include_grok_agent %} + Grok{% endif %} + Opus synthesis | PAID (high-stakes architecture) |
+{% endif %}
+| @gemini-overseer | Single-model review (Gemini only) | PAID (quick checks) |
+| @openai-overseer | Single-model review (OpenAI only) | PAID (when Gemini unavailable) |
+| @archivist | Knowledge/notes management | FREE (Claude session) |
+{% if has_local_llm %}
+| @local-git | Commit messages, PR summaries, branch names | FREE (Ollama) |
+{% endif %}
+
+#### Hook Enforcement (Automatic)
+- `UserPromptSubmit` -> Injects `<system_instruction>` with MUST delegate directives
+- `PreToolUse` -> BLOCKS Edit/Write on code files unless agent has run
+{% if has_local_llm %}
+- `PreToolUse` -> On Task tool for `@local-coder`:
+  - **Prompt injection**: Auto-appends Ollama reminder if "ollama" not in prompt
+  - **Model blocking**: BLOCKS if `model` parameter passed (prevents Claude API waste)
+{% endif %}
+- `SubagentStop` -> Logs agent completions
+
+#### Exemptions (Whitelist)
+You MAY edit directly (no delegation required):
+- Documentation files: `.md`, `.txt`, `.log`
+- Config files: `.json`, `.yaml`, `.yml`
+- Data files: `.csv`
+- **System configuration**: `.claude/` directory (skills, subagents, hooks)
+
+#### Cost-Conscious Waterfall
+{% if has_local_llm %}
+0. **Tier 0 (FREE, Zero Calls):** `/consider:*` thinking models (pure prompt enhancement)
+1. **Tier 1 (FREE):** @local-orchestrator for routing, @local-coder for code, @lite-general for simple tasks
+2. **Tier 2 (FREE):** @code-sentinel for security, @archivist for knowledge
+3. **Tier 3 (PAID):** @gemini-overseer or @openai-overseer for single-model validation
+{% if include_multi_model_overseer %}
+4. **Tier 4 (PAID, Premium):** @overseer for multi-model panel
+{% endif %}
+{% else %}
+1. **Tier 1 (BUDGET):** @code-sentinel for security, @archivist for knowledge
+2. **Tier 2 (PAID):** @gemini-overseer or @openai-overseer for validation
+{% if include_multi_model_overseer %}
+3. **Tier 3 (PREMIUM):** @overseer for multi-model panel
+{% endif %}
+{% endif %}
+
+### Session Hygiene (Context Surgeon Protocol)
+
+**Ghost Code** occurs when an LLM hallucinates changes it thinks it made but didn't commit. **Context Rot** happens when accumulated conversation history pollutes understanding.
+
+**Rules:**
+
+{% if enable_task_system %}
+1. **One Task = One Session**
+   - Complete ONE task from `tasks/master.md` per session
+   - After completion, commit and START A FRESH SESSION
+{% endif %}
+
+2. **Context Refresh Triggers**
+   - After completing any task (mandatory)
+   - After any error you can't immediately explain
+   - If you catch yourself saying "I think we changed..." or "earlier I..."
+
+3. **Fresh Start Procedure**
+   ```bash
+   git add . && git commit -m "checkpoint: [what you did]"
+   # Start fresh Claude session
+   ```
+
+4. **Ghost Code Detection**
+   - If you reference code changes without a corresponding commit, STOP
+   - Run `git status` and `git diff` to verify actual state
+
+## Project Structure
+
+```text
+{{ project_name }}/
+├── .claude/           # Claude Code config
+│   ├── settings.json  # Hooks and permissions
+│   ├── agents/        # Subagent definitions
+│   ├── skills/        # Custom skills
+│   └── hooks/         # Enforcement hooks
+{% if enable_task_system %}
+├── tasks/             # Task Management System
+│   ├── master.md      # The backlog and status board
+│   ├── detail/        # Active task specifications
+│   ├── done/          # Completed task archive
+│   └── templates/     # Task templates
+{% endif %}
+├── scripts/           # Utility scripts
+├── CLAUDE.md          # This file
+└── README.md          # Project documentation
+```
+
+{% if enable_task_system %}
+## Task Management Protocol
+
+### Phase 1: Planning (MANDATORY)
+1. **Select Task**: Move item in `tasks/master.md` to `## In Progress`.
+2. **Create Spec**: Copy `tasks/templates/task_spec.md` to `tasks/detail/[feature-name].md`.
+3. **Fill Requirements**: Analyze requirements and propose architecture.
+4. **Define Success**: Write specific success criteria. **DO NOT CODE YET.**
+5. **Review**: Briefly reflect: "Does this plan actually solve the problem?"
+
+### Phase 2: Execution (Chunked)
+1. **Test First**: Create the failing test or verification script.
+2. **Implement**: Write code in small chunks.
+{% if include_integration_check %}
+3. **Integration Checkpoint**: After creating >2 files, verify import exists in calling code.
+{% endif %}
+4. **Log**: Update the "Execution Log" in the detail file.
+
+### Phase 3: Completion
+1. **Verify**: All tests pass
+2. **Commit**: `git add . && git commit -m "feat: [task] - [summary]"`
+3. **Archive**: Move detail file to `tasks/done/`, update master list
+{% endif %}
+
+## Common Tasks
+
+{% if has_local_llm %}
+### Check Model Connectivity
+```bash
+# Check Ollama
+curl {{ ollama_endpoint }}/api/tags | jq '.models[].name'
+```
+{% endif %}
+
+{% if has_knowledge_graph %}
+### Check Knowledge Graph
+```bash
+# Check Memgraph
+nc -zw2 {{ memgraph_host }} {{ memgraph_port }} && echo "UP" || echo "DOWN"
+```
+{% endif %}
+
+## Troubleshooting
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+{% if has_local_llm %}
+| No response | Ollama down | Check `{{ ollama_endpoint }}/api/tags` |
+| Slow response | Model cold start | Wait 30s, or keep model warm |
+{% endif %}
+| Tool errors | Schema issues | Check tool documentation |
+
+## The Critic Protocol (Multi-Model Validation)
+
+{% if include_multi_model_overseer %}
+You have access to multiple AI reviewers:
+
+| Agent | Focus | Models Used |
+|-------|-------|-------------|
+| @overseer | Architecture, integration, design | Gemini + OpenAI{% if include_grok_agent %} + Grok{% endif %} + Opus |
+| @code-sentinel | Security vulnerabilities | Gemini + OpenAI{% if include_grok_agent %} + Grok{% endif %} |
+| @gemini-overseer | Quick single-model checks | Gemini only |
+| @openai-overseer | Alternate single-model | OpenAI only |
+{% else %}
+You have access to AI reviewers:
+
+| Agent | Focus |
+|-------|-------|
+| @code-sentinel | Security vulnerabilities |
+| @gemini-overseer | Architecture and design |
+| @openai-overseer | Logic and flow |
+{% endif %}
+
+**Trigger 1: Architectural Review**
+BEFORE starting any complex feature (touching >3 files):
+{% if include_multi_model_overseer %}
+1. Draft your plan
+2. Call `@overseer` to review integration fit
+3. Adjust based on multi-model feedback
+{% else %}
+1. Draft your plan
+2. Call `@gemini-overseer` or `@openai-overseer` for review
+3. Adjust based on feedback
+{% endif %}
+
+**Trigger 2: Thought Loop Breaker**
+WHEN you notice:
+- Same error encountered 3+ times
+- Same tool called repeatedly, no progress
+- Reverting changes you just made
+
+THEN:
+{% if has_local_llm %}
+1. STOP and summarize what you've tried
+2. **FIRST (FREE)**: Call @local-orchestrator to analyze
+3. **IF stuck (PAID)**: Call @gemini-overseer or @openai-overseer
+{% if include_multi_model_overseer %}
+4. **IF still stuck (PREMIUM)**: Call @overseer for full panel
+{% endif %}
+{% else %}
+1. STOP and summarize what you've tried
+2. Call @gemini-overseer or @openai-overseer for fresh perspective
+{% if include_multi_model_overseer %}
+3. If needed, escalate to @overseer for full panel
+{% endif %}
+{% endif %}
+
+**Trigger 3: Security Checkpoint**
+WHEN writing code that handles:
+- API keys, tokens, passwords
+- File permissions
+- Network configuration
+
+Call `@code-sentinel` for security audit.
+
+## Working Conventions
+
+1. **Config in version control** - Always commit configuration changes
+2. **Don't commit secrets** - Never commit `.env` or API keys
+3. **Test locally first** - Verify changes work before committing
+{% if enable_cost_tracking %}
+4. **Monitor costs** - Review API usage periodically
+{% endif %}

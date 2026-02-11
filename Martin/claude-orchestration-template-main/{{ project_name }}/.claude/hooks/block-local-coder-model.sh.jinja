@@ -1,0 +1,27 @@
+{% if has_local_llm %}
+#!/bin/bash
+# PreToolUse hook: Block model parameter on local-coder
+# Prevents accidentally using Claude API instead of Ollama
+
+INPUT=$(cat 2>/dev/null)
+
+SUBAGENT_TYPE=$(echo "$INPUT" | jq -r '.tool_input.subagent_type // empty' 2>/dev/null)
+MODEL_PARAM=$(echo "$INPUT" | jq -r '.tool_input.model // empty' 2>/dev/null)
+
+if [ "$SUBAGENT_TYPE" = "local-coder" ] && [ -n "$MODEL_PARAM" ]; then
+    echo "" >&2
+    echo "============================================" >&2
+    echo "BLOCKED: Do not pass model to @local-coder" >&2
+    echo "============================================" >&2
+    echo "@local-coder must use Ollama, not Claude API" >&2
+    echo "Remove the model parameter from the Task call" >&2
+    echo "============================================" >&2
+    exit 2
+fi
+
+echo "$INPUT"
+{% else %}
+#!/bin/bash
+# Local LLM hooks disabled
+cat
+{% endif %}

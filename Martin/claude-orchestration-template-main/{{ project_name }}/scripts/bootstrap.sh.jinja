@@ -1,0 +1,119 @@
+#!/bin/bash
+# Bootstrap script for {{ project_name }}
+set -e
+
+PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$PROJECT_ROOT"
+
+echo "=== Bootstrapping {{ project_name }} ==="
+echo "Project root: $PROJECT_ROOT"
+
+# Create .env from template if it doesn't exist
+if [[ ! -f .env ]]; then
+    if [[ -f .env.template ]]; then
+        cp .env.template .env
+        chmod 600 .env
+        echo ""
+        echo "Created .env from template"
+        echo ""
+        echo "IMPORTANT: Edit .env and add your API keys"
+        echo "  Required: ANTHROPIC_API_KEY"
+{% if include_multi_model_overseer %}
+        echo "  Optional: GEMINI_API_KEY, OPENAI_API_KEY"
+{% endif %}
+{% if include_grok_agent %}
+        echo "  Optional: XAI_API_KEY (for Grok)"
+{% endif %}
+        echo ""
+        echo "Run this script again after adding your keys."
+        exit 1
+    else
+        echo "Warning: No .env.template found"
+        exit 1
+    fi
+fi
+
+# Validate required variables - safe parsing (no code execution)
+if [ -f .env ]; then
+    set -a  # automatically export all variables
+    while IFS='=' read -r key value; do
+        # Skip comments and empty lines
+        [[ -z "$key" || "$key" =~ ^# ]] && continue
+        # Remove surrounding quotes from value
+        value="${value%\"}"
+        value="${value#\"}"
+        value="${value%\'}"
+        value="${value#\'}"
+        export "$key=$value"
+    done < .env
+    set +a
+fi
+
+if [[ -z "$ANTHROPIC_API_KEY" || "$ANTHROPIC_API_KEY" == "your-anthropic-key-here" ]]; then
+    echo ""
+    echo "ERROR: ANTHROPIC_API_KEY not set in .env"
+    echo "  Get your key from: https://console.anthropic.com/"
+    exit 1
+fi
+
+echo "Environment configured"
+
+# Create state directory
+mkdir -p .claude/.state
+echo "Created .claude/.state directory"
+
+# Create task directories
+{% if enable_task_system %}
+mkdir -p tasks/detail tasks/done
+echo "Created task directories"
+{% endif %}
+
+# Make scripts executable
+find scripts -name "*.sh" -exec chmod +x {} \; 2>/dev/null || true
+find .claude/hooks -name "*.sh" -exec chmod +x {} \; 2>/dev/null || true
+echo "Made scripts executable"
+
+# Install pre-commit hooks
+{% if include_pre_commit %}
+if command -v pre-commit &> /dev/null; then
+    echo "Installing pre-commit hooks..."
+    pre-commit install
+
+    # Create secrets baseline if it doesn't exist
+    if [[ ! -f .secrets.baseline ]]; then
+        echo "Creating secrets baseline..."
+        detect-secrets scan --baseline .secrets.baseline 2>/dev/null || true
+    fi
+else
+    echo "Warning: pre-commit not installed. Run: pip install pre-commit"
+fi
+{% endif %}
+
+# Initialize git if not already
+if [[ ! -d .git ]]; then
+    echo ""
+    echo "Git not initialized. Run:"
+    echo "  git init"
+    echo "  git add ."
+    echo "  git commit -m 'Initial project setup'"
+fi
+
+# Offer to install cc alias
+if ! command -v cc &> /dev/null && ! alias cc &> /dev/null 2>&1; then
+    if ! grep -q "alias cc=" ~/.bashrc ~/.zshrc ~/.bash_aliases 2>/dev/null; then
+        echo ""
+        read -p "Install 'cc' alias for 'claude'? [Y/n] " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]] || [[ -z $REPLY ]]; then
+            ./scripts/install-alias.sh
+        fi
+    fi
+fi
+
+echo ""
+echo "=== Bootstrap Complete ==="
+echo ""
+echo "Next steps:"
+echo "1. Verify your .env has correct API keys"
+echo "2. Run 'cc' (or 'claude') to start Claude Code"
+echo "3. Say '/onboard' for interactive project setup"

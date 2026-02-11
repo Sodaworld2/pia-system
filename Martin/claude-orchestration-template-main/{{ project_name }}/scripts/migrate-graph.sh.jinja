@@ -1,0 +1,92 @@
+#!/bin/bash
+# Apply pending graph migrations
+{% if has_knowledge_graph %}
+set -e
+
+PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+MIGRATIONS_DIR="$PROJECT_ROOT/graph/migrations"
+APPLIED_FILE="$PROJECT_ROOT/.graph-migrations"
+MEMGRAPH_HOST="${MEMGRAPH_HOST:-{{ memgraph_host }}}"
+MEMGRAPH_PORT="${MEMGRAPH_PORT:-{{ memgraph_port }}}"
+
+echo "Checking graph migrations..."
+
+# Create applied file if doesn't exist
+touch "$APPLIED_FILE"
+
+# Count pending migrations
+pending=0
+for migration in "$MIGRATIONS_DIR"/*.cypher; do
+    [[ -f "$migration" ]] || continue
+    name=$(basename "$migration")
+    if ! grep -q "^$name$" "$APPLIED_FILE" 2>/dev/null; then
+        ((pending++))
+    fi
+done
+
+if [[ $pending -eq 0 ]]; then
+    echo "All migrations already applied"
+    exit 0
+fi
+
+echo "Found $pending pending migration(s)"
+
+# Check Memgraph connectivity
+if ! nc -zw2 "$MEMGRAPH_HOST" "$MEMGRAPH_PORT" 2>/dev/null; then
+    echo "ERROR: Cannot connect to Memgraph at $MEMGRAPH_HOST:$MEMGRAPH_PORT"
+    exit 1
+fi
+
+# Apply pending migrations in order
+for migration in "$MIGRATIONS_DIR"/*.cypher; do
+    [[ -f "$migration" ]] || continue
+    name=$(basename "$migration")
+
+    if grep -q "^$name$" "$APPLIED_FILE" 2>/dev/null; then
+        echo "  Skipping $name (already applied)"
+        continue
+    fi
+
+    echo "  Applying $name..."
+
+    # Apply via mgconsole (Memgraph CLI)
+    if command -v mgconsole &> /dev/null; then
+        mgconsole --host "$MEMGRAPH_HOST" --port "$MEMGRAPH_PORT" < "$migration"
+    else
+        echo "    Using Python fallback..."
+        # Pass variables via environment to avoid shell injection
+        export MEMGRAPH_HOST MEMGRAPH_PORT
+        export MIGRATION_FILE="$migration"
+        python3 << 'PYTHON_EOF'
+import os
+from neo4j import GraphDatabase
+import sys
+
+try:
+    host = os.environ.get('MEMGRAPH_HOST', 'localhost')
+    port = os.environ.get('MEMGRAPH_PORT', '7687')
+    migration_file = os.environ['MIGRATION_FILE']
+
+    with GraphDatabase.driver(f'bolt://{host}:{port}') as driver:
+        with driver.session() as session:
+            with open(migration_file) as f:
+                for statement in f.read().split(';'):
+                    statement = statement.strip()
+                    if statement and not statement.startswith('--'):
+                        session.run(statement)
+except Exception as e:
+    print(f'Migration failed: {e}', file=sys.stderr)
+    sys.exit(1)
+PYTHON_EOF
+    fi
+
+    # Record as applied
+    echo "$name" >> "$APPLIED_FILE"
+    echo "    Applied $name"
+done
+
+echo ""
+echo "All migrations applied successfully"
+{% else %}
+echo "Knowledge graph not configured - skipping migrations"
+{% endif %}

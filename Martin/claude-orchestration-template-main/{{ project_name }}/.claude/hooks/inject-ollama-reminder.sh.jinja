@@ -1,0 +1,33 @@
+{% if has_local_llm %}
+#!/bin/bash
+# PreToolUse hook: Inject Ollama reminder into local-coder prompts
+# Ensures the agent always remembers to call Ollama
+
+INPUT=$(cat 2>/dev/null)
+
+SUBAGENT_TYPE=$(echo "$INPUT" | jq -r '.tool_input.subagent_type // empty' 2>/dev/null)
+
+# Only modify local-coder prompts
+if [ "$SUBAGENT_TYPE" = "local-coder" ]; then
+    ORIGINAL_PROMPT=$(echo "$INPUT" | jq -r '.tool_input.prompt // empty' 2>/dev/null)
+    
+    # Check if prompt already mentions ollama (case insensitive)
+    if ! echo "$ORIGINAL_PROMPT" | grep -qi "ollama"; then
+        # Inject reminder
+        REMINDER=$'\n\nREMINDER: You MUST call mcp__ollama__ollama_chat with model {{ primary_coding_model }} for code generation. Do not generate code without calling Ollama first.'
+        
+        NEW_PROMPT="${ORIGINAL_PROMPT}${REMINDER}"
+        
+        # Return modified input
+        jq --arg newPrompt "$NEW_PROMPT" '.tool_input.prompt = $newPrompt' <<< "$INPUT"
+        exit 0
+    fi
+fi
+
+# Pass through unchanged
+echo "$INPUT"
+{% else %}
+#!/bin/bash
+# Ollama hooks disabled - no local LLM configured
+cat
+{% endif %}

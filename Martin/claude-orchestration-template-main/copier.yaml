@@ -1,0 +1,175 @@
+# Claude Code Orchestration Template
+# https://copier.readthedocs.io/
+
+_min_copier_version: "9.0.0"
+_subdirectory: "{{ project_name }}"
+_answers_file: .copier-answers.yml
+
+# Template version - update on each release
+_version: "0.1.0"
+
+# =============================================================================
+# Core Questions (Required)
+# =============================================================================
+
+project_name:
+  type: str
+  help: "Project name (used for directory and identifiers, e.g., 'my-ai-project')"
+  validator: "{% if not project_name or ' ' in project_name %}Project name cannot be empty or contain spaces{% endif %}"
+
+project_description:
+  type: str
+  help: "Brief project description"
+  default: "Claude Code orchestrated project"
+
+admin_username:
+  type: str
+  help: "Primary admin username for this project"
+  default: "{{ _copier_conf.user }}"
+
+# =============================================================================
+# Infrastructure Configuration
+# =============================================================================
+
+has_local_llm:
+  type: bool
+  default: true
+  help: "Do you have a local LLM server (Ollama, vLLM)?"
+
+ollama_endpoint:
+  type: str
+  default: "http://localhost:11434"
+  help: "Ollama API endpoint URL"
+  when: "{{ has_local_llm }}"
+
+primary_coding_model:
+  type: str
+  default: "qwen2.5-coder:32b"
+  help: "Default model for coding tasks"
+  when: "{{ has_local_llm }}"
+
+has_guardrails_proxy:
+  type: bool
+  default: false
+  help: "Do you have a guardrails proxy for LLM requests?"
+
+guardrails_endpoint:
+  type: str
+  default: "http://localhost:8080"
+  help: "Guardrails proxy endpoint"
+  when: "{{ has_guardrails_proxy }}"
+
+has_knowledge_graph:
+  type: bool
+  default: false
+  help: "Do you have Memgraph/Neo4j for code knowledge graph?"
+
+memgraph_host:
+  type: str
+  default: "localhost"
+  help: "Memgraph/Neo4j host"
+  when: "{{ has_knowledge_graph }}"
+
+memgraph_port:
+  type: int
+  default: 7687
+  help: "Memgraph/Neo4j Bolt port"
+  when: "{{ has_knowledge_graph }}"
+
+# =============================================================================
+# Agent Features (Optional)
+# =============================================================================
+
+include_multi_model_overseer:
+  type: bool
+  default: false
+  help: "Include @overseer multi-model review panel? (requires Gemini + OpenAI API keys)"
+
+include_grok_agent:
+  type: bool
+  default: false
+  help: "Include Grok devil's advocate agent? (requires XAI_API_KEY)"
+  when: "{{ include_multi_model_overseer }}"
+
+include_debug_agent:
+  type: bool
+  default: true
+  help: "Include @debug agent with Ralph Wiggum pattern?"
+
+include_integration_check:
+  type: bool
+  default: true
+  help: "Include @integration-check to verify code wiring?"
+
+include_janitor:
+  type: bool
+  default: true
+  help: "Include @janitor cleanup agent?"
+
+# =============================================================================
+# Development Environment
+# =============================================================================
+
+include_devcontainer:
+  type: bool
+  default: true
+  help: "Include DevContainer configuration?"
+
+include_pre_commit:
+  type: bool
+  default: true
+  help: "Include pre-commit hooks for secret scanning?"
+
+# =============================================================================
+# Task System
+# =============================================================================
+
+enable_task_system:
+  type: bool
+  default: true
+  help: "Include task management system (tasks/master.md)?"
+
+enable_cost_tracking:
+  type: bool
+  default: true
+  help: "Track API costs via hooks?"
+
+# =============================================================================
+# Exclusions - Never overwrite user-owned files
+# =============================================================================
+
+_exclude:
+  # User hook extensions
+  - ".claude/hooks/*.d/*.sh"
+  - ".claude/hooks/*.d/*.py"
+  # User task data
+  - "tasks/detail/*"
+  - "tasks/done/*"
+  # Secrets and environment
+  - ".env"
+  - "*.age"
+  - "secrets.yaml"
+  # Build artifacts
+  - "*.pyc"
+  - "__pycache__"
+  - "node_modules"
+  - ".venv"
+  - "venv"
+  # Git
+  - ".git"
+  # IDE
+  - ".idea"
+  - ".vscode/settings.json"
+  # State files
+  - ".claude/.state/*"
+  # Graph data (keep schema, exclude data)
+  - "graph/data/*"
+  - ".graph-migrations"
+
+# =============================================================================
+# Tasks to run after copy
+# =============================================================================
+
+_tasks:
+  - command: "chmod +x {{ _copier_conf.dst_path }}/scripts/*.sh 2>/dev/null || true"
+  - command: "chmod +x {{ _copier_conf.dst_path }}/.claude/hooks/*.sh 2>/dev/null || true"

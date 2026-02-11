@@ -1,0 +1,87 @@
+{
+  "statusLine": {
+    "type": "command",
+    "command": "${PROJECT_ROOT:-.}/.claude/statusline.sh"
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${PROJECT_ROOT:-.}/.claude/hooks/session-start.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${PROJECT_ROOT:-.}/.claude/hooks/user-prompt-submit.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|Bash|Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${PROJECT_ROOT:-.}/.claude/hooks/pre-tool-use.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write{% if enable_cost_tracking %}|mcp__ollama__*|mcp__gemini__*|mcp__openai__*|mcp__grok__*{% endif %}",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${PROJECT_ROOT:-.}/.claude/hooks/post-tool-use.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${PROJECT_ROOT:-.}/.claude/hooks/track-agent-calls.sh",
+            "timeout": 2
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${PROJECT_ROOT:-.}/.claude/hooks/subagent-stop.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c '${PROJECT_ROOT:-.}/scripts/session-audit.sh 2>/dev/null; echo \"Session ended $(date)\" >> /tmp/claude-sessions.log'",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

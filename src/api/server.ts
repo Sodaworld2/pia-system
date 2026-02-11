@@ -11,6 +11,11 @@ import machinesRouter from './routes/machines.js';
 import agentsRouter from './routes/agents.js';
 import sessionsRouter from './routes/sessions.js';
 import alertsRouter from './routes/alerts.js';
+import mcpsRouter from './routes/mcps.js';
+import checkpointsRouter from './routes/checkpoints.js';
+import aiRouter from './routes/ai.js';
+import orchestratorRouter from './routes/orchestrator.js';
+import hooksRouter from './routes/hooks.js';
 
 const logger = createLogger('API');
 
@@ -32,31 +37,32 @@ function validateApiToken(req: Request, res: Response, next: NextFunction): void
   next();
 }
 
-// Rate limiter for API routes
+// Rate limiter for API routes (very relaxed for development/testing)
 const apiLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 100, // 100 requests per minute per IP
+  max: 2000, // 2000 requests per minute per IP
   message: { error: 'Too many requests, please try again later' },
   standardHeaders: true,
   legacyHeaders: false,
 });
 
-// Stricter rate limit for session creation (prevents CLI abuse)
+// Rate limit for session operations
 const sessionLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 10, // 10 sessions per minute
+  max: 5000, // 5000 session operations per minute
   message: { error: 'Too many session requests' },
 });
 
 export function createServer(): Express {
   const app = express();
 
-  // Security middleware
+  // Security middleware (relaxed for development)
   app.use(helmet({
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "unpkg.com"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-hashes'", "unpkg.com"],
+        scriptSrcAttr: ["'unsafe-inline'"], // Allow onclick handlers
         styleSrc: ["'self'", "'unsafe-inline'"],
         imgSrc: ["'self'", "data:", "blob:"],
         connectSrc: ["'self'", "ws:", "wss:"],
@@ -96,6 +102,11 @@ export function createServer(): Express {
   app.use('/api/agents', agentsRouter);
   app.use('/api/sessions', sessionsRouter);
   app.use('/api/alerts', alertsRouter);
+  app.use('/api/mcps', mcpsRouter);
+  app.use('/api/checkpoints', checkpointsRouter);
+  app.use('/api/ai', aiRouter);
+  app.use('/api/orchestrator', orchestratorRouter);
+  app.use('/api/hooks', hooksRouter);
 
   // Health check
   app.get('/api/health', (_req: Request, res: Response) => {
@@ -107,40 +118,45 @@ export function createServer(): Express {
   });
 
   // Stats endpoint
-  app.get('/api/stats', (_req: Request, res: Response) => {
-    const { getAllMachines } = require('../db/queries/machines.js');
-    const { getAgentStats } = require('../db/queries/agents.js');
-    const { getAlertCounts } = require('../db/queries/alerts.js');
-    const { getWebSocketServer } = require('../tunnel/websocket-server.js');
-    const { ptyManager } = require('../tunnel/pty-wrapper.js');
-
-    const machines = getAllMachines();
-    const agentStats = getAgentStats();
-    const alertCounts = getAlertCounts();
-
-    let wsClients = 0;
+  app.get('/api/stats', async (_req: Request, res: Response) => {
     try {
-      const ws = getWebSocketServer();
-      wsClients = ws.getAuthenticatedClientCount();
-    } catch {
-      // WebSocket not initialized yet
-    }
+      const machinesModule = await import('../db/queries/machines.js');
+      const agentsModule = await import('../db/queries/agents.js');
+      const alertsModule = await import('../db/queries/alerts.js');
+      const ptyModule = await import('../tunnel/pty-wrapper.js');
 
-    res.json({
-      machines: {
-        total: machines.length,
-        online: machines.filter((m: { status: string }) => m.status === 'online').length,
-        offline: machines.filter((m: { status: string }) => m.status === 'offline').length,
-      },
-      agents: agentStats,
-      alerts: alertCounts,
-      sessions: {
-        active: ptyManager.getSessionCount(),
-      },
-      websocket: {
-        clients: wsClients,
-      },
-    });
+      const machines = machinesModule.getAllMachines();
+      const agentStats = agentsModule.getAgentStats();
+      const alertCounts = alertsModule.getAlertCounts();
+
+      let wsClients = 0;
+      try {
+        const wsModule = await import('../tunnel/websocket-server.js');
+        const ws = wsModule.getWebSocketServer();
+        wsClients = ws.getAuthenticatedClientCount();
+      } catch {
+        // WebSocket not initialized yet
+      }
+
+      res.json({
+        machines: {
+          total: machines.length,
+          online: machines.filter((m: { status: string }) => m.status === 'online').length,
+          offline: machines.filter((m: { status: string }) => m.status === 'offline').length,
+        },
+        agents: agentStats,
+        alerts: alertCounts,
+        sessions: {
+          active: ptyModule.ptyManager.getSessionCount(),
+        },
+        websocket: {
+          clients: wsClients,
+        },
+      });
+    } catch (error) {
+      logger.error(`Stats error: ${error}`);
+      res.status(500).json({ error: 'Failed to get stats' });
+    }
   });
 
   // Serve static files (dashboard)

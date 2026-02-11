@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PIA - Visual Setup Guide</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #0a0a15 100%);
+      color: #e0e0e0;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      color: #00ff88;
+      font-size: 36px;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #888;
+      margin-bottom: 40px;
+      font-size: 18px;
+    }
+
+    .step {
+      background: #12121f;
+      border: 1px solid #2a2a4e;
+      border-radius: 16px;
+      padding: 30px;
+      margin-bottom: 30px;
+    }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .step-number {
+      background: #00ff88;
+      color: #0a0a15;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 18px;
+    }
+
+    .step-title {
+      font-size: 22px;
+      font-weight: 600;
+    }
+
+    .step-desc {
+      color: #aaa;
+      margin-bottom: 20px;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    /* Mock UI Elements */
+    .mock-ui {
+      background: #0a0a15;
+      border: 2px solid #00ff88;
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 20px 0;
+    }
+
+    .mock-header {
+      background: #12121f;
+      padding: 12px 20px;
+      border-bottom: 1px solid #2a2a4e;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .mock-logo {
+      color: #00ff88;
+      font-weight: bold;
+      font-size: 20px;
+    }
+
+    .mock-nav {
+      display: flex;
+      gap: 5px;
+      padding: 10px 20px;
+      background: #12121f;
+      border-bottom: 1px solid #2a2a4e;
+    }
+
+    .mock-nav-item {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      color: #888;
+    }
+
+    .mock-nav-item.active {
+      background: #1a1a2e;
+      color: #00ff88;
+    }
+
+    .mock-nav-item.highlight {
+      background: #00ff88;
+      color: #0a0a15;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    .mock-content {
+      padding: 30px;
+      min-height: 200px;
+    }
+
+    .mock-btn {
+      background: #00ff88;
+      color: #0a0a15;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .mock-btn.highlight {
+      animation: pulse 1s infinite;
+      box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+    }
+
+    .mock-terminal {
+      background: #000;
+      border-radius: 8px;
+      padding: 20px;
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: 14px;
+      color: #00ff88;
+    }
+
+    .mock-terminal .prompt {
+      color: #888;
+    }
+
+    .mock-terminal .command {
+      color: #fff;
+    }
+
+    .mock-dialog {
+      background: #1a1a2e;
+      border: 1px solid #2a2a4e;
+      border-radius: 12px;
+      padding: 20px;
+      max-width: 350px;
+      margin: 20px auto;
+    }
+
+    .mock-dialog-title {
+      font-weight: 600;
+      margin-bottom: 15px;
+    }
+
+    .mock-input {
+      width: 100%;
+      background: #0a0a15;
+      border: 1px solid #2a2a4e;
+      border-radius: 6px;
+      padding: 10px;
+      color: #fff;
+      font-size: 14px;
+      margin-bottom: 15px;
+    }
+
+    .mock-dialog-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .mock-btn-secondary {
+      background: #2a2a4e;
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    .arrow {
+      text-align: center;
+      font-size: 40px;
+      color: #00ff88;
+      margin: 20px 0;
+    }
+
+    .highlight-box {
+      border: 3px dashed #00ff88;
+      border-radius: 8px;
+      padding: 10px;
+      display: inline-block;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+
+    .tip {
+      background: rgba(0, 255, 136, 0.1);
+      border-left: 4px solid #00ff88;
+      padding: 15px 20px;
+      margin: 20px 0;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .tip-title {
+      color: #00ff88;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .success-box {
+      background: rgba(0, 255, 136, 0.1);
+      border: 1px solid #00ff88;
+      border-radius: 12px;
+      padding: 30px;
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .success-icon {
+      font-size: 60px;
+      margin-bottom: 15px;
+    }
+
+    .what-next {
+      background: #1a1a2e;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+
+    .what-next h4 {
+      color: #00aaff;
+      margin-bottom: 10px;
+    }
+
+    .what-next ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .what-next li {
+      padding: 8px 0;
+      border-bottom: 1px solid #2a2a4e;
+    }
+
+    .what-next li:last-child {
+      border-bottom: none;
+    }
+
+    .what-next li::before {
+      content: "→ ";
+      color: #00ff88;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 PIA Setup Guide</h1>
+    <p class="subtitle">Visual step-by-step instructions</p>
+
+    <!-- STEP 1 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">1</div>
+        <div class="step-title">Open the Dashboard</div>
+      </div>
+      <p class="step-desc">
+        Open your web browser and go to: <strong style="color: #00ff88;">http://localhost:3000</strong>
+      </p>
+
+      <div class="mock-ui">
+        <div class="mock-header">
+          <span class="mock-logo">PIA</span>
+          <span style="color: #888; font-size: 14px;">Project Intelligence Agent</span>
+        </div>
+        <div class="mock-nav">
+          <div class="mock-nav-item active">Fleet Matrix</div>
+          <div class="mock-nav-item">CLI Tunnel</div>
+          <div class="mock-nav-item">MCPs</div>
+          <div class="mock-nav-item">Alerts</div>
+          <div class="mock-nav-item">AI Models</div>
+        </div>
+        <div class="mock-content">
+          <div class="empty-state">
+            <p style="font-size: 18px; margin-bottom: 10px;">No agents found</p>
+            <p>Agents will appear here when machines connect</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="tip">
+        <div class="tip-title">💡 This is normal!</div>
+        "No agents found" just means no AI is running yet. We'll fix that next.
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">2</div>
+        <div class="step-title">Click "CLI Tunnel"</div>
+      </div>
+      <p class="step-desc">
+        Find the "CLI Tunnel" tab in the navigation menu and click it.
+      </p>
+
+      <div class="mock-ui">
+        <div class="mock-header">
+          <span class="mock-logo">PIA</span>
+        </div>
+        <div class="mock-nav">
+          <div class="mock-nav-item">Fleet Matrix</div>
+          <div class="mock-nav-item highlight">👆 CLI Tunnel - CLICK HERE</div>
+          <div class="mock-nav-item">MCPs</div>
+          <div class="mock-nav-item">Alerts</div>
+          <div class="mock-nav-item">AI Models</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">3</div>
+        <div class="step-title">Click "New Session"</div>
+      </div>
+      <p class="step-desc">
+        You'll see the CLI Tunnel page. Click the green "New Session" button.
+      </p>
+
+      <div class="mock-ui">
+        <div class="mock-header">
+          <span class="mock-logo">PIA</span>
+        </div>
+        <div class="mock-nav">
+          <div class="mock-nav-item">Fleet Matrix</div>
+          <div class="mock-nav-item active">CLI Tunnel</div>
+          <div class="mock-nav-item">MCPs</div>
+          <div class="mock-nav-item">Alerts</div>
+        </div>
+        <div class="mock-content">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="font-size: 18px;">CLI Tunnel</h2>
+            <div class="highlight-box">
+              <button class="mock-btn highlight">New Session</button>
+              <div style="color: #00ff88; font-size: 12px; margin-top: 5px;">👆 CLICK THIS</div>
+            </div>
+          </div>
+          <div style="background: #000; border-radius: 8px; height: 150px; display: flex; align-items: center; justify-content: center; color: #444;">
+            Terminal will appear here
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">4</div>
+        <div class="step-title">Type "cmd" and Click OK</div>
+      </div>
+      <p class="step-desc">
+        A popup will ask what command to run. Type <strong>cmd</strong> and click OK.
+      </p>
+
+      <div class="mock-dialog">
+        <div class="mock-dialog-title">Command to run:</div>
+        <input type="text" class="mock-input" value="cmd" readonly style="border-color: #00ff88;">
+        <div style="font-size: 12px; color: #00ff88; margin-bottom: 15px;">👆 Type "cmd" here</div>
+        <div class="mock-dialog-buttons">
+          <button class="mock-btn-secondary">Cancel</button>
+          <button class="mock-btn highlight">OK 👆</button>
+        </div>
+      </div>
+
+      <div class="tip">
+        <div class="tip-title">💡 What is "cmd"?</div>
+        "cmd" opens a Windows command prompt. You could also type "powershell" if you prefer.
+      </div>
+    </div>
+
+    <!-- STEP 5 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">5</div>
+        <div class="step-title">Terminal Appears!</div>
+      </div>
+      <p class="step-desc">
+        A black terminal window appears. This is a real command line running on your computer.
+      </p>
+
+      <div class="mock-ui">
+        <div class="mock-header">
+          <span class="mock-logo">PIA</span>
+        </div>
+        <div class="mock-nav">
+          <div class="mock-nav-item">Fleet Matrix</div>
+          <div class="mock-nav-item active">CLI Tunnel</div>
+          <div class="mock-nav-item">MCPs</div>
+          <div class="mock-nav-item">Alerts</div>
+        </div>
+        <div class="mock-content" style="padding: 15px;">
+          <div class="mock-terminal">
+            <div>Microsoft Windows [Version 10.0.19045]</div>
+            <div>(c) Microsoft Corporation. All rights reserved.</div>
+            <div style="margin-top: 15px;">
+              <span class="prompt">C:\Users\mic&gt;</span>
+              <span class="command" style="animation: blink 1s infinite;">_</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 6 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">6</div>
+        <div class="step-title">Type "claude" and Press Enter</div>
+      </div>
+      <p class="step-desc">
+        In the terminal, type <strong>claude</strong> and press the Enter key on your keyboard.
+      </p>
+
+      <div class="mock-ui">
+        <div class="mock-content" style="padding: 15px;">
+          <div class="mock-terminal">
+            <div>Microsoft Windows [Version 10.0.19045]</div>
+            <div>(c) Microsoft Corporation. All rights reserved.</div>
+            <div style="margin-top: 15px;">
+              <span class="prompt">C:\Users\mic&gt;</span>
+              <span class="command" style="color: #00ff88; font-weight: bold;">claude</span>
+            </div>
+            <div style="margin-top: 10px; color: #00ff88;">👆 Type this and press Enter</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUCCESS -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">✓</div>
+        <div class="step-title">Success! Claude is Running</div>
+      </div>
+
+      <div class="success-box">
+        <div class="success-icon">🎉</div>
+        <h3 style="color: #00ff88; margin-bottom: 10px;">Claude is now running!</h3>
+        <p>You can now give Claude tasks and commands.</p>
+      </div>
+
+      <div class="mock-ui">
+        <div class="mock-content" style="padding: 15px;">
+          <div class="mock-terminal">
+            <div style="color: #00aaff;">╭─────────────────────────────────────────╮</div>
+            <div style="color: #00aaff;">│  Claude Code                             │</div>
+            <div style="color: #00aaff;">╰─────────────────────────────────────────╯</div>
+            <div style="margin-top: 15px;">
+              <span style="color: #00ff88;">&gt;</span>
+              <span class="command"> How can I help you today?_</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="what-next">
+        <h4>What can you do now?</h4>
+        <ul>
+          <li>Type any task for Claude (e.g., "help me write a Python script")</li>
+          <li>Go back to "Fleet Matrix" to see your agent appear</li>
+          <li>Open multiple sessions for multiple tasks</li>
+          <li>Check "AI Models" tab to see cost tracking</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- TROUBLESHOOTING -->
+    <div class="step" style="border-color: #ffaa00;">
+      <div class="step-header">
+        <div class="step-number" style="background: #ffaa00;">?</div>
+        <div class="step-title">Troubleshooting</div>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <h4 style="color: #ffaa00; margin-bottom: 10px;">❌ "claude" command not found?</h4>
+        <p>Claude CLI might not be installed. Install it first:</p>
+        <div class="mock-terminal" style="margin-top: 10px;">
+          <span class="prompt">C:\&gt;</span>
+          <span class="command">npm install -g @anthropic-ai/claude-code</span>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <h4 style="color: #ffaa00; margin-bottom: 10px;">❌ Can't connect to terminal?</h4>
+        <p>Make sure PIA is still running in your other terminal window.</p>
+      </div>
+
+      <div>
+        <h4 style="color: #ffaa00; margin-bottom: 10px;">❌ Page won't load?</h4>
+        <p>Try refreshing (press F5) or check that http://localhost:3000 is correct.</p>
+      </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 40px; color: #666;">
+      <p>Guide created for PIA System</p>
+      <p style="margin-top: 10px;">
+        <a href="/" style="color: #00ff88; text-decoration: none;">← Back to Dashboard</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>

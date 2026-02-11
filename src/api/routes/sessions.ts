@@ -12,6 +12,7 @@ import {
 import { ptyManager } from '../../tunnel/pty-wrapper.js';
 import { getWebSocketServer } from '../../tunnel/websocket-server.js';
 import { createLogger } from '../../utils/logger.js';
+import { getCheckpointManager } from '../../checkpoint/index.js';
 
 const router = Router();
 const logger = createLogger('SessionsAPI');
@@ -91,6 +92,21 @@ router.post('/', (req: Request, res: Response) => {
         ws.registerPTY(session.id, ptyWrapper);
       } catch {
         logger.warn('WebSocket server not available for PTY registration');
+      }
+
+      // Start checkpointing for session recovery
+      try {
+        const checkpointMgr = getCheckpointManager();
+        checkpointMgr.startCheckpointing(
+          session.id,
+          machine_id,
+          command || 'claude',
+          cwd || process.cwd(),
+          () => ptyWrapper.getBufferAsString(),
+          agent_id
+        );
+      } catch (cpError) {
+        logger.warn(`Failed to start checkpointing: ${cpError}`);
       }
 
       logger.info(`Session created: ${session.id} (PID: ${pid})`);
@@ -175,6 +191,14 @@ router.delete('/:id', (req: Request, res: Response) => {
     if (!session) {
       res.status(404).json({ error: 'Session not found' });
       return;
+    }
+
+    // Stop checkpointing
+    try {
+      const checkpointMgr = getCheckpointManager();
+      checkpointMgr.stopCheckpointing(session.id, 'completed');
+    } catch {
+      // Checkpoint manager may not be initialized
     }
 
     // Kill PTY
