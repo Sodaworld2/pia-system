@@ -16,6 +16,12 @@ import checkpointsRouter from './routes/checkpoints.js';
 import aiRouter from './routes/ai.js';
 import orchestratorRouter from './routes/orchestrator.js';
 import hooksRouter from './routes/hooks.js';
+import factoryRouter from './routes/factory.js';
+import tasksRouter from './routes/tasks.js';
+import messagesRouter from './routes/messages.js';
+import doctorRouter from './routes/doctor.js';
+import delegationRouter from './routes/delegation.js';
+import relayRouter from './routes/relay.js';
 
 const logger = createLogger('API');
 
@@ -107,6 +113,12 @@ export function createServer(): Express {
   app.use('/api/ai', aiRouter);
   app.use('/api/orchestrator', orchestratorRouter);
   app.use('/api/hooks', hooksRouter);
+  app.use('/api/factory', factoryRouter);
+  app.use('/api/tasks', tasksRouter);
+  app.use('/api/messages', messagesRouter);
+  app.use('/api/doctor', doctorRouter);
+  app.use('/api/delegation', delegationRouter);
+  app.use('/api/relay', relayRouter);
 
   // Health check
   app.get('/api/health', (_req: Request, res: Response) => {

@@ -63,21 +63,12 @@ const PRICING: Record<string, { input: number; output: number }> = {
   'codellama:13b': { input: 0, output: 0 },
   'deepseek-coder:6.7b': { input: 0, output: 0 },
   'qwen2.5-coder:7b': { input: 0, output: 0 },
+  'qwen2.5-coder:32b': { input: 0, output: 0 },
 
-  // Gemini
-  'gemini-1.5-pro': { input: 1.25, output: 5.00 },
-  'gemini-1.5-flash': { input: 0.075, output: 0.30 },
-
-  // OpenAI
-  'gpt-4.1': { input: 2.50, output: 10.00 },
-  'gpt-4.1-mini': { input: 0.15, output: 0.60 },
-  'o3': { input: 10.00, output: 40.00 },
-  'o3-mini': { input: 1.10, output: 4.40 },
-  'o3-pro': { input: 20.00, output: 80.00 },
-
-  // Grok
-  'grok-4-0709': { input: 3.00, output: 15.00 },
-  'grok-4-0709-fast': { input: 1.00, output: 5.00 },
+  // Claude (primary cloud provider)
+  'claude-haiku-4-5-20251001': { input: 0.80, output: 4.00 },
+  'claude-sonnet-4-5-20250929': { input: 3.00, output: 15.00 },
+  'claude-opus-4-6': { input: 15.00, output: 75.00 },
 };
 
 export class CostTracker {
@@ -85,7 +76,7 @@ export class CostTracker {
    * Calculate cost for a request
    */
   calculateCost(model: string, inputTokens: number, outputTokens: number): number {
-    const pricing = PRICING[model] || PRICING['gpt-4.1']; // Default to GPT-4 pricing
+    const pricing = PRICING[model] || PRICING['claude-haiku-4-5-20251001']; // Default to Haiku pricing
     const inputCost = (inputTokens / 1_000_000) * pricing.input;
     const outputCost = (outputTokens / 1_000_000) * pricing.output;
     return inputCost + outputCost;

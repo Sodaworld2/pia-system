@@ -41,6 +41,15 @@ async function startHub(): Promise<void> {
   initWebSocketServer(config.server.wsPort);
   logger.info(`WebSocket server running on port ${config.server.wsPort}`);
 
+  // Initialize Cross-Machine Relay
+  logger.info('Starting Cross-Machine Relay...');
+  const { initCrossMachineRelay } = await import('./comms/cross-machine.js');
+  const os = await import('os');
+  initCrossMachineRelay(
+    `hub-${os.hostname().toLowerCase()}`,
+    config.hub.machineName || os.hostname(),
+  );
+
   // Initialize Hub Aggregator
   logger.info('Starting Hub Aggregator...');
   const { initAggregator } = await import('./hub/aggregator.js');
@@ -50,6 +59,23 @@ async function startHub(): Promise<void> {
   logger.info('Starting Alert Monitor...');
   const { initAlertMonitor } = await import('./hub/alert-monitor.js');
   initAlertMonitor();
+
+  // Start Heartbeat Service
+  logger.info('Starting Heartbeat Service...');
+  const { getHeartbeatService } = await import('./orchestrator/heartbeat.js');
+  const heartbeat = getHeartbeatService();
+  heartbeat.start(30000); // Every 30 seconds
+
+  // Start Execution Engine (but don't auto-process - user starts it)
+  logger.info('Initializing Execution Engine...');
+  const { getExecutionEngine } = await import('./orchestrator/execution-engine.js');
+  getExecutionEngine(); // Initialize but don't start - user controls via API
+
+  // Start Doctor (auto-healing)
+  logger.info('Starting Doctor (auto-healer)...');
+  const { getDoctor } = await import('./agents/doctor.js');
+  const doctor = getDoctor();
+  doctor.start(60000); // Check every 60 seconds
 
   // Log startup complete
   logger.info('');
@@ -79,6 +105,22 @@ async function startLocal(): Promise<void> {
 function shutdown(): void {
   logger.info('');
   logger.info('Shutting down PIA...');
+
+  // Stop background services
+  try {
+    const { getHeartbeatService } = require('./orchestrator/heartbeat.js');
+    getHeartbeatService().stop();
+  } catch { /* may not be initialized */ }
+
+  try {
+    const { getExecutionEngine } = require('./orchestrator/execution-engine.js');
+    getExecutionEngine().stop();
+  } catch { /* may not be initialized */ }
+
+  try {
+    const { getDoctor } = require('./agents/doctor.js');
+    getDoctor().stop();
+  } catch { /* may not be initialized */ }
 
   // Kill all PTY sessions
   logger.info('Closing PTY sessions...');

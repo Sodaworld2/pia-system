@@ -69,6 +69,12 @@ class PIADashboard {
     this.setupHooksView();
     await this.loadHookEvents();
 
+    // Setup new module views
+    this.setupTasksView();
+    this.setupBusView();
+    this.setupDoctorView();
+    this.setupDelegationView();
+
     // Start polling for updates
     this.startPolling();
   }
@@ -694,6 +700,20 @@ class PIADashboard {
 
     // Poll AI costs every 30 seconds
     setInterval(() => this.loadAIStatus(), 30000);
+
+    // Poll task queue every 10 seconds
+    setInterval(() => {
+      if (document.getElementById('view-tasks')?.classList.contains('active')) {
+        this.loadTasksData();
+      }
+    }, 10000);
+
+    // Poll doctor every 30 seconds
+    setInterval(() => {
+      if (document.getElementById('view-doctor')?.classList.contains('active')) {
+        this.loadDoctorData();
+      }
+    }, 30000);
   }
 
   escapeHtml(text) {
@@ -1361,6 +1381,314 @@ class PIADashboard {
       this.renderHookEvents();
       this.updateHooksStats();
     }
+  }
+
+  // ============ Task Queue View ============
+
+  setupTasksView() {
+    document.getElementById('btn-add-task')?.addEventListener('click', () => {
+      document.getElementById('task-modal')?.classList.remove('hidden');
+    });
+    document.getElementById('task-modal-close')?.addEventListener('click', () => {
+      document.getElementById('task-modal')?.classList.add('hidden');
+    });
+    document.getElementById('task-modal-cancel')?.addEventListener('click', () => {
+      document.getElementById('task-modal')?.classList.add('hidden');
+    });
+    document.getElementById('task-modal-submit')?.addEventListener('click', () => this.addTask());
+    document.getElementById('tasks-filter')?.addEventListener('change', () => this.loadTasksData());
+    document.getElementById('btn-engine-toggle')?.addEventListener('click', () => this.toggleEngine());
+    this.loadTasksData();
+  }
+
+  async loadTasksData() {
+    try {
+      const filter = document.getElementById('tasks-filter')?.value || '';
+      const url = filter ? `/api/tasks?status=${filter}` : '/api/tasks';
+      const [tasksRes, statsRes, engineRes] = await Promise.all([
+        apiFetch(url),
+        apiFetch('/api/tasks/stats'),
+        apiFetch('/api/tasks/engine/stats'),
+      ]);
+
+      if (statsRes.ok) {
+        const stats = await statsRes.json();
+        document.getElementById('tasks-total').textContent = stats.total || 0;
+        document.getElementById('tasks-pending').textContent = stats.pending || 0;
+        document.getElementById('tasks-in-progress').textContent = stats.inProgress || 0;
+        document.getElementById('tasks-completed').textContent = stats.completed || 0;
+        document.getElementById('tasks-failed').textContent = stats.failed || 0;
+      }
+
+      if (engineRes.ok) {
+        const engine = await engineRes.json();
+        const dot = document.getElementById('engine-dot');
+        const text = document.getElementById('engine-status-text');
+        const btn = document.getElementById('btn-engine-toggle');
+        if (engine.running) {
+          dot?.classList.add('online');
+          text.textContent = 'Engine: Running';
+          btn.textContent = 'Stop Engine';
+          btn.classList.remove('btn-primary');
+          btn.classList.add('btn-secondary');
+        } else {
+          dot?.classList.remove('online');
+          text.textContent = 'Engine: Stopped';
+          btn.textContent = 'Start Engine';
+          btn.classList.remove('btn-secondary');
+          btn.classList.add('btn-primary');
+        }
+        document.getElementById('engine-processed').textContent = engine.tasksProcessed || 0;
+        document.getElementById('engine-active').textContent = engine.activeTasks || 0;
+        document.getElementById('engine-cost').textContent = (engine.totalCost || 0).toFixed(2);
+      }
+
+      if (tasksRes.ok) {
+        const tasks = await tasksRes.json();
+        this.renderTasks(Array.isArray(tasks) ? tasks : []);
+      }
+    } catch (err) {
+      console.error('Failed to load tasks:', err);
+    }
+  }
+
+  renderTasks(tasks) {
+    const list = document.getElementById('tasks-list');
+    const empty = document.getElementById('tasks-empty');
+    if (!list) return;
+
+    list.querySelectorAll('.task-item').forEach(el => el.remove());
+
+    if (tasks.length === 0) {
+      if (empty) empty.style.display = '';
+      return;
+    }
+    if (empty) empty.style.display = 'none';
+
+    tasks.slice(0, 50).forEach(task => {
+      const el = document.createElement('div');
+      el.className = `task-item task-${task.status}`;
+      const priorityStars = '★'.repeat(task.priority || 3) + '☆'.repeat(5 - (task.priority || 3));
+      el.innerHTML = `
+        <div class="task-header">
+          <span class="task-title">${this.escapeHtml(task.title)}</span>
+          <span class="task-status badge badge-${task.status}">${task.status}</span>
+        </div>
+        <div class="task-meta">
+          <span class="task-priority">${priorityStars}</span>
+          ${task.agent_id ? `<span class="task-agent">Agent: ${task.agent_id.substring(0,8)}</span>` : ''}
+          ${task.output ? `<div class="task-output">${this.escapeHtml(task.output.substring(0, 200))}</div>` : ''}
+        </div>
+      `;
+      list.appendChild(el);
+    });
+  }
+
+  async addTask() {
+    const title = document.getElementById('task-title')?.value;
+    const description = document.getElementById('task-description')?.value;
+    const priority = parseInt(document.getElementById('task-priority')?.value) || 3;
+
+    if (!title) return alert('Title is required');
+
+    try {
+      const res = await apiFetch('/api/tasks', {
+        method: 'POST',
+        body: JSON.stringify({ title, description, priority }),
+      });
+      if (res.ok) {
+        document.getElementById('task-modal')?.classList.add('hidden');
+        document.getElementById('task-title').value = '';
+        document.getElementById('task-description').value = '';
+        this.loadTasksData();
+      }
+    } catch (err) {
+      console.error('Failed to add task:', err);
+    }
+  }
+
+  async toggleEngine() {
+    try {
+      const res = await apiFetch('/api/tasks/engine/stats');
+      const stats = await res.json();
+      const endpoint = stats.running ? '/api/tasks/engine/stop' : '/api/tasks/engine/start';
+      await apiFetch(endpoint, { method: 'POST' });
+      this.loadTasksData();
+    } catch (err) {
+      console.error('Failed to toggle engine:', err);
+    }
+  }
+
+  // ============ Agent Bus View ============
+
+  setupBusView() {
+    document.getElementById('btn-refresh-bus')?.addEventListener('click', () => this.loadBusData());
+    document.getElementById('btn-bus-send')?.addEventListener('click', () => this.sendBusMessage());
+    this.loadBusData();
+  }
+
+  async loadBusData() {
+    try {
+      const res = await apiFetch('/api/messages/stats');
+      if (res.ok) {
+        const stats = await res.json();
+        document.getElementById('bus-total').textContent = stats.totalMessages || 0;
+        document.getElementById('bus-subscribers').textContent = stats.activeSubscribers || 0;
+        document.getElementById('bus-inboxes').textContent = stats.agentInboxes || 0;
+      }
+    } catch (err) {
+      console.error('Failed to load bus data:', err);
+    }
+  }
+
+  async sendBusMessage() {
+    const from = document.getElementById('bus-from')?.value || 'dashboard';
+    const to = document.getElementById('bus-to')?.value;
+    const content = document.getElementById('bus-content')?.value;
+
+    if (!to || !content) return alert('To and content are required');
+
+    try {
+      const endpoint = to === '*' ? '/api/messages/broadcast' : '/api/messages/send';
+      const body = to === '*'
+        ? { from, content }
+        : { from, to, content };
+      await apiFetch(endpoint, { method: 'POST', body: JSON.stringify(body) });
+      document.getElementById('bus-content').value = '';
+      this.loadBusData();
+    } catch (err) {
+      console.error('Failed to send message:', err);
+    }
+  }
+
+  // ============ Doctor View ============
+
+  setupDoctorView() {
+    document.getElementById('btn-doctor-check')?.addEventListener('click', () => this.runDoctorCheck());
+    document.getElementById('btn-refresh-doctor')?.addEventListener('click', () => this.loadDoctorData());
+    this.loadDoctorData();
+  }
+
+  async loadDoctorData() {
+    try {
+      const res = await apiFetch('/api/doctor/health');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.agents) {
+          document.getElementById('doc-agents-total').textContent = data.agents.total || 0;
+          document.getElementById('doc-agents-healthy').textContent = data.agents.healthy || 0;
+          document.getElementById('doc-agents-stuck').textContent = data.agents.stuck || 0;
+          document.getElementById('doc-agents-errored').textContent = data.agents.errored || 0;
+        }
+        if (data.machines) {
+          document.getElementById('doc-machines-total').textContent = data.machines.total || 0;
+          document.getElementById('doc-machines-online').textContent = data.machines.online || 0;
+          document.getElementById('doc-machines-offline').textContent = data.machines.offline || 0;
+        }
+        if (data.actions && data.actions.length > 0) {
+          this.renderDoctorActions(data.actions);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load doctor data:', err);
+    }
+  }
+
+  renderDoctorActions(actions) {
+    const container = document.getElementById('doctor-actions');
+    if (!container) return;
+    container.innerHTML = '';
+
+    actions.slice(0, 30).forEach(action => {
+      const el = document.createElement('div');
+      el.className = `doctor-action ${action.success ? 'success' : 'failed'}`;
+      const time = new Date(action.timestamp * 1000).toLocaleTimeString();
+      el.innerHTML = `
+        <span class="action-type badge badge-${action.type}">${action.type}</span>
+        <span class="action-target">${this.escapeHtml(action.targetName)}</span>
+        <span class="action-reason">${this.escapeHtml(action.reason)}</span>
+        <span class="action-time">${time}</span>
+        <span class="action-result">${action.success ? 'OK' : 'FAIL'}</span>
+      `;
+      container.appendChild(el);
+    });
+  }
+
+  async runDoctorCheck() {
+    try {
+      await apiFetch('/api/doctor/check', { method: 'POST' });
+      this.loadDoctorData();
+    } catch (err) {
+      console.error('Failed to run doctor check:', err);
+    }
+  }
+
+  // ============ Delegation View ============
+
+  setupDelegationView() {
+    document.getElementById('btn-refresh-delegation')?.addEventListener('click', () => this.loadDelegationData());
+    this.loadDelegationData();
+  }
+
+  async loadDelegationData() {
+    try {
+      const [rulesRes, tiersRes] = await Promise.all([
+        apiFetch('/api/delegation/rules'),
+        apiFetch('/api/delegation/cost-status'),
+      ]);
+
+      if (rulesRes.ok) {
+        const rules = await rulesRes.json();
+        this.renderDelegationRules(Array.isArray(rules) ? rules : []);
+      }
+
+      if (tiersRes.ok) {
+        const tiers = await tiersRes.json();
+        this.renderCostTiers(Array.isArray(tiers) ? tiers : []);
+      }
+    } catch (err) {
+      console.error('Failed to load delegation data:', err);
+    }
+  }
+
+  renderDelegationRules(rules) {
+    const container = document.getElementById('delegation-rules');
+    if (!container) return;
+    container.innerHTML = '';
+
+    rules.forEach(rule => {
+      const el = document.createElement('div');
+      el.className = 'delegation-rule';
+      el.innerHTML = `
+        <div class="rule-header"><strong>${this.escapeHtml(rule.name)}</strong></div>
+        <div class="rule-description">${this.escapeHtml(rule.description)}</div>
+      `;
+      container.appendChild(el);
+    });
+
+    if (rules.length === 0) {
+      container.innerHTML = '<div class="empty-state"><p>No delegation rules configured</p></div>';
+    }
+  }
+
+  renderCostTiers(tiers) {
+    const container = document.getElementById('delegation-tiers');
+    if (!container) return;
+    container.innerHTML = '';
+
+    tiers.forEach(tier => {
+      const el = document.createElement('div');
+      el.className = `tier-card ${tier.available ? 'available' : 'unavailable'}`;
+      el.innerHTML = `
+        <div class="tier-header">
+          <span class="tier-name">${this.escapeHtml(tier.provider)}/${this.escapeHtml(tier.model)}</span>
+          <span class="tier-label badge badge-${tier.tier}">${tier.tier.toUpperCase()}</span>
+        </div>
+        <div class="tier-cost">${tier.costLabel}</div>
+        <div class="tier-status">${tier.available ? 'Available' : 'Not Available'}</div>
+      `;
+      container.appendChild(el);
+    });
   }
 }
 

@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PIA System - Complete Showcase</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #0a0e1a;
+      color: #e0e0e0;
+      line-height: 1.6;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #0f1629 0%, #1a1040 50%, #0d1a2d 100%);
+      padding: 60px 40px;
+      text-align: center;
+      border-bottom: 2px solid #2a2a4a;
+    }
+
+    .hero h1 {
+      font-size: 3.5rem;
+      background: linear-gradient(90deg, #00e5ff, #7c4dff, #ff6b35);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 10px;
+    }
+
+    .hero .subtitle {
+      font-size: 1.3rem;
+      color: #8892b0;
+      margin-bottom: 30px;
+    }
+
+    .hero .stats-bar {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      flex-wrap: wrap;
+    }
+
+    .hero .stat {
+      text-align: center;
+    }
+
+    .hero .stat .number {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #00e5ff;
+    }
+
+    .hero .stat .label {
+      font-size: 0.85rem;
+      color: #6a7590;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .nav {
+      background: #111827;
+      padding: 15px 40px;
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+      border-bottom: 1px solid #1e293b;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav a {
+      color: #8892b0;
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+
+    .nav a:hover {
+      color: #00e5ff;
+      background: #1e293b;
+    }
+
+    .section {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 60px 40px;
+    }
+
+    .section-header {
+      margin-bottom: 40px;
+    }
+
+    .section-header h2 {
+      font-size: 2rem;
+      color: #e0e0e0;
+      margin-bottom: 8px;
+    }
+
+    .section-header .tag {
+      display: inline-block;
+      padding: 3px 12px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-right: 8px;
+    }
+
+    .tag-working { background: #064e3b; color: #34d399; }
+    .tag-dashboard { background: #1e1b4b; color: #818cf8; }
+    .tag-api { background: #422006; color: #fb923c; }
+    .tag-new { background: #7f1d1d; color: #fca5a5; }
+
+    .section-header p {
+      color: #6a7590;
+      font-size: 1.05rem;
+      max-width: 800px;
+    }
+
+    .screenshot-card {
+      background: #111827;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 40px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .screenshot-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0, 229, 255, 0.1);
+    }
+
+    .screenshot-card .card-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid #1e293b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .screenshot-card .card-header h3 {
+      font-size: 1.2rem;
+      color: #e0e0e0;
+    }
+
+    .screenshot-card .card-header .status {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .status-working { background: #064e3b; color: #34d399; }
+    .status-live { background: #1e3a5f; color: #60a5fa; }
+
+    .screenshot-card .card-body {
+      padding: 0;
+    }
+
+    .screenshot-card img {
+      width: 100%;
+      display: block;
+    }
+
+    .screenshot-card .card-footer {
+      padding: 16px 24px;
+      background: #0d1117;
+      border-top: 1px solid #1e293b;
+    }
+
+    .screenshot-card .card-footer p {
+      color: #6a7590;
+      font-size: 0.9rem;
+    }
+
+    .feature-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .feature-list li {
+      padding: 4px 0;
+      color: #8892b0;
+      font-size: 0.9rem;
+    }
+
+    .feature-list li::before {
+      content: "  ";
+      margin-right: 8px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+    }
+
+    @media (max-width: 900px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #1e293b;
+      margin: 0;
+    }
+
+    .architecture-box {
+      background: #111827;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 30px;
+      margin-bottom: 40px;
+    }
+
+    .architecture-box h3 {
+      color: #00e5ff;
+      margin-bottom: 16px;
+    }
+
+    .architecture-box pre {
+      background: #0d1117;
+      padding: 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      color: #8892b0;
+    }
+
+    .endpoint-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+    }
+
+    .endpoint-table th {
+      text-align: left;
+      padding: 10px 16px;
+      background: #1e293b;
+      color: #00e5ff;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .endpoint-table td {
+      padding: 10px 16px;
+      border-bottom: 1px solid #1e293b;
+      font-size: 0.9rem;
+    }
+
+    .endpoint-table .method {
+      font-weight: 700;
+      font-family: monospace;
+    }
+
+    .method-get { color: #34d399; }
+    .method-post { color: #60a5fa; }
+
+    .endpoint-table .path {
+      font-family: monospace;
+      color: #e0e0e0;
+    }
+
+    .footer {
+      background: #0d1117;
+      padding: 40px;
+      text-align: center;
+      color: #4a5568;
+      border-top: 1px solid #1e293b;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hero -->
+  <div class="hero">
+    <h1>PIA System</h1>
+    <p class="subtitle">Project Intelligence Agent - Multi-Machine AI Orchestration Platform</p>
+    <div class="stats-bar">
+      <div class="stat">
+        <div class="number">7</div>
+        <div class="label">Dashboard Tabs</div>
+      </div>
+      <div class="stat">
+        <div class="number">31+</div>
+        <div class="label">API Endpoints</div>
+      </div>
+      <div class="stat">
+        <div class="number">8</div>
+        <div class="label">Active Agents</div>
+      </div>
+      <div class="stat">
+        <div class="number">3</div>
+        <div class="label">Machines</div>
+      </div>
+      <div class="stat">
+        <div class="number">6</div>
+        <div class="label">Agent Templates</div>
+      </div>
+      <div class="stat">
+        <div class="number">3</div>
+        <div class="label">Cost Tiers</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="nav">
+    <a href="#architecture">Architecture</a>
+    <a href="#fleet">Fleet Matrix</a>
+    <a href="#command">Command Center</a>
+    <a href="#tunnel">CLI Tunnel</a>
+    <a href="#mcps">MCPs</a>
+    <a href="#hooks">Hooks</a>
+    <a href="#alerts">Alerts</a>
+    <a href="#ai">AI Models</a>
+    <a href="#factory">Agent Factory</a>
+    <a href="#tasks">Task Queue</a>
+    <a href="#messages">Agent Bus</a>
+    <a href="#doctor">Doctor</a>
+    <a href="#delegation">Delegation</a>
+    <a href="#machines">Multi-Machine</a>
+    <a href="#endpoints">All Endpoints</a>
+  </nav>
+
+  <!-- Architecture Overview -->
+  <div class="section" id="architecture">
+    <div class="section-header">
+      <h2>System Architecture</h2>
+      <p>PIA is a multi-machine AI orchestration platform built with Express, WebSocket, SQLite, and node-pty. It manages fleets of AI agents across multiple machines with cost-aware routing.</p>
+    </div>
+
+    <div class="architecture-box">
+      <h3>Technology Stack</h3>
+      <pre>
+Server:      Express.js + TypeScript
+Database:    SQLite (better-sqlite3, WAL mode)
+Realtime:    WebSocket (ws) with authenticated channels
+Terminal:    node-pty + xterm.js (full PTY sessions)
+Security:    Helmet, CORS, Rate Limiting, API Token Auth
+AI Tiers:    FREE (Ollama) -> CHEAP (Gemini) -> MEDIUM (OpenAI)
+
+Core Modules:
+  - Agent Factory:      Spawn/manage agents from 6 templates
+  - Cost Router:        Waterfall routing across cost tiers
+  - Task Queue:         Priority-based with dependency tracking
+  - Agent Bus:          Inter-agent pub/sub messaging
+  - Doctor:             Self-healing health monitor
+  - Delegation:         Role boundary enforcement
+  - Multi-Machine:      Machine enrollment + remote agent spawn
+      </pre>
+    </div>
+
+    <div class="architecture-box">
+      <h3>Cost Waterfall (Martin's Design)</h3>
+      <pre>
+   FREE (Tier 0)           CHEAP (Tier 1)          MEDIUM (Tier 2)
+  +-----------------+     +-----------------+     +-----------------+
+  | Ollama Local    |     | Google Gemini   |     | OpenAI GPT-4.1  |
+  | qwen2.5-coder   | --> | gemini-2.0-flash| --> | gpt-4.1         |
+  | $0.00/req       |     | ~$0.001/req     |     | ~$0.02/req      |
+  +-----------------+     +-----------------+     +-----------------+
+  @local-coder             @researcher              @reviewer
+  @debug                   @devops                   @security
+      </pre>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- 1. Fleet Matrix -->
+  <div class="section" id="fleet">
+    <div class="section-header">
+      <span class="tag tag-dashboard">Dashboard</span>
+      <span class="tag tag-working">Working</span>
+      <h2>Fleet Matrix</h2>
+      <p>Real-time overview of all agents across all machines. Filter by machine or status. Each card shows agent name, type, machine, current task, and last output.</p>
+    </div>
+
+    <div class="screenshot-card">
+      <div class="card-header">
+        <h3>Fleet Matrix - 8 Agents, 3 Machines</h3>
+        <span class="status status-working">Working</span>
+      </div>
+      <div class="card-body">
+        <img src="screenshots/01-fleet-matrix.png" alt="Fleet Matrix Dashboard">
+      </div>
+      <div class="card-footer">
+        <ul class="feature-list">
+          <li>8 agents visible: Claude-Main, Gemini-Docs, CLI-Session-5/6, @local-coder-1/2, Claude-Finance, Claude-Research</li>
+          <li>3 machines: Main PC, Main-PC, Remote-Worker-1 (enrolled via API)</li>
+          <li>Real-time status via WebSocket (green "Connected" indicator)</li>
+          <li>Filter by machine dropdown and status dropdown</li>
+          <li>Color-coded agent types: claude (blue), gemini (green), local-coder (orange)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- 2. Command Center -->
+  <div class="section" id="command">
+    <div class="section-header">
+      <span class="tag tag-dashboard">Dashboard</span>
+      <span class="tag tag-working">Working</span>
+      <h2>Command Center</h2>
+      <p>Orchestrator interface for sending commands to AI agents. Quick commands for status reports, listing instances, spawning new agents, and direct messaging.</p>
+    </div>
+
+    <div class="screenshot-card">
+      <div class="card-header">
+        <h3>Command Center - Orchestrator Interface</h3>
+        <span class="status status-working">Working</span>
+      </div>
+      <div class="card-body">
+        <img src="screenshots/02-command-center.png" alt="Command Center">
+      </div>
+      <div class="card-footer">
+        <ul class="feature-list">
+          <li>Quick command buttons: Status Report, List Instances, Spawn Claude</li>
+          <li>Free-form text input for orchestrator messages</li>
+          <li>@InstanceName direct messaging to specific agents</li>
+          <li>Online status indicator showing connected instances</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- 3. CLI Tunnel -->
+  <div class="section" id="tunnel">
+    <div class="section-header">
+      <span class="tag tag-dashboard">Dashboard</span>
+      <span class="tag tag-working">Working</span>
+      <h2>CLI Tunnel</h2>
+      <p>Full xterm.js terminal sessions in the browser. Create new sessions, switch between them, and interact with real PTY processes (Claude, PowerShell, cmd).</p>
+    </div>
+
+    <div class="screenshot-card">
+      <div class="card-header">
+        <h3>CLI Tunnel - 42+ Sessions Available</h3>
+        <span class="status status-working">Working</span>
+      </div>
+      <div class="card-body">
+        <img src="screenshots/03-cli-tunnel.png" alt="CLI Tunnel">
+      </div>
+      <div class="card-footer">
+        <ul class="feature-list">
+          <li>42+ terminal sessions: claude, powershell, cmd types</li>
+          <li>Full xterm.js terminal with cursor, colors, and scrollback</li>
+          <li>Session dropdown for quick switching</li>
+          <li>"New Session" button to create fresh terminals</li>
+          <li>Real PTY (node-pty) backing each session - not a fake terminal</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- 4. MCPs -->
+  <div class="section" id="mcps">
+    <div class="section-header">
+      <span class="tag tag-dashboard">Dashboard</span>
+      <span class="tag tag-working">Working</span>
+      <h2>MCP Servers</h2>
+      <p>Model Context Protocol server management. View installed MCPs, install new ones, test connectivity, and manage environment variables.</p>
+    </div>
+
+    <div class="screenshot-card">
+      <div class="card-header">
+        <h3>MCP Servers - 8 Installed, 15 Available</h3>
+        <span class="status status-working">Working</span>
+      </div>
+      <div class="card-body">
+        <img src="screenshots/04-mcps.png" alt="MCP Servers">
+      </div>
+      <div class="card-footer">
+        <ul class="feature-list">
+          <li>8 installed MCPs: browsermcp, firebase, google-drive, gmail, google-calendar, google-keep-local, cerebra-legal, context7</li>
+          <li>15 available MCPs categorized: Core, Database, Development, Communication, Storage</li>
+          <li>One-click Install/Remove/Test actions</li>
+          <li>Environment variable display (GOOGLE_CLIENT_ID, etc.)</li>
+          <li>Source detection: Claude Desktop integration</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- 5. Hooks -->
+  <div class="section" id="hooks">
+    <div class="section-header">
+      <span class="tag tag-dashboard">Dashboard</span>
+      <span class="tag tag-working">Working</span>
+      <h2>Hook Events</h2>
+      <p>Claude Code hook event monitoring. Tracks SessionStart, PreToolUse, PostToolUse, and Agent Done events with blocking and completion stats.</p>
+    </div>
+
+    <div class="screenshot-card">
+      <div class="card-header">
+        <h3>Hook Events - Event Monitor</h3>
+        <span class="status status-working">Working</span>
+      </div>
+      <div class="card-body">
+        <img src="screenshots/05-hooks.png" alt="Hook Events">
+      </div>
+      <div class="card-footer">
+        <ul class="feature-list">
+          <li>Stats counters: Total Events, Blocked, Completions, Last Event</li>
+          <li>Event type filter: All Events, SessionStart, PreToolUse, PostToolUse, Agent Done</li>
+          <li>Refresh and Clear controls</li>
+          <li>Events appear in real-time when Claude Code hooks fire</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- 6. Alerts -->
+  <div class="section" id="alerts">
+    <div class="section-header">
+      <span class="tag tag-dashboard">Dashboard</span>
+      <span class="tag tag-working">Working</span>
+      <h2>Alerts</h2>
+      <p>System-wide alert management. Auto-generated by the Doctor self-healer when agents get stuck, error out, or machines go offline.</p>
+    </div>
+
+    <div class="screenshot-card">
+      <div class="card-header">
+        <h3>Alerts - 507 System Alerts</h3>
+        <span class="status status-live">Live Data</span>
+      </div>
+      <div class="card-body">
+        <img src="screenshots/06-alerts.png" alt="Alerts">
+      </div>
+      <div class="card-footer">
+        <ul class="feature-list">
+          <li>507 total alerts accumulated from Doctor health checks</li>
+          <li>Auto-heal alerts: "Auto-restarted stuck agent: Claude-Main, Gemini-Docs, CLI-Session-5/6, @local-coder-1/2"</li>
+          <li>Machine offline alerts: "Machine offline: Main PC (mic-pc)", "Main-PC (main-pc)"</li>
+          <li>Color-coded by type: agent_stuck (yellow), machine_offline (red)</li>
+          <li>Individual Dismiss and Acknowledge All actions</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- 7. AI Models -->
+  <div class="section" id="ai">
+    <div class="section-header">
+      <span class="tag tag-dashboard">Dashboard</span>
+      <span class="tag tag-working">Working</span>
+      <h2>AI Models</h2>
+      <p>AI provider management with cost tracking, budget settings, and usage history. Supports Ollama (FREE), Gemini (CHEAP), OpenAI (MEDIUM), and xAI Grok (PREMIUM).</p>
+    </div>
+
+    <div class="screenshot-card">
+      <div class="card-header">
+        <h3>AI Models - 4 Providers, Budget Tracking</h3>
+        <span class="status status-working">Working</span>
+      </div>
+      <div class="card-body">
+        <img src="screenshots/07-ai-models.png" alt="AI Models">
+      </div>
+      <div class="card-footer">
+        <ul class="feature-list">
+          <li>Cost tracking: $0.00 today/week/month with $10.00 budget remaining</li>
+          <li>4 providers: Ollama (FREE, Available), Gemini (CHEAP), OpenAI (MEDIUM), xAI Grok (PREMIUM)</li>
+          <li>Recent Usage table: Provider, Model, Task, Tokens, Cost, Duration</li>
+          <li>Budget Settings: configurable Daily Limit ($10) and Monthly Limit ($100)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- 8. Agent Factory API -->
+  <div class="section" id="factory">
+    <div class="section-header">
+      <span class="tag tag-api">API</span>
+      <span class="tag tag-new">New</span>
+      <span class="tag tag-working">Working</span>
+      <h2>Agent Factory</h2>
+      <p>Spawn and manage AI agents from 6 pre-configured templates. Each template has a specific cost tier, model preference, and capability set.</p>
+    </div>
+
+    <div class="grid-2">
+      <div class="screenshot-card">
+        <div class="card-header">
+          <h3>GET /api/factory/templates</h3>
+          <span class="status status-working">200 OK</span>
+        </div>
+        <div class="card-body">
+          <img src="screenshots/08-api-factory-templates.png" alt="Factory Templates API">
+        </div>
+        <div class="card-footer">
+          <ul class="feature-list">
+            <li>6 templates: @local-coder (FREE), @researcher (CHEAP), @reviewer (MEDIUM), @debug (FREE), @devops (CHEAP), @security (MEDIUM)</li>
+            <li>Each has capabilities array, model preference, cost tier, max concurrent limit</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="screenshot-card">
+        <div class="card-header">
+          <h3>GET /api/factory/cost/status</h3>
+          <span class="status status-working">200 OK</span>
+        </div>
+        <div class="card-body">
+          <img src="screenshots/09-api-cost-status.png" alt="Cost Status API">
+        </div>
+        <div class="card-footer">
+          <ul class="feature-list">
+            <li>3 cost tiers: FREE ($0), CHEAP (~$0.001/req), MEDIUM (~$0.02/req)</li>
+            <li>Provider availability status: Ollama available, Gemini/OpenAI not configured</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- 9. Task Queue API -->
+  <div class="section" id="tasks">
+    <div class="section-header">
+      <span class="tag tag-api">API</span>
+      <span class="tag tag-new">New</span>
+      <span class="tag tag-working">Working</span>
+      <h2>Task Queue</h2>
+      <p>Priority-based task queue with dependency tracking. Tasks can block other tasks, and agents can dequeue work based on priority (1=highest, 5=lowest).</p>
+    </div>
+
+    <div class="screenshot-card">
+      <div class="card-header">
+        <h3>GET /api/tasks/stats</h3>
+        <span class="status status-working">200 OK</span>
+      </div>
+      <div class="card-body">
+        <img src="screenshots/10-api-tasks-stats.png" alt="Task Queue Stats API">
+      </div>
+      <div class="card-footer">
+        <ul class="feature-list">
+          <li>2 pending tasks, 0 in-progress, 0 completed, 0 failed</li>
+          <li>8 endpoints: create, list, stats, dequeue, get, assign, complete, fail</li>
+          <li>Priority-based dequeue with dependency checking (blocked_by)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- 10. Agent Bus API -->
+  <div class="section" id="messages">
+    <div class="section-header">
+      <span class="tag tag-api">API</span>
+      <span class="tag tag-new">New</span>
+      <span class="tag tag-working">Working</span>
+      <h2>Agent Communication Bus</h2>
+      <p>Inter-agent messaging system with direct and broadcast modes. Agents can subscribe to messages and communicate without shared state.</p>
+    </div>
+
+    <div class="screenshot-card">
+      <div class="card-header">
+        <h3>GET /api/messages/stats</h3>
+        <span class="status status-working">200 OK</span>
+      </div>
+      <div class="card-body">
+        <img src="screenshots/11-api-messages-stats.png" alt="Agent Bus Stats API">
+      </div>
+      <div class="card-footer">
+        <ul class="feature-list">
+          <li>1 total message (direct type), 1 agent inbox active</li>
+          <li>5 endpoints: send, broadcast, stats, get by agent, mark read</li>
+          <li>In-memory pub/sub with subscriber callbacks</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- 11. Doctor API -->
+  <div class="section" id="doctor">
+    <div class="section-header">
+      <span class="tag tag-api">API</span>
+      <span class="tag tag-new">New</span>
+      <span class="tag tag-working">Working</span>
+      <h2>Doctor (Self-Healer)</h2>
+      <p>Automated health monitoring and self-healing. Detects stuck agents (>5min), errored agents, and offline machines (>2min). Auto-restarts and creates alerts.</p>
+    </div>
+
+    <div class="screenshot-card">
+      <div class="card-header">
+        <h3>GET /api/doctor/health</h3>
+        <span class="status status-live">Live Data</span>
+      </div>
+      <div class="card-body">
+        <img src="screenshots/12-api-doctor-health.png" alt="Doctor Health API">
+      </div>
+      <div class="card-footer">
+        <ul class="feature-list">
+          <li>8 total agents, 7 healthy, 0 stuck, 0 errored</li>
+          <li>Detected Remote-Worker-1 offline >2min - created alert automatically</li>
+          <li>6 endpoints: health check, status, heal agent, action log, start/stop auto-healing</li>
+          <li>Auto-healing interval: configurable (default 60s)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- 12. Delegation API -->
+  <div class="section" id="delegation">
+    <div class="section-header">
+      <span class="tag tag-api">API</span>
+      <span class="tag tag-new">New</span>
+      <span class="tag tag-working">Working</span>
+      <h2>Delegation Enforcement</h2>
+      <p>PostToolUse hook logic that enforces role boundaries, cost awareness, and complexity detection. Suggests delegation when agents operate outside their capabilities.</p>
+    </div>
+
+    <div class="screenshot-card">
+      <div class="card-header">
+        <h3>GET /api/delegation/rules</h3>
+        <span class="status status-working">200 OK</span>
+      </div>
+      <div class="card-body">
+        <img src="screenshots/13-api-delegation-rules.png" alt="Delegation Rules API">
+      </div>
+      <div class="card-footer">
+        <ul class="feature-list">
+          <li>ROLE_BOUNDARY: Agents stay within their role capabilities; cross-role suggests delegation</li>
+          <li>COST_AWARENESS: Warns when free-tier agents attempt operations better suited for higher tiers</li>
+          <li>COMPLEXITY_CHECK: Detects very large inputs (>10k chars) that may benefit from more capable models</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- 13. Multi-Machine API -->
+  <div class="section" id="machines">
+    <div class="section-header">
+      <span class="tag tag-api">API</span>
+      <span class="tag tag-new">New</span>
+      <span class="tag tag-working">Working</span>
+      <h2>Multi-Machine Enrollment</h2>
+      <p>Enroll remote machines into the fleet with full capability metadata. Spawn agents remotely and track resources across the network.</p>
+    </div>
+
+    <div class="grid-2">
+      <div class="screenshot-card">
+        <div class="card-header">
+          <h3>GET /api/machines</h3>
+          <span class="status status-live">Live Data</span>
+        </div>
+        <div class="card-body">
+          <img src="screenshots/14-api-machines.png" alt="Machines API">
+        </div>
+        <div class="card-footer">
+          <ul class="feature-list">
+            <li>3 machines: Main PC (win32, 8 CPU), Main-PC (127.0.0.1), Remote-Worker-1 (ubuntu, GPU, 32GB, 16 cores)</li>
+            <li>Remote-Worker-1 enrolled via POST /api/machines/enroll</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="screenshot-card">
+        <div class="card-header">
+          <h3>GET /api/health</h3>
+          <span class="status status-working">200 OK</span>
+        </div>
+        <div class="card-body">
+          <img src="screenshots/15-api-health.png" alt="Health API">
+        </div>
+        <div class="card-footer">
+          <ul class="feature-list">
+            <li>System status: "ok", mode: "hub"</li>
+            <li>Timestamp confirms server running and responsive</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- All Endpoints Reference -->
+  <div class="section" id="endpoints">
+    <div class="section-header">
+      <h2>Complete API Reference</h2>
+      <p>All 31+ REST endpoints across 14 route groups.</p>
+    </div>
+
+    <div class="architecture-box">
+      <table class="endpoint-table">
+        <thead>
+          <tr>
+            <th>Method</th>
+            <th>Endpoint</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="3" style="color:#00e5ff;font-weight:700;padding-top:20px">Core</td></tr>
+          <tr><td class="method method-get">GET</td><td class="path">/api/health</td><td>System health check</td></tr>
+          <tr><td class="method method-get">GET</td><td class="path">/api/stats</td><td>Aggregated system statistics</td></tr>
+
+          <tr><td colspan="3" style="color:#00e5ff;font-weight:700;padding-top:20px">Machines</td></tr>
+          <tr><td class="method method-get">GET</td><td class="path">/api/machines</td><td>List all machines</td></tr>
+          <tr><td class="method method-post">POST</td><td class="path">/api/machines</td><td>Register a machine</td></tr>
+          <tr><td class="method method-post">POST</td><td class="path">/api/machines/enroll</td><td>Full machine enrollment with capabilities</td></tr>
+          <tr><td class="method method-get">GET</td><td class="path">/api/machines/:id/agents</td><td>List agents on a machine</td></tr>
+          <tr><td class="method method-post">POST</td><td class="path">/api/machines/:id/spawn</td><td>Spawn agent on machine via factory</td></tr>
+
+          <tr><td colspan="3" style="color:#00e5ff;font-weight:700;padding-top:20px">Agents</td></tr>
+          <tr><td class="method method-get">GET</td><td class="path">/api/agents</td><td>List all agents</td></tr>
+          <tr><td class="method method-post">POST</td><td class="path">/api/agents</td><td>Create an agent</td></tr>
+          <tr><td class="method method-get">GET</td><td class="path">/api/agents/:id</td><td>Get agent details</td></tr>
+
+          <tr><td colspan="3" style="color:#00e5ff;font-weight:700;padding-top:20px">Agent Factory</td></tr>
+          <tr><td class="method method-get">GET</td><td class="path">/api/factory/templates</td><td>List 6 agent templates</td></tr>
+          <tr><td class="method method-post">POST</td><td class="path">/api/factory/spawn</td><td>Spawn agent from template</td></tr>
+          <tr><td class="method method-post">POST</td><td class="path">/api/factory/stop/:id</td><td>Stop a factory-spawned agent</td></tr>
+          <tr><td class="method method-get">GET</td><td class="path">/api/factory/status</td><td>Factory running status</td></tr>
+          <tr><td class="method method-get">GET</td><td class="path">/api/factory/cost/status</td><td>Cost tier availability</td></tr>
+          <tr><td class="method method-post">POST</td><td class="path">/api/factory/cost/estimate</td><td>Estimate task cost</td></tr>
+          <tr><td class="method method-post">POST</td><td class="path">/api/factory/cost/route</td><td>Route task by complexity</td></tr>
+
+          <tr><td colspan="3" style="color:#00e5ff;font-weight:700;padding-top:20px">Task Queue</td></tr>
+          <tr><td class="method method-post">POST</td><td class="path">/api/tasks</td><td>Create a task</td></tr>
+          <tr><td class="method method-get">GET</td><td class="path">/api/tasks</td><td>List all tasks</td></tr>
+          <tr><td class="method method-get">GET</td><td class="path">/api/tasks/stats</td><td>Queue statistics</td></tr>
+          <tr><td class="method method-get">GET</td><td class="path">/api/tasks/queue/next</td><td>Dequeue next task</td></tr>
+          <tr><td class="method method-get">GET</td><td class="path">/api/tasks/:id</td><td>Get task by ID</td></tr>
+          <tr><td class="method method-post">POST</td><td class="path">/api/tasks/:id/assign</td><td>Assign task to agent</td></tr>
+          <tr><td class="method method-post">POST</td><td class="path">/api/tasks/:id/complete</td><td>Mark task complete</td></tr>
+          <tr><td class="method method-post">POST</td><td class="path">/api/tasks/:id/fail</td><td>Mark task failed</td></tr>
+
+          <tr><td colspan="3" style="color:#00e5ff;font-weight:700;padding-top:20px">Agent Communication Bus</td></tr>
+          <tr><td class="method method-post">POST</td><td class="path">/api/messages/send</td><td>Send direct message</td></tr>
+          <tr><td class="method method-post">POST</td><td class="path">/api/messages/broadcast</td><td>Broadcast to all agents</td></tr>
+          <tr><td class="method method-get">GET</td><td class="path">/api/messages/stats</td><td>Messaging statistics</td></tr>
+          <tr><td class="method method-get">GET</td><td class="path">/api/messages/:agentId</td><td>Get agent inbox</td></tr>
+          <tr><td class="method method-post">POST</td><td class="path">/api/messages/:messageId/read</td><td>Mark message read</td></tr>
+
+          <tr><td colspan="3" style="color:#00e5ff;font-weight:700;padding-top:20px">Doctor (Self-Healer)</td></tr>
+          <tr><td class="method method-get">GET</td><td class="path">/api/doctor/health</td><td>Run health check now</td></tr>
+          <tr><td class="method method-get">GET</td><td class="path">/api/doctor/status</td><td>Last report + running state</td></tr>
+          <tr><td class="method method-post">POST</td><td class="path">/api/doctor/heal/:id</td><td>Manually heal an agent</td></tr>
+          <tr><td class="method method-get">GET</td><td class="path">/api/doctor/log</td><td>Action log</td></tr>
+          <tr><td class="method method-post">POST</td><td class="path">/api/doctor/start</td><td>Start auto-healing</td></tr>
+          <tr><td class="method method-post">POST</td><td class="path">/api/doctor/stop</td><td>Stop auto-healing</td></tr>
+
+          <tr><td colspan="3" style="color:#00e5ff;font-weight:700;padding-top:20px">Delegation</td></tr>
+          <tr><td class="method method-post">POST</td><td class="path">/api/delegation/validate</td><td>Validate delegation context</td></tr>
+          <tr><td class="method method-get">GET</td><td class="path">/api/delegation/rules</td><td>List all delegation rules</td></tr>
+
+          <tr><td colspan="3" style="color:#00e5ff;font-weight:700;padding-top:20px">Sessions / Alerts / MCPs / Hooks / AI / Orchestrator</td></tr>
+          <tr><td class="method method-get">GET</td><td class="path">/api/sessions</td><td>List PTY sessions</td></tr>
+          <tr><td class="method method-post">POST</td><td class="path">/api/sessions</td><td>Create PTY session</td></tr>
+          <tr><td class="method method-get">GET</td><td class="path">/api/alerts</td><td>List alerts</td></tr>
+          <tr><td class="method method-get">GET</td><td class="path">/api/mcps</td><td>List MCP servers</td></tr>
+          <tr><td class="method method-get">GET</td><td class="path">/api/hooks</td><td>List hook events</td></tr>
+          <tr><td class="method method-get">GET</td><td class="path">/api/ai/status</td><td>AI provider status</td></tr>
+          <tr><td class="method method-get">GET</td><td class="path">/api/orchestrator/status</td><td>Orchestrator status</td></tr>
+          <tr><td class="method method-get">GET</td><td class="path">/api/checkpoints</td><td>Checkpoint management</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <p>PIA System Showcase - Built Feb 11, 2026 - All systems operational</p>
+    <p style="margin-top:8px; font-size:0.85rem;">Express + WebSocket + SQLite + node-pty + xterm.js | Martin's Claude Orchestration Template</p>
+  </div>
+
+</body>
+</html>

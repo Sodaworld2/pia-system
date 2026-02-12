@@ -128,6 +128,116 @@ router.patch('/:id', (req: Request, res: Response) => {
   }
 });
 
+// POST /api/machines/enroll - Enroll a new machine with full capabilities
+router.post('/enroll', (req: Request, res: Response) => {
+  try {
+    const { name, hostname, ip_address, capabilities, ssh, resources } = req.body;
+
+    if (!name || !hostname) {
+      res.status(400).json({ error: 'name and hostname are required' });
+      return;
+    }
+
+    // Check if machine already exists - update if so
+    const existing = getMachineByHostname(hostname);
+    if (existing) {
+      const fullCapabilities = {
+        ...(existing.capabilities || {}),
+        ...capabilities,
+        ssh: ssh || (existing.capabilities as Record<string, unknown>)?.ssh,
+        resources: resources || (existing.capabilities as Record<string, unknown>)?.resources,
+        enrolledAt: (existing.capabilities as Record<string, unknown>)?.enrolledAt,
+        lastEnrollment: Math.floor(Date.now() / 1000),
+      };
+      updateMachineHeartbeat(existing.id, fullCapabilities);
+      const updated = getMachineById(existing.id);
+      logger.info(`Machine re-enrolled: ${hostname} (${existing.id})`);
+      res.json({ status: 'updated', machine: updated });
+      return;
+    }
+
+    // New enrollment
+    const fullCapabilities = {
+      ...capabilities,
+      ssh: ssh || null,
+      resources: resources || null,
+      enrolledAt: Math.floor(Date.now() / 1000),
+      lastEnrollment: Math.floor(Date.now() / 1000),
+    };
+
+    const machine = createMachine({
+      name,
+      hostname,
+      ip_address,
+      capabilities: fullCapabilities,
+    });
+
+    logger.info(`Machine enrolled: ${machine.name} @ ${hostname} (${machine.id})`);
+    res.status(201).json({ status: 'enrolled', machine });
+  } catch (error) {
+    logger.error(`Failed to enroll machine: ${error}`);
+    res.status(500).json({ error: 'Failed to enroll machine' });
+  }
+});
+
+// GET /api/machines/:id/agents - List agents on a specific machine
+router.get('/:id/agents', (req: Request, res: Response) => {
+  try {
+    const machine = getMachineById(req.params.id as string);
+    if (!machine) {
+      res.status(404).json({ error: 'Machine not found' });
+      return;
+    }
+
+    const agents = getAgentsByMachine(machine.id);
+    res.json({
+      machine: { id: machine.id, name: machine.name, status: machine.status },
+      agents,
+      counts: {
+        total: agents.length,
+        working: agents.filter(a => a.status === 'working').length,
+        idle: agents.filter(a => a.status === 'idle').length,
+        error: agents.filter(a => a.status === 'error').length,
+      },
+    });
+  } catch (error) {
+    logger.error(`Failed to get machine agents: ${error}`);
+    res.status(500).json({ error: 'Failed to get machine agents' });
+  }
+});
+
+// POST /api/machines/:id/spawn - Spawn an agent on a specific machine
+router.post('/:id/spawn', (req: Request, res: Response) => {
+  try {
+    const machine = getMachineById(req.params.id as string);
+    if (!machine) {
+      res.status(404).json({ error: 'Machine not found' });
+      return;
+    }
+
+    const { template, task } = req.body;
+    if (!template || !task) {
+      res.status(400).json({ error: 'template and task are required' });
+      return;
+    }
+
+    // Use the agent factory to spawn on this machine
+    const { getAgentFactory } = require('../../agents/agent-factory.js');
+    const factory = getAgentFactory();
+    const result = factory.spawn(template, {
+      machineId: machine.id,
+      taskDescription: task,
+    });
+
+    logger.info(`Spawned ${result.agent.name} on ${machine.name}`);
+    res.status(201).json(result);
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    logger.error(`Failed to spawn on machine: ${msg}`);
+    res.status(400).json({ error: msg });
+  }
+});
+
 // DELETE /api/machines/:id - Delete machine
 router.delete('/:id', (req: Request, res: Response) => {
   try {

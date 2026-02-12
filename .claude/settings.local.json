@@ -6,20 +6,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "powershell.exe -ExecutionPolicy Bypass -NoProfile -File .claude/hooks/session-start.ps1",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "powershell.exe -ExecutionPolicy Bypass -NoProfile -File .claude/hooks/pre-tool-use.ps1",
-            "timeout": 10
+            "command": "node .claude/hooks/session-start.cjs",
+            "timeout": 5
           }
         ]
       }
@@ -30,8 +18,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "powershell.exe -ExecutionPolicy Bypass -NoProfile -File .claude/hooks/post-tool-use.ps1",
-            "timeout": 10
+            "command": "node .claude/hooks/post-tool-use.cjs",
+            "timeout": 5
           }
         ]
       }
@@ -41,8 +29,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "powershell.exe -ExecutionPolicy Bypass -NoProfile -File .claude/hooks/stop.ps1",
-            "timeout": 10
+            "command": "node .claude/hooks/stop.cjs",
+            "timeout": 5
           }
         ]
       }

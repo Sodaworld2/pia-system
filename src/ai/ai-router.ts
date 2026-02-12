@@ -4,16 +4,13 @@
  *
  * Cost Waterfall:
  * Tier 0 (FREE):    Ollama (local GPU)
- * Tier 1 (CHEAP):   Gemini Flash
- * Tier 2 (MEDIUM):  Gemini Pro, GPT-4.1-mini
- * Tier 3 (PREMIUM): GPT-4.1, o3, Grok
+ * Tier 1 (CHEAP):   Claude Haiku 4.5 (~$0.002/req)
+ * Tier 2 (MEDIUM):  Claude Sonnet 4.5 (~$0.01/req)
  */
 
 import { createLogger } from '../utils/logger.js';
 import { getOllamaClient, OllamaClient } from './ollama-client.js';
-import { getGeminiClient, GeminiClient } from './gemini-client.js';
-import { getOpenAIClient, OpenAIClient } from './openai-client.js';
-import { getGrokClient, GrokClient } from './grok-client.js';
+import { getClaudeClient, ClaudeClient } from './claude-client.js';
 
 const logger = createLogger('AIRouter');
 
@@ -21,8 +18,9 @@ export type TaskComplexity = 'simple' | 'medium' | 'complex' | 'security';
 export type TaskType = 'code' | 'review' | 'security' | 'chat' | 'analysis';
 
 export interface AIProvider {
-  name: 'ollama' | 'gemini' | 'openai' | 'grok' | 'claude';
-  tier: 0 | 1 | 2 | 3;
+  name: 'ollama' | 'claude';
+  tier: 0 | 1 | 2;
+  model: string;
   costPer1KTokens: number;
   available: boolean;
 }
@@ -32,7 +30,7 @@ export interface RoutingDecision {
   model: string;
   reason: string;
   estimatedCost: number;
-  fallback?: AIProvider['name'];
+  fallback?: string;
 }
 
 export interface AIRequest {
@@ -55,62 +53,56 @@ export interface AIResponse {
 
 export class AIRouter {
   private ollama: OllamaClient;
-  private gemini: GeminiClient;
-  private openai: OpenAIClient;
-  private grok: GrokClient;
+  private claude: ClaudeClient;
 
-  private providers: Map<AIProvider['name'], AIProvider> = new Map();
+  private providers: Map<string, AIProvider> = new Map();
 
   constructor() {
     this.ollama = getOllamaClient();
-    this.gemini = getGeminiClient();
-    this.openai = getOpenAIClient();
-    this.grok = getGrokClient();
+    this.claude = getClaudeClient();
 
     // Initialize provider info
     this.providers.set('ollama', {
       name: 'ollama',
       tier: 0,
+      model: this.ollama.getDefaultModel(),
       costPer1KTokens: 0,
       available: false,
     });
-    this.providers.set('gemini', {
-      name: 'gemini',
+    this.providers.set('claude-haiku', {
+      name: 'claude',
       tier: 1,
-      costPer1KTokens: 0.001,
-      available: this.gemini.isConfigured(),
+      model: 'claude-haiku-4-5-20251001',
+      costPer1KTokens: 0.0008,
+      available: this.claude.isConfigured(),
     });
-    this.providers.set('openai', {
-      name: 'openai',
+    this.providers.set('claude-sonnet', {
+      name: 'claude',
       tier: 2,
-      costPer1KTokens: 0.01,
-      available: this.openai.isConfigured(),
-    });
-    this.providers.set('grok', {
-      name: 'grok',
-      tier: 3,
-      costPer1KTokens: 0.015,
-      available: this.grok.isConfigured(),
+      model: 'claude-sonnet-4-5-20250929',
+      costPer1KTokens: 0.003,
+      available: this.claude.isConfigured(),
     });
   }
 
   /**
    * Check which providers are available
    */
-  async checkAvailability(): Promise<Map<AIProvider['name'], boolean>> {
-    const availability = new Map<AIProvider['name'], boolean>();
+  async checkAvailability(): Promise<Map<string, boolean>> {
+    const availability = new Map<string, boolean>();
 
-    // Check Ollama
+    // Check Ollama (requires network call)
     const ollamaAvailable = await this.ollama.isAvailable();
     this.providers.get('ollama')!.available = ollamaAvailable;
     availability.set('ollama', ollamaAvailable);
 
-    // Check others (just config check)
-    availability.set('gemini', this.gemini.isConfigured());
-    availability.set('openai', this.openai.isConfigured());
-    availability.set('grok', this.grok.isConfigured());
+    // Check Claude (config check - actual API test is expensive)
+    const claudeConfigured = this.claude.isConfigured();
+    this.providers.get('claude-haiku')!.available = claudeConfigured;
+    this.providers.get('claude-sonnet')!.available = claudeConfigured;
+    availability.set('claude', claudeConfigured);
 
-    logger.info(`Provider availability: Ollama=${ollamaAvailable}, Gemini=${this.gemini.isConfigured()}, OpenAI=${this.openai.isConfigured()}, Grok=${this.grok.isConfigured()}`);
+    logger.info(`Provider availability: Ollama=${ollamaAvailable}, Claude=${claudeConfigured}`);
 
     return availability;
   }
@@ -119,7 +111,6 @@ export class AIRouter {
    * Classify task complexity
    */
   async classifyTask(prompt: string): Promise<TaskComplexity> {
-    // Quick heuristics first
     const lowerPrompt = prompt.toLowerCase();
 
     // Security tasks are always complex
@@ -173,21 +164,25 @@ export class AIRouter {
 
   /**
    * Route a request to the appropriate AI
+   *
+   * Waterfall: Ollama (FREE) -> Claude Haiku (CHEAP) -> Claude Sonnet (MEDIUM)
    */
   async route(request: AIRequest): Promise<RoutingDecision> {
     await this.checkAvailability();
 
     const complexity = request.complexity || await this.classifyTask(request.prompt);
 
-    // Security tasks always use multi-model panel
+    // Security tasks always use Claude Sonnet (strongest reasoning)
     if (complexity === 'security' || request.taskType === 'security') {
-      return {
-        provider: 'openai', // Primary for security
-        model: 'o3',
-        reason: 'Security tasks require deep reasoning',
-        estimatedCost: 0.10,
-        fallback: 'gemini',
-      };
+      if (this.providers.get('claude-sonnet')!.available) {
+        return {
+          provider: 'claude',
+          model: 'claude-sonnet-4-5-20250929',
+          reason: 'Security tasks require deep reasoning (Claude Sonnet)',
+          estimatedCost: 0.02,
+          fallback: 'claude-haiku-4-5-20251001',
+        };
+      }
     }
 
     // Try FREE tier first (Ollama)
@@ -198,47 +193,44 @@ export class AIRouter {
         model: this.ollama.getDefaultModel(),
         reason: 'Using FREE local AI for simple task',
         estimatedCost: 0,
-        fallback: 'gemini',
+        fallback: 'claude-haiku-4-5-20251001',
       };
     }
 
-    // Medium tasks - try Gemini (cheaper than OpenAI)
-    const geminiProvider = this.providers.get('gemini')!;
-    if (geminiProvider.available && complexity !== 'complex') {
+    // Medium tasks - Claude Haiku (fast & cheap)
+    const haikuProvider = this.providers.get('claude-haiku')!;
+    if (haikuProvider.available && complexity !== 'complex') {
       return {
-        provider: 'gemini',
-        model: 'gemini-1.5-pro',
-        reason: 'Using Gemini for medium complexity task',
-        estimatedCost: 0.02,
-        fallback: 'openai',
+        provider: 'claude',
+        model: 'claude-haiku-4-5-20251001',
+        reason: 'Using Claude Haiku for medium complexity task',
+        estimatedCost: 0.002,
+        fallback: 'claude-sonnet-4-5-20250929',
       };
     }
 
-    // Complex tasks or Gemini unavailable - use OpenAI
-    const openaiProvider = this.providers.get('openai')!;
-    if (openaiProvider.available) {
+    // Complex tasks or Haiku unavailable - Claude Sonnet
+    const sonnetProvider = this.providers.get('claude-sonnet')!;
+    if (sonnetProvider.available) {
       return {
-        provider: 'openai',
-        model: complexity === 'complex' ? 'o3' : 'gpt-4.1',
-        reason: `Using OpenAI for ${complexity} task`,
-        estimatedCost: complexity === 'complex' ? 0.15 : 0.05,
-        fallback: 'grok',
+        provider: 'claude',
+        model: 'claude-sonnet-4-5-20250929',
+        reason: `Using Claude Sonnet for ${complexity} task`,
+        estimatedCost: 0.01,
       };
     }
 
-    // Last resort - Grok
-    const grokProvider = this.providers.get('grok')!;
-    if (grokProvider.available) {
+    // Fallback to Ollama even for complex tasks if nothing else available
+    if (ollamaProvider.available) {
       return {
-        provider: 'grok',
-        model: 'grok-4-0709',
-        reason: 'Using Grok as fallback',
-        estimatedCost: 0.08,
+        provider: 'ollama',
+        model: this.ollama.getDefaultModel(),
+        reason: 'Falling back to Ollama (no Claude API key)',
+        estimatedCost: 0,
       };
     }
 
-    // No AI available
-    throw new Error('No AI providers available');
+    throw new Error('No AI providers available. Configure Ollama or set ANTHROPIC_API_KEY.');
   }
 
   /**
@@ -252,26 +244,30 @@ export class AIRouter {
 
     try {
       let content: string;
+      let tokens: number | undefined;
 
       switch (decision.provider) {
-        case 'ollama':
+        case 'ollama': {
           const ollamaResponse = await this.ollama.chat([
             { role: 'user', content: request.prompt },
           ]);
           content = ollamaResponse.message.content;
           break;
+        }
 
-        case 'gemini':
-          content = await this.gemini.generate(request.prompt);
+        case 'claude': {
+          const claudeResult = await this.claude.chat(
+            [{ role: 'user', content: request.prompt }],
+            decision.model as any,
+            {
+              system: request.context,
+              maxTokens: 4096,
+            }
+          );
+          content = claudeResult.text;
+          tokens = claudeResult.usage.input_tokens + claudeResult.usage.output_tokens;
           break;
-
-        case 'openai':
-          content = await this.openai.generate(request.prompt, decision.model as any);
-          break;
-
-        case 'grok':
-          content = await this.grok.generate(request.prompt);
-          break;
+        }
 
         default:
           throw new Error(`Unknown provider: ${decision.provider}`);
@@ -283,17 +279,51 @@ export class AIRouter {
         content,
         provider: decision.provider,
         model: decision.model,
+        tokens,
         cost: decision.estimatedCost,
         duration,
       };
     } catch (error) {
       // Try fallback if available
       if (decision.fallback) {
-        logger.warn(`${decision.provider} failed, trying fallback: ${decision.fallback}`);
-        return this.execute({
-          ...request,
-          complexity: request.complexity, // Keep original to prevent infinite loop
-        });
+        logger.warn(`${decision.provider}/${decision.model} failed, trying fallback: ${decision.fallback}`);
+
+        // Determine fallback provider
+        const isOllamaFallback = decision.fallback.includes('ollama');
+        const fallbackProvider = isOllamaFallback ? 'ollama' : 'claude';
+
+        try {
+          let content: string;
+          let tokens: number | undefined;
+
+          if (fallbackProvider === 'ollama') {
+            const ollamaResponse = await this.ollama.chat([
+              { role: 'user', content: request.prompt },
+            ]);
+            content = ollamaResponse.message.content;
+          } else {
+            const claudeResult = await this.claude.chat(
+              [{ role: 'user', content: request.prompt }],
+              decision.fallback as any,
+              { system: request.context, maxTokens: 4096 }
+            );
+            content = claudeResult.text;
+            tokens = claudeResult.usage.input_tokens + claudeResult.usage.output_tokens;
+          }
+
+          const duration = Date.now() - startTime;
+          return {
+            content,
+            provider: fallbackProvider,
+            model: decision.fallback,
+            tokens,
+            cost: fallbackProvider === 'ollama' ? 0 : 0.002,
+            duration,
+          };
+        } catch (fallbackError) {
+          logger.error(`Fallback also failed: ${fallbackError}`);
+          throw error; // Throw original error
+        }
       }
       throw error;
     }
@@ -313,15 +343,15 @@ export class AIRouter {
   getRecommendation(taskType: TaskType): string {
     switch (taskType) {
       case 'code':
-        return 'ollama (FREE) → gemini → openai';
+        return 'ollama (FREE) → claude-haiku → claude-sonnet';
       case 'review':
-        return 'gemini → openai → grok';
+        return 'claude-haiku → claude-sonnet';
       case 'security':
-        return 'Multi-model panel (gemini + openai + grok)';
+        return 'claude-sonnet (deep reasoning)';
       case 'analysis':
-        return 'openai (o3) → gemini';
+        return 'claude-sonnet → claude-haiku';
       default:
-        return 'ollama → gemini → openai';
+        return 'ollama → claude-haiku → claude-sonnet';
     }
   }
 }

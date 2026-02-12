@@ -69,7 +69,14 @@
       "mcp__playwright__browser_type",
       "Bash(if not exist \"C:\\\\Users\\\\mic\\\\Downloads\\\\pia-system\\\\.claude\\\\hooks\" mkdir \"C:\\\\Users\\\\mic\\\\Downloads\\\\pia-system\\\\.claude\\\\hooks\")",
       "Bash(powershell.exe:*)",
-      "Bash(ping:*)"
+      "Bash(ping:*)",
+      "mcp__playwright__browser_evaluate",
+      "mcp__playwright__browser_console_messages",
+      "WebFetch(domain:docs.elizaos.ai)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(wmic process:*)",
+      "Bash(tailscale ip:*)",
+      "Bash(cmd /c \"if not exist C:\\\\Users\\\\mic\\\\Downloads\\\\pia-system\\\\scripts mkdir C:\\\\Users\\\\mic\\\\Downloads\\\\pia-system\\\\scripts\")"
     ]
   }
 }

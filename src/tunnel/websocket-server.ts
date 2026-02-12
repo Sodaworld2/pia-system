@@ -16,7 +16,8 @@ interface Client {
 interface IncomingMessage {
   type: 'auth' | 'subscribe' | 'unsubscribe' | 'input' | 'resize' | 'ping' |
         'machine:register' | 'machine:heartbeat' | 'machine:status' |
-        'agent:register' | 'agent:update' | 'agent:remove' | 'pong';
+        'agent:register' | 'agent:update' | 'agent:remove' | 'pong' |
+        'relay:register' | 'relay:send' | 'relay:broadcast';
   payload?: {
     token?: string;
     sessionId?: string;
@@ -40,7 +41,7 @@ interface IncomingMessage {
 }
 
 interface OutgoingMessage {
-  type: 'auth' | 'output' | 'buffer' | 'exit' | 'error' | 'pong' | 'agent:update' | 'alert' | 'machine:update' | 'command';
+  type: 'auth' | 'output' | 'buffer' | 'exit' | 'error' | 'pong' | 'agent:update' | 'alert' | 'machine:update' | 'command' | 'relay:message' | 'relay:registered';
   success?: boolean;
   payload?: unknown;
   sessionId?: string;
@@ -146,6 +147,17 @@ export class TunnelWebSocketServer {
         }
         this.handleHubMessage(msg.type, msg.payload);
         break;
+
+      // Cross-machine relay messages
+      case 'relay:register':
+      case 'relay:send':
+      case 'relay:broadcast':
+        if (!client.authenticated) {
+          this.send(ws, { type: 'error', payload: 'Not authenticated' });
+          return;
+        }
+        this.handleRelayMessage(ws, msg.type, msg.payload);
+        break;
     }
   }
 
@@ -218,6 +230,74 @@ export class TunnelWebSocketServer {
       }
     } catch (error) {
       logger.error(`Failed to handle hub message: ${error}`);
+    }
+  }
+
+  private handleRelayMessage(ws: WebSocket, type: string, payload: IncomingMessage['payload']): void {
+    try {
+      const { getCrossMachineRelay } = require('../comms/cross-machine.js');
+      const relay = getCrossMachineRelay();
+
+      switch (type) {
+        case 'relay:register':
+          if (payload?.id && payload?.name) {
+            const machine = relay.registerMachine({
+              id: payload.id as string,
+              name: payload.name as string,
+              hostname: (payload.hostname as string) || 'unknown',
+              project: (payload as Record<string, unknown>).project as string,
+              tailscaleIp: (payload as Record<string, unknown>).tailscaleIp as string,
+              channels: ['websocket'],
+              ws,
+            });
+
+            // Subscribe this WS to relay messages
+            relay.subscribe((msg: Record<string, unknown>) => {
+              if (ws.readyState === WebSocket.OPEN) {
+                this.send(ws, { type: 'relay:message', payload: msg });
+              }
+            });
+
+            this.send(ws, {
+              type: 'relay:registered',
+              payload: {
+                status: 'registered',
+                hub: relay.getStats().thisMachine,
+                machine: { ...machine, ws: undefined },
+              },
+            });
+          }
+          break;
+
+        case 'relay:send':
+          if (payload) {
+            const p = payload as Record<string, unknown>;
+            relay.send(
+              p.to as string,
+              p.content as string,
+              (p.type as string) || 'chat',
+              'websocket',
+              p.metadata as Record<string, unknown>,
+            );
+          }
+          break;
+
+        case 'relay:broadcast':
+          if (payload) {
+            const p = payload as Record<string, unknown>;
+            relay.send(
+              '*',
+              p.content as string,
+              (p.type as string) || 'chat',
+              'websocket',
+              p.metadata as Record<string, unknown>,
+            );
+          }
+          break;
+      }
+    } catch (error) {
+      logger.error(`Failed to handle relay message: ${error}`);
+      this.send(ws, { type: 'error', payload: `Relay error: ${error}` });
     }
   }
 

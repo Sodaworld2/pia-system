@@ -1,6 +1,8 @@
 /**
  * AI API Routes
  * Endpoints for AI operations, cost tracking, and provider status
+ *
+ * Providers: Ollama (FREE) → Claude Haiku (CHEAP) → Claude Sonnet (MEDIUM)
  */
 
 import { Router, Request, Response } from 'express';
@@ -8,6 +10,7 @@ import { getAIRouter } from '../../ai/ai-router.js';
 import { getMultiModelPanel } from '../../ai/multi-model-panel.js';
 import { getCostTracker } from '../../ai/cost-tracker.js';
 import { getOllamaClient } from '../../ai/ollama-client.js';
+import { getClaudeClient } from '../../ai/claude-client.js';
 import { createLogger } from '../../utils/logger.js';
 
 const logger = createLogger('AI-API');
@@ -21,19 +24,30 @@ router.get('/status', async (_req: Request, res: Response) => {
   try {
     const aiRouter = getAIRouter();
     const costTracker = getCostTracker();
+    const claude = getClaudeClient();
+    const ollama = getOllamaClient();
 
     const availability = await aiRouter.checkAvailability();
     const providerStatus = costTracker.getProviderStatus();
 
     // Update database with current availability
-    for (const [provider, available] of availability) {
-      const configured = available; // If available, it's configured
-      costTracker.updateProviderStatus(provider, configured, available);
-    }
+    const ollamaAvailable = availability.get('ollama') || false;
+    const claudeAvailable = availability.get('claude') || false;
+
+    costTracker.updateProviderStatus('ollama', ollamaAvailable, ollamaAvailable);
+    costTracker.updateProviderStatus('claude', claude.isConfigured(), claudeAvailable);
 
     res.json({
       providers: providerStatus,
       availability: Object.fromEntries(availability),
+      claude: {
+        configured: claude.isConfigured(),
+        models: ['claude-haiku-4-5-20251001', 'claude-sonnet-4-5-20250929'],
+      },
+      ollama: {
+        available: ollamaAvailable,
+        defaultModel: ollama.getDefaultModel(),
+      },
       recommendations: {
         code: aiRouter.getRecommendation('code'),
         review: aiRouter.getRecommendation('review'),
@@ -152,7 +166,7 @@ router.post('/generate', async (req: Request, res: Response): Promise<void> => {
       provider: response.provider,
       model: response.model,
       taskType,
-      inputTokens: Math.floor(prompt.length / 4), // Rough estimate
+      inputTokens: Math.floor(prompt.length / 4),
       outputTokens: Math.floor(response.content.length / 4),
       totalTokens: response.tokens || Math.floor((prompt.length + response.content.length) / 4),
       costUsd: response.cost,
@@ -169,7 +183,7 @@ router.post('/generate', async (req: Request, res: Response): Promise<void> => {
 
 /**
  * POST /api/ai/review
- * Multi-model code review
+ * Multi-model code review (Ollama + Claude Haiku + Claude Sonnet)
  */
 router.post('/review', async (req: Request, res: Response): Promise<void> => {
   try {
@@ -205,13 +219,12 @@ router.post('/review', async (req: Request, res: Response): Promise<void> => {
       if (!review.error) {
         costTracker.recordUsage({
           provider: review.provider,
-          model: review.provider === 'gemini' ? 'gemini-1.5-pro' :
-                 review.provider === 'openai' ? 'gpt-4.1' : 'grok-4-0709',
+          model: review.model,
           taskType: security ? 'security' : 'review',
           inputTokens: Math.floor(code.length / 4),
           outputTokens: Math.floor(review.rawOutput.length / 4),
           totalTokens: Math.floor((code.length + review.rawOutput.length) / 4),
-          costUsd: result.totalCost / result.reviews.length, // Split evenly
+          costUsd: result.totalCost / result.reviews.length,
           durationMs: review.duration,
           success: true,
         });
@@ -307,6 +320,33 @@ router.post('/ollama/pull', async (req: Request, res: Response): Promise<void> =
   } catch (error) {
     logger.error(`Failed to pull model: ${error}`);
     res.status(500).json({ error: 'Failed to pull model' });
+  }
+});
+
+/**
+ * GET /api/ai/claude/status
+ * Check Claude API status
+ */
+router.get('/claude/status', async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const claude = getClaudeClient();
+
+    res.json({
+      configured: claude.isConfigured(),
+      models: [
+        { id: 'claude-haiku-4-5-20251001', name: 'Claude Haiku 4.5', tier: 'cheap' },
+        { id: 'claude-sonnet-4-5-20250929', name: 'Claude Sonnet 4.5', tier: 'medium' },
+        { id: 'claude-opus-4-6', name: 'Claude Opus 4.6', tier: 'premium' },
+      ],
+      envVars: {
+        PIA_CLAUDE_API_KEY: !!process.env.PIA_CLAUDE_API_KEY,
+        ANTHROPIC_API_KEY: !!process.env.ANTHROPIC_API_KEY,
+        CLAUDE_API_KEY: !!process.env.CLAUDE_API_KEY,
+      },
+    });
+  } catch (error) {
+    logger.error(`Failed to get Claude status: ${error}`);
+    res.status(500).json({ error: 'Failed to get Claude status' });
   }
 });
 

@@ -3,17 +3,16 @@
  * Runs multiple AI models in parallel for comprehensive code review
  *
  * Panel Members:
- * - Gemini: Architecture and patterns perspective
- * - OpenAI: Logic and security perspective
- * - Grok: Devil's advocate / chaos perspective
+ * - Ollama: Fast local scan (FREE)
+ * - Claude Haiku: Patterns & architecture perspective (CHEAP)
+ * - Claude Sonnet: Deep logic & security analysis (MEDIUM)
  *
  * Synthesis: Combines all reviews into unified verdict
  */
 
 import { createLogger } from '../utils/logger.js';
-import { getGeminiClient, GeminiClient } from './gemini-client.js';
-import { getOpenAIClient, OpenAIClient } from './openai-client.js';
-import { getGrokClient, GrokClient } from './grok-client.js';
+import { getOllamaClient, OllamaClient } from './ollama-client.js';
+import { getClaudeClient, ClaudeClient } from './claude-client.js';
 
 const logger = createLogger('MultiModel');
 
@@ -26,7 +25,8 @@ export interface ReviewFinding {
 }
 
 export interface ModelReview {
-  provider: 'gemini' | 'openai' | 'grok';
+  provider: string;
+  model: string;
   perspective: string;
   findings: ReviewFinding[];
   rawOutput: string;
@@ -35,28 +35,26 @@ export interface ModelReview {
 }
 
 export interface PanelResult {
-  unanimous: ReviewFinding[];      // All 3 agree
-  majority: ReviewFinding[];       // 2 of 3 agree
-  geminiOnly: ReviewFinding[];     // Only Gemini found
-  openaiOnly: ReviewFinding[];     // Only OpenAI found
-  grokOnly: ReviewFinding[];       // Only Grok found
-  contradictions: string[];        // Disagreements
+  unanimous: ReviewFinding[];
+  majority: ReviewFinding[];
+  ollamaOnly: ReviewFinding[];
+  haikuOnly: ReviewFinding[];
+  sonnetOnly: ReviewFinding[];
+  contradictions: string[];
   verdict: 'APPROVE' | 'CONCERNS' | 'REJECT';
-  confidence: number;              // 0-100
+  confidence: number;
   reviews: ModelReview[];
   totalDuration: number;
   totalCost: number;
 }
 
 export class MultiModelPanel {
-  private gemini: GeminiClient;
-  private openai: OpenAIClient;
-  private grok: GrokClient;
+  private ollama: OllamaClient;
+  private claude: ClaudeClient;
 
   constructor() {
-    this.gemini = getGeminiClient();
-    this.openai = getOpenAIClient();
-    this.grok = getGrokClient();
+    this.ollama = getOllamaClient();
+    this.claude = getClaudeClient();
   }
 
   /**
@@ -64,9 +62,12 @@ export class MultiModelPanel {
    */
   getAvailableModels(): string[] {
     const available: string[] = [];
-    if (this.gemini.isConfigured()) available.push('gemini');
-    if (this.openai.isConfigured()) available.push('openai');
-    if (this.grok.isConfigured()) available.push('grok');
+    // Ollama availability needs async check, so we just check config
+    available.push('ollama'); // Always listed, checked at runtime
+    if (this.claude.isConfigured()) {
+      available.push('claude-haiku');
+      available.push('claude-sonnet');
+    }
     return available;
   }
 
@@ -77,23 +78,17 @@ export class MultiModelPanel {
     const startTime = Date.now();
     const reviews: ModelReview[] = [];
 
-    logger.info('Starting multi-model code review');
+    logger.info('Starting multi-model code review (Ollama + Claude Haiku + Claude Sonnet)');
 
-    // Run all reviews in parallel
     const reviewPromises: Promise<ModelReview>[] = [];
 
-    if (this.gemini.isConfigured()) {
-      reviewPromises.push(this.runGeminiReview(code, context));
-    }
-    if (this.openai.isConfigured()) {
-      reviewPromises.push(this.runOpenAIReview(code, context));
-    }
-    if (this.grok.isConfigured()) {
-      reviewPromises.push(this.runGrokReview(code, context));
-    }
+    // Always try Ollama (free)
+    reviewPromises.push(this.runOllamaReview(code, context));
 
-    if (reviewPromises.length === 0) {
-      throw new Error('No AI models configured for multi-model review');
+    // Claude reviews if API key configured
+    if (this.claude.isConfigured()) {
+      reviewPromises.push(this.runHaikuReview(code, context));
+      reviewPromises.push(this.runSonnetReview(code, context));
     }
 
     // Wait for all reviews
@@ -105,6 +100,10 @@ export class MultiModelPanel {
       } else {
         logger.error(`Review failed: ${result.reason}`);
       }
+    }
+
+    if (reviews.length === 0) {
+      throw new Error('No AI models available for multi-model review');
     }
 
     // Synthesize results
@@ -128,14 +127,11 @@ export class MultiModelPanel {
 
     const reviewPromises: Promise<ModelReview>[] = [];
 
-    if (this.gemini.isConfigured()) {
-      reviewPromises.push(this.runGeminiSecurityReview(code, context));
-    }
-    if (this.openai.isConfigured()) {
-      reviewPromises.push(this.runOpenAISecurityReview(code, context));
-    }
-    if (this.grok.isConfigured()) {
-      reviewPromises.push(this.runGrokSecurityReview(code, context));
+    reviewPromises.push(this.runOllamaSecurityReview(code, context));
+
+    if (this.claude.isConfigured()) {
+      reviewPromises.push(this.runHaikuSecurityReview(code, context));
+      reviewPromises.push(this.runSonnetSecurityReview(code, context));
     }
 
     const results = await Promise.allSettled(reviewPromises);
@@ -153,17 +149,65 @@ export class MultiModelPanel {
     return panelResult;
   }
 
+  // ---------------------------------------------------------------------------
+  // Individual Model Reviews
+  // ---------------------------------------------------------------------------
+
   /**
-   * Run Gemini review (architecture/patterns focus)
+   * Ollama review - Quick local scan (FREE)
    */
-  private async runGeminiReview(code: string, _context?: string): Promise<ModelReview> {
+  private async runOllamaReview(code: string, _context?: string): Promise<ModelReview> {
     const startTime = Date.now();
 
     try {
-      const output = await this.gemini.analyzeCode(code, 'architecture');
+      const available = await this.ollama.isAvailable();
+      if (!available) throw new Error('Ollama not available');
+
+      const output = await this.ollama.reviewCode(code);
 
       return {
-        provider: 'gemini',
+        provider: 'ollama',
+        model: this.ollama.getDefaultModel(),
+        perspective: 'Quick Local Scan',
+        findings: this.parseFindings(output),
+        rawOutput: output,
+        duration: Date.now() - startTime,
+      };
+    } catch (error) {
+      return {
+        provider: 'ollama',
+        model: this.ollama.getDefaultModel(),
+        perspective: 'Quick Local Scan',
+        findings: [],
+        rawOutput: '',
+        duration: Date.now() - startTime,
+        error: String(error),
+      };
+    }
+  }
+
+  /**
+   * Claude Haiku review - Architecture & patterns (CHEAP)
+   */
+  private async runHaikuReview(code: string, context?: string): Promise<ModelReview> {
+    const startTime = Date.now();
+
+    try {
+      const output = await this.claude.generate(
+        context
+          ? `Context: ${context}\n\nReview this code for architecture patterns, design issues, and maintainability:\n\`\`\`\n${code}\n\`\`\``
+          : `Review this code for architecture patterns, design issues, and maintainability:\n\`\`\`\n${code}\n\`\`\``,
+        'claude-haiku-4-5-20251001',
+        {
+          system: 'You are an architecture reviewer. Focus on patterns, code structure, naming, separation of concerns, and maintainability. Mark findings by severity: **CRITICAL**, **HIGH**, **MEDIUM**, **LOW**.',
+          temperature: 0.3,
+          maxTokens: 4096,
+        }
+      );
+
+      return {
+        provider: 'claude',
+        model: 'claude-haiku-4-5-20251001',
         perspective: 'Architecture & Patterns',
         findings: this.parseFindings(output),
         rawOutput: output,
@@ -171,7 +215,8 @@ export class MultiModelPanel {
       };
     } catch (error) {
       return {
-        provider: 'gemini',
+        provider: 'claude',
+        model: 'claude-haiku-4-5-20251001',
         perspective: 'Architecture & Patterns',
         findings: [],
         rawOutput: '',
@@ -182,25 +227,27 @@ export class MultiModelPanel {
   }
 
   /**
-   * Run OpenAI review (logic/security focus)
+   * Claude Sonnet review - Deep logic & security (MEDIUM)
    */
-  private async runOpenAIReview(code: string, _context?: string): Promise<ModelReview> {
+  private async runSonnetReview(code: string, context?: string): Promise<ModelReview> {
     const startTime = Date.now();
 
     try {
-      const output = await this.openai.reviewCode(code, 'logic');
+      const output = await this.claude.reviewCode(code, context, 'claude-sonnet-4-5-20250929');
 
       return {
-        provider: 'openai',
-        perspective: 'Logic & Flow',
+        provider: 'claude',
+        model: 'claude-sonnet-4-5-20250929',
+        perspective: 'Deep Logic & Security',
         findings: this.parseFindings(output),
         rawOutput: output,
         duration: Date.now() - startTime,
       };
     } catch (error) {
       return {
-        provider: 'openai',
-        perspective: 'Logic & Flow',
+        provider: 'claude',
+        model: 'claude-sonnet-4-5-20250929',
+        perspective: 'Deep Logic & Security',
         findings: [],
         rawOutput: '',
         duration: Date.now() - startTime,
@@ -210,25 +257,39 @@ export class MultiModelPanel {
   }
 
   /**
-   * Run Grok review (devil's advocate)
+   * Security-focused Ollama review
    */
-  private async runGrokReview(code: string, context?: string): Promise<ModelReview> {
+  private async runOllamaSecurityReview(code: string, _context?: string): Promise<ModelReview> {
     const startTime = Date.now();
 
     try {
-      const output = await this.grok.devilsAdvocate(code, context);
+      const available = await this.ollama.isAvailable();
+      if (!available) throw new Error('Ollama not available');
+
+      const response = await this.ollama.chat([
+        {
+          role: 'system',
+          content: 'You are a security auditor. Check for OWASP top 10 vulnerabilities, injection flaws, auth bypass, data exposure. Mark severity: **CRITICAL**, **HIGH**, **MEDIUM**, **LOW**.',
+        },
+        {
+          role: 'user',
+          content: `Security review this code:\n\`\`\`\n${code}\n\`\`\``,
+        },
+      ]);
 
       return {
-        provider: 'grok',
-        perspective: "Devil's Advocate",
-        findings: this.parseFindings(output),
-        rawOutput: output,
+        provider: 'ollama',
+        model: this.ollama.getDefaultModel(),
+        perspective: 'Security Scan (Local)',
+        findings: this.parseFindings(response.message.content),
+        rawOutput: response.message.content,
         duration: Date.now() - startTime,
       };
     } catch (error) {
       return {
-        provider: 'grok',
-        perspective: "Devil's Advocate",
+        provider: 'ollama',
+        model: this.ollama.getDefaultModel(),
+        perspective: 'Security Scan (Local)',
         findings: [],
         rawOutput: '',
         duration: Date.now() - startTime,
@@ -238,16 +299,25 @@ export class MultiModelPanel {
   }
 
   /**
-   * Security-focused Gemini review
+   * Security-focused Haiku review
    */
-  private async runGeminiSecurityReview(code: string, _context?: string): Promise<ModelReview> {
+  private async runHaikuSecurityReview(code: string, _context?: string): Promise<ModelReview> {
     const startTime = Date.now();
 
     try {
-      const output = await this.gemini.analyzeCode(code, 'security');
+      const output = await this.claude.generate(
+        `Security audit this code. Check for OWASP top 10, injection, auth bypass, data exposure:\n\`\`\`\n${code}\n\`\`\``,
+        'claude-haiku-4-5-20251001',
+        {
+          system: 'You are a security auditor. Find vulnerabilities. Mark by severity: **CRITICAL**, **HIGH**, **MEDIUM**, **LOW**. Be specific with line numbers.',
+          temperature: 0.2,
+          maxTokens: 4096,
+        }
+      );
 
       return {
-        provider: 'gemini',
+        provider: 'claude',
+        model: 'claude-haiku-4-5-20251001',
         perspective: 'Security Analysis',
         findings: this.parseFindings(output),
         rawOutput: output,
@@ -255,7 +325,8 @@ export class MultiModelPanel {
       };
     } catch (error) {
       return {
-        provider: 'gemini',
+        provider: 'claude',
+        model: 'claude-haiku-4-5-20251001',
         perspective: 'Security Analysis',
         findings: [],
         rawOutput: '',
@@ -266,16 +337,25 @@ export class MultiModelPanel {
   }
 
   /**
-   * Security-focused OpenAI review (red team)
+   * Security-focused Sonnet review (red team)
    */
-  private async runOpenAISecurityReview(code: string, _context?: string): Promise<ModelReview> {
+  private async runSonnetSecurityReview(code: string, _context?: string): Promise<ModelReview> {
     const startTime = Date.now();
 
     try {
-      const output = await this.openai.redTeam(code);
+      const output = await this.claude.generate(
+        `Red team this code. Think like an attacker. How would you exploit it? What data could you exfiltrate?\n\`\`\`\n${code}\n\`\`\``,
+        'claude-sonnet-4-5-20250929',
+        {
+          system: 'You are a red team security specialist. Find attack vectors, exploitation paths, and defense weaknesses. Mark severity: **CRITICAL**, **HIGH**, **MEDIUM**, **LOW**. Be thorough.',
+          temperature: 0.4,
+          maxTokens: 8192,
+        }
+      );
 
       return {
-        provider: 'openai',
+        provider: 'claude',
+        model: 'claude-sonnet-4-5-20250929',
         perspective: 'Red Team Analysis',
         findings: this.parseFindings(output),
         rawOutput: output,
@@ -283,7 +363,8 @@ export class MultiModelPanel {
       };
     } catch (error) {
       return {
-        provider: 'openai',
+        provider: 'claude',
+        model: 'claude-sonnet-4-5-20250929',
         perspective: 'Red Team Analysis',
         findings: [],
         rawOutput: '',
@@ -293,33 +374,9 @@ export class MultiModelPanel {
     }
   }
 
-  /**
-   * Security-focused Grok review (abuse scenarios)
-   */
-  private async runGrokSecurityReview(code: string, _context?: string): Promise<ModelReview> {
-    const startTime = Date.now();
-
-    try {
-      const output = await this.grok.abuseScenarios(code);
-
-      return {
-        provider: 'grok',
-        perspective: 'Abuse Scenarios',
-        findings: this.parseFindings(output),
-        rawOutput: output,
-        duration: Date.now() - startTime,
-      };
-    } catch (error) {
-      return {
-        provider: 'grok',
-        perspective: 'Abuse Scenarios',
-        findings: [],
-        rawOutput: '',
-        duration: Date.now() - startTime,
-        error: String(error),
-      };
-    }
-  }
+  // ---------------------------------------------------------------------------
+  // Parsing & Synthesis
+  // ---------------------------------------------------------------------------
 
   /**
    * Parse AI output into structured findings
@@ -327,7 +384,6 @@ export class MultiModelPanel {
   private parseFindings(output: string): ReviewFinding[] {
     const findings: ReviewFinding[] = [];
 
-    // Look for severity markers
     const severityPatterns = [
       { pattern: /\*\*CRITICAL\*\*:?\s*(.+?)(?=\n\*\*|\n\n|$)/gi, severity: 'CRITICAL' as const },
       { pattern: /\*\*HIGH\*\*:?\s*(.+?)(?=\n\*\*|\n\n|$)/gi, severity: 'HIGH' as const },
@@ -369,9 +425,9 @@ export class MultiModelPanel {
     const result: PanelResult = {
       unanimous: [],
       majority: [],
-      geminiOnly: [],
-      openaiOnly: [],
-      grokOnly: [],
+      ollamaOnly: [],
+      haikuOnly: [],
+      sonnetOnly: [],
       contradictions: [],
       verdict: 'APPROVE',
       confidence: 100,
@@ -380,13 +436,12 @@ export class MultiModelPanel {
       totalCost: 0,
     };
 
-    // Collect all findings by provider
-    const geminiFindings = reviews.find(r => r.provider === 'gemini')?.findings || [];
-    const openaiFindings = reviews.find(r => r.provider === 'openai')?.findings || [];
-    const grokFindings = reviews.find(r => r.provider === 'grok')?.findings || [];
+    // Collect findings by source
+    const ollamaFindings = reviews.find(r => r.provider === 'ollama')?.findings || [];
+    const haikuFindings = reviews.find(r => r.model === 'claude-haiku-4-5-20251001')?.findings || [];
+    const sonnetFindings = reviews.find(r => r.model === 'claude-sonnet-4-5-20250929')?.findings || [];
 
-    // Simple similarity check (could be improved with embeddings)
-    const allFindings = [...geminiFindings, ...openaiFindings, ...grokFindings];
+    const allFindings = [...ollamaFindings, ...haikuFindings, ...sonnetFindings];
 
     // Count critical/high findings
     const criticalCount = allFindings.filter(f => f.severity === 'CRITICAL').length;
@@ -408,12 +463,17 @@ export class MultiModelPanel {
     }
 
     // Categorize findings
-    result.geminiOnly = geminiFindings;
-    result.openaiOnly = openaiFindings;
-    result.grokOnly = grokFindings;
+    result.ollamaOnly = ollamaFindings;
+    result.haikuOnly = haikuFindings;
+    result.sonnetOnly = sonnetFindings;
 
-    // Estimate cost
-    result.totalCost = reviews.length * 0.05; // Rough estimate
+    // Estimate cost (Ollama=free, Haiku~$0.002, Sonnet~$0.01)
+    result.totalCost = 0;
+    for (const review of reviews) {
+      if (review.model === 'claude-haiku-4-5-20251001') result.totalCost += 0.002;
+      else if (review.model === 'claude-sonnet-4-5-20250929') result.totalCost += 0.01;
+      // Ollama is free
+    }
 
     return result;
   }
@@ -435,7 +495,7 @@ export class MultiModelPanel {
     ];
 
     for (const review of result.reviews) {
-      lines.push(`### ${review.provider.toUpperCase()} - ${review.perspective}`);
+      lines.push(`### ${review.provider.toUpperCase()} (${review.model}) - ${review.perspective}`);
       lines.push(`Duration: ${review.duration}ms`);
       lines.push('');
 

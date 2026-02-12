@@ -231,12 +231,13 @@ function getMigrations(): Migration[] {
           created_at INTEGER DEFAULT (unixepoch())
         );
 
-        -- Insert default providers
+        -- Insert default providers (Ollama + Claude waterfall)
         INSERT OR IGNORE INTO ai_providers (id, name, tier, is_local) VALUES
           ('ollama', 'Ollama (Local)', 0, 1),
-          ('gemini', 'Google Gemini', 1, 0),
-          ('openai', 'OpenAI', 2, 0),
-          ('grok', 'xAI Grok', 3, 0);
+          ('claude', 'Anthropic Claude', 1, 0);
+
+        -- Migrate old providers to Claude if they exist
+        DELETE FROM ai_providers WHERE id IN ('gemini', 'openai', 'grok');
 
         -- Insert default budget
         INSERT OR IGNORE INTO ai_budgets (id, name, daily_limit_usd, monthly_limit_usd)
