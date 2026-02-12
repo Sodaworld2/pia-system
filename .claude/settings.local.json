@@ -1,4 +1,19 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(node --version:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm start)",
+      "Bash(timeout:*)",
+      "Bash(curl:*)",
+      "Bash(if exist \"%USERPROFILE%\\\\.claude\\\\settings.json\" type \"%USERPROFILE%\\\\.claude\\\\settings.json\")",
+      "Bash(git fetch:*)",
+      "Bash(git stash:*)",
+      "Bash(git pull:*)"
+    ]
+  },
   "hooks": {
     "SessionStart": [
       {
