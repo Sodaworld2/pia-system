@@ -22,6 +22,7 @@ import messagesRouter from './routes/messages.js';
 import doctorRouter from './routes/doctor.js';
 import delegationRouter from './routes/delegation.js';
 import relayRouter from './routes/relay.js';
+import reposRouter from './routes/repos.js';
 
 const logger = createLogger('API');
 
@@ -119,6 +120,7 @@ export function createServer(): Express {
   app.use('/api/doctor', doctorRouter);
   app.use('/api/delegation', delegationRouter);
   app.use('/api/relay', relayRouter);
+  app.use('/api/repos', reposRouter);
 
   // Health check
   app.get('/api/health', (_req: Request, res: Response) => {

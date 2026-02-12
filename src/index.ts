@@ -50,6 +50,11 @@ async function startHub(): Promise<void> {
     config.hub.machineName || os.hostname(),
   );
 
+  // Initialize Repo Router
+  logger.info('Starting Repo Router...');
+  const { getRepoRouter } = await import('./comms/repo-router.js');
+  getRepoRouter();
+
   // Initialize Hub Aggregator
   logger.info('Starting Hub Aggregator...');
   const { initAggregator } = await import('./hub/aggregator.js');
