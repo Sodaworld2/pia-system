@@ -79,7 +79,8 @@
       "Bash(cmd /c \"if not exist C:\\\\Users\\\\mic\\\\Downloads\\\\pia-system\\\\scripts mkdir C:\\\\Users\\\\mic\\\\Downloads\\\\pia-system\\\\scripts\")",
       "Bash(cmd /c \"start /min node dist/index.js\")",
       "Bash(cmd //c \"start /min node dist/index.js\")",
-      "mcp__playwright__browser_tabs"
+      "mcp__playwright__browser_tabs",
+      "Bash(git fetch:*)"
     ]
   }
 }
