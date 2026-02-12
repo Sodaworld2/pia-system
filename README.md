@@ -1,91 +1,223 @@
 # PIA - Project Intelligence Agent
 
-A supervisor system for controlling and monitoring AI coding agents across multiple machines from a single dashboard.
+Control 43+ AI agents across multiple machines from one dashboard.
+
+```
+  Machine #1 (izzit7)          Machine #2 (NEW)           Machine #3 (soda-yeti)
+  ┌──────────────────┐       ┌──────────────────┐       ┌──────────────────┐
+  │  Windows 11 Pro  │       │   Coming Online  │       │  Windows 11 Pro  │
+  │  RTX 5090        │◄─────►│   TBD specs      │◄─────►│  Ryzen 7 7700X   │
+  │  HUB (primary)   │       │                  │       │  32GB RAM        │
+  │  100.73.133.3    │       │                  │       │  100.102.217.69  │
+  └──────────────────┘       └──────────────────┘       └──────────────────┘
+         ▲                                                       ▲
+         └──────────── Tailscale VPN (100.x.y.z) ───────────────┘
+```
 
 ## Features
 
+- **Visor Dashboard** - 7-tab governance UI (Chat, History, Health, Tasks, Network, Security, CLI)
 - **Fleet Matrix** - See all agents across all machines in one view
 - **CLI Tunnel** - Remote terminal access via WebSocket + xterm.js
-- **Real-time Updates** - WebSocket-based live status updates
+- **Network Sentinel** - Intrusion detection (brute force, port scans, rate limits)
+- **Multi-Model AI** - Claude, GPT, Gemini, Grok, Ollama all in one router
+- **Agent Factory** - Spawn agents from templates
 - **Auto-Healer** - AI-powered documentation drift detection
+- **Desktop App** - Electron wrapper with system tray
 - **Mobile PWA** - Control agents from your phone
-- **Multi-Machine** - Hub/Local architecture for distributed workloads
+- **Cross-Machine Relay** - REST + WebSocket inter-machine messaging
 
 ## Quick Start
 
 ```bash
-# Clone the repo
+# 1. Clone the repo
 git clone https://github.com/Sodaworld2/pia-system.git
 cd pia-system
 
-# Install dependencies
+# 2. Install dependencies
 npm install
 
-# Start hub server
-npm start
+# 3. Create .env file (see below)
 
-# Open dashboard
-# http://localhost:3000
+# 4. Build
+npm run build
+
+# 5. Start PIA
+npm run dev        # development (hot reload)
+npm start          # production
+
+# 6. Open the Visor (dashboard)
+# Browser:  http://localhost:3000/visor.html
+# Desktop:  npm run desktop
 ```
 
 ## Environment Variables
 
-Create a `.env` file (see `.env.example`):
+Create a `.env` file:
 
 ```bash
-# Mode: 'hub' for central server, 'local' for worker machine
-PIA_MODE=hub
-
-# Server ports
-PIA_PORT=3000
-PIA_WS_PORT=3001
-
-# Security (CHANGE IN PRODUCTION!)
-PIA_SECRET_TOKEN=your-secret-token
-PIA_JWT_SECRET=your-jwt-secret
-
-# For local mode - connect to hub
-PIA_HUB_URL=http://hub-ip:3000
-PIA_MACHINE_NAME=my-machine
-
-# AI (optional)
-PIA_OLLAMA_URL=http://localhost:11434
+PIA_MODE=hub                               # hub (primary) or local (spoke)
+PIA_PORT=3000                              # API port
+PIA_WS_PORT=3001                           # WebSocket port
+PIA_SECRET_TOKEN=pia-local-dev-token-2024  # API auth token
+PIA_HUB_URL=http://100.73.133.3:3000      # Hub URL (for spoke machines)
+PIA_MACHINE_NAME=my-machine                # Machine name
+PIA_OLLAMA_URL=http://localhost:11434      # Ollama (optional)
 ```
+
+---
+
+## MCP Servers - Where They Are & How to Set Up
+
+MCPs (Model Context Protocol servers) give Claude extra capabilities. Here's every MCP used in PIA.
+
+### 1. Playwright MCP (Browser Control)
+
+**What it does:** Controls a real browser - takes screenshots, clicks buttons, fills forms, navigates pages. This is how we take screenshots of the Visor and test the UI.
+
+**Where it runs:** Every machine that needs browser automation.
+
+| Machine | Status |
+|---------|--------|
+| #1 izzit7 | INSTALLED |
+| #2 new | NEEDS INSTALL |
+| #3 soda-yeti | NEEDS CHECK |
+
+**Install:**
+```bash
+claude mcp add playwright -- cmd /c npx -y @playwright/mcp@latest
+```
+
+**Key tools:** `browser_navigate`, `browser_snapshot`, `browser_take_screenshot`, `browser_click`, `browser_type`, `browser_evaluate`
+
+### 2. Windows MCP (System Control)
+
+**What it does:** Windows system operations - window management, system info, clipboard, notifications.
+
+**Where it runs:** Every Windows machine.
+
+| Machine | Status |
+|---------|--------|
+| #1 izzit7 | INSTALLED |
+| #2 new | NEEDS INSTALL |
+| #3 soda-yeti | NEEDS CHECK |
+
+**Install:**
+```bash
+# Requires Python + uv
+pip install uv                    # or: winget install astral-sh.uv
+claude mcp add windows-mcp -- cmd /c uvx windows-mcp
+```
+
+### 3. GitHub MCP (Git + Collaboration)
+
+**What it does:** Direct GitHub access - PRs, issues, code search, repo management, cross-machine code sync, automated commits.
+
+**Where it runs:** All machines (enables frequent code sync between machines).
+
+| Machine | Status |
+|---------|--------|
+| #1 izzit7 | NEEDS INSTALL |
+| #2 new | NEEDS INSTALL |
+| #3 soda-yeti | NEEDS INSTALL |
+
+**Install:**
+```bash
+# 1. Get a GitHub personal access token from github.com/settings/tokens
+# 2. Add the MCP
+claude mcp add github -- cmd /c npx -y @modelcontextprotocol/server-github
+
+# 3. Set the token (add to your shell profile or .env)
+set GITHUB_PERSONAL_ACCESS_TOKEN=ghp_your_token_here
+```
+
+**Verify all MCPs:**
+```bash
+claude mcp list
+# Should show all installed MCPs with "Connected" status
+```
+
+---
+
+## Setting Up a NEW Machine
+
+### Prerequisites
+
+1. **Node.js 20+**: `winget install OpenJS.NodeJS.LTS`
+2. **Git**: `winget install Git.Git`
+3. **Tailscale**: `winget install Tailscale.Tailscale`
+4. **Python + uv**: `winget install Python.Python.3.13` then `pip install uv`
+5. **Claude Code CLI**: Follow Anthropic's install instructions
+
+### Step-by-Step
+
+```bash
+# 1. Join Tailscale network
+tailscale up
+# Note your Tailscale IP (100.x.y.z)
+
+# 2. Clone PIA
+git clone https://github.com/Sodaworld2/pia-system.git
+cd pia-system
+
+# 3. Install dependencies
+npm install
+
+# 4. Create .env (spoke mode)
+echo PIA_MODE=local > .env
+echo PIA_PORT=3000 >> .env
+echo PIA_WS_PORT=3001 >> .env
+echo PIA_SECRET_TOKEN=pia-local-dev-token-2024 >> .env
+echo PIA_HUB_URL=http://100.73.133.3:3000 >> .env
+
+# 5. Build & start
+npm run build && npm run dev
+
+# 6. Install MCPs
+claude mcp add playwright -- cmd /c npx -y @playwright/mcp@latest
+claude mcp add windows-mcp -- cmd /c uvx windows-mcp
+claude mcp add github -- cmd /c npx -y @modelcontextprotocol/server-github
+
+# 7. Register with hub
+curl -X POST http://100.73.133.3:3000/api/machines/register \
+  -H "Content-Type: application/json" \
+  -H "X-Api-Token: pia-local-dev-token-2024" \
+  -d "{\"machineId\":\"machine-2\",\"name\":\"YOUR-NAME\",\"tailscaleIp\":\"YOUR-IP\",\"port\":3000,\"role\":\"spoke\"}"
+
+# 8. Verify
+curl http://100.73.133.3:3000/api/health -H "X-Api-Token: pia-local-dev-token-2024"
+```
+
+---
 
 ## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Browser / Mobile PWA                      │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │  Fleet Matrix   │  CLI Tunnel   │  Alerts          │   │
-│  └─────────────────────┬───────────────────────────────┘   │
-└─────────────────────────┼───────────────────────────────────┘
+│              Browser / Visor / Desktop / Mobile              │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  Chat │ History │ Health │ Tasks │ Network │ Security│    │
+│  └─────────────────────┬───────────────────────────────┘    │
+└─────────────────────────┼────────────────────────────────────┘
                           │ HTTP + WebSocket
-┌─────────────────────────▼───────────────────────────────────┐
-│                    PIA Hub (Central)                         │
-│  ┌─────────────────┐  ┌─────────────────┐                   │
-│  │ Express API     │  │ WebSocket Server│                   │
-│  │ :3000           │  │ :3001           │                   │
-│  └────────┬────────┘  └────────┬────────┘                   │
-│           │                    │                            │
-│  ┌────────▼────────────────────▼────────┐                   │
-│  │  Hub Aggregator  │  Alert Monitor    │                   │
-│  └────────┬─────────────────────────────┘                   │
-│           │                                                  │
-│  ┌────────▼─────────────────────────────┐                   │
-│  │         SQLite Database               │                   │
-│  │  machines | agents | sessions | alerts│                   │
-│  └──────────────────────────────────────┘                   │
-└─────────────────────────────────────────────────────────────┘
-                          │
-    ┌─────────────────────┼─────────────────┐
-    ▼                     ▼                 ▼
-┌─────────┐         ┌─────────┐       ┌─────────┐
-│ PIA Local│         │ PIA Local│       │ PIA Local│
-│ Machine 1│         │ Machine 2│       │ Machine 3│
-│ N agents │         │ N agents │       │ N agents │
-└─────────┘         └─────────┘       └─────────┘
+┌─────────────────────────▼────────────────────────────────────┐
+│                    PIA Hub (Machine #1)                        │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐    │
+│  │ Express :3000│  │ WS :3001     │  │ Network Sentinel │    │
+│  └──────┬───────┘  └──────┬───────┘  └──────────────────┘    │
+│  ┌──────▼──────────────────▼───────┐  ┌──────────────────┐    │
+│  │  Hub Aggregator │ Alert Monitor │  │  Agent Factory   │    │
+│  └──────┬──────────────────────────┘  └──────────────────┘    │
+│  ┌──────▼──────────────────────────┐  ┌──────────────────┐    │
+│  │  SQLite (machines,agents,etc)   │  │  Multi-Model AI  │    │
+│  └─────────────────────────────────┘  └──────────────────┘    │
+└──────────────────────────────────────────────────────────────┘
+           │                      │
+    ┌──────▼──────┐        ┌──────▼──────┐
+    │ Machine #2  │        │ Machine #3  │
+    │ (spoke)     │        │ soda-yeti   │
+    │ PIA local   │        │ PIA local   │
+    └─────────────┘        └─────────────┘
 ```
 
 ## API Endpoints
