@@ -72,7 +72,7 @@ const sessionLimiter = rateLimit({
 export function createServer(): Express {
   const app = express();
 
-  // Security middleware (relaxed for development)
+  // Security middleware (relaxed for development / Tailscale LAN)
   app.use(helmet({
     contentSecurityPolicy: {
       directives: {
@@ -83,9 +83,11 @@ export function createServer(): Express {
         imgSrc: ["'self'", "data:", "blob:"],
         connectSrc: ["'self'", "ws:", "wss:"],
         fontSrc: ["'self'"],
+        upgradeInsecureRequests: null, // Disable — no HTTPS on Tailscale LAN
       },
     },
     crossOriginEmbedderPolicy: false, // Allow xterm.js
+    hsts: false, // Disable — no HTTPS on Tailscale LAN
   }));
 
   // CORS with restrictions
