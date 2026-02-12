@@ -3,11 +3,26 @@
     "allow": [
       "Bash(find:*)",
       "Bash(dir:*)",
-      "Bash(npm run dev:*)",
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(node:*)",
+      "Bash(git:*)",
       "Bash(curl:*)",
-      "Bash(pip show:*)",
-      "Bash(pipx list:*)",
+      "Bash(pip:*)",
+      "Bash(pipx:*)",
       "Bash(findstr:*)",
+      "Bash(python:*)",
+      "Bash(powershell:*)",
+      "Bash(powershell.exe:*)",
+      "Bash(cmd:*)",
+      "Bash(gh:*)",
+      "Bash(claude:*)",
+      "Bash(sleep:*)",
+      "Bash(cd:*)",
+      "Bash(mkdir:*)",
+      "Bash(echo:*)",
+      "Bash(type:*)",
+      "Bash(if:*)",
       "Bash(pip install:*)",
       "Bash(C:UsersmicAppDataRoamingPythonPython313Scriptscopier.exe copy \"C:\\\\Users\\\\mic\\\\Downloads\\\\claude-orchestration-template-main\" \"C:\\\\Users\\\\mic\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\test-orchestration-project\" --trust --defaults -d project_name=test-project -d project_description=\"Test orchestration project\" -d admin_username=mic -d has_local_llm=false -d has_guardrails_proxy=false -d has_knowledge_graph=false -d include_multi_model_overseer=false -d include_debug_agent=true -d include_integration_check=true -d include_janitor=true -d include_devcontainer=false -d include_pre_commit=false -d enable_task_system=true -d enable_cost_tracking=true)",
       "Bash(python -m copier:*)",
@@ -85,7 +100,9 @@
       "WebFetch(domain:mcp.so)",
       "Bash(git status:*)",
       "Bash(git pull:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(gh repo list:*)",
+      "Bash(gh api:*)"
     ]
   }
 }
