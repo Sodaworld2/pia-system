@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PIA Desktop App - Wireframes</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #1a1a2e;
+      color: #e0e0ff;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      padding: 40px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 32px;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #58a6ff, #bc8cff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #8b949e;
+      font-size: 16px;
+      margin-bottom: 40px;
+    }
+
+    /* ── Wireframe Container ── */
+    .wireframe-section {
+      max-width: 1100px;
+      margin: 0 auto 60px;
+    }
+
+    .section-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #c9d1d9;
+    }
+
+    .section-desc {
+      font-size: 14px;
+      color: #8b949e;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    /* ── Desktop Window Frame ── */
+    .desktop-window {
+      background: #0a0a1a;
+      border: 2px solid #30363d;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+
+    .window-titlebar {
+      background: #161b22;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid #30363d;
+    }
+
+    .window-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .window-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .window-dot.red { background: #f85149; }
+    .window-dot.yellow { background: #d29922; }
+    .window-dot.green { background: #3fb950; }
+
+    .window-title {
+      flex: 1;
+      text-align: center;
+      font-size: 12px;
+      color: #8b949e;
+    }
+
+    .window-tray {
+      font-size: 11px;
+      color: #484f58;
+    }
+
+    /* ── App Header ── */
+    .app-header {
+      background: linear-gradient(135deg, #0d1117, #161b22);
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #30363d;
+    }
+
+    .app-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .app-logo h2 {
+      font-size: 16px;
+      background: linear-gradient(135deg, #58a6ff, #bc8cff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .app-machine {
+      font-size: 12px;
+      color: #8b949e;
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #3fb950;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* ── Tab Bar ── */
+    .tab-bar {
+      background: #161b22;
+      display: flex;
+      border-bottom: 1px solid #30363d;
+      padding: 0 16px;
+    }
+
+    .tab {
+      padding: 10px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #8b949e;
+      border-bottom: 2px solid transparent;
+      cursor: default;
+      position: relative;
+    }
+
+    .tab.active { color: #58a6ff; border-bottom-color: #58a6ff; }
+
+    .tab .badge {
+      position: absolute;
+      top: 4px;
+      right: 2px;
+      background: #f85149;
+      color: white;
+      font-size: 9px;
+      padding: 1px 4px;
+      border-radius: 8px;
+      font-weight: 700;
+    }
+
+    /* ── Stats Bar ── */
+    .stats-bar {
+      background: #0d1117;
+      border-bottom: 1px solid #21262d;
+      padding: 6px 20px;
+      display: flex;
+      gap: 24px;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-val {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .stat-val.blue { color: #58a6ff; }
+    .stat-val.green { color: #3fb950; }
+    .stat-val.orange { color: #d29922; }
+    .stat-val.red { color: #f85149; }
+    .stat-val.purple { color: #bc8cff; }
+
+    .stat-lbl {
+      font-size: 9px;
+      color: #484f58;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Content Areas ── */
+    .content-area {
+      min-height: 360px;
+      padding: 16px;
+      position: relative;
+    }
+
+    /* ── CHAT VIEW ── */
+    .chat-layout {
+      display: flex;
+      gap: 12px;
+      height: 340px;
+    }
+
+    .chat-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #0d1117;
+      border-radius: 8px;
+      border: 1px solid #21262d;
+      overflow: hidden;
+    }
+
+    .chat-target {
+      padding: 8px 12px;
+      background: #161b22;
+      border-bottom: 1px solid #21262d;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chat-target select {
+      background: #21262d;
+      color: #c9d1d9;
+      border: 1px solid #30363d;
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-size: 11px;
+    }
+
+    .chat-messages {
+      flex: 1;
+      padding: 10px;
+      overflow: hidden;
+    }
+
+    .msg {
+      margin-bottom: 10px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+    }
+
+    .msg.incoming {
+      background: #161b22;
+      border: 1px solid #21262d;
+      margin-right: 60px;
+    }
+
+    .msg.outgoing {
+      background: #0d2818;
+      border: 1px solid #238636;
+      margin-left: 60px;
+    }
+
+    .msg.system {
+      background: #0d1830;
+      border: 1px solid #1f3d7a;
+      text-align: center;
+      font-size: 11px;
+      color: #58a6ff;
+    }
+
+    .msg-from {
+      font-weight: 700;
+      font-size: 11px;
+      margin-bottom: 2px;
+    }
+
+    .msg-from.remote { color: #bc8cff; }
+    .msg-from.you { color: #3fb950; }
+
+    .msg-time {
+      float: right;
+      font-size: 10px;
+      color: #484f58;
+    }
+
+    .chat-input {
+      display: flex;
+      padding: 8px;
+      gap: 6px;
+      background: #161b22;
+      border-top: 1px solid #21262d;
+    }
+
+    .chat-input input {
+      flex: 1;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 6px 12px;
+      color: #c9d1d9;
+      font-size: 12px;
+    }
+
+    .chat-input button {
+      background: #238636;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: default;
+    }
+
+    .chat-sidebar {
+      width: 220px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .sidebar-card {
+      background: #161b22;
+      border: 1px solid #21262d;
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    .sidebar-card h4 {
+      font-size: 11px;
+      color: #8b949e;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .repo-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 0;
+      font-size: 11px;
+    }
+
+    .repo-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .repo-dot.idle { background: #3fb950; }
+    .repo-dot.working { background: #d29922; }
+    .repo-dot.offline { background: #484f58; }
+
+    .machine-item {
+      padding: 4px 0;
+      font-size: 11px;
+    }
+
+    .machine-item .ip {
+      color: #bc8cff;
+      font-family: monospace;
+      font-size: 10px;
+    }
+
+    /* ── SECURITY VIEW ── */
+    .security-layout {
+      display: flex;
+      gap: 12px;
+      height: 340px;
+    }
+
+    .security-connections {
+      flex: 2;
+      overflow: hidden;
+    }
+
+    .security-events {
+      flex: 3;
+      overflow: hidden;
+    }
+
+    .panel-title {
+      font-size: 11px;
+      color: #8b949e;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .conn-item {
+      background: #161b22;
+      border: 1px solid #21262d;
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+    }
+
+    .conn-item.tailscale { border-color: #3fb950; }
+    .conn-item.localhost { border-color: #58a6ff; }
+    .conn-item.unknown { border-color: #d29922; }
+    .conn-item.blocked { border-color: #f85149; background: #1a0a0a; }
+
+    .conn-ip {
+      font-family: 'Consolas', monospace;
+      font-weight: 600;
+      min-width: 120px;
+    }
+
+    .conn-tag {
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .conn-tag.ts { background: #0d2818; color: #3fb950; }
+    .conn-tag.local { background: #0d1830; color: #58a6ff; }
+    .conn-tag.unk { background: #2d1a00; color: #d29922; }
+    .conn-tag.blk { background: #3d0a0a; color: #f85149; }
+
+    .conn-info {
+      font-size: 10px;
+      color: #8b949e;
+      flex: 1;
+    }
+
+    .conn-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .conn-btn {
+      font-size: 9px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      border: 1px solid #30363d;
+      background: #21262d;
+      color: #c9d1d9;
+      cursor: default;
+    }
+
+    .conn-btn.danger { border-color: #f85149; color: #f85149; }
+
+    .event-item {
+      background: #161b22;
+      border: 1px solid #21262d;
+      border-radius: 6px;
+      padding: 6px 12px;
+      margin-bottom: 3px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+    }
+
+    .event-item.critical { border-left: 3px solid #f85149; }
+    .event-item.warning { border-left: 3px solid #d29922; }
+    .event-item.info { border-left: 3px solid #58a6ff; }
+
+    .event-type {
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 9px;
+      min-width: 90px;
+    }
+
+    .event-type.crit { color: #f85149; }
+    .event-type.warn { color: #d29922; }
+    .event-type.inf { color: #58a6ff; }
+
+    .event-ip { color: #bc8cff; font-family: monospace; min-width: 90px; }
+    .event-detail { flex: 1; color: #c9d1d9; }
+    .event-time { color: #484f58; font-size: 10px; }
+
+    /* ── HEALTH VIEW ── */
+    .health-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .health-card {
+      background: #161b22;
+      border: 1px solid #21262d;
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .health-card h4 {
+      font-size: 13px;
+      margin-bottom: 10px;
+      color: #c9d1d9;
+    }
+
+    .health-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      font-size: 12px;
+      border-bottom: 1px solid #0d1117;
+    }
+
+    .health-label { color: #8b949e; }
+    .health-val { font-weight: 600; }
+    .health-val.ok { color: #3fb950; }
+    .health-val.warn { color: #d29922; }
+    .health-val.err { color: #f85149; }
+
+    /* ── NETWORK VIEW ── */
+    .network-topo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .topo-node {
+      text-align: center;
+    }
+
+    .topo-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 700;
+      margin: 0 auto 6px;
+      position: relative;
+    }
+
+    .topo-icon.hub { background: linear-gradient(135deg, #1a3a5c, #0d2040); border: 2px solid #58a6ff; color: #58a6ff; }
+    .topo-icon.remote { background: linear-gradient(135deg, #1a3a2a, #0d2018); border: 2px solid #3fb950; color: #3fb950; }
+    .topo-icon.offline { background: #1c1c2e; border: 2px solid #484f58; color: #484f58; }
+
+    .topo-dot {
+      position: absolute;
+      top: -3px;
+      right: -3px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #3fb950;
+      border: 2px solid #0a0a1a;
+    }
+
+    .topo-name { font-size: 12px; font-weight: 600; color: #c9d1d9; }
+    .topo-ip { font-size: 10px; color: #8b949e; font-family: monospace; }
+
+    .topo-line {
+      width: 80px;
+      height: 2px;
+      background: linear-gradient(90deg, #58a6ff, #3fb950);
+      position: relative;
+    }
+
+    .topo-latency {
+      position: absolute;
+      top: -16px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 9px;
+      color: #3fb950;
+      background: #0a0a1a;
+      padding: 1px 6px;
+      border-radius: 4px;
+      border: 1px solid #21262d;
+    }
+
+    .channel-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .channel-card {
+      background: #161b22;
+      border: 1px solid #21262d;
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .channel-card h4 { font-size: 12px; color: #c9d1d9; margin-bottom: 6px; }
+
+    .channel-stat {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      padding: 2px 0;
+    }
+
+    .channel-stat .label { color: #8b949e; }
+    .channel-stat .value { color: #58a6ff; font-weight: 600; }
+
+    /* ── CLI VIEW ── */
+    .cli-toolbar {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .cli-btn {
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1px solid #30363d;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: default;
+    }
+
+    .cli-btn.ps { background: #0d2040; color: #58a6ff; border-color: #1f3d7a; }
+    .cli-btn.claude { background: #1a0d30; color: #bc8cff; border-color: #3d1a7a; }
+    .cli-btn.cmd { background: #21262d; color: #c9d1d9; }
+
+    .cli-terminal {
+      background: #0a0a15;
+      border: 1px solid #21262d;
+      border-radius: 8px;
+      padding: 12px;
+      font-family: 'Consolas', 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      height: 300px;
+      overflow: hidden;
+    }
+
+    .cli-prompt { color: #3fb950; }
+    .cli-path { color: #58a6ff; }
+    .cli-text { color: #c9d1d9; }
+    .cli-output { color: #8b949e; }
+    .cli-cursor { background: #00ff88; color: #000; animation: blink 1s step-end infinite; }
+
+    @keyframes blink {
+      50% { opacity: 0; }
+    }
+
+    /* ── ANNOTATIONS ── */
+    .annotation {
+      position: absolute;
+      background: #d29922;
+      color: #000;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 20px;
+      white-space: nowrap;
+      z-index: 10;
+    }
+
+    .annotation::before {
+      content: '';
+      position: absolute;
+      width: 0;
+      height: 0;
+    }
+
+    /* ── CALLOUT BOXES ── */
+    .callout {
+      background: #0d1830;
+      border: 1px solid #1f3d7a;
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin: 16px 0;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #c9d1d9;
+    }
+
+    .callout strong { color: #58a6ff; }
+
+    .callout.warn {
+      background: #2d1a00;
+      border-color: #d29922;
+    }
+
+    .callout.warn strong { color: #d29922; }
+
+    .callout.success {
+      background: #0d2818;
+      border-color: #238636;
+    }
+
+    .callout.success strong { color: #3fb950; }
+
+    /* ── System Tray ── */
+    .tray-demo {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+      background: #2d2d3d;
+      padding: 6px 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .tray-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .tray-icon.pia { background: linear-gradient(135deg, #58a6ff, #bc8cff); color: #000; }
+    .tray-icon.other { background: #484f58; color: #c9d1d9; }
+
+    .tray-time { font-size: 12px; color: #c9d1d9; }
+
+    .tray-tooltip {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 11px;
+      position: relative;
+    }
+
+    .tray-tooltip::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      right: 30px;
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 6px solid #30363d;
+    }
+
+    .tray-tooltip-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 2px 0;
+    }
+
+    .tray-tooltip-label { color: #8b949e; }
+    .tray-tooltip-val { font-weight: 600; }
+    .tray-tooltip-val.green { color: #3fb950; }
+    .tray-tooltip-val.red { color: #f85149; }
+
+    /* ── Divider ── */
+    .divider {
+      border: none;
+      border-top: 1px solid #21262d;
+      margin: 40px 0;
+    }
+
+    /* ── Flow Diagram ── */
+    .flow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      margin: 20px 0;
+      flex-wrap: wrap;
+    }
+
+    .flow-box {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 12px 18px;
+      text-align: center;
+      min-width: 140px;
+    }
+
+    .flow-box.highlight {
+      border-color: #58a6ff;
+      background: #0d1830;
+    }
+
+    .flow-box h5 { font-size: 12px; color: #58a6ff; margin-bottom: 4px; }
+    .flow-box p { font-size: 10px; color: #8b949e; }
+
+    .flow-arrow {
+      font-size: 20px;
+      color: #3fb950;
+      padding: 0 8px;
+    }
+
+    /* ── Notification Demo ── */
+    .notif-demo {
+      background: #2d2d3d;
+      border: 1px solid #484f58;
+      border-radius: 10px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      max-width: 350px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+
+    .notif-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #58a6ff, #bc8cff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: #000;
+      flex-shrink: 0;
+    }
+
+    .notif-text h5 { font-size: 12px; color: #c9d1d9; }
+    .notif-text p { font-size: 11px; color: #8b949e; margin-top: 2px; }
+  </style>
+</head>
+<body>
+
+<h1>PIA VISOR - Desktop App</h1>
+<p class="subtitle">How the governance app looks and works on each machine</p>
+
+<!-- ──────────────────────────────────────────── -->
+<!-- SECTION 1: Overview -->
+<!-- ──────────────────────────────────────────── -->
+<div class="wireframe-section">
+  <div class="section-title">What Is The Visor?</div>
+  <div class="section-desc">
+    Every machine in your network runs a <strong>PIA Visor</strong> app. It's your control center for that machine -
+    you can see who's connected, chat with other machines, send tasks to repos, monitor security threats,
+    and even open terminal sessions. Think of it like a <strong>walkie-talkie + security camera + remote control</strong> for your computers.
+  </div>
+
+  <div class="flow">
+    <div class="flow-box">
+      <h5>Your Computer</h5>
+      <p>izzit7 (Hub)</p>
+    </div>
+    <div class="flow-arrow">&#8596;</div>
+    <div class="flow-box highlight">
+      <h5>PIA VISOR</h5>
+      <p>Desktop App</p>
+    </div>
+    <div class="flow-arrow">&#8596;</div>
+    <div class="flow-box">
+      <h5>Other Machines</h5>
+      <p>soda-yeti, DAO, etc.</p>
+    </div>
+  </div>
+
+  <div class="callout success">
+    <strong>Key Idea:</strong> Each machine has its own Visor. They all talk to each other through Tailscale
+    (your private network). No one outside your network can see or access them.
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ──────────────────────────────────────────── -->
+<!-- SECTION 2: Chat Tab -->
+<!-- ──────────────────────────────────────────── -->
+<div class="wireframe-section">
+  <div class="section-title">1. Chat - Talk Between Machines</div>
+  <div class="section-desc">
+    Send messages to any machine on your network. Like a group chat, but for your computers.
+    You can broadcast to all machines or message one directly. The sidebar shows you what repos are alive and what jobs are running.
+  </div>
+
+  <div class="desktop-window">
+    <div class="window-titlebar">
+      <div class="window-dots">
+        <div class="window-dot red"></div>
+        <div class="window-dot yellow"></div>
+        <div class="window-dot green"></div>
+      </div>
+      <div class="window-title">PIA Visor - izzit7</div>
+      <div class="window-tray">System Tray: Active</div>
+    </div>
+
+    <div class="app-header">
+      <div class="app-logo">
+        <h2>PIA VISOR</h2>
+        <span class="app-machine">Main PC (hub-izzit7)</span>
+      </div>
+      <div class="status-indicator">
+        <div class="status-dot"></div>
+        <span style="color:#3fb950;">Connected</span>
+      </div>
+    </div>
+
+    <div class="tab-bar">
+      <div class="tab active">Chat</div>
+      <div class="tab">History</div>
+      <div class="tab">Health</div>
+      <div class="tab">Tasks</div>
+      <div class="tab">Network</div>
+      <div class="tab">Security <span class="badge">2</span></div>
+      <div class="tab">CLI</div>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat"><span class="stat-val green">3</span><span class="stat-lbl">Repos</span></div>
+      <div class="stat"><span class="stat-val blue">2</span><span class="stat-lbl">Machines</span></div>
+      <div class="stat"><span class="stat-val purple">12</span><span class="stat-lbl">Jobs</span></div>
+      <div class="stat"><span class="stat-val orange">2</span><span class="stat-lbl">Queued</span></div>
+      <div class="stat"><span class="stat-val green">8</span><span class="stat-lbl">Done</span></div>
+      <div class="stat"><span class="stat-val red">1</span><span class="stat-lbl">Failed</span></div>
+      <div class="stat"><span class="stat-val blue">47</span><span class="stat-lbl">Messages</span></div>
+      <div class="stat"><span class="stat-val blue">8</span><span class="stat-lbl">Agents</span></div>
+      <div class="stat"><span class="stat-val green">3</span><span class="stat-lbl">Tracked IPs</span></div>
+      <div class="stat"><span class="stat-val red">0</span><span class="stat-lbl">Blocked</span></div>
+    </div>
+
+    <div class="content-area">
+      <div class="chat-layout">
+        <div class="chat-main">
+          <div class="chat-target">
+            <span style="color:#8b949e;">Send to:</span>
+            <select>
+              <option>All Machines (Broadcast)</option>
+              <option>soda-yeti</option>
+              <option>dao-machine</option>
+            </select>
+          </div>
+          <div class="chat-messages">
+            <div class="msg system">Connected to PIA Hub</div>
+
+            <div class="msg incoming">
+              <div class="msg-from remote">soda-yeti <span class="msg-time">2:34 PM</span></div>
+              Deploy to staging complete. All tests passing.
+            </div>
+
+            <div class="msg outgoing">
+              <div class="msg-from you">You (broadcast) <span class="msg-time">2:35 PM</span></div>
+              Great work! Wingspan, can you update the deck with the new endpoints?
+            </div>
+
+            <div class="msg incoming">
+              <div class="msg-from remote">soda-yeti <span class="msg-time">2:36 PM</span></div>
+              Task queued for Wingspan: update-deck
+            </div>
+
+            <div class="msg outgoing">
+              <div class="msg-from you">You -> soda-yeti <span class="msg-time">2:38 PM</span></div>
+              Also run the integration tests when you get a chance
+            </div>
+          </div>
+          <div class="chat-input">
+            <input type="text" placeholder="Type a message..." disabled>
+            <button>Send</button>
+          </div>
+        </div>
+
+        <div class="chat-sidebar">
+          <div class="sidebar-card">
+            <h4>Alive Repos</h4>
+            <div class="repo-item"><div class="repo-dot idle"></div> Wingspan <span style="color:#484f58;font-size:10px;margin-left:auto;">izzit7</span></div>
+            <div class="repo-item"><div class="repo-dot working"></div> DAO <span style="color:#484f58;font-size:10px;margin-left:auto;">dao-machine</span></div>
+            <div class="repo-item"><div class="repo-dot idle"></div> Farcake <span style="color:#484f58;font-size:10px;margin-left:auto;">soda-yeti</span></div>
+          </div>
+          <div class="sidebar-card">
+            <h4>Machines</h4>
+            <div class="machine-item">soda-yeti <div class="ip">100.102.217.69</div></div>
+            <div class="machine-item">dao-machine <div class="ip">100.xx.xx.xx</div></div>
+          </div>
+          <div class="sidebar-card">
+            <h4>Recent Jobs</h4>
+            <div style="font-size:11px;padding:3px 0;"><span style="color:#bc8cff;">Farcake</span>: deploy <span style="color:#3fb950;font-size:9px;">done</span></div>
+            <div style="font-size:11px;padding:3px 0;"><span style="color:#bc8cff;">Wingspan</span>: update-deck <span style="color:#d29922;font-size:9px;">queued</span></div>
+            <div style="font-size:11px;padding:3px 0;"><span style="color:#bc8cff;">DAO</span>: compile <span style="color:#d29922;font-size:9px;">running</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>How it works:</strong> Pick a machine from the dropdown and type your message. It travels through your
+    private Tailscale network (encrypted, no one else can see it). The sidebar shows you which repos are alive
+    and what they're doing right now.
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ──────────────────────────────────────────── -->
+<!-- SECTION 3: Security Tab -->
+<!-- ──────────────────────────────────────────── -->
+<div class="wireframe-section">
+  <div class="section-title">2. Security - Who's Connecting?</div>
+  <div class="section-desc">
+    See every device that connects to your machine. Known devices (your Tailscale network) show green.
+    Unknown devices show orange. If someone tries to break in, they get <strong>automatically blocked</strong> and you see a red alert.
+    You can also manually block or allow any IP address.
+  </div>
+
+  <div class="desktop-window">
+    <div class="window-titlebar">
+      <div class="window-dots">
+        <div class="window-dot red"></div>
+        <div class="window-dot yellow"></div>
+        <div class="window-dot green"></div>
+      </div>
+      <div class="window-title">PIA Visor - izzit7</div>
+    </div>
+
+    <div class="app-header">
+      <div class="app-logo">
+        <h2>PIA VISOR</h2>
+        <span class="app-machine">Main PC (hub-izzit7)</span>
+      </div>
+      <div class="status-indicator">
+        <div class="status-dot"></div>
+        <span style="color:#3fb950;">Connected</span>
+      </div>
+    </div>
+
+    <div class="tab-bar">
+      <div class="tab">Chat</div>
+      <div class="tab">History</div>
+      <div class="tab">Health</div>
+      <div class="tab">Tasks</div>
+      <div class="tab">Network</div>
+      <div class="tab active">Security <span class="badge">2</span></div>
+      <div class="tab">CLI</div>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat"><span class="stat-val green">3</span><span class="stat-lbl">Repos</span></div>
+      <div class="stat"><span class="stat-val blue">2</span><span class="stat-lbl">Machines</span></div>
+      <div class="stat"><span class="stat-val purple">12</span><span class="stat-lbl">Jobs</span></div>
+      <div class="stat"><span class="stat-val green">4</span><span class="stat-lbl">Tracked IPs</span></div>
+      <div class="stat"><span class="stat-val red">1</span><span class="stat-lbl">Blocked</span></div>
+    </div>
+
+    <div class="content-area">
+      <div class="security-layout">
+        <div class="security-connections">
+          <div class="panel-title">Tracked Connections</div>
+
+          <div class="conn-item tailscale">
+            <span class="conn-ip">100.73.133.3</span>
+            <span class="conn-tag ts">TAILSCALE</span>
+            <span class="conn-info">142 reqs | 0 fails</span>
+          </div>
+
+          <div class="conn-item tailscale">
+            <span class="conn-ip">100.102.217.69</span>
+            <span class="conn-tag ts">TAILSCALE</span>
+            <span class="conn-info">87 reqs | 0 fails</span>
+          </div>
+
+          <div class="conn-item localhost">
+            <span class="conn-ip">127.0.0.1</span>
+            <span class="conn-tag local">LOCALHOST</span>
+            <span class="conn-info">523 reqs | 0 fails</span>
+          </div>
+
+          <div class="conn-item blocked">
+            <span class="conn-ip">203.45.67.89</span>
+            <span class="conn-tag blk">BLOCKED</span>
+            <span class="conn-info">5 failed auths</span>
+            <div class="conn-actions">
+              <span class="conn-btn">Unblock</span>
+            </div>
+          </div>
+
+          <div class="conn-item unknown">
+            <span class="conn-ip">185.220.101.42</span>
+            <span class="conn-tag unk">UNKNOWN</span>
+            <span class="conn-info">3 reqs | 2 fails</span>
+            <div class="conn-actions">
+              <span class="conn-btn danger">Block</span>
+              <span class="conn-btn">Allow</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="security-events">
+          <div class="panel-title">Security Events</div>
+
+          <div class="event-item critical">
+            <span class="event-type crit">BRUTE FORCE</span>
+            <span class="event-ip">203.45.67.89</span>
+            <span class="event-detail">BLOCKED: 5 failed authentication attempts</span>
+            <span class="event-time">2:45 PM</span>
+          </div>
+
+          <div class="event-item critical">
+            <span class="event-type crit">IP BLOCKED</span>
+            <span class="event-ip">203.45.67.89</span>
+            <span class="event-detail">Auto-blocked for 15 minutes</span>
+            <span class="event-time">2:45 PM</span>
+          </div>
+
+          <div class="event-item warning">
+            <span class="event-type warn">UNKNOWN IP</span>
+            <span class="event-ip">185.220.101.42</span>
+            <span class="event-detail">Unknown IP connected (UA: python-requests/2.28)</span>
+            <span class="event-time">2:42 PM</span>
+          </div>
+
+          <div class="event-item warning">
+            <span class="event-type warn">FAILED AUTH</span>
+            <span class="event-ip">203.45.67.89</span>
+            <span class="event-detail">Failed auth attempt #3</span>
+            <span class="event-time">2:44 PM</span>
+          </div>
+
+          <div class="event-item info">
+            <span class="event-type inf">NEW CONNECTION</span>
+            <span class="event-ip">100.102.217.69</span>
+            <span class="event-detail">New Tailscale connection: soda-yeti</span>
+            <span class="event-time">2:30 PM</span>
+          </div>
+
+          <div class="event-item info">
+            <span class="event-type inf">NEW CONNECTION</span>
+            <span class="event-ip">127.0.0.1</span>
+            <span class="event-detail">New local connection: localhost</span>
+            <span class="event-time">2:28 PM</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <strong>Auto-Protection:</strong> If someone tries to guess your password 5 times, they get automatically blocked for 15 minutes.
+    If someone scans your system for open doors (port scan), they get blocked instantly.
+    If someone floods your connection with messages, they get cut off. All of this happens automatically - you just see the alerts.
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ──────────────────────────────────────────── -->
+<!-- SECTION 4: Network Tab -->
+<!-- ──────────────────────────────────────────── -->
+<div class="wireframe-section">
+  <div class="section-title">3. Network - Your Machine Map</div>
+  <div class="section-desc">
+    See all your machines and how they're connected. The hub (your main computer) sits in the center.
+    Remote machines connect through Tailscale. You can see which communication channels are active.
+  </div>
+
+  <div class="desktop-window">
+    <div class="window-titlebar">
+      <div class="window-dots">
+        <div class="window-dot red"></div>
+        <div class="window-dot yellow"></div>
+        <div class="window-dot green"></div>
+      </div>
+      <div class="window-title">PIA Visor - izzit7</div>
+    </div>
+
+    <div class="tab-bar">
+      <div class="tab">Chat</div>
+      <div class="tab">History</div>
+      <div class="tab">Health</div>
+      <div class="tab">Tasks</div>
+      <div class="tab active">Network</div>
+      <div class="tab">Security</div>
+      <div class="tab">CLI</div>
+    </div>
+
+    <div class="content-area">
+      <div class="panel-title">Topology</div>
+      <div class="network-topo">
+        <div class="topo-node">
+          <div class="topo-icon hub"><div class="topo-dot"></div>H</div>
+          <div class="topo-name">izzit7</div>
+          <div class="topo-ip">100.73.133.3</div>
+        </div>
+
+        <div class="topo-line">
+          <span class="topo-latency">5ms</span>
+        </div>
+
+        <div class="topo-node">
+          <div class="topo-icon remote"><div class="topo-dot"></div>M</div>
+          <div class="topo-name">soda-yeti</div>
+          <div class="topo-ip">100.102.217.69</div>
+        </div>
+
+        <div class="topo-line">
+          <span class="topo-latency">12ms</span>
+        </div>
+
+        <div class="topo-node">
+          <div class="topo-icon remote"><div class="topo-dot"></div>M</div>
+          <div class="topo-name">dao-machine</div>
+          <div class="topo-ip">100.xx.xx.xx</div>
+        </div>
+
+        <div style="width:80px;"></div>
+
+        <div class="topo-node">
+          <div class="topo-icon offline">M</div>
+          <div class="topo-name">backup-pc</div>
+          <div class="topo-ip">offline</div>
+        </div>
+      </div>
+
+      <div class="panel-title">Communication Channels</div>
+      <div class="channel-grid">
+        <div class="channel-card">
+          <h4>Cross-Machine Relay</h4>
+          <div class="channel-stat"><span class="label">Messages</span><span class="value">47</span></div>
+          <div class="channel-stat"><span class="label">Machines</span><span class="value">2</span></div>
+        </div>
+        <div class="channel-card">
+          <h4>PubSub (MQTT)</h4>
+          <div class="channel-stat"><span class="label">Published</span><span class="value">23</span></div>
+          <div class="channel-stat"><span class="label">Topics</span><span class="value">5</span></div>
+        </div>
+        <div class="channel-card">
+          <h4>Webhooks</h4>
+          <div class="channel-stat"><span class="label">Hooks</span><span class="value">3</span></div>
+          <div class="channel-stat"><span class="label">Success</span><span class="value">100%</span></div>
+        </div>
+        <div class="channel-card">
+          <h4>WebSocket</h4>
+          <div class="channel-stat"><span class="label">Status</span><span class="value">Connected</span></div>
+          <div class="channel-stat"><span class="label">Port</span><span class="value">3001</span></div>
+        </div>
+        <div class="channel-card">
+          <h4>Agent Bus</h4>
+          <div class="channel-stat"><span class="label">Type</span><span class="value">In-process</span></div>
+          <div class="channel-stat"><span class="label">Pattern</span><span class="value">Direct + Broadcast</span></div>
+        </div>
+        <div class="channel-card">
+          <h4>Tailscale VPN</h4>
+          <div class="channel-stat"><span class="label">Type</span><span class="value">Private mesh</span></div>
+          <div class="channel-stat"><span class="label">Machines</span><span class="value">3</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ──────────────────────────────────────────── -->
+<!-- SECTION 5: Health Tab -->
+<!-- ──────────────────────────────────────────── -->
+<div class="wireframe-section">
+  <div class="section-title">4. Health - Everything At A Glance</div>
+  <div class="section-desc">
+    A dashboard showing the health of your entire system. Green means good, orange means attention needed, red means problem.
+    Each card covers a different part of the system.
+  </div>
+
+  <div class="desktop-window">
+    <div class="window-titlebar">
+      <div class="window-dots">
+        <div class="window-dot red"></div>
+        <div class="window-dot yellow"></div>
+        <div class="window-dot green"></div>
+      </div>
+      <div class="window-title">PIA Visor - izzit7</div>
+    </div>
+
+    <div class="tab-bar">
+      <div class="tab">Chat</div>
+      <div class="tab">History</div>
+      <div class="tab active">Health</div>
+      <div class="tab">Tasks</div>
+      <div class="tab">Network</div>
+      <div class="tab">Security</div>
+      <div class="tab">CLI</div>
+    </div>
+
+    <div class="content-area">
+      <div class="health-grid">
+        <div class="health-card">
+          <h4>System</h4>
+          <div class="health-row"><span class="health-label">Status</span><span class="health-val ok">OK</span></div>
+          <div class="health-row"><span class="health-label">Mode</span><span class="health-val">Hub</span></div>
+          <div class="health-row"><span class="health-label">WebSocket</span><span class="health-val ok">Connected</span></div>
+          <div class="health-row"><span class="health-label">Uptime</span><span class="health-val">4h 32m</span></div>
+        </div>
+
+        <div class="health-card">
+          <h4>Machines (3)</h4>
+          <div class="health-row"><span class="health-label">izzit7 (Hub)</span><span class="health-val ok">Online</span></div>
+          <div class="health-row"><span class="health-label">soda-yeti</span><span class="health-val ok">5s ago</span></div>
+          <div class="health-row"><span class="health-label">dao-machine</span><span class="health-val warn">45s ago</span></div>
+          <div class="health-row"><span class="health-label">backup-pc</span><span class="health-val err">Offline</span></div>
+        </div>
+
+        <div class="health-card">
+          <h4>Repositories (3)</h4>
+          <div class="health-row"><span class="health-label">Wingspan</span><span class="health-val ok">Idle</span></div>
+          <div class="health-row"><span class="health-label">DAO</span><span class="health-val warn">Working</span></div>
+          <div class="health-row"><span class="health-label">Farcake</span><span class="health-val ok">Idle</span></div>
+          <div class="health-row"><span class="health-label">Total Jobs</span><span class="health-val">12</span></div>
+        </div>
+
+        <div class="health-card">
+          <h4>Agents (8)</h4>
+          <div class="health-row"><span class="health-label">Active</span><span class="health-val ok">6</span></div>
+          <div class="health-row"><span class="health-label">Idle</span><span class="health-val">1</span></div>
+          <div class="health-row"><span class="health-label">Error</span><span class="health-val err">1</span></div>
+        </div>
+
+        <div class="health-card">
+          <h4>PubSub</h4>
+          <div class="health-row"><span class="health-label">Published</span><span class="health-val">23</span></div>
+          <div class="health-row"><span class="health-label">Subscriptions</span><span class="health-val">4</span></div>
+          <div class="health-row"><span class="health-label">Topics</span><span class="health-val">5</span></div>
+        </div>
+
+        <div class="health-card">
+          <h4>Security</h4>
+          <div class="health-row"><span class="health-label">Tracked IPs</span><span class="health-val">4</span></div>
+          <div class="health-row"><span class="health-label">Blocked</span><span class="health-val err">1</span></div>
+          <div class="health-row"><span class="health-label">Threat Level</span><span class="health-val warn">Medium</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ──────────────────────────────────────────── -->
+<!-- SECTION 6: CLI Tab -->
+<!-- ──────────────────────────────────────────── -->
+<div class="wireframe-section">
+  <div class="section-title">5. CLI - Remote Terminal</div>
+  <div class="section-desc">
+    Open a terminal right inside the app. You can start PowerShell, CMD, or even Claude sessions.
+    This means you can control any machine from the Visor without switching windows.
+  </div>
+
+  <div class="desktop-window">
+    <div class="window-titlebar">
+      <div class="window-dots">
+        <div class="window-dot red"></div>
+        <div class="window-dot yellow"></div>
+        <div class="window-dot green"></div>
+      </div>
+      <div class="window-title">PIA Visor - izzit7</div>
+    </div>
+
+    <div class="tab-bar">
+      <div class="tab">Chat</div>
+      <div class="tab">History</div>
+      <div class="tab">Health</div>
+      <div class="tab">Tasks</div>
+      <div class="tab">Network</div>
+      <div class="tab">Security</div>
+      <div class="tab active">CLI</div>
+    </div>
+
+    <div class="content-area" style="padding:12px;">
+      <div class="cli-toolbar">
+        <span class="cli-btn ps">New PowerShell</span>
+        <span class="cli-btn claude">New Claude</span>
+        <span class="cli-btn cmd">New CMD</span>
+        <select style="background:#21262d;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;padding:4px 8px;font-size:11px;margin-left:8px;">
+          <option>powershell (a3f8...)</option>
+          <option>claude (b2c1...)</option>
+        </select>
+      </div>
+
+      <div class="cli-terminal">
+        <div><span class="cli-prompt">PS</span> <span class="cli-path">C:\Users\mic\Downloads\pia-system</span><span class="cli-text">&gt;</span></div>
+        <div><span class="cli-text">npm run build</span></div>
+        <div><span class="cli-output">&gt; pia-system@1.0.0 build</span></div>
+        <div><span class="cli-output">&gt; tsc</span></div>
+        <div><span class="cli-output"></span></div>
+        <div><span class="cli-prompt">PS</span> <span class="cli-path">C:\Users\mic\Downloads\pia-system</span><span class="cli-text">&gt;</span></div>
+        <div><span class="cli-text">node dist/index.js</span></div>
+        <div><span class="cli-output">[Main] PIA - Project Intelligence Agent</span></div>
+        <div><span class="cli-output">[Main] Mode: HUB</span></div>
+        <div><span class="cli-output">[Sentinel] Network Sentinel initialized</span></div>
+        <div><span class="cli-output">[API] API server running at http://0.0.0.0:3000</span></div>
+        <div><span class="cli-output">[WS] WebSocket server running on port 3001</span></div>
+        <div><span class="cli-output">[Main] PIA Hub is ready!</span></div>
+        <div><span class="cli-output"></span></div>
+        <div><span class="cli-prompt">PS</span> <span class="cli-path">C:\Users\mic\Downloads\pia-system</span><span class="cli-text">&gt; </span><span class="cli-cursor">&nbsp;</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Power move:</strong> Click "New Claude" to open an AI assistant terminal right in the app.
+    It has full context of the machine it's running on. You can ask it to run builds, fix bugs, or manage the system.
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ──────────────────────────────────────────── -->
+<!-- SECTION 7: System Tray & Notifications -->
+<!-- ──────────────────────────────────────────── -->
+<div class="wireframe-section">
+  <div class="section-title">6. System Tray + Notifications</div>
+  <div class="section-desc">
+    When running as a desktop app (Electron), PIA lives in your system tray. It shows a quick status when you hover,
+    and pops up notifications for important events - like when a machine goes offline or someone tries to break in.
+  </div>
+
+  <div style="display:flex;gap:30px;align-items:flex-start;flex-wrap:wrap;">
+    <div>
+      <div class="panel-title" style="margin-bottom:12px;">System Tray (bottom-right of screen)</div>
+      <div class="tray-tooltip">
+        <div style="font-weight:700;margin-bottom:6px;color:#58a6ff;">PIA Visor - izzit7</div>
+        <div class="tray-tooltip-row"><span class="tray-tooltip-label">Status</span><span class="tray-tooltip-val green">All OK</span></div>
+        <div class="tray-tooltip-row"><span class="tray-tooltip-label">Machines</span><span class="tray-tooltip-val">2 online</span></div>
+        <div class="tray-tooltip-row"><span class="tray-tooltip-label">Repos</span><span class="tray-tooltip-val">3 alive</span></div>
+        <div class="tray-tooltip-row"><span class="tray-tooltip-label">Blocked IPs</span><span class="tray-tooltip-val red">1</span></div>
+        <div class="tray-tooltip-row"><span class="tray-tooltip-label">Jobs Running</span><span class="tray-tooltip-val">1</span></div>
+      </div>
+      <div class="tray-demo" style="margin-top:8px;">
+        <div class="tray-icon other">W</div>
+        <div class="tray-icon other">D</div>
+        <div class="tray-icon other">S</div>
+        <div class="tray-icon pia">P</div>
+        <div class="tray-time">2:47 PM</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel-title" style="margin-bottom:12px;">Desktop Notifications</div>
+      <div class="notif-demo" style="margin-bottom:10px;">
+        <div class="notif-icon">P</div>
+        <div class="notif-text">
+          <h5>PIA Security Alert</h5>
+          <p>Unknown IP 185.220.101.42 attempted connection. Auto-blocked after 5 failed auth attempts.</p>
+        </div>
+      </div>
+      <div class="notif-demo" style="margin-bottom:10px;">
+        <div class="notif-icon">P</div>
+        <div class="notif-text">
+          <h5>soda-yeti: Task Complete</h5>
+          <p>Farcake deploy finished successfully (took 34s)</p>
+        </div>
+      </div>
+      <div class="notif-demo">
+        <div class="notif-icon">P</div>
+        <div class="notif-text">
+          <h5>Machine Offline</h5>
+          <p>dao-machine hasn't responded in 5 minutes</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ──────────────────────────────────────────── -->
+<!-- SECTION 8: How to Make It a Desktop App -->
+<!-- ──────────────────────────────────────────── -->
+<div class="wireframe-section">
+  <div class="section-title">How To Make It A Desktop App</div>
+  <div class="section-desc">
+    Three options, from quickest to most powerful:
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+    <div class="health-card">
+      <h4 style="color:#3fb950;">Option 1: Install As PWA</h4>
+      <div style="font-size:12px;color:#c9d1d9;margin-bottom:8px;">Works right now - zero extra work</div>
+      <div class="health-row"><span class="health-label">Open Chrome</span><span class="health-val">localhost:3000/visor.html</span></div>
+      <div class="health-row"><span class="health-label">Click the install icon</span><span class="health-val">(in URL bar)</span></div>
+      <div class="health-row"><span class="health-label">Pin to taskbar</span><span class="health-val">Done!</span></div>
+      <div style="margin-top:8px;font-size:11px;color:#8b949e;">Gets its own window, icon, and feels like an app. No system tray though.</div>
+    </div>
+
+    <div class="health-card" style="border-color:#58a6ff;">
+      <h4 style="color:#58a6ff;">Option 2: Electron App</h4>
+      <div style="font-size:12px;color:#c9d1d9;margin-bottom:8px;">Full desktop app experience</div>
+      <div class="health-row"><span class="health-label">System tray icon</span><span class="health-val ok">Yes</span></div>
+      <div class="health-row"><span class="health-label">Auto-start on boot</span><span class="health-val ok">Yes</span></div>
+      <div class="health-row"><span class="health-label">Native notifications</span><span class="health-val ok">Yes</span></div>
+      <div class="health-row"><span class="health-label">Always-on background</span><span class="health-val ok">Yes</span></div>
+      <div class="health-row"><span class="health-label">App size</span><span class="health-val warn">~300MB</span></div>
+      <div style="margin-top:8px;font-size:11px;color:#8b949e;">The gold standard. Most apps use this (VS Code, Discord, Slack).</div>
+    </div>
+
+    <div class="health-card">
+      <h4 style="color:#bc8cff;">Option 3: Tauri App</h4>
+      <div style="font-size:12px;color:#c9d1d9;margin-bottom:8px;">Lightweight alternative</div>
+      <div class="health-row"><span class="health-label">System tray icon</span><span class="health-val ok">Yes</span></div>
+      <div class="health-row"><span class="health-label">Auto-start on boot</span><span class="health-val ok">Yes</span></div>
+      <div class="health-row"><span class="health-label">Native notifications</span><span class="health-val ok">Yes</span></div>
+      <div class="health-row"><span class="health-label">Always-on background</span><span class="health-val ok">Yes</span></div>
+      <div class="health-row"><span class="health-label">App size</span><span class="health-val ok">~50MB</span></div>
+      <div style="margin-top:8px;font-size:11px;color:#8b949e;">6x smaller than Electron. Uses Rust under the hood. Newer but growing fast.</div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<div style="text-align:center;padding:20px;color:#484f58;font-size:12px;">
+  PIA Visor Wireframes | Built by Claude Opus 4.6 | 2026-02-12
+</div>
+
+</body>
+</html>

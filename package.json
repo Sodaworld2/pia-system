@@ -12,7 +12,9 @@
     "test:e2e": "vitest run --config vitest.e2e.config.ts",
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit",
-    "db:migrate": "tsx src/db/migrate.ts"
+    "db:migrate": "tsx src/db/migrate.ts",
+    "desktop": "electron electron-main.cjs",
+    "desktop:build": "npm run build && electron electron-main.cjs"
   },
   "keywords": [
     "ai",
@@ -54,6 +56,7 @@
     "@types/express": "^5.0.0",
     "@types/node": "^22.10.7",
     "@types/ws": "^8.5.13",
+    "electron": "^40.4.0",
     "eslint": "^9.18.0",
     "prettier": "^3.4.2",
     "tsx": "^4.19.2",
