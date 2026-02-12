@@ -82,7 +82,10 @@
       "mcp__playwright__browser_tabs",
       "Bash(git fetch:*)",
       "WebFetch(domain:www.npmjs.com)",
-      "WebFetch(domain:mcp.so)"
+      "WebFetch(domain:mcp.so)",
+      "Bash(git status:*)",
+      "Bash(git pull:*)",
+      "Bash(git push:*)"
     ]
   }
 }
