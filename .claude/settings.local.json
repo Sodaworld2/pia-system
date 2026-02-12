@@ -11,7 +11,9 @@
       "Bash(if exist \"%USERPROFILE%\\\\.claude\\\\settings.json\" type \"%USERPROFILE%\\\\.claude\\\\settings.json\")",
       "Bash(git fetch:*)",
       "Bash(git stash:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(start:*)",
+      "Bash(npx kill-port:*)"
     ]
   },
   "hooks": {

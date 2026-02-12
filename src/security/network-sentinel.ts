@@ -176,6 +176,8 @@ export class NetworkSentinel {
 
   private checkPortScan(state: IPState, endpoint: string): void {
     state.uniqueEndpoints.add(endpoint);
+    // Never block localhost or Tailscale IPs for port scanning — dashboards hit many endpoints
+    if (state.isLocalhost || state.isTailscale) return;
     if (state.uniqueEndpoints.size > this.config.portScanThreshold) {
       this.blockIP(state, 'port_scan_detected',
         `Hit ${state.uniqueEndpoints.size} unique endpoints rapidly`);
