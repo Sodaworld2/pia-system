@@ -111,25 +111,23 @@ claude mcp add windows-mcp -- cmd /c uvx windows-mcp
 
 ### 3. GitHub MCP (Git + Collaboration)
 
-**What it does:** Direct GitHub access - PRs, issues, code search, repo management, cross-machine code sync, automated commits.
+**What it does:** Direct GitHub access - create/merge PRs, manage issues, push files, search code, list commits. 26 tools total. Claude can commit and sync code across machines through GitHub.
 
-**Where it runs:** All machines (enables frequent code sync between machines).
+**Where it runs:** All machines.
 
 | Machine | Status |
 |---------|--------|
-| #1 izzit7 | NEEDS INSTALL |
+| #1 izzit7 | INSTALLED |
 | #2 new | NEEDS INSTALL |
 | #3 soda-yeti | NEEDS INSTALL |
 
-**Install:**
+**Install (new official way - old npm package is deprecated):**
 ```bash
-# 1. Get a GitHub personal access token from github.com/settings/tokens
-# 2. Add the MCP
-claude mcp add github -- cmd /c npx -y @modelcontextprotocol/server-github
-
-# 3. Set the token (add to your shell profile or .env)
-set GITHUB_PERSONAL_ACCESS_TOKEN=ghp_your_token_here
+claude mcp add --transport http github https://api.githubcopilot.com/mcp/
 ```
+Claude will handle OAuth authentication automatically when you first use it.
+
+**Key tools:** `create_or_update_file`, `push_files`, `get_file_contents`, `create_pull_request`, `merge_pull_request`, `search_code`, `list_commits`, `create_issue`
 
 **Verify all MCPs:**
 ```bash
@@ -176,7 +174,7 @@ npm run build && npm run dev
 # 6. Install MCPs
 claude mcp add playwright -- cmd /c npx -y @playwright/mcp@latest
 claude mcp add windows-mcp -- cmd /c uvx windows-mcp
-claude mcp add github -- cmd /c npx -y @modelcontextprotocol/server-github
+claude mcp add --transport http github https://api.githubcopilot.com/mcp/
 
 # 7. Register with hub
 curl -X POST http://100.73.133.3:3000/api/machines/register \
@@ -193,25 +191,25 @@ curl http://100.73.133.3:3000/api/health -H "X-Api-Token: pia-local-dev-token-20
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│              Browser / Visor / Desktop / Mobile              │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │  Chat │ History │ Health │ Tasks │ Network │ Security│    │
-│  └─────────────────────┬───────────────────────────────┘    │
-└─────────────────────────┼────────────────────────────────────┘
-                          │ HTTP + WebSocket
-┌─────────────────────────▼────────────────────────────────────┐
+┌──────────────────────────────────────────────────────────────┐
+│              Browser / Visor / Desktop / Mobile               │
+│  ┌──────────────────────────────────────────────────────┐    │
+│  │  Chat | History | Health | Tasks | Network | Security │    │
+│  └──────────────────────┬────────────────────────────────┘    │
+└──────────────────────────┼────────────────────────────────────┘
+                           │ HTTP + WebSocket
+┌──────────────────────────▼────────────────────────────────────┐
 │                    PIA Hub (Machine #1)                        │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐    │
-│  │ Express :3000│  │ WS :3001     │  │ Network Sentinel │    │
-│  └──────┬───────┘  └──────┬───────┘  └──────────────────┘    │
-│  ┌──────▼──────────────────▼───────┐  ┌──────────────────┐    │
-│  │  Hub Aggregator │ Alert Monitor │  │  Agent Factory   │    │
-│  └──────┬──────────────────────────┘  └──────────────────┘    │
-│  ┌──────▼──────────────────────────┐  ┌──────────────────┐    │
-│  │  SQLite (machines,agents,etc)   │  │  Multi-Model AI  │    │
-│  └─────────────────────────────────┘  └──────────────────┘    │
-└──────────────────────────────────────────────────────────────┘
+│  ┌──────────────┐  ┌──────────────┐  ┌───────────────────┐   │
+│  │ Express :3000│  │ WS :3001     │  │ Network Sentinel  │   │
+│  └──────┬───────┘  └──────┬───────┘  └───────────────────┘   │
+│  ┌──────▼──────────────────▼───────┐  ┌───────────────────┐   │
+│  │  Hub Aggregator | Alert Monitor │  │  Agent Factory    │   │
+│  └──────┬──────────────────────────┘  └───────────────────┘   │
+│  ┌──────▼──────────────────────────┐  ┌───────────────────┐   │
+│  │  SQLite (machines,agents,etc)   │  │  Multi-Model AI   │   │
+│  └─────────────────────────────────┘  └───────────────────┘   │
+└───────────────────────────────────────────────────────────────┘
            │                      │
     ┌──────▼──────┐        ┌──────▼──────┐
     │ Machine #2  │        │ Machine #3  │
@@ -222,129 +220,102 @@ curl http://100.73.133.3:3000/api/health -H "X-Api-Token: pia-local-dev-token-20
 
 ## API Endpoints
 
-### Health & Stats
-- `GET /api/health` - Health check (no auth required)
-- `GET /api/stats` - Global statistics
+All endpoints require header: `X-Api-Token: pia-local-dev-token-2024`
 
-### Machines
-- `GET /api/machines` - List all machines
-- `POST /api/machines` - Register machine
-- `GET /api/machines/:id` - Get machine
-- `POST /api/machines/:id/heartbeat` - Update heartbeat
+| Category | Endpoint | Description |
+|----------|----------|-------------|
+| Health | `GET /api/health` | System health check |
+| Machines | `GET /api/machines` | List connected machines |
+| Machines | `POST /api/machines/register` | Register a new machine |
+| Sessions | `GET /api/sessions` | CLI tunnel sessions |
+| Agents | `GET /api/agents` | List all agents |
+| Factory | `POST /api/factory/spawn` | Spawn agent from template |
+| Tasks | `GET /api/tasks` | Orchestrator tasks |
+| AI | `POST /api/ai/chat` | Multi-model AI chat |
+| Security | `GET /api/security/stats` | Network Sentinel stats |
+| Security | `GET /api/security/events` | Security events log |
+| Hooks | `GET /api/hooks` | Claude hook activity |
+| MCPs | `GET /api/mcps` | MCP server status |
+| Alerts | `GET /api/alerts` | System alerts |
+| Doctor | `GET /api/doctor/health` | Deep health diagnosis |
+| Relay | `POST /api/relay/send` | Cross-machine messaging |
+| PubSub | `POST /api/pubsub/publish` | MQTT-style pub/sub |
+| Webhooks | `POST /api/webhooks/register` | Register webhook |
 
-### Agents
-- `GET /api/agents` - List agents
-- `POST /api/agents` - Create agent
-- `GET /api/agents/:id` - Get agent
-- `PATCH /api/agents/:id` - Update agent status
-- `POST /api/agents/:id/task` - Assign task
+## Claude Hooks
 
-### Sessions (CLI Tunnel)
-- `GET /api/sessions` - List active sessions
-- `POST /api/sessions` - Create session (spawns PTY)
-- `GET /api/sessions/:id` - Get session + buffer
-- `POST /api/sessions/:id/input` - Send input
-- `DELETE /api/sessions/:id` - Close session
+PIA uses Claude hooks for session tracking. Located in `.claude/hooks/`.
 
-### Alerts
-- `GET /api/alerts` - List alerts
-- `POST /api/alerts/:id/ack` - Acknowledge
-- `POST /api/alerts/ack-all` - Acknowledge all
+| Hook | File | Purpose |
+|------|------|---------|
+| Session Start | `session-start.cjs` | Records session begin |
+| Post Tool Use | `post-tool-use.cjs` | Tracks tool usage |
+| Stop | `stop.cjs` | Records session end |
 
-## WebSocket Protocol
-
-```javascript
-// Authenticate
-{ type: 'auth', payload: { token: 'xxx' } }
-
-// Subscribe to session output
-{ type: 'subscribe', payload: { sessionId: 'abc' } }
-
-// Send terminal input
-{ type: 'input', payload: { sessionId: 'abc', data: 'ls\n' } }
-
-// Resize terminal
-{ type: 'resize', payload: { sessionId: 'abc', cols: 120, rows: 40 } }
-
-// Server responses
-{ type: 'auth', success: true }
-{ type: 'buffer', sessionId: 'abc', payload: '...' }
-{ type: 'output', sessionId: 'abc', payload: '...' }
-{ type: 'agent:update', payload: { id, status, progress } }
-{ type: 'alert', payload: { id, type, message } }
-```
-
-## Security
-
-- API token required for all endpoints (except `/api/health`)
-- Rate limiting: 100 req/min API, 10/min session creation
-- Helmet.js security headers
-- CORS restrictions in production
+Config: `.claude/settings.local.json` - hooks activate automatically after clone.
 
 ## Project Structure
 
 ```
 pia-system/
 ├── src/
-│   ├── index.ts              # Entry point (hub/local modes)
-│   ├── config.ts             # Environment configuration
+│   ├── index.ts              # Entry point (hub/local mode)
+│   ├── config.ts             # .env configuration
+│   ├── agents/               # Agent factory, cost router, doctor
+│   ├── ai/                   # Multi-model AI (Claude, GPT, Gemini, Grok, Ollama)
 │   ├── api/
-│   │   ├── server.ts         # Express server + security
-│   │   └── routes/           # API route handlers
-│   ├── db/
-│   │   ├── database.ts       # SQLite with migrations
-│   │   └── queries/          # Database operations
-│   ├── hub/
-│   │   ├── aggregator.ts     # Machine/agent aggregation
-│   │   └── alert-monitor.ts  # Automatic alert detection
-│   ├── local/
-│   │   ├── hub-client.ts     # Connect to central hub
-│   │   └── service.ts        # Local agent management
-│   ├── tunnel/
-│   │   ├── pty-wrapper.ts    # node-pty CLI capture
-│   │   └── websocket-server.ts # Real-time communication
-│   ├── auto-healer/
-│   │   ├── folder-watcher.ts # File change detection
-│   │   ├── ai-assessor.ts    # Ollama integration
-│   │   └── doc-updater.ts    # Auto documentation
-│   └── utils/
-│       └── logger.ts         # Colored logging
+│   │   ├── server.ts         # Express + middleware + sentinel
+│   │   └── routes/           # 19 API route files
+│   ├── comms/                # Cross-machine, Discord, MQTT, agent bus
+│   ├── db/                   # SQLite database + queries
+│   ├── hooks/                # Delegation rules
+│   ├── hub/                  # Aggregator, alert monitor
+│   ├── local/                # Hub client, local service
+│   ├── orchestrator/         # Task queue, execution engine, heartbeat
+│   ├── security/             # Network Sentinel (IDS)
+│   ├── tunnel/               # PTY wrapper, WebSocket server
+│   └── utils/                # Logger
 ├── public/
-│   ├── index.html            # Dashboard
-│   ├── sw.js                 # Service worker (PWA)
-│   ├── offline.html          # Offline page
-│   ├── manifest.json         # PWA manifest
-│   ├── css/styles.css        # Responsive styles
-│   ├── js/app.js             # Dashboard logic
-│   └── icons/                # App icons
-└── data/
-    └── pia.db                # SQLite database
+│   ├── visor.html            # Main dashboard (7 tabs)
+│   ├── wireframes.html       # UI wireframes
+│   ├── showcase.html         # API showcase
+│   ├── index.html            # Landing page
+│   └── css/, js/             # Frontend assets
+├── electron-main.cjs         # Desktop app wrapper
+├── .claude/
+│   ├── settings.local.json   # Hook config
+│   └── hooks/                # Session tracking hooks
+└── package.json
 ```
+
+## Desktop App
+
+```bash
+npm run desktop          # Launch Electron visor
+npm run desktop:build    # Build then launch
+```
+
+System tray, minimize-to-tray, auto-detects running server.
+
+## Machine Fleet
+
+| Machine | Name | Role | Tailscale IP | Specs |
+|---------|------|------|-------------|-------|
+| #1 | izzit7 | Hub | 100.73.133.3 | RTX 5090, Windows 11 Pro |
+| #2 | TBD | Spoke | TBD | Coming online |
+| #3 | soda-yeti | Spoke | 100.102.217.69 | Ryzen 7 7700X, 32GB RAM |
 
 ## Development Status
 
 | Phase | Status | Tickets |
 |-------|--------|---------|
-| Foundation | ✅ Complete | PIA-001 to PIA-006 |
-| Dashboard | ✅ Complete | PIA-007 to PIA-011 |
-| Multi-Machine | ✅ Complete | PIA-012 to PIA-015 |
-| Mobile + Auto-Healer | ✅ Complete | PIA-016 to PIA-021 |
-| Polish | ✅ Complete | PIA-022 to PIA-025 |
-
-**Progress: 21/25 tickets complete (84%)**
-
-## Documentation
-
-| Document | Description |
-|----------|-------------|
-| [PROGRESS.md](PROGRESS.md) | Development progress log |
-| [SPRINT_PLAN.md](SPRINT_PLAN.md) | Original implementation plan |
-| [KNOWLEDGE_BASE.md](KNOWLEDGE_BASE.md) | Research on existing solutions |
+| Foundation | Done | PIA-001 to PIA-006 |
+| Dashboard | Done | PIA-007 to PIA-011 |
+| Multi-Machine | Done | PIA-012 to PIA-015 |
+| Mobile + Auto-Healer | Done | PIA-016 to PIA-021 |
+| Polish + Security | Done | PIA-022 to PIA-025 |
+| Visor + Sentinel + Desktop | Done | Session 1-3 |
 
 ## License
 
 MIT
-
----
-
-Built with Claude Code

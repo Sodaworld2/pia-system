@@ -80,7 +80,9 @@
       "Bash(cmd /c \"start /min node dist/index.js\")",
       "Bash(cmd //c \"start /min node dist/index.js\")",
       "mcp__playwright__browser_tabs",
-      "Bash(git fetch:*)"
+      "Bash(git fetch:*)",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:mcp.so)"
     ]
   }
 }

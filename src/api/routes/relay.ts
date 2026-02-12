@@ -147,6 +147,27 @@ router.get('/poll/:machineId', (req: Request, res: Response) => {
   }
 });
 
+// POST /api/relay/incoming - Receive a message from a remote machine
+router.post('/incoming', (req: Request, res: Response) => {
+  try {
+    const msg = req.body;
+
+    if (!msg || !msg.from || !msg.content) {
+      res.status(400).json({ error: 'Invalid message format' });
+      return;
+    }
+
+    const relay = getCrossMachineRelay();
+    relay.handleIncoming(msg);
+
+    logger.info(`Incoming message from ${msg.from.machineName || msg.from.machineId}: ${msg.content.substring(0, 80)}`);
+    res.json({ status: 'received', messageId: msg.id });
+  } catch (error) {
+    logger.error(`Failed to handle incoming message: ${error}`);
+    res.status(500).json({ error: 'Failed to handle incoming message' });
+  }
+});
+
 // GET /api/relay/stats - Relay statistics
 router.get('/stats', (_req: Request, res: Response) => {
   try {

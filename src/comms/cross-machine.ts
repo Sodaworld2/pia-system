@@ -299,8 +299,41 @@ export class CrossMachineRelay {
       return;
     }
 
-    // Fallback: store for polling via API
-    logger.debug(`Machine ${machine.name} not connected via WS, message queued for API polling`);
+    // Fallback: HTTP POST to remote machine's relay/incoming endpoint
+    const targetUrl = machine.tailscaleIp
+      ? `http://${machine.tailscaleIp}:3000/api/relay/incoming`
+      : machine.ngrokUrl
+        ? `${machine.ngrokUrl}/api/relay/incoming`
+        : null;
+
+    if (targetUrl) {
+      this.httpDeliver(targetUrl, msg, machine.name).catch(() => {
+        logger.warn(`HTTP delivery failed to ${machine.name}, message stored for polling`);
+      });
+    } else {
+      logger.debug(`Machine ${machine.name} not connected via WS and no IP, message queued for API polling`);
+    }
+  }
+
+  private async httpDeliver(url: string, msg: CrossMachineMessage, machineName: string): Promise<void> {
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Api-Token': process.env.PIA_SECRET_TOKEN || 'pia-local-dev-token-2024',
+        },
+        body: JSON.stringify(msg),
+        signal: AbortSignal.timeout(5000),
+      });
+      if (response.ok) {
+        logger.info(`HTTP delivered to ${machineName}`);
+      } else {
+        logger.warn(`HTTP delivery to ${machineName} returned ${response.status}`);
+      }
+    } catch (err) {
+      logger.warn(`HTTP delivery to ${machineName} failed: ${err}`);
+    }
   }
 
   private notifySubscribers(msg: CrossMachineMessage): void {

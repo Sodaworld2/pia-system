@@ -93,12 +93,29 @@ async function startHub(): Promise<void> {
   logger.info('  PIA Hub is ready!');
   logger.info('='.repeat(50));
   logger.info(`  Dashboard: http://localhost:${config.server.port}`);
+  logger.info(`  Visor:     http://localhost:${config.server.port}/visor.html`);
   logger.info(`  API:       http://localhost:${config.server.port}/api`);
   logger.info(`  WebSocket: ws://localhost:${config.server.wsPort}`);
   logger.info('');
   logger.info('  Waiting for machines to connect...');
   logger.info('='.repeat(50));
   logger.info('');
+
+  // Auto-open Visor in default browser (unless running inside Electron)
+  if (!process.env.ELECTRON_RUN_AS_NODE && !process.env.PIA_NO_BROWSER) {
+    try {
+      const { exec } = await import('child_process');
+      const visorUrl = `http://localhost:${config.server.port}/visor.html`;
+      const platform = process.platform;
+      const cmd = platform === 'win32' ? `start "" "${visorUrl}"`
+        : platform === 'darwin' ? `open "${visorUrl}"`
+        : `xdg-open "${visorUrl}"`;
+      exec(cmd, (err) => {
+        if (err) logger.warn(`Could not auto-open Visor: ${err.message}`);
+        else logger.info('Visor opened in default browser');
+      });
+    } catch { /* ignore - browser open is best-effort */ }
+  }
 }
 
 async function startLocal(): Promise<void> {
