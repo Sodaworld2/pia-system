@@ -13,7 +13,10 @@
       "Bash(git stash:*)",
       "Bash(git pull:*)",
       "Bash(start:*)",
-      "Bash(npx kill-port:*)"
+      "Bash(npx kill-port:*)",
+      "Bash(tailscale status:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(node -e:*)"
     ]
   },
   "hooks": {

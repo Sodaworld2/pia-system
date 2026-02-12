@@ -274,6 +274,114 @@ The user wants to:
 
 ---
 
-*Journal created by Claude Opus 4.6 (Machine #3)*
+## Session 2: Full Reboot, Setup Instructions, Browser Control, UX Plan
+
+### Context
+Second Claude session on Machine #3. Previous session created .env, installed packages, built, started server, created Puppeteer MCP config. This session continued with pulling latest code, following Machine #3 setup instructions from Machine #1, browser control via Playwright, and designing usability improvements.
+
+### What Was Accomplished
+
+#### 1. Pulled Latest Code from Hub (Machine #1)
+- `git pull` brought in 57c242f (and chain): +6,319 lines of new code
+- Major new systems from Machine #1:
+  - **Alive Repos** (`src/comms/repo-router.ts`, `src/api/routes/repos.ts`, `scripts/init-repo.cjs`, `scripts/repo-agent.cjs`)
+  - **Cross-Machine Relay** (`src/comms/cross-machine.ts`, `src/api/routes/relay.ts`)
+  - **MQTT PubSub** (`src/comms/mqtt-broker.ts`, `src/api/routes/pubsub.ts`)
+  - **Webhooks** (`src/comms/webhooks.ts`, `src/api/routes/webhooks.ts`)
+  - **Network Sentinel IDS** (`src/security/network-sentinel.ts`, `src/api/routes/security.ts`)
+  - **Visor 7-tab governance app** (`public/visor.html`)
+  - **Electron desktop app** (`electron-main.cjs`)
+  - **Setup instructions** for Machine #2 and #3
+
+#### 2. Fixed Network Sentinel Bug (Critical)
+- **Bug**: Network Sentinel was blocking localhost (127.0.0.1) as a port scanner
+- **Cause**: Dashboard + Visor + curl requests collectively hit 31+ unique endpoints, triggering `port_scan_detected` for 127.0.0.1
+- **Fix**: Added `if (state.isLocalhost || state.isTailscale) return;` to `checkPortScan()` in `src/security/network-sentinel.ts`
+- **Impact**: Without this fix, the dashboard would lock itself out after loading
+
+#### 3. Followed Machine #3 Setup Instructions (MACHINE-3-SETUP.md)
+- `npm install` (55 new packages for latest deps)
+- `npm run build` (clean compile)
+- Server started on ports 3000/3001
+- Registered hub-izzit7 on local relay
+- Registered soda-yeti on hub's relay
+- Sent test message: "Machine #3 (soda-yeti) is ONLINE"
+- Verified 3 machines live: izzit7, soda-yeti, soda-monster-hunter
+
+#### 4. Tailscale Confirmed
+- This machine's Tailscale IP: **100.102.217.69**
+- Hub (izzit7) reachable at: **100.73.133.3**
+- Full path needed on Windows: `"C:\Program Files\Tailscale\tailscale.exe"`
+
+#### 5. Browser Control via Playwright
+- Used Playwright (npm dependency) to launch Chromium browser
+- Opened Visor at `http://localhost:3000/visor.html`
+- Sent a chat message via browser automation
+- Took screenshots of all 7 tabs: Chat, History, Health, Tasks, Network, Security, CLI
+- **Key lesson**: MCPs only load on session start. Playwright as npm dependency works as fallback.
+
+#### 6. UX Improvement Plan Designed
+User asked: "between all of you working on the PIA system how but u work out how to improve it so its best usability for me in terms of interface and visibility?"
+
+Launched 3 parallel exploration agents to analyze:
+1. **Visor HTML/UX** - Found stale data (tabs load once), 3s polling instead of WS push, no scroll-to-latest, incomplete responsive design
+2. **Main Dashboard UX** - Found 11 views overlapping with Visor's 7 tabs, inconsistent UIs
+3. **Cross-Machine Data Gaps** - Found job queues/delivery failures/repo capabilities hidden from UI, 3 messaging layers with no unified observability
+
+**Approved Plan (5 Phases):**
+1. **Fleet Status Tab** - New first tab showing all machines, repos, agents, jobs at a glance
+2. **WebSocket Push Infrastructure** - Wire RepoRouter + NetworkSentinel events to WS broadcast
+3. **Visor WS-Driven Refresh** - Kill 3s polling, use WS push, 30s fallback only
+4. **SVG Network Topology** - Replace flex layout with SVG graph (hub centered, spokes radial)
+5. **Consolidation & Polish** - Visor as default, auto-scroll fix, API retry, threat summary, responsive CSS
+
+**Plan file**: `C:\Users\User\.claude\plans\nested-mapping-pinwheel.md`
+
+### Files Modified This Session
+
+| File | Action | Details |
+|------|--------|---------|
+| `src/security/network-sentinel.ts` | Fixed | Added localhost/Tailscale exemption in `checkPortScan()` |
+| `JOURNAL_2026-02-12_machine3.md` | Updated | This file — added Session 2 |
+| `HANDOFF.md` | Updated | Reflects current state |
+
+### Server State at End of Session
+
+```
+Server: Running (background task bac5f2e)
+Ports: 3000 (API), 3001 (WebSocket)
+Machines registered: izzit7 (hub), soda-yeti (this), soda-monster-hunter
+Cross-machine relay: Active
+Tailscale: 100.102.217.69
+Browser: Was controlled via Playwright
+```
+
+### Known Issues on This Machine
+
+1. **MCP tools not loaded** - `.mcp.json` has Puppeteer MCP but it loads on session start. Playwright npm package used as workaround.
+2. **MCPs recommended but not installed**: Playwright MCP, Windows MCP, GitHub MCP (per MACHINE-3-SETUP.md Step 6) - need `claude mcp add` commands then session restart
+3. **Port conflicts on restart** - Must kill ports 3000/3001 before restarting server: `npx kill-port 3000 3001`
+
+### What the Next Session Should Do
+
+1. **Install MCPs properly** (requires running `claude mcp add` commands from MACHINE-3-SETUP.md Step 6, then restart session)
+2. **Implement the UX plan** - 5 phases of usability improvements (plan approved, ready to code)
+   - Start with Phase 1: Fleet Status Tab (new `src/api/routes/fleet.ts` + Visor HTML)
+   - Then Phase 2: WebSocket push infrastructure
+   - Then Phase 3-5: Frontend refresh, SVG topology, polish
+3. **Commit and push** the sentinel fix + journal updates
+4. **Continue coordinating** with Machine #1 on shared improvements
+
+### User Style Reminders
+- Action over explanation
+- Wants to SEE browser control (use Playwright or MCP)
+- Types fast with typos - understand intent
+- Likes journals and documentation
+- Calls this "machine #3" or "soda-yeti"
+- "im a very visual person i need to see the app working"
+
+---
+
+*Journal updated by Claude Opus 4.6 (Machine #3, Session 2)*
 *Session Date: February 12, 2026*
-*Machine: SODA-YETI*
+*Machine: SODA-YETI (100.102.217.69)*
