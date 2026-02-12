@@ -23,6 +23,10 @@ import doctorRouter from './routes/doctor.js';
 import delegationRouter from './routes/delegation.js';
 import relayRouter from './routes/relay.js';
 import reposRouter from './routes/repos.js';
+import webhooksRouter from './routes/webhooks.js';
+import pubsubRouter from './routes/pubsub.js';
+import securityRouter from './routes/security.js';
+import { getNetworkSentinel } from '../security/network-sentinel.js';
 
 const logger = createLogger('API');
 
@@ -37,6 +41,11 @@ function validateApiToken(req: Request, res: Response, next: NextFunction): void
   const token = req.headers['x-api-token'] || req.headers['authorization']?.replace('Bearer ', '');
 
   if (!token || token !== config.security.secretToken) {
+    // Record failed auth for intrusion detection
+    try {
+      const ip = req.ip || req.socket.remoteAddress || 'unknown';
+      getNetworkSentinel().recordFailedAuth(ip);
+    } catch { /* sentinel may not be initialized yet */ }
     res.status(401).json({ error: 'Unauthorized: Invalid or missing API token' });
     return;
   }
@@ -95,6 +104,9 @@ export function createServer(): Express {
     next();
   });
 
+  // Network Sentinel - intrusion detection middleware
+  app.use(getNetworkSentinel().middleware());
+
   // Apply rate limiting to all API routes
   app.use('/api', apiLimiter);
 
@@ -121,6 +133,9 @@ export function createServer(): Express {
   app.use('/api/delegation', delegationRouter);
   app.use('/api/relay', relayRouter);
   app.use('/api/repos', reposRouter);
+  app.use('/api/webhooks', webhooksRouter);
+  app.use('/api/pubsub', pubsubRouter);
+  app.use('/api/security', securityRouter);
 
   // Health check
   app.get('/api/health', (_req: Request, res: Response) => {

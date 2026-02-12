@@ -31,6 +31,11 @@ async function startHub(): Promise<void> {
   logger.info('Initializing database...');
   initDatabase();
 
+  // Initialize Network Sentinel (intrusion detection) - BEFORE server so middleware captures it
+  logger.info('Starting Network Sentinel...');
+  const { initNetworkSentinel } = await import('./security/network-sentinel.js');
+  initNetworkSentinel();
+
   // Create and start API server
   logger.info('Starting API server...');
   const app = createServer();
@@ -125,6 +130,12 @@ function shutdown(): void {
   try {
     const { getDoctor } = require('./agents/doctor.js');
     getDoctor().stop();
+  } catch { /* may not be initialized */ }
+
+  // Stop Network Sentinel
+  try {
+    const { getNetworkSentinel } = require('./security/network-sentinel.js');
+    getNetworkSentinel().stop();
   } catch { /* may not be initialized */ }
 
   // Kill all PTY sessions

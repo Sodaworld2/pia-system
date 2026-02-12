@@ -9,6 +9,8 @@
 import { createLogger } from '../utils/logger.js';
 import { getCrossMachineRelay } from './cross-machine.js';
 import { getAgentBus } from './agent-bus.js';
+import { getWebhookManager } from './webhooks.js';
+import { getMQTTBroker } from './mqtt-broker.js';
 import { nanoid } from 'nanoid';
 
 const logger = createLogger('RepoRouter');
@@ -220,6 +222,12 @@ export class RepoRouter {
     logger.info(`Task sent to ${toRepo}: ${action} - ${description} (job ${job.id})`);
     this.notify('job:queued', job);
 
+    // Fire webhooks and pubsub
+    try {
+      getWebhookManager().fire('repo:task', requestedBy, { job, targetRepo: toRepo });
+      getMQTTBroker().publish(`pia/${toRepo}/task`, job, requestedBy);
+    } catch { /* webhook/pubsub not initialized */ }
+
     return job;
   }
 
@@ -265,6 +273,12 @@ export class RepoRouter {
 
     logger.info(`Job ${jobId} updated: ${job.status}${job.result ? ` - ${job.result.substring(0, 100)}` : ''}`);
     this.notify(`job:${job.status}`, job);
+
+    // Fire webhooks and pubsub on completion/failure
+    try {
+      getWebhookManager().fire(`job:${job.status}`, job.repoName, { job });
+      getMQTTBroker().publish(`pia/${job.repoName}/job/${job.status}`, job, job.repoName);
+    } catch { /* webhook/pubsub not initialized */ }
 
     return job;
   }

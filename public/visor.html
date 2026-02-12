@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PIA Visor</title>
+  <title>PIA Visor - Machine Governance</title>
+  <link rel="stylesheet" href="/css/xterm.css">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -19,7 +20,7 @@
     .visor-header {
       background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
       border-bottom: 1px solid #30363d;
-      padding: 12px 20px;
+      padding: 10px 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -35,7 +36,7 @@
     }
 
     .visor-title h1 {
-      font-size: 20px;
+      font-size: 18px;
       font-weight: 700;
       background: linear-gradient(135deg, #58a6ff, #bc8cff);
       -webkit-background-clip: text;
@@ -47,11 +48,17 @@
       font-size: 13px;
     }
 
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
     .connection-status {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 13px;
+      gap: 6px;
+      font-size: 12px;
     }
 
     .status-dot {
@@ -70,23 +77,50 @@
       50% { opacity: 0.5; }
     }
 
-    /* ── Layout ── */
-    .visor-body {
-      display: grid;
-      grid-template-columns: 1fr 350px;
-      grid-template-rows: auto 1fr;
+    /* ── Tabs ── */
+    .tab-bar {
+      display: flex;
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
+      padding: 0 20px;
       gap: 0;
-      height: calc(100vh - 52px);
     }
+
+    .tab {
+      padding: 10px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #8b949e;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tab:hover { color: #c9d1d9; }
+    .tab.active { color: #58a6ff; border-bottom-color: #58a6ff; }
+
+    .tab .badge {
+      background: #f85149;
+      color: white;
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 10px;
+      font-weight: 700;
+      display: none;
+    }
+
+    .tab .badge.visible { display: inline; }
 
     /* ── Stats Bar ── */
     .stats-bar {
-      grid-column: 1 / -1;
-      background: #161b22;
-      border-bottom: 1px solid #30363d;
-      padding: 10px 20px;
+      background: #0d1117;
+      border-bottom: 1px solid #21262d;
+      padding: 8px 20px;
       display: flex;
-      gap: 24px;
+      gap: 20px;
       overflow-x: auto;
     }
 
@@ -94,17 +128,17 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      min-width: 80px;
+      min-width: 65px;
     }
 
     .stat-value {
-      font-size: 22px;
+      font-size: 20px;
       font-weight: 700;
       color: #58a6ff;
     }
 
     .stat-label {
-      font-size: 11px;
+      font-size: 10px;
       color: #8b949e;
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -115,25 +149,62 @@
     .stat-value.red { color: #f85149; }
     .stat-value.purple { color: #bc8cff; }
 
-    /* ── Message Feed ── */
+    /* ── Tab Content ── */
+    .tab-content { display: none; height: calc(100vh - 128px); }
+    .tab-content.active { display: flex; }
+
+    /* ── CHAT TAB ── */
+    #tab-chat {
+      display: none;
+      flex-direction: row;
+    }
+    #tab-chat.active { display: flex; }
+
+    .chat-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .chat-target-bar {
+      background: #161b22;
+      padding: 8px 16px;
+      border-bottom: 1px solid #21262d;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+    }
+
+    .chat-target-bar select {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      color: #c9d1d9;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+
     .message-feed {
-      padding: 16px 20px;
+      flex: 1;
+      padding: 12px 16px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
     }
 
     .message {
       background: #161b22;
       border: 1px solid #30363d;
       border-radius: 8px;
-      padding: 12px 16px;
-      animation: slideIn 0.3s ease;
+      padding: 10px 14px;
+      animation: slideIn 0.2s ease;
     }
 
     @keyframes slideIn {
-      from { opacity: 0; transform: translateY(-10px); }
+      from { opacity: 0; transform: translateY(-8px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
@@ -147,36 +218,16 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
-    .message-from {
-      font-weight: 600;
-      font-size: 13px;
-      color: #58a6ff;
-    }
+    .message-from { font-weight: 600; font-size: 12px; color: #58a6ff; }
+    .message-time { font-size: 10px; color: #484f58; }
+    .message-content { font-size: 13px; line-height: 1.5; color: #c9d1d9; word-break: break-word; }
+    .message-meta { margin-top: 4px; font-size: 10px; color: #484f58; }
 
-    .message-time {
-      font-size: 11px;
-      color: #484f58;
-    }
-
-    .message-content {
-      font-size: 14px;
-      line-height: 1.5;
-      color: #c9d1d9;
-      word-break: break-word;
-    }
-
-    .message-meta {
-      margin-top: 6px;
-      font-size: 11px;
-      color: #484f58;
-    }
-
-    /* ── Input Bar ── */
     .input-bar {
-      padding: 12px 20px;
+      padding: 10px 16px;
       background: #161b22;
       border-top: 1px solid #30363d;
       display: flex;
@@ -188,9 +239,9 @@
       background: #0d1117;
       border: 1px solid #30363d;
       border-radius: 6px;
-      padding: 10px 14px;
+      padding: 8px 12px;
       color: #c9d1d9;
-      font-size: 14px;
+      font-size: 13px;
       outline: none;
     }
 
@@ -201,58 +252,309 @@
       color: white;
       border: none;
       border-radius: 6px;
-      padding: 10px 20px;
-      font-size: 14px;
+      padding: 8px 16px;
+      font-size: 13px;
       font-weight: 600;
       cursor: pointer;
     }
 
     .input-bar button:hover { background: #2ea043; }
 
-    /* ── Sidebar: Repos & Machines ── */
-    .sidebar {
+    .chat-sidebar {
+      width: 280px;
       background: #0d1117;
       border-left: 1px solid #30363d;
       overflow-y: auto;
+      padding: 12px;
+    }
+
+    /* ── HEALTH TAB ── */
+    #tab-health {
+      display: none;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 20px;
+      gap: 16px;
+    }
+    #tab-health.active { display: flex; }
+
+    .health-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+    }
+
+    .health-card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
       padding: 16px;
     }
 
-    .sidebar h3 {
+    .health-card h3 {
+      font-size: 14px;
+      color: #e6edf3;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .health-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid #21262d;
+      font-size: 13px;
+    }
+
+    .health-row:last-child { border-bottom: none; }
+    .health-label { color: #8b949e; }
+    .health-value { color: #c9d1d9; font-weight: 600; }
+    .health-value.ok { color: #3fb950; }
+    .health-value.warn { color: #d29922; }
+    .health-value.err { color: #f85149; }
+
+    .health-bar {
+      height: 6px;
+      background: #21262d;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    .health-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.5s;
+    }
+
+    .latency-ping {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      padding: 4px 10px;
+      background: #0d1117;
+      border-radius: 6px;
+      margin-right: 8px;
+    }
+
+    /* ── TASKS TAB ── */
+    #tab-tasks {
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #tab-tasks.active { display: flex; }
+
+    .tasks-toolbar {
+      padding: 12px 20px;
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .tasks-toolbar select, .tasks-toolbar input {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      color: #c9d1d9;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+
+    .btn {
+      background: #238636;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn:hover { background: #2ea043; }
+    .btn.purple { background: #8957e5; }
+    .btn.purple:hover { background: #a371f7; }
+    .btn.blue { background: #1f6feb; }
+    .btn.blue:hover { background: #388bfd; }
+
+    .task-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px;
+    }
+
+    .task-item {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .task-status-badge {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .task-status-badge.queued { background: #2a1f0f; color: #d29922; }
+    .task-status-badge.running { background: #0d2818; color: #3fb950; }
+    .task-status-badge.completed { background: #1b3a2d; color: #56d364; }
+    .task-status-badge.failed { background: #3d1418; color: #f85149; }
+
+    .task-info .task-action { font-weight: 600; font-size: 14px; color: #e6edf3; }
+    .task-info .task-desc { font-size: 12px; color: #8b949e; margin-top: 2px; }
+    .task-meta { font-size: 11px; color: #484f58; text-align: right; }
+
+    /* ── NETWORK TAB ── */
+    #tab-network {
+      display: none;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 20px;
+      gap: 16px;
+    }
+    #tab-network.active { display: flex; }
+
+    .network-topology {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+      padding: 30px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      min-height: 180px;
+      flex-wrap: wrap;
+    }
+
+    .machine-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      min-width: 120px;
+    }
+
+    .machine-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      border: 2px solid #30363d;
+      position: relative;
+    }
+
+    .machine-icon.hub { background: #0d2818; border-color: #3fb950; }
+    .machine-icon.remote { background: #1c2333; border-color: #58a6ff; }
+    .machine-icon.offline { background: #1c1c2e; border-color: #484f58; opacity: 0.6; }
+
+    .machine-icon .online-dot {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #3fb950;
+      border: 2px solid #0a0a1a;
+    }
+
+    .machine-node-name { font-size: 13px; font-weight: 600; color: #e6edf3; }
+    .machine-node-ip { font-size: 11px; color: #8b949e; }
+
+    .connection-line {
+      width: 60px;
+      height: 2px;
+      background: linear-gradient(90deg, #3fb950, #58a6ff);
+      position: relative;
+    }
+
+    .connection-line .latency-badge {
+      position: absolute;
+      top: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      color: #3fb950;
+      white-space: nowrap;
+    }
+
+    .channel-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 12px;
+    }
+
+    .channel-card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 14px;
+    }
+
+    .channel-card h4 {
+      font-size: 13px;
+      color: #e6edf3;
+      margin-bottom: 8px;
+    }
+
+    .channel-stat {
+      display: flex;
+      justify-content: space-between;
       font-size: 12px;
+      padding: 3px 0;
+    }
+
+    .channel-stat .label { color: #8b949e; }
+    .channel-stat .value { color: #c9d1d9; }
+
+    /* ── Sidebar shared ── */
+    .sidebar-section h3 {
+      font-size: 11px;
       color: #8b949e;
       text-transform: uppercase;
       letter-spacing: 1px;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
+      margin-top: 16px;
     }
+
+    .sidebar-section:first-child h3 { margin-top: 0; }
 
     .repo-card {
       background: #161b22;
       border: 1px solid #30363d;
       border-radius: 8px;
-      padding: 12px;
-      margin-bottom: 8px;
+      padding: 10px;
+      margin-bottom: 6px;
       cursor: pointer;
       transition: border-color 0.2s;
     }
 
     .repo-card:hover { border-color: #58a6ff; }
+    .repo-card .repo-name { font-weight: 600; font-size: 13px; color: #e6edf3; }
+    .repo-card .repo-desc { font-size: 11px; color: #8b949e; margin-top: 2px; }
 
-    .repo-card .repo-name {
-      font-weight: 600;
-      font-size: 14px;
-      color: #e6edf3;
-    }
-
-    .repo-card .repo-desc {
-      font-size: 12px;
-      color: #8b949e;
-      margin-top: 4px;
-    }
-
-    .repo-card .repo-status {
+    .repo-status {
       display: inline-block;
-      margin-top: 6px;
-      font-size: 11px;
+      margin-top: 4px;
+      font-size: 10px;
       padding: 2px 8px;
       border-radius: 12px;
       font-weight: 600;
@@ -263,75 +565,311 @@
     .repo-status.error { background: #3d1418; color: #f85149; }
     .repo-status.offline { background: #1c1c2e; color: #484f58; }
 
-    .repo-card .repo-jobs {
-      font-size: 11px;
-      color: #484f58;
-      margin-top: 4px;
-    }
-
-    .repo-card .repo-caps {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-      margin-top: 6px;
-    }
-
     .cap-tag {
-      font-size: 10px;
-      padding: 2px 6px;
+      font-size: 9px;
+      padding: 1px 5px;
       border-radius: 4px;
       background: #1c2333;
       color: #58a6ff;
+      display: inline-block;
+      margin: 2px 2px 0 0;
     }
 
     .machine-card {
       background: #161b22;
       border: 1px solid #30363d;
       border-radius: 8px;
-      padding: 10px 12px;
-      margin-bottom: 8px;
+      padding: 8px 10px;
+      margin-bottom: 6px;
     }
 
-    .machine-card .machine-name {
-      font-weight: 600;
-      font-size: 13px;
-    }
+    .machine-card .mc-name { font-weight: 600; font-size: 12px; }
+    .machine-card .mc-info { font-size: 10px; color: #8b949e; }
 
-    .machine-card .machine-info {
-      font-size: 11px;
-      color: #8b949e;
-    }
+    .empty-state { text-align: center; color: #484f58; padding: 16px; font-size: 12px; }
 
-    .empty-state {
-      text-align: center;
-      color: #484f58;
-      padding: 20px;
-      font-size: 13px;
-    }
-
-    /* ── Notification toast ── */
-    .toast {
+    /* ── Toast ── */
+    .toast-container {
       position: fixed;
       top: 60px;
       right: 20px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
       background: #1f2937;
       border: 1px solid #58a6ff;
       border-radius: 8px;
-      padding: 12px 20px;
+      padding: 10px 16px;
       color: #e6edf3;
-      font-size: 14px;
-      z-index: 1000;
+      font-size: 13px;
       animation: toastIn 0.3s ease, toastOut 0.3s ease 4.7s;
       box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      max-width: 350px;
     }
 
     @keyframes toastIn { from { opacity: 0; transform: translateX(100px); } to { opacity: 1; transform: translateX(0); } }
     @keyframes toastOut { from { opacity: 1; } to { opacity: 0; } }
 
+    /* ── Send Task Modal ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.visible { display: flex; }
+
+    .modal {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 24px;
+      width: 420px;
+      max-width: 90vw;
+    }
+
+    .modal h2 {
+      font-size: 16px;
+      margin-bottom: 16px;
+      color: #e6edf3;
+    }
+
+    .modal label {
+      display: block;
+      font-size: 12px;
+      color: #8b949e;
+      margin-bottom: 4px;
+      margin-top: 12px;
+    }
+
+    .modal input, .modal select, .modal textarea {
+      width: 100%;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      color: #c9d1d9;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .modal textarea { min-height: 60px; resize: vertical; }
+    .modal input:focus, .modal textarea:focus { border-color: #58a6ff; }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 20px;
+    }
+
+    .btn-cancel {
+      background: #21262d;
+      color: #c9d1d9;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 8px 16px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    /* ── CLI TAB ── */
+    #tab-cli {
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #tab-cli.active { display: flex; }
+
+    #terminalContainer {
+      position: relative;
+    }
+
+    #terminalContainer .xterm {
+      height: 100%;
+    }
+
+    /* ── HISTORY TAB ── */
+    #tab-history {
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #tab-history.active { display: flex; }
+
+    .history-msg {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 6px;
+      display: grid;
+      grid-template-columns: 100px 1fr auto;
+      gap: 10px;
+      align-items: start;
+    }
+
+    .history-msg .hm-from {
+      font-weight: 600;
+      font-size: 12px;
+      color: #58a6ff;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .history-msg .hm-content {
+      font-size: 13px;
+      color: #c9d1d9;
+      word-break: break-word;
+    }
+
+    .history-msg .hm-meta {
+      font-size: 10px;
+      color: #484f58;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .history-msg .hm-to {
+      font-size: 10px;
+      color: #8b949e;
+    }
+
+    .history-msg .hm-type {
+      display: inline-block;
+      font-size: 9px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .hm-type.chat { background: #1c2333; color: #58a6ff; }
+    .hm-type.command { background: #2a1f0f; color: #d29922; }
+    .hm-type.task { background: #1f0d2a; color: #bc8cff; }
+    .hm-type.greeting { background: #1b3a2d; color: #3fb950; }
+    .hm-type.broadcast { background: #0d2818; color: #56d364; }
+    .hm-type.status { background: #21262d; color: #8b949e; }
+
+    /* ── Security Tab ── */
+    .sec-connection {
+      background: #161b22;
+      border: 1px solid #21262d;
+      border-radius: 6px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sec-connection.blocked { border-color: #f85149; background: #1a0a0a; }
+    .sec-connection.tailscale { border-color: #3fb950; }
+    .sec-connection.localhost { border-color: #58a6ff; }
+    .sec-connection.unknown { border-color: #d29922; }
+
+    .sec-ip {
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 13px;
+      font-weight: 600;
+      min-width: 130px;
+    }
+
+    .sec-tag {
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .sec-tag.tailscale { background: #0d2818; color: #3fb950; }
+    .sec-tag.localhost { background: #0d1830; color: #58a6ff; }
+    .sec-tag.unknown { background: #2d1a00; color: #d29922; }
+    .sec-tag.blocked { background: #3d0a0a; color: #f85149; }
+
+    .sec-detail {
+      font-size: 11px;
+      color: #8b949e;
+    }
+
+    .sec-actions {
+      margin-left: auto;
+      display: flex;
+      gap: 4px;
+    }
+
+    .sec-actions button {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      border: 1px solid #30363d;
+      background: #21262d;
+      color: #c9d1d9;
+      cursor: pointer;
+    }
+
+    .sec-actions button:hover { background: #30363d; }
+    .sec-actions button.danger { border-color: #f85149; color: #f85149; }
+    .sec-actions button.danger:hover { background: #3d0a0a; }
+
+    .sec-event {
+      background: #161b22;
+      border: 1px solid #21262d;
+      border-radius: 6px;
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sec-event.critical { border-left: 3px solid #f85149; }
+    .sec-event.warning { border-left: 3px solid #d29922; }
+    .sec-event.info { border-left: 3px solid #58a6ff; }
+
+    .sec-event-type {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      min-width: 110px;
+    }
+
+    .sec-event-type.critical { color: #f85149; }
+    .sec-event-type.warning { color: #d29922; }
+    .sec-event-type.info { color: #58a6ff; }
+
+    .sec-event-detail {
+      font-size: 11px;
+      color: #c9d1d9;
+      flex: 1;
+    }
+
+    .sec-event-time {
+      font-size: 10px;
+      color: #484f58;
+      min-width: 70px;
+      text-align: right;
+    }
+
+    .sec-event-ip {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: #bc8cff;
+      min-width: 100px;
+    }
+
     /* ── Responsive ── */
     @media (max-width: 768px) {
-      .visor-body { grid-template-columns: 1fr; }
-      .sidebar { display: none; }
+      .chat-sidebar { display: none; }
+      .health-grid { grid-template-columns: 1fr; }
+      .channel-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -342,45 +880,219 @@
       <h1>PIA VISOR</h1>
       <span class="machine-name" id="machineName">Connecting...</span>
     </div>
-    <div class="connection-status">
-      <div class="status-dot" id="statusDot"></div>
-      <span id="statusText">Connecting...</span>
+    <div class="header-right">
+      <div class="connection-status">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusText">Connecting...</span>
+      </div>
     </div>
   </div>
 
-  <div class="stats-bar" id="statsBar">
+  <div class="tab-bar">
+    <div class="tab active" data-tab="chat" onclick="switchTab('chat')">Chat <span class="badge" id="chatBadge">0</span></div>
+    <div class="tab" data-tab="history" onclick="switchTab('history')">History</div>
+    <div class="tab" data-tab="health" onclick="switchTab('health')">Health</div>
+    <div class="tab" data-tab="tasks" onclick="switchTab('tasks')">Tasks <span class="badge" id="taskBadge">0</span></div>
+    <div class="tab" data-tab="network" onclick="switchTab('network')">Network</div>
+    <div class="tab" data-tab="security" onclick="switchTab('security')">Security <span class="badge" id="secBadge">0</span></div>
+    <div class="tab" data-tab="cli" onclick="switchTab('cli')">CLI</div>
+  </div>
+
+  <div class="stats-bar">
     <div class="stat"><span class="stat-value green" id="statRepos">0</span><span class="stat-label">Repos</span></div>
     <div class="stat"><span class="stat-value" id="statMachines">0</span><span class="stat-label">Machines</span></div>
     <div class="stat"><span class="stat-value purple" id="statJobs">0</span><span class="stat-label">Jobs</span></div>
     <div class="stat"><span class="stat-value orange" id="statQueued">0</span><span class="stat-label">Queued</span></div>
     <div class="stat"><span class="stat-value green" id="statCompleted">0</span><span class="stat-label">Done</span></div>
+    <div class="stat"><span class="stat-value red" id="statFailed">0</span><span class="stat-label">Failed</span></div>
     <div class="stat"><span class="stat-value" id="statMessages">0</span><span class="stat-label">Messages</span></div>
     <div class="stat"><span class="stat-value" id="statAgents">0</span><span class="stat-label">Agents</span></div>
+    <div class="stat"><span class="stat-value purple" id="statPubsub">0</span><span class="stat-label">PubSub</span></div>
+    <div class="stat"><span class="stat-value" id="statWebhooks">0</span><span class="stat-label">Webhooks</span></div>
+    <div class="stat"><span class="stat-value green" id="statTrackedIPs">0</span><span class="stat-label">Tracked IPs</span></div>
+    <div class="stat"><span class="stat-value red" id="statBlockedIPs">0</span><span class="stat-label">Blocked</span></div>
   </div>
 
-  <div class="visor-body">
-    <div style="display:flex;flex-direction:column;overflow:hidden;">
+  <!-- CHAT TAB -->
+  <div class="tab-content active" id="tab-chat">
+    <div class="chat-main">
+      <div class="chat-target-bar">
+        <span style="color:#8b949e;">Send to:</span>
+        <select id="chatTarget">
+          <option value="broadcast">All Machines (Broadcast)</option>
+        </select>
+        <span style="color:#484f58;font-size:11px;margin-left:auto;" id="chatTargetInfo"></span>
+      </div>
       <div class="message-feed" id="messageFeed">
         <div class="empty-state">Waiting for messages...</div>
       </div>
       <div class="input-bar">
-        <input type="text" id="messageInput" placeholder="Type a message to broadcast..." autocomplete="off">
+        <input type="text" id="messageInput" placeholder="Type a message..." autocomplete="off">
         <button onclick="sendMessage()">Send</button>
       </div>
     </div>
-
-    <div class="sidebar">
-      <h3>Alive Repos</h3>
-      <div id="repoList"><div class="empty-state">Loading...</div></div>
-
-      <h3 style="margin-top:20px;">Machines</h3>
-      <div id="machineList"><div class="empty-state">Loading...</div></div>
-
-      <h3 style="margin-top:20px;">Recent Jobs</h3>
-      <div id="jobList"><div class="empty-state">Loading...</div></div>
+    <div class="chat-sidebar">
+      <div class="sidebar-section">
+        <h3>Alive Repos</h3>
+        <div id="repoList"><div class="empty-state">Loading...</div></div>
+      </div>
+      <div class="sidebar-section">
+        <h3>Machines</h3>
+        <div id="machineList"><div class="empty-state">Loading...</div></div>
+      </div>
+      <div class="sidebar-section">
+        <h3>Recent Jobs</h3>
+        <div id="jobList"><div class="empty-state">Loading...</div></div>
+      </div>
     </div>
   </div>
 
+  <!-- HEALTH TAB -->
+  <div class="tab-content" id="tab-health">
+    <div class="health-grid" id="healthGrid">
+      <div class="empty-state">Loading health data...</div>
+    </div>
+  </div>
+
+  <!-- TASKS TAB -->
+  <div class="tab-content" id="tab-tasks">
+    <div class="tasks-toolbar">
+      <select id="taskFilterRepo">
+        <option value="">All Repos</option>
+      </select>
+      <select id="taskFilterStatus">
+        <option value="">All Statuses</option>
+        <option value="queued">Queued</option>
+        <option value="running">Running</option>
+        <option value="completed">Completed</option>
+        <option value="failed">Failed</option>
+      </select>
+      <button class="btn purple" onclick="openTaskModal()">+ New Task</button>
+      <button class="btn blue" onclick="refreshTasks()" style="margin-left:auto;">Refresh</button>
+    </div>
+    <div class="task-list" id="taskList">
+      <div class="empty-state">Loading tasks...</div>
+    </div>
+  </div>
+
+  <!-- NETWORK TAB -->
+  <div class="tab-content" id="tab-network">
+    <h3 style="font-size:14px;color:#8b949e;text-transform:uppercase;letter-spacing:1px;">Topology</h3>
+    <div class="network-topology" id="networkTopology">
+      <div class="empty-state">Loading network topology...</div>
+    </div>
+
+    <h3 style="font-size:14px;color:#8b949e;text-transform:uppercase;letter-spacing:1px;margin-top:8px;">Communication Channels</h3>
+    <div class="channel-grid" id="channelGrid">
+      <div class="empty-state">Loading channels...</div>
+    </div>
+  </div>
+
+  <!-- HISTORY TAB -->
+  <div class="tab-content" id="tab-history">
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+      <div class="tasks-toolbar">
+        <select id="historyFilter">
+          <option value="">All Messages</option>
+          <option value="chat">Chat</option>
+          <option value="command">Command</option>
+          <option value="task">Task</option>
+          <option value="status">Status</option>
+          <option value="greeting">Greeting</option>
+          <option value="broadcast">Broadcast</option>
+        </select>
+        <select id="historyMachine">
+          <option value="">All Machines</option>
+        </select>
+        <button class="btn blue" onclick="refreshHistory()">Refresh</button>
+        <span style="margin-left:auto;font-size:12px;color:#8b949e;" id="historyCount">0 messages</span>
+      </div>
+      <div class="task-list" id="historyList" style="flex:1;overflow-y:auto;">
+        <div class="empty-state">Loading conversation history...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECURITY TAB -->
+  <div class="tab-content" id="tab-security">
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+      <div class="tasks-toolbar">
+        <select id="secEventFilter">
+          <option value="">All Events</option>
+          <option value="unknown_ip">Unknown IP</option>
+          <option value="failed_auth">Failed Auth</option>
+          <option value="brute_force_blocked">Brute Force</option>
+          <option value="port_scan_detected">Port Scan</option>
+          <option value="rate_limit_exceeded">Rate Limit</option>
+          <option value="ws_flood_detected">WS Flood</option>
+          <option value="ip_blocked">IP Blocked</option>
+          <option value="ip_unblocked">IP Unblocked</option>
+        </select>
+        <select id="secSeverityFilter">
+          <option value="">All Severities</option>
+          <option value="critical">Critical</option>
+          <option value="warning">Warning</option>
+          <option value="info">Info</option>
+        </select>
+        <button class="btn blue" onclick="refreshSecurity()">Refresh</button>
+        <span style="margin-left:auto;font-size:12px;color:#8b949e;" id="secSummary">Loading...</span>
+      </div>
+      <div style="flex:1;display:flex;gap:12px;padding:12px;overflow:hidden;">
+        <!-- Left: Connections Table -->
+        <div style="flex:2;overflow-y:auto;">
+          <h3 style="font-size:13px;color:#8b949e;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Tracked Connections</h3>
+          <div id="secConnections" class="task-list" style="gap:4px;"></div>
+        </div>
+        <!-- Right: Event Feed -->
+        <div style="flex:3;display:flex;flex-direction:column;overflow:hidden;">
+          <h3 style="font-size:13px;color:#8b949e;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Security Events</h3>
+          <div id="secEvents" class="task-list" style="flex:1;overflow-y:auto;gap:4px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLI TAB -->
+  <div class="tab-content" id="tab-cli">
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+      <div class="tasks-toolbar" id="cliToolbar">
+        <select id="cliSessionSelect">
+          <option value="">No Session</option>
+        </select>
+        <button class="btn" onclick="createCliSession('powershell')">New PowerShell</button>
+        <button class="btn purple" onclick="createCliSession('claude')">New Claude</button>
+        <button class="btn blue" onclick="createCliSession('cmd')">New CMD</button>
+        <button class="btn-cancel" onclick="closeCliSession()" style="margin-left:auto;">Close Session</button>
+      </div>
+      <div id="terminalContainer" style="flex:1;background:#0a0a15;padding:4px;overflow:hidden;">
+        <div id="terminal" style="width:100%;height:100%;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TASK MODAL -->
+  <div class="modal-overlay" id="taskModal">
+    <div class="modal">
+      <h2>Send Task to Repo</h2>
+      <label>Target Repo</label>
+      <select id="modalRepo"></select>
+      <label>Action</label>
+      <input type="text" id="modalAction" placeholder="e.g., build, deploy, test, compile">
+      <label>Description</label>
+      <textarea id="modalDesc" placeholder="What should the repo do?"></textarea>
+      <label>Requested By</label>
+      <input type="text" id="modalBy" value="visor">
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeTaskModal()">Cancel</button>
+        <button class="btn purple" onclick="submitTask()">Send Task</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+<script src="/js/xterm.js"></script>
+<script src="/js/xterm-addon-fit.js"></script>
 <script>
 // ── Config ──
 const HUB_URL = location.origin;
@@ -389,6 +1101,13 @@ const TOKEN = 'pia-local-dev-token-2024';
 let ws = null;
 let connected = false;
 let messageCount = 0;
+let unreadChat = 0;
+let activeTab = 'chat';
+
+// ── State caches ──
+let cachedRepos = [];
+let cachedMachines = [];
+let cachedJobs = [];
 
 // ── API Helper ──
 async function api(method, path, body) {
@@ -397,8 +1116,31 @@ async function api(method, path, body) {
     headers: { 'X-Api-Token': TOKEN, 'Content-Type': 'application/json' },
   };
   if (body) opts.body = JSON.stringify(body);
-  const res = await fetch(HUB_URL + path, opts);
-  return res.json();
+  try {
+    const res = await fetch(HUB_URL + path, opts);
+    return res.json();
+  } catch { return {}; }
+}
+
+// ── Tab Switching ──
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === 'tab-' + tab));
+
+  if (tab === 'chat') { unreadChat = 0; updateBadge('chatBadge', 0); }
+  if (tab === 'history') refreshHistory();
+  if (tab === 'health') refreshHealth();
+  if (tab === 'tasks') refreshTasks();
+  if (tab === 'network') refreshNetwork();
+  if (tab === 'security') refreshSecurity();
+  if (tab === 'cli') { initTerminal(); if (fitAddon) setTimeout(() => fitAddon.fit(), 100); }
+}
+
+function updateBadge(id, count) {
+  const el = document.getElementById(id);
+  el.textContent = count;
+  el.classList.toggle('visible', count > 0);
 }
 
 // ── WebSocket ──
@@ -426,12 +1168,16 @@ function connectWS() {
         const content = relay?.content || '';
         const type = relay?.type || 'chat';
         addMessage('incoming', from, content, type);
-        showToast(`${from}: ${content.substring(0, 80)}`);
+        showToast(from + ': ' + content.substring(0, 80));
+        if (activeTab !== 'chat') {
+          unreadChat++;
+          updateBadge('chatBadge', unreadChat);
+        }
         return;
       }
 
       if (msg.type === 'agent:update') {
-        addMessage('system', 'Agent Update', JSON.stringify(msg.payload), 'status');
+        addMessage('system', 'Agent', JSON.stringify(msg.payload), 'status');
         return;
       }
 
@@ -444,11 +1190,11 @@ function connectWS() {
 
   ws.onclose = () => {
     setStatus('disconnected');
-    addMessage('error', 'System', 'Disconnected from hub. Reconnecting in 5s...', 'system');
+    addMessage('error', 'System', 'Disconnected. Reconnecting in 5s...', 'system');
     setTimeout(connectWS, 5000);
   };
 
-  ws.onerror = () => { /* onclose will fire */ };
+  ws.onerror = () => {};
 }
 
 function setStatus(state) {
@@ -465,19 +1211,18 @@ function addMessage(direction, from, content, type) {
   if (feed.querySelector('.empty-state')) feed.innerHTML = '';
 
   const div = document.createElement('div');
-  div.className = `message ${direction}`;
+  div.className = 'message ' + direction;
   if (type === 'task') div.className += ' task';
   if (type === 'error' || type === 'alert') div.className += ' error';
 
   const time = new Date().toLocaleTimeString();
-  div.innerHTML = `
-    <div class="message-header">
-      <span class="message-from">${escHtml(from)}</span>
-      <span class="message-time">${time}</span>
-    </div>
-    <div class="message-content">${escHtml(content)}</div>
-    <div class="message-meta">${type}</div>
-  `;
+  div.innerHTML =
+    '<div class="message-header">' +
+      '<span class="message-from">' + esc(from) + '</span>' +
+      '<span class="message-time">' + time + '</span>' +
+    '</div>' +
+    '<div class="message-content">' + esc(content) + '</div>' +
+    '<div class="message-meta">' + type + '</div>';
 
   feed.appendChild(div);
   feed.scrollTop = feed.scrollHeight;
@@ -485,8 +1230,8 @@ function addMessage(direction, from, content, type) {
   document.getElementById('statMessages').textContent = messageCount;
 }
 
-function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 // ── Send Message ──
@@ -495,73 +1240,127 @@ function sendMessage() {
   const content = input.value.trim();
   if (!content) return;
 
-  api('POST', '/api/relay/broadcast', { content, type: 'chat' });
-  addMessage('outgoing', 'You', content, 'chat');
+  const target = document.getElementById('chatTarget').value;
+  if (target === 'broadcast') {
+    api('POST', '/api/relay/broadcast', { content, type: 'chat' });
+    addMessage('outgoing', 'You (broadcast)', content, 'chat');
+  } else {
+    api('POST', '/api/relay/send', { to: target, content, type: 'chat' });
+    addMessage('outgoing', 'You -> ' + target, content, 'chat');
+  }
   input.value = '';
 }
 
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && document.activeElement.id === 'messageInput') {
-    sendMessage();
-  }
+  if (e.key === 'Enter' && document.activeElement.id === 'messageInput') sendMessage();
 });
 
-// ── Toast Notifications ──
+// ── Toast ──
 function showToast(text) {
+  const container = document.getElementById('toastContainer');
   const toast = document.createElement('div');
   toast.className = 'toast';
   toast.textContent = text;
-  document.body.appendChild(toast);
+  container.appendChild(toast);
   setTimeout(() => toast.remove(), 5000);
 
-  // Browser notification
   if (Notification.permission === 'granted') {
-    new Notification('PIA Visor', { body: text, icon: '/icons/icon-192.png' });
+    new Notification('PIA Visor', { body: text });
   }
 }
 
-// ── Polling for stats ──
+// ── Stats Polling ──
 async function refreshStats() {
   try {
-    const [repoStats, relayStats, sysStats] = await Promise.all([
+    const [repoStats, relayStats, sysStats, pubsubStats, webhookStats, secStats] = await Promise.all([
       api('GET', '/api/repos/stats'),
       api('GET', '/api/relay/stats'),
       api('GET', '/api/stats'),
+      api('GET', '/api/pubsub/stats'),
+      api('GET', '/api/webhooks/stats'),
+      api('GET', '/api/security/stats'),
     ]);
 
     document.getElementById('statRepos').textContent = repoStats.totalRepos || 0;
     document.getElementById('statJobs').textContent = repoStats.totalJobs || 0;
     document.getElementById('statQueued').textContent = repoStats.jobsByStatus?.queued || 0;
     document.getElementById('statCompleted').textContent = repoStats.jobsByStatus?.completed || 0;
-    document.getElementById('statMachines').textContent = relayStats.connectedMachines || 0;
+    document.getElementById('statFailed').textContent = repoStats.jobsByStatus?.failed || 0;
+    document.getElementById('statMachines').textContent = (relayStats.connectedMachines || 0) + 1; // +1 for self
     document.getElementById('statAgents').textContent = sysStats.agents?.total || 0;
-    document.getElementById('machineName').textContent = relayStats.thisMachine?.name || 'Unknown';
+    document.getElementById('statPubsub').textContent = pubsubStats.totalPublished || 0;
+    document.getElementById('statWebhooks').textContent = webhookStats.totalHooks || 0;
+    document.getElementById('statTrackedIPs').textContent = secStats.totalTrackedIPs || 0;
+    document.getElementById('statBlockedIPs').textContent = secStats.blockedIPs || 0;
 
-    // Update repos sidebar
-    renderRepos(repoStats.repos || []);
+    // Security badge
+    const criticalSec = secStats.criticalEvents || 0;
+    if (activeTab !== 'security' && criticalSec > 0) {
+      updateBadge('secBadge', criticalSec);
+    }
 
-    // Update machines sidebar
-    renderMachines(relayStats.machines || []);
+    document.getElementById('machineName').textContent = (relayStats.thisMachine?.name || 'Unknown') + ' (' + (relayStats.thisMachine?.id || '') + ')';
 
-    // Update jobs sidebar
+    cachedRepos = repoStats.repos || [];
+    cachedMachines = relayStats.machines || [];
+
+    // Update chat sidebar
+    renderRepos(cachedRepos);
+    renderMachines(cachedMachines);
+
+    // Update chat target dropdown
+    updateChatTargets(cachedMachines);
+
+    // Update task filter dropdown
+    updateTaskRepoFilter(cachedRepos);
+
+    // Fetch recent jobs
     const jobsRes = await api('GET', '/api/repos/jobs/all?limit=10');
-    renderJobs(jobsRes.jobs || []);
+    cachedJobs = jobsRes.jobs || [];
+    renderJobs(cachedJobs);
+
+    // Update task badge
+    const queuedCount = repoStats.jobsByStatus?.queued || 0;
+    if (activeTab !== 'tasks' && queuedCount > 0) {
+      updateBadge('taskBadge', queuedCount);
+    }
   } catch { /* hub unreachable */ }
+}
+
+function updateChatTargets(machines) {
+  const sel = document.getElementById('chatTarget');
+  const current = sel.value;
+  const opts = '<option value="broadcast">All Machines (Broadcast)</option>' +
+    machines.map(m => '<option value="' + m.id + '">' + esc(m.name) + '</option>').join('');
+  sel.innerHTML = opts;
+  sel.value = current || 'broadcast';
+}
+
+function updateTaskRepoFilter(repos) {
+  const sel = document.getElementById('taskFilterRepo');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">All Repos</option>' +
+    repos.map(r => '<option value="' + r.name + '">' + esc(r.displayName) + '</option>').join('');
+  sel.value = current;
+
+  // Also update modal
+  const modal = document.getElementById('modalRepo');
+  modal.innerHTML = repos.map(r => '<option value="' + r.name + '">' + esc(r.displayName) + ' (' + r.machine + ')</option>').join('');
 }
 
 function renderRepos(repos) {
   const el = document.getElementById('repoList');
   if (repos.length === 0) { el.innerHTML = '<div class="empty-state">No repos registered</div>'; return; }
 
-  el.innerHTML = repos.map(r => `
-    <div class="repo-card" onclick="sendTaskToRepo('${r.name}')">
-      <div class="repo-name">${escHtml(r.displayName)}</div>
-      <div class="repo-desc">${escHtml(r.machine)}</div>
-      <span class="repo-status ${r.status}">${r.status}</span>
-      <div class="repo-jobs">${r.jobsCompleted} done, ${r.jobsFailed} failed</div>
-      <div class="repo-caps">${(r.capabilities||[]).map(c => `<span class="cap-tag">${c}</span>`).join('')}</div>
-    </div>
-  `).join('');
+  el.innerHTML = repos.map(r =>
+    '<div class="repo-card" onclick="openTaskModalFor(\'' + r.name + '\')">' +
+      '<div class="repo-name">' + esc(r.displayName) + '</div>' +
+      '<div class="repo-desc">' + esc(r.machine) + '</div>' +
+      '<span class="repo-status ' + r.status + '">' + r.status + '</span>' +
+      '<div style="font-size:10px;color:#484f58;margin-top:2px;">' + r.jobsCompleted + ' done, ' + r.jobsFailed + ' failed</div>' +
+      '<div>' + (r.capabilities||[]).map(c => '<span class="cap-tag">' + c + '</span>').join('') + '</div>' +
+    '</div>'
+  ).join('');
 }
 
 function renderMachines(machines) {
@@ -570,12 +1369,10 @@ function renderMachines(machines) {
 
   el.innerHTML = machines.map(m => {
     const ago = Math.floor((Date.now() - m.lastSeen) / 1000);
-    return `
-      <div class="machine-card">
-        <div class="machine-name">${escHtml(m.name)}</div>
-        <div class="machine-info">${m.project || 'unknown'} | ${ago}s ago</div>
-      </div>
-    `;
+    return '<div class="machine-card">' +
+      '<div class="mc-name">' + esc(m.name) + '</div>' +
+      '<div class="mc-info">' + (m.id || '') + ' | ' + ago + 's ago</div>' +
+    '</div>';
   }).join('');
 }
 
@@ -583,37 +1380,635 @@ function renderJobs(jobs) {
   const el = document.getElementById('jobList');
   if (jobs.length === 0) { el.innerHTML = '<div class="empty-state">No jobs yet</div>'; return; }
 
-  el.innerHTML = jobs.map(j => `
-    <div class="repo-card" style="padding:8px 12px;">
-      <div style="display:flex;justify-content:space-between;">
-        <span style="font-weight:600;font-size:12px;color:#bc8cff;">${escHtml(j.repoName)}</span>
-        <span class="repo-status ${j.status}" style="font-size:10px;">${j.status}</span>
-      </div>
-      <div style="font-size:12px;color:#c9d1d9;margin-top:4px;">${escHtml(j.action)}: ${escHtml(j.description||'')}</div>
-      <div style="font-size:10px;color:#484f58;margin-top:2px;">by ${j.requestedBy}${j.duration ? ' | '+j.duration+'ms' : ''}</div>
-    </div>
-  `).join('');
+  el.innerHTML = jobs.slice(0, 8).map(j =>
+    '<div class="repo-card" style="padding:6px 10px;">' +
+      '<div style="display:flex;justify-content:space-between;">' +
+        '<span style="font-weight:600;font-size:11px;color:#bc8cff;">' + esc(j.repoName) + '</span>' +
+        '<span class="repo-status ' + j.status + '" style="font-size:9px;">' + j.status + '</span>' +
+      '</div>' +
+      '<div style="font-size:11px;color:#c9d1d9;margin-top:2px;">' + esc(j.action) + '</div>' +
+      '<div style="font-size:9px;color:#484f58;">' + j.requestedBy + (j.duration ? ' | ' + j.duration + 'ms' : '') + '</div>' +
+    '</div>'
+  ).join('');
 }
 
-async function sendTaskToRepo(repoName) {
-  const action = prompt(`Send task to ${repoName}.\nAction (e.g., build, deploy, test):`);
-  if (!action) return;
-  const description = prompt('Description:') || action;
+// ── HEALTH TAB ──
+async function refreshHealth() {
+  const grid = document.getElementById('healthGrid');
 
-  const res = await api('POST', `/api/repos/${repoName}/task`, {
+  try {
+    const [health, relayStats, repoStats, pubsubStats, webhookStats, sysStats] = await Promise.all([
+      api('GET', '/api/health'),
+      api('GET', '/api/relay/stats'),
+      api('GET', '/api/repos/stats'),
+      api('GET', '/api/pubsub/stats'),
+      api('GET', '/api/webhooks/stats'),
+      api('GET', '/api/stats'),
+    ]);
+
+    let html = '';
+
+    // System Health
+    html += '<div class="health-card">' +
+      '<h3>System Health</h3>' +
+      '<div class="health-row"><span class="health-label">Status</span><span class="health-value ok">' + (health.status || 'unknown') + '</span></div>' +
+      '<div class="health-row"><span class="health-label">Mode</span><span class="health-value">' + (health.mode || 'unknown') + '</span></div>' +
+      '<div class="health-row"><span class="health-label">Uptime</span><span class="health-value">' + (health.timestamp || '') + '</span></div>' +
+      '<div class="health-row"><span class="health-label">WebSocket</span><span class="health-value ' + (connected ? 'ok' : 'err') + '">' + (connected ? 'Connected' : 'Disconnected') + '</span></div>' +
+    '</div>';
+
+    // Machines Health
+    const machineCount = (relayStats.connectedMachines || 0) + 1;
+    html += '<div class="health-card">' +
+      '<h3>Machines (' + machineCount + ')</h3>' +
+      '<div class="health-row"><span class="health-label">This Machine</span><span class="health-value ok">' + esc(relayStats.thisMachine?.name || '?') + '</span></div>' +
+      '<div class="health-row"><span class="health-label">Remote Connected</span><span class="health-value">' + (relayStats.connectedMachines || 0) + '</span></div>' +
+      '<div class="health-row"><span class="health-label">Total Messages</span><span class="health-value">' + (relayStats.totalMessages || 0) + '</span></div>';
+    (relayStats.machines || []).forEach(m => {
+      const ago = Math.floor((Date.now() - m.lastSeen) / 1000);
+      const cls = ago < 60 ? 'ok' : ago < 300 ? 'warn' : 'err';
+      html += '<div class="health-row"><span class="health-label">' + esc(m.name) + '</span><span class="health-value ' + cls + '">' + ago + 's ago</span></div>';
+    });
+    html += '</div>';
+
+    // Repos Health
+    html += '<div class="health-card">' +
+      '<h3>Repositories (' + (repoStats.totalRepos || 0) + ')</h3>';
+    const reposByStatus = repoStats.reposByStatus || {};
+    Object.entries(reposByStatus).forEach(([status, count]) => {
+      const cls = status === 'idle' ? 'ok' : status === 'working' ? 'warn' : status === 'error' ? 'err' : '';
+      html += '<div class="health-row"><span class="health-label">' + status + '</span><span class="health-value ' + cls + '">' + count + '</span></div>';
+    });
+    html += '<div class="health-row"><span class="health-label">Total Jobs</span><span class="health-value">' + (repoStats.totalJobs || 0) + '</span></div>';
+    html += '</div>';
+
+    // Agents Health
+    html += '<div class="health-card">' +
+      '<h3>Agents</h3>' +
+      '<div class="health-row"><span class="health-label">Total</span><span class="health-value">' + (sysStats.agents?.total || 0) + '</span></div>' +
+      '<div class="health-row"><span class="health-label">Active</span><span class="health-value ok">' + (sysStats.agents?.byStatus?.active || 0) + '</span></div>' +
+      '<div class="health-row"><span class="health-label">Idle</span><span class="health-value">' + (sysStats.agents?.byStatus?.idle || 0) + '</span></div>' +
+      '<div class="health-row"><span class="health-label">Error</span><span class="health-value err">' + (sysStats.agents?.byStatus?.error || 0) + '</span></div>' +
+    '</div>';
+
+    // PubSub Health
+    html += '<div class="health-card">' +
+      '<h3>PubSub (MQTT)</h3>' +
+      '<div class="health-row"><span class="health-label">Published</span><span class="health-value">' + (pubsubStats.totalPublished || 0) + '</span></div>' +
+      '<div class="health-row"><span class="health-label">Delivered</span><span class="health-value">' + (pubsubStats.totalDelivered || 0) + '</span></div>' +
+      '<div class="health-row"><span class="health-label">Subscriptions</span><span class="health-value">' + (pubsubStats.activeSubscriptions || 0) + '</span></div>' +
+      '<div class="health-row"><span class="health-label">Topics</span><span class="health-value">' + (pubsubStats.activeTopics || 0) + '</span></div>' +
+      '<div class="health-row"><span class="health-label">Retained</span><span class="health-value">' + (pubsubStats.retainedMessages || 0) + '</span></div>' +
+    '</div>';
+
+    // Webhooks Health
+    html += '<div class="health-card">' +
+      '<h3>Webhooks</h3>' +
+      '<div class="health-row"><span class="health-label">Registered</span><span class="health-value">' + (webhookStats.totalHooks || 0) + '</span></div>' +
+      '<div class="health-row"><span class="health-label">Active</span><span class="health-value ok">' + (webhookStats.activeHooks || 0) + '</span></div>' +
+      '<div class="health-row"><span class="health-label">Deliveries</span><span class="health-value">' + (webhookStats.totalDeliveries || 0) + '</span></div>' +
+      '<div class="health-row"><span class="health-label">Success Rate</span><span class="health-value ' + ((webhookStats.successRate || 100) >= 90 ? 'ok' : 'warn') + '">' + (webhookStats.successRate || 100) + '%</span></div>' +
+    '</div>';
+
+    // Alerts
+    html += '<div class="health-card">' +
+      '<h3>Alerts</h3>' +
+      '<div class="health-row"><span class="health-label">Critical</span><span class="health-value err">' + (sysStats.alerts?.critical || 0) + '</span></div>' +
+      '<div class="health-row"><span class="health-label">Warning</span><span class="health-value warn">' + (sysStats.alerts?.warning || 0) + '</span></div>' +
+      '<div class="health-row"><span class="health-label">Info</span><span class="health-value">' + (sysStats.alerts?.info || 0) + '</span></div>' +
+      '<div class="health-row"><span class="health-label">Active Sessions</span><span class="health-value">' + (sysStats.sessions?.active || 0) + '</span></div>' +
+    '</div>';
+
+    grid.innerHTML = html;
+  } catch (err) {
+    grid.innerHTML = '<div class="health-card"><h3>Error</h3><p style="color:#f85149;">' + esc(String(err)) + '</p></div>';
+  }
+}
+
+// ── TASKS TAB ──
+async function refreshTasks() {
+  const list = document.getElementById('taskList');
+  const repoFilter = document.getElementById('taskFilterRepo').value;
+  const statusFilter = document.getElementById('taskFilterStatus').value;
+
+  let url = '/api/repos/jobs/all?limit=50';
+  if (statusFilter) url += '&status=' + statusFilter;
+
+  const data = await api('GET', url);
+  let jobs = data.jobs || [];
+
+  if (repoFilter) jobs = jobs.filter(j => j.repoName === repoFilter);
+
+  if (jobs.length === 0) {
+    list.innerHTML = '<div class="empty-state">No tasks found</div>';
+    return;
+  }
+
+  list.innerHTML = jobs.map(j => {
+    const time = new Date(j.requestedAt).toLocaleTimeString();
+    return '<div class="task-item">' +
+      '<span class="task-status-badge ' + j.status + '">' + j.status + '</span>' +
+      '<div class="task-info">' +
+        '<div class="task-action">' + esc(j.repoName) + ': ' + esc(j.action) + '</div>' +
+        '<div class="task-desc">' + esc(j.description || '') + '</div>' +
+      '</div>' +
+      '<div class="task-meta">' +
+        '<div>by ' + esc(j.requestedBy) + '</div>' +
+        '<div>' + time + '</div>' +
+        (j.duration ? '<div>' + j.duration + 'ms</div>' : '') +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  updateBadge('taskBadge', 0);
+}
+
+document.getElementById('taskFilterRepo').addEventListener('change', refreshTasks);
+document.getElementById('taskFilterStatus').addEventListener('change', refreshTasks);
+
+// ── Task Modal ──
+function openTaskModal() {
+  document.getElementById('taskModal').classList.add('visible');
+}
+
+function openTaskModalFor(repoName) {
+  document.getElementById('taskModal').classList.add('visible');
+  document.getElementById('modalRepo').value = repoName;
+}
+
+function closeTaskModal() {
+  document.getElementById('taskModal').classList.remove('visible');
+}
+
+async function submitTask() {
+  const repo = document.getElementById('modalRepo').value;
+  const action = document.getElementById('modalAction').value.trim();
+  const desc = document.getElementById('modalDesc').value.trim();
+  const by = document.getElementById('modalBy').value.trim() || 'visor';
+
+  if (!repo || !action) { showToast('Repo and action are required'); return; }
+
+  const res = await api('POST', '/api/repos/' + repo + '/task', {
     action,
-    description,
-    requestedBy: 'visor',
+    description: desc || action,
+    requestedBy: by,
   });
 
-  addMessage('task', 'You → ' + repoName, `Task: ${action} - ${description}`, 'task');
-  showToast(`Task sent to ${repoName}: ${action}`);
-  refreshStats();
+  if (res.id) {
+    addMessage('task', 'You -> ' + repo, 'Task: ' + action + ' - ' + (desc || action), 'task');
+    showToast('Task sent to ' + repo + ': ' + action);
+    closeTaskModal();
+    document.getElementById('modalAction').value = '';
+    document.getElementById('modalDesc').value = '';
+    refreshStats();
+    if (activeTab === 'tasks') refreshTasks();
+  } else {
+    showToast('Failed: ' + (res.error || 'Unknown error'));
+  }
 }
+
+// ── NETWORK TAB ──
+async function refreshNetwork() {
+  const [relayStats, pubsubStats, webhookStats] = await Promise.all([
+    api('GET', '/api/relay/stats'),
+    api('GET', '/api/pubsub/stats'),
+    api('GET', '/api/webhooks/stats'),
+  ]);
+
+  // Topology
+  const topo = document.getElementById('networkTopology');
+  const hub = relayStats.thisMachine || { id: '?', name: '?' };
+  const machines = relayStats.machines || [];
+
+  let html = '<div class="machine-node">' +
+    '<div class="machine-icon hub"><div class="online-dot"></div>H</div>' +
+    '<div class="machine-node-name">' + esc(hub.name) + '</div>' +
+    '<div class="machine-node-ip">' + esc(hub.id) + '</div>' +
+  '</div>';
+
+  machines.forEach(m => {
+    const ago = Math.floor((Date.now() - m.lastSeen) / 1000);
+    const isOnline = ago < 120;
+    html += '<div class="connection-line"><span class="latency-badge">' + (isOnline ? ago + 's' : 'offline') + '</span></div>';
+    html += '<div class="machine-node">' +
+      '<div class="machine-icon ' + (isOnline ? 'remote' : 'offline') + '">' + (isOnline ? '<div class="online-dot"></div>' : '') + 'M</div>' +
+      '<div class="machine-node-name">' + esc(m.name) + '</div>' +
+      '<div class="machine-node-ip">' + esc(m.id) + (m.channels ? ' [' + m.channels.join(', ') + ']' : '') + '</div>' +
+    '</div>';
+  });
+
+  if (machines.length === 0) {
+    html += '<div style="color:#484f58;margin-left:40px;">No remote machines connected</div>';
+  }
+
+  topo.innerHTML = html;
+
+  // Channels
+  const channels = document.getElementById('channelGrid');
+  const channelBreakdown = relayStats.channels || {};
+
+  let chHtml = '';
+
+  chHtml += '<div class="channel-card">' +
+    '<h4>Cross-Machine Relay</h4>' +
+    '<div class="channel-stat"><span class="label">Total Messages</span><span class="value">' + (relayStats.totalMessages || 0) + '</span></div>' +
+    '<div class="channel-stat"><span class="label">Machines</span><span class="value">' + (relayStats.connectedMachines || 0) + '</span></div>';
+  Object.entries(channelBreakdown).forEach(([ch, count]) => {
+    chHtml += '<div class="channel-stat"><span class="label">' + ch + '</span><span class="value">' + count + '</span></div>';
+  });
+  chHtml += '</div>';
+
+  chHtml += '<div class="channel-card">' +
+    '<h4>PubSub (MQTT)</h4>' +
+    '<div class="channel-stat"><span class="label">Published</span><span class="value">' + (pubsubStats.totalPublished || 0) + '</span></div>' +
+    '<div class="channel-stat"><span class="label">Delivered</span><span class="value">' + (pubsubStats.totalDelivered || 0) + '</span></div>' +
+    '<div class="channel-stat"><span class="label">Topics</span><span class="value">' + (pubsubStats.activeTopics || 0) + '</span></div>' +
+    '<div class="channel-stat"><span class="label">Subscriptions</span><span class="value">' + (pubsubStats.activeSubscriptions || 0) + '</span></div>' +
+  '</div>';
+
+  chHtml += '<div class="channel-card">' +
+    '<h4>Webhooks</h4>' +
+    '<div class="channel-stat"><span class="label">Hooks</span><span class="value">' + (webhookStats.totalHooks || 0) + '</span></div>' +
+    '<div class="channel-stat"><span class="label">Active</span><span class="value">' + (webhookStats.activeHooks || 0) + '</span></div>' +
+    '<div class="channel-stat"><span class="label">Deliveries</span><span class="value">' + (webhookStats.totalDeliveries || 0) + '</span></div>' +
+    '<div class="channel-stat"><span class="label">Success Rate</span><span class="value">' + (webhookStats.successRate || 100) + '%</span></div>' +
+  '</div>';
+
+  chHtml += '<div class="channel-card">' +
+    '<h4>WebSocket</h4>' +
+    '<div class="channel-stat"><span class="label">Status</span><span class="value">' + (connected ? 'Connected' : 'Disconnected') + '</span></div>' +
+    '<div class="channel-stat"><span class="label">Port</span><span class="value">3001</span></div>' +
+  '</div>';
+
+  chHtml += '<div class="channel-card">' +
+    '<h4>Agent Bus (Internal)</h4>' +
+    '<div class="channel-stat"><span class="label">Type</span><span class="value">In-process messaging</span></div>' +
+    '<div class="channel-stat"><span class="label">Pattern</span><span class="value">Direct + Broadcast</span></div>' +
+  '</div>';
+
+  chHtml += '<div class="channel-card">' +
+    '<h4>Tailscale VPN</h4>' +
+    '<div class="channel-stat"><span class="label">Type</span><span class="value">Private mesh network</span></div>' +
+    '<div class="channel-stat"><span class="label">Machines</span><span class="value">' + (machines.filter(m => (m.channels||[]).includes('tailscale')).length + 1) + '</span></div>' +
+  '</div>';
+
+  channels.innerHTML = chHtml;
+}
+
+// ── HISTORY TAB ──
+async function refreshHistory() {
+  const list = document.getElementById('historyList');
+  const typeFilter = document.getElementById('historyFilter').value;
+  const machineFilter = document.getElementById('historyMachine').value;
+
+  let url = '/api/relay/messages?limit=200';
+  if (typeFilter) url += '&type=' + typeFilter;
+  if (machineFilter) url += '&machineId=' + machineFilter;
+
+  const data = await api('GET', url);
+  const msgs = data.messages || [];
+
+  document.getElementById('historyCount').textContent = msgs.length + ' messages';
+
+  // Update machine filter
+  const machSel = document.getElementById('historyMachine');
+  const current = machSel.value;
+  const machineIds = new Set();
+  msgs.forEach(m => {
+    if (m.from?.machineId) machineIds.add(m.from.machineId);
+    if (m.to?.machineId) machineIds.add(m.to.machineId);
+  });
+  machSel.innerHTML = '<option value="">All Machines</option>' +
+    Array.from(machineIds).map(id => '<option value="' + id + '">' + esc(String(id)) + '</option>').join('');
+  machSel.value = current;
+
+  if (msgs.length === 0) {
+    list.innerHTML = '<div class="empty-state">No conversation history found</div>';
+    return;
+  }
+
+  list.innerHTML = msgs.map(m => {
+    const from = m.from?.machineName || m.from?.machineId || '?';
+    const to = m.to === '*' ? 'broadcast' : (m.to?.machineName || m.to?.machineId || '?');
+    const time = new Date(m.timestamp).toLocaleString();
+    const type = m.type || 'chat';
+    return '<div class="history-msg">' +
+      '<div>' +
+        '<div class="hm-from">' + esc(from) + '</div>' +
+        '<div class="hm-to">to ' + esc(to) + '</div>' +
+      '</div>' +
+      '<div class="hm-content">' + esc(m.content || '') + '</div>' +
+      '<div class="hm-meta">' +
+        '<span class="hm-type ' + type + '">' + type + '</span><br>' +
+        '<span>' + time + '</span><br>' +
+        '<span>' + (m.channel || '') + '</span>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+document.getElementById('historyFilter').addEventListener('change', refreshHistory);
+document.getElementById('historyMachine').addEventListener('change', refreshHistory);
+
+// ── SECURITY TAB ──
+async function refreshSecurity() {
+  const connEl = document.getElementById('secConnections');
+  const evtEl = document.getElementById('secEvents');
+  const typeFilter = document.getElementById('secEventFilter').value;
+  const sevFilter = document.getElementById('secSeverityFilter').value;
+
+  try {
+    const [stats, eventsRes] = await Promise.all([
+      api('GET', '/api/security/stats'),
+      api('GET', '/api/security/events?limit=200' +
+        (typeFilter ? '&type=' + typeFilter : '') +
+        (sevFilter ? '&severity=' + sevFilter : '')),
+    ]);
+
+    // Update stats bar
+    document.getElementById('statTrackedIPs').textContent = stats.totalTrackedIPs || 0;
+    document.getElementById('statBlockedIPs').textContent = stats.blockedIPs || 0;
+
+    // Summary
+    document.getElementById('secSummary').textContent =
+      (stats.totalTrackedIPs || 0) + ' IPs tracked | ' +
+      (stats.tailscaleIPs || 0) + ' Tailscale | ' +
+      (stats.unknownIPs || 0) + ' unknown | ' +
+      (stats.blockedIPs || 0) + ' blocked | ' +
+      (stats.criticalEvents || 0) + ' critical events';
+
+    // Badge
+    const criticals = stats.criticalEvents || 0;
+    if (activeTab !== 'security' && criticals > 0) {
+      updateBadge('secBadge', criticals);
+    } else {
+      updateBadge('secBadge', 0);
+    }
+
+    // Connections
+    const conns = stats.connections || [];
+    if (conns.length === 0) {
+      connEl.innerHTML = '<div class="empty-state">No connections tracked yet</div>';
+    } else {
+      connEl.innerHTML = conns.map(c => {
+        const cls = c.blocked ? 'blocked' : c.isTailscale ? 'tailscale' : c.isLocalhost ? 'localhost' : 'unknown';
+        const tag = c.blocked ? 'blocked' : c.isTailscale ? 'tailscale' : c.isLocalhost ? 'localhost' : 'unknown';
+        const ago = Math.floor((Date.now() - c.lastSeen) / 1000);
+        return '<div class="sec-connection ' + cls + '">' +
+          '<span class="sec-ip">' + esc(c.ip) + '</span>' +
+          '<span class="sec-tag ' + tag + '">' + tag + '</span>' +
+          '<div class="sec-detail">' +
+            c.requests + ' reqs | ' + c.failedAuths + ' fails | ' + ago + 's ago' +
+            (c.blocked ? '<br>Reason: ' + esc(c.blockedReason) : '') +
+          '</div>' +
+          '<div class="sec-actions">' +
+            (c.blocked
+              ? '<button onclick="secUnblock(\'' + esc(c.ip) + '\')">Unblock</button>'
+              : (!c.isTailscale && !c.isLocalhost
+                ? '<button class="danger" onclick="secBlock(\'' + esc(c.ip) + '\')">Block</button>' +
+                  '<button onclick="secAllow(\'' + esc(c.ip) + '\')">Allow</button>'
+                : '')) +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    // Events
+    const events = eventsRes.events || [];
+    if (events.length === 0) {
+      evtEl.innerHTML = '<div class="empty-state">No security events</div>';
+    } else {
+      evtEl.innerHTML = events.map(e => {
+        const time = new Date(e.timestamp).toLocaleTimeString();
+        return '<div class="sec-event ' + e.severity + '">' +
+          '<span class="sec-event-type ' + e.severity + '">' + e.type.replace(/_/g, ' ') + '</span>' +
+          '<span class="sec-event-ip">' + esc(e.ip) + '</span>' +
+          '<span class="sec-event-detail">' + esc(e.details) + '</span>' +
+          '<span class="sec-event-time">' + time + '</span>' +
+        '</div>';
+      }).join('');
+    }
+  } catch (err) {
+    connEl.innerHTML = '<div class="empty-state" style="color:#f85149;">Failed to load: ' + esc(String(err)) + '</div>';
+  }
+}
+
+async function secBlock(ip) {
+  await api('POST', '/api/security/block', { ip });
+  showToast('Blocked: ' + ip);
+  refreshSecurity();
+}
+
+async function secUnblock(ip) {
+  await api('POST', '/api/security/unblock', { ip });
+  showToast('Unblocked: ' + ip);
+  refreshSecurity();
+}
+
+async function secAllow(ip) {
+  await api('POST', '/api/security/allow-ip', { ip });
+  showToast('Added to allowlist: ' + ip);
+  refreshSecurity();
+}
+
+document.getElementById('secEventFilter').addEventListener('change', refreshSecurity);
+document.getElementById('secSeverityFilter').addEventListener('change', refreshSecurity);
+
+// ── CLI TERMINAL ──
+let terminal = null;
+let fitAddon = null;
+let currentSession = null;
+let cliWs = null;
+
+function initTerminal() {
+  if (terminal) return;
+  if (typeof Terminal === 'undefined') {
+    document.getElementById('terminal').innerHTML = '<div class="empty-state" style="color:#f85149;padding:40px;">xterm.js not loaded. Make sure /js/xterm.js exists.</div>';
+    return;
+  }
+
+  terminal = new Terminal({
+    theme: {
+      background: '#0a0a15',
+      foreground: '#e0e0e0',
+      cursor: '#00ff88',
+      cursorAccent: '#000000',
+      selection: 'rgba(88, 166, 255, 0.3)',
+      black: '#1c1c2e',
+      red: '#f85149',
+      green: '#3fb950',
+      yellow: '#d29922',
+      blue: '#58a6ff',
+      magenta: '#bc8cff',
+      cyan: '#39d2c0',
+      white: '#e0e0e0',
+    },
+    fontFamily: '"JetBrains Mono", "Fira Code", "Cascadia Code", monospace',
+    fontSize: 14,
+    cursorBlink: true,
+    cursorStyle: 'block',
+    scrollback: 5000,
+  });
+
+  fitAddon = new FitAddon.FitAddon();
+  terminal.loadAddon(fitAddon);
+  terminal.open(document.getElementById('terminal'));
+  fitAddon.fit();
+
+  terminal.writeln('\x1b[36mPIA Visor Terminal\x1b[0m');
+  terminal.writeln('Create a new session to get started.\r\n');
+
+  // Handle keyboard input
+  terminal.onData((data) => {
+    if (cliWs && cliWs.readyState === WebSocket.OPEN && currentSession) {
+      cliWs.send(JSON.stringify({
+        type: 'input',
+        payload: { sessionId: currentSession, data }
+      }));
+    }
+  });
+
+  // Handle resize
+  window.addEventListener('resize', () => {
+    if (fitAddon && activeTab === 'cli') {
+      fitAddon.fit();
+      if (cliWs && cliWs.readyState === WebSocket.OPEN && currentSession) {
+        cliWs.send(JSON.stringify({
+          type: 'resize',
+          payload: { sessionId: currentSession, cols: terminal.cols, rows: terminal.rows }
+        }));
+      }
+    }
+  });
+}
+
+function connectCliWs() {
+  if (cliWs && cliWs.readyState === WebSocket.OPEN) return;
+
+  cliWs = new WebSocket(WS_URL);
+
+  cliWs.onopen = () => {
+    cliWs.send(JSON.stringify({ type: 'auth', payload: { token: TOKEN } }));
+  };
+
+  cliWs.onmessage = (e) => {
+    try {
+      const msg = JSON.parse(e.data);
+
+      if (msg.type === 'auth' && msg.success) {
+        if (currentSession) {
+          cliWs.send(JSON.stringify({ type: 'subscribe', payload: { sessionId: currentSession } }));
+        }
+        return;
+      }
+
+      if ((msg.type === 'output' || msg.type === 'buffer') && msg.sessionId === currentSession && terminal) {
+        terminal.write(msg.payload);
+        return;
+      }
+
+      if (msg.type === 'exit' && msg.sessionId === currentSession) {
+        terminal.writeln('\r\n\x1b[33m--- Session ended (code: ' + (msg.payload?.code || '?') + ') ---\x1b[0m');
+        currentSession = null;
+        return;
+      }
+    } catch { /* ignore */ }
+  };
+
+  cliWs.onclose = () => {
+    setTimeout(connectCliWs, 3000);
+  };
+}
+
+async function createCliSession(command) {
+  initTerminal();
+  connectCliWs();
+
+  terminal.clear();
+  terminal.writeln('\x1b[36mStarting ' + command + ' session...\x1b[0m\r\n');
+
+  // Get the first online machine ID from the database
+  let machineId = 'local';
+  try {
+    const machines = await api('GET', '/api/machines');
+    if (Array.isArray(machines) && machines.length > 0) {
+      const online = machines.find(m => m.status === 'online');
+      machineId = (online || machines[0]).id;
+    }
+  } catch { /* fallback */ }
+
+  const res = await api('POST', '/api/sessions', {
+    machine_id: machineId,
+    command: command,
+  });
+
+  if (res.id) {
+    currentSession = res.id;
+    showToast('CLI session created: ' + command);
+
+    // Update session dropdown
+    const sel = document.getElementById('cliSessionSelect');
+    const opt = document.createElement('option');
+    opt.value = res.id;
+    opt.textContent = command + ' (' + res.id.substring(0, 8) + ')';
+    sel.appendChild(opt);
+    sel.value = res.id;
+
+    // Subscribe via WebSocket
+    if (cliWs && cliWs.readyState === WebSocket.OPEN) {
+      cliWs.send(JSON.stringify({ type: 'subscribe', payload: { sessionId: res.id } }));
+      // Send resize
+      setTimeout(() => {
+        if (fitAddon) fitAddon.fit();
+        cliWs.send(JSON.stringify({
+          type: 'resize',
+          payload: { sessionId: res.id, cols: terminal.cols, rows: terminal.rows }
+        }));
+      }, 500);
+    }
+  } else {
+    terminal.writeln('\x1b[31mFailed to create session: ' + (res.error || 'unknown') + '\x1b[0m');
+  }
+}
+
+async function closeCliSession() {
+  if (!currentSession) return;
+  await api('DELETE', '/api/sessions/' + currentSession);
+  terminal.writeln('\r\n\x1b[33m--- Session closed ---\x1b[0m');
+  showToast('Session closed');
+  currentSession = null;
+}
+
+async function loadSessions() {
+  const res = await api('GET', '/api/sessions');
+  const sessions = res.sessions || res || [];
+  const sel = document.getElementById('cliSessionSelect');
+  sel.innerHTML = '<option value="">No Session</option>';
+  if (Array.isArray(sessions)) {
+    sessions.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.id;
+      opt.textContent = (s.command || 'session') + ' (' + s.id.substring(0, 8) + ')';
+      sel.appendChild(opt);
+    });
+  }
+}
+
+document.getElementById('cliSessionSelect').addEventListener('change', function() {
+  const sid = this.value;
+  if (!sid) return;
+  currentSession = sid;
+  if (terminal) {
+    terminal.clear();
+    terminal.writeln('\x1b[36mSwitching to session ' + sid.substring(0, 8) + '...\x1b[0m\r\n');
+  }
+  if (cliWs && cliWs.readyState === WebSocket.OPEN) {
+    cliWs.send(JSON.stringify({ type: 'subscribe', payload: { sessionId: sid } }));
+  }
+});
 
 // ── Init ──
 async function init() {
-  // Request notification permission
   if ('Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission();
   }
