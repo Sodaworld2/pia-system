@@ -316,6 +316,117 @@ System tray, minimize-to-tray, auto-detects running server.
 | Polish + Security | Done | PIA-022 to PIA-025 |
 | Visor + Sentinel + Desktop | Done | Session 1-3 |
 
+## Orchestration Techniques (Playbook)
+
+Techniques discovered and proven during the DAO rebuild session. Use these patterns for future multi-machine AI projects.
+
+### 1. Remote PTY Control
+**What**: Create terminal sessions on remote machines via PIA API and run commands.
+```bash
+# Create session on remote machine
+curl -X POST http://REMOTE_IP:3000/api/sessions \
+  -H "Content-Type: application/json" \
+  -H "X-Api-Token: pia-local-dev-token-2024" \
+  -d '{"machine_id":"MACHINE_DB_ID","command":"powershell"}'
+
+# Send command
+curl -X POST http://REMOTE_IP:3000/api/sessions/SESSION_ID/input \
+  -H "Content-Type: application/json" \
+  -H "X-Api-Token: pia-local-dev-token-2024" \
+  -d '{"data":"hostname\r\n"}'
+
+# Read output (check .buffer field)
+curl http://REMOTE_IP:3000/api/sessions/SESSION_ID \
+  -H "X-Api-Token: pia-local-dev-token-2024"
+```
+**Best for**: Running builds, git operations, quick checks. **Not for**: Creating large files (use git push instead).
+
+### 2. Git-Based Messaging
+**What**: Use git push/pull as a reliable async message channel between machines.
+```bash
+# Hub writes a message file
+echo "Instructions for Machine #3" > MESSAGE_FROM_HUB.md
+git add MESSAGE_FROM_HUB.md && git commit -m "hub: message" && git push
+
+# Machine #3 reads it
+git pull && cat MESSAGE_FROM_HUB.md
+```
+**Best for**: Specs, journals, large documents, instructions. **Not for**: Real-time chat (use relay API instead).
+
+### 3. Parallel Agent Swarm
+**What**: Launch 5+ agents simultaneously for maximum throughput.
+```
+Hub launches in parallel:
+├── Agent 1: Write API contracts spec
+├── Agent 2: Write state machines spec
+├── Agent 3: Deploy implementation to Machine #3 via PTY
+├── Agent 4: QA review agent analyzing code on Machine #3
+└── Agent 5: Read knowledge base from GitHub
+```
+**Key rule**: Agents must be independent (no dependencies between them). If Agent 3 needs Agent 1's output, run Agent 1 first.
+
+### 4. Relay Broadcasting
+**What**: Send status updates to all machines via the cross-machine relay.
+```bash
+curl -X POST http://localhost:3000/api/relay/send \
+  -H "Content-Type: application/json" \
+  -H "X-Api-Token: pia-local-dev-token-2024" \
+  -d '{"to":"*","content":"[HUB] Status update here","type":"chat"}'
+```
+Visible on every machine's Visor Chat tab. Good for keeping the fleet informed.
+
+### 5. Spec-First Development
+**What**: Write complete specifications before touching any code.
+```
+Phase A: SPECIFY
+  1. Foundation Spec (DB, auth, types)
+  2. API Contracts (every endpoint)
+  3. State Machines (every lifecycle)
+
+Phase B: IMPLEMENT
+  - All agents share the same blueprint
+  - Parallel implementation across machines
+
+Phase C: QA
+  - Automated review agents check work
+  - Devil's advocate analysis on decisions
+```
+
+### 6. Decision Journal with Devil's Advocate
+**What**: Track every architectural decision with WHY, alternatives rejected, and self-criticism.
+```markdown
+## Decision #1: SQLite over PostgreSQL
+**WHY**: Zero infrastructure cost, portable...
+**ALTERNATIVES REJECTED**: PostgreSQL (adds complexity), Supabase (adds cost)...
+**DEVIL'S ADVOCATE**: No concurrent writes, no pgvector...
+**VERDICT**: Keep SQLite, plan migration at 100+ users.
+```
+
+### 7. Cross-Machine QA Agent
+**What**: Launch a review agent on a DIFFERENT machine to analyze code independently.
+```
+Hub creates PTY on Machine #3 → Runs build → Checks for errors →
+Runs tests → Counts TODOs → Checks security → Reports back via relay
+```
+Separation between builder and reviewer prevents blind spots.
+
+---
+
+## Related Documents
+
+| Document | Purpose |
+|----------|---------|
+| `MACHINE-2-SETUP.md` | Step-by-step setup for Machine #2 |
+| `MACHINE-3-SETUP.md` | Update instructions for Machine #3 |
+| `THREE-MACHINE-SIMULATION.md` | Full 3-machine orchestration simulation + issues |
+| `MESSAGE_FROM_HUB.md` | Latest hub-to-fleet message |
+| `DAO_FOUNDATION_SPEC.md` | Foundation specification (DB, auth, types) |
+| `DAO_API_CONTRACTS.md` | API endpoint contracts |
+| `DAO_STATE_MACHINES.md` | State machine specifications |
+| `DAO_DECISION_JOURNAL.md` | Decision log with devil's advocate analysis |
+| `PIA_IMPROVEMENTS_JOURNAL.md` | PIA system improvement proposals |
+| `HANDOFF.md` | Quick reference for next agent session |
+
 ## License
 
 MIT
