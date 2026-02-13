@@ -1,0 +1,1579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PIA Mission Control</title>
+  <link rel="stylesheet" href="/css/xterm.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #050508;
+      color: #e2e8f0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    .mc-header {
+      background: linear-gradient(135deg, #0a0a12 0%, #12121e 100%);
+      border-bottom: 1px solid #1e1e2e;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .mc-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .mc-title h1 {
+      font-size: 18px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #9b4dca, #58a6ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.02em;
+    }
+
+    .mc-title .subtitle {
+      color: #64748b;
+      font-size: 12px;
+      font-weight: 400;
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .global-mode-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #0f0f18;
+      border: 1px solid #2a2a3a;
+      border-radius: 8px;
+      padding: 5px 12px;
+      font-size: 12px;
+    }
+
+    .mode-btn {
+      padding: 4px 12px;
+      border: none;
+      border-radius: 5px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .mode-btn.manual { background: #1a3a5c; color: #58a6ff; }
+    .mode-btn.manual.active { background: #58a6ff; color: #000; }
+    .mode-btn.auto { background: #1a2e1a; color: #3fb950; }
+    .mode-btn.auto.active { background: #3fb950; color: #000; }
+
+    .ws-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    .ws-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #3fb950;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+
+    /* ── Stats Bar ── */
+    .stats-bar {
+      background: #0a0a12;
+      border-bottom: 1px solid #1a1a2a;
+      padding: 6px 20px;
+      display: flex;
+      gap: 24px;
+      flex-shrink: 0;
+    }
+
+    .stat {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+    }
+
+    .stat-value {
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    .stat-label { color: #64748b; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-value.green { color: #3fb950; }
+    .stat-value.orange { color: #d29922; }
+    .stat-value.red { color: #f85149; }
+    .stat-value.blue { color: #58a6ff; }
+    .stat-value.purple { color: #bc8cff; }
+
+    /* ── Main Layout ── */
+    .mc-main {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ── Left Panel: Machine Grid ── */
+    .machine-panel {
+      width: 320px;
+      background: #0a0a10;
+      border-right: 1px solid #1a1a2a;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .panel-header {
+      padding: 10px 16px;
+      border-bottom: 1px solid #1a1a2a;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .panel-header .count {
+      background: #1a1a2e;
+      color: #bc8cff;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 10px;
+    }
+
+    .machine-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+    }
+
+    .machine-tile {
+      background: #0f0f18;
+      border: 1px solid #1e1e30;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .machine-tile:hover { border-color: #9b4dca; transform: translateY(-1px); }
+    .machine-tile.selected { border-color: #9b4dca; background: #12101e; box-shadow: 0 0 20px rgba(155,77,202,0.15); }
+    .machine-tile.has-prompt { border-left: 3px solid #d29922; }
+    .machine-tile.has-prompt::after {
+      content: '!';
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      background: #d29922;
+      color: #000;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 800;
+      animation: pulse 1.5s infinite;
+    }
+
+    .machine-name {
+      font-weight: 700;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .machine-status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+    }
+
+    .machine-status-dot.online { background: #3fb950; }
+    .machine-status-dot.busy { background: #d29922; }
+    .machine-status-dot.offline { background: #484f58; }
+    .machine-status-dot.error { background: #f85149; }
+
+    .machine-meta {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+      font-size: 11px;
+      color: #64748b;
+    }
+
+    .machine-ip { font-family: 'JetBrains Mono', monospace; }
+
+    .machine-agents {
+      display: flex;
+      gap: 4px;
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+
+    .agent-chip {
+      font-size: 9px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .agent-chip.idle { background: #0d2818; color: #3fb950; }
+    .agent-chip.working { background: #2a1f0f; color: #d29922; }
+    .agent-chip.waiting { background: #2a0f0f; color: #f85149; animation: pulse 1.5s infinite; }
+    .agent-chip.done { background: #1a1a2e; color: #8b949e; }
+
+    .machine-mode {
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .mode-indicator {
+      font-size: 9px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .mode-indicator.manual { background: #0d1830; color: #58a6ff; }
+    .mode-indicator.auto { background: #0d2818; color: #3fb950; }
+
+    /* ── Center: Agent Detail / Terminal ── */
+    .center-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .agent-detail-header {
+      background: #0d0d15;
+      border-bottom: 1px solid #1a1a2a;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .agent-detail-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .agent-detail-title h2 {
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .agent-detail-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn:hover { filter: brightness(1.2); }
+    .btn.green { background: #238636; color: white; }
+    .btn.purple { background: #8957e5; color: white; }
+    .btn.blue { background: #1f6feb; color: white; }
+    .btn.red { background: #da3633; color: white; }
+    .btn.ghost { background: #1a1a2e; color: #c9d1d9; border: 1px solid #2a2a3e; }
+
+    .agent-tabs {
+      display: flex;
+      background: #0a0a12;
+      border-bottom: 1px solid #1a1a2a;
+      padding: 0 16px;
+      flex-shrink: 0;
+    }
+
+    .agent-tab {
+      padding: 8px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .agent-tab:hover { color: #c9d1d9; }
+    .agent-tab.active { color: #bc8cff; border-bottom-color: #bc8cff; }
+
+    /* Terminal View */
+    .terminal-view {
+      flex: 1;
+      background: #080810;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .terminal-output {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 16px;
+      font-family: 'JetBrains Mono', 'Cascadia Code', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #c9d1d9;
+    }
+
+    .term-line { margin-bottom: 2px; white-space: pre-wrap; word-break: break-word; }
+    .term-line.system { color: #64748b; }
+    .term-line.tool { color: #bc8cff; }
+    .term-line.output { color: #c9d1d9; }
+    .term-line.error { color: #f85149; }
+    .term-line.success { color: #3fb950; }
+    .term-line.prompt { color: #d29922; font-weight: 700; }
+
+    .tool-call {
+      background: #0f0f1a;
+      border: 1px solid #1e1e30;
+      border-left: 3px solid #bc8cff;
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin: 6px 0;
+      font-size: 12px;
+    }
+
+    .tool-call .tool-name { color: #bc8cff; font-weight: 700; }
+    .tool-call .tool-args { color: #64748b; margin-top: 2px; }
+    .tool-call .tool-result { color: #3fb950; margin-top: 4px; border-top: 1px solid #1e1e30; padding-top: 4px; }
+
+    /* Journal View */
+    .journal-view {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 16px;
+      display: none;
+    }
+
+    .journal-view.active { display: block; }
+
+    .journal-entry {
+      background: #0f0f18;
+      border: 1px solid #1e1e30;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 6px;
+    }
+
+    .journal-entry-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .journal-time { font-size: 10px; color: #484f58; }
+    .journal-type {
+      font-size: 9px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .journal-type.tool_call { background: #1f0d2a; color: #bc8cff; }
+    .journal-type.output { background: #0d1830; color: #58a6ff; }
+    .journal-type.prompt { background: #2a1f0f; color: #d29922; }
+    .journal-type.response { background: #0d2818; color: #3fb950; }
+    .journal-type.auto_approved { background: #0d2818; color: #3fb950; border: 1px solid #1a3a2d; }
+    .journal-type.error { background: #2a0f0f; color: #f85149; }
+    .journal-type.cost { background: #1a1a2e; color: #8b949e; }
+
+    .journal-content {
+      font-size: 13px;
+      color: #c9d1d9;
+      line-height: 1.5;
+    }
+
+    /* ── Right Panel: Prompt Queue ── */
+    .prompt-panel {
+      width: 360px;
+      background: #0a0a10;
+      border-left: 1px solid #1a1a2a;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .prompt-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+    }
+
+    .prompt-card {
+      background: #0f0f18;
+      border: 1px solid #1e1e30;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 8px;
+      transition: all 0.2s;
+    }
+
+    .prompt-card.urgent { border-color: #d29922; border-left: 3px solid #d29922; }
+    .prompt-card.active { border-color: #9b4dca; background: #12101e; }
+    .prompt-card.resolved { opacity: 0.5; border-color: #1a3a2d; }
+
+    .prompt-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+
+    .prompt-agent-name {
+      font-weight: 700;
+      font-size: 13px;
+      color: #bc8cff;
+    }
+
+    .prompt-machine-tag {
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: #1c2333;
+      color: #58a6ff;
+      font-weight: 600;
+    }
+
+    .prompt-time {
+      font-size: 10px;
+      color: #484f58;
+    }
+
+    .prompt-question {
+      font-size: 13px;
+      color: #e2e8f0;
+      line-height: 1.5;
+      margin-bottom: 10px;
+      padding: 8px 10px;
+      background: #0a0a15;
+      border-radius: 6px;
+      border-left: 3px solid #d29922;
+    }
+
+    .prompt-options {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+
+    .prompt-option-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: #12121e;
+      border: 1px solid #2a2a3e;
+      border-radius: 6px;
+      color: #c9d1d9;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .prompt-option-btn:hover { border-color: #9b4dca; background: #1a1a2e; }
+    .prompt-option-btn.selected { border-color: #3fb950; background: #0d2818; color: #3fb950; }
+
+    .prompt-option-num {
+      background: #2a2a3e;
+      color: #bc8cff;
+      width: 22px; height: 22px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .prompt-text-input {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .prompt-text-input input {
+      flex: 1;
+      background: #0a0a15;
+      border: 1px solid #2a2a3e;
+      border-radius: 6px;
+      padding: 7px 10px;
+      color: #c9d1d9;
+      font-size: 12px;
+      outline: none;
+    }
+
+    .prompt-text-input input:focus { border-color: #9b4dca; }
+
+    .prompt-text-input button {
+      background: #238636;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 7px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* ── Spawn Modal ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.visible { display: flex; }
+
+    .modal {
+      background: #12121e;
+      border: 1px solid #2a2a3e;
+      border-radius: 12px;
+      padding: 24px;
+      width: 460px;
+      max-width: 90vw;
+    }
+
+    .modal h2 {
+      font-size: 16px;
+      margin-bottom: 16px;
+      color: #e6edf3;
+    }
+
+    .modal label {
+      display: block;
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 4px;
+      margin-top: 12px;
+    }
+
+    .modal input, .modal select, .modal textarea {
+      width: 100%;
+      background: #0a0a15;
+      border: 1px solid #2a2a3e;
+      color: #c9d1d9;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .modal textarea { min-height: 80px; resize: vertical; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+    .modal input:focus, .modal textarea:focus, .modal select:focus { border-color: #9b4dca; }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 20px;
+    }
+
+    .btn-cancel {
+      background: #1a1a2e;
+      color: #c9d1d9;
+      border: 1px solid #2a2a3e;
+      border-radius: 6px;
+      padding: 8px 16px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    /* ── Toast ── */
+    .toast-container {
+      position: fixed;
+      top: 60px;
+      right: 20px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      background: #1f2937;
+      border: 1px solid #9b4dca;
+      border-radius: 8px;
+      padding: 10px 16px;
+      color: #e6edf3;
+      font-size: 13px;
+      animation: toastIn 0.3s ease;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      max-width: 350px;
+    }
+
+    @keyframes toastIn { from { opacity:0; transform:translateX(100px); } to { opacity:1; transform:translateX(0); } }
+
+    /* ── Grid View (multi-terminal) ── */
+    .grid-view {
+      flex: 1;
+      display: none;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      grid-template-rows: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 6px;
+      padding: 6px;
+      overflow-y: auto;
+      background: #050508;
+    }
+
+    .grid-view.active { display: grid; }
+
+    .grid-tile {
+      background: #0a0a12;
+      border: 1px solid #1e1e30;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.2s;
+      min-height: 0;
+    }
+
+    .grid-tile:hover { border-color: #9b4dca; box-shadow: 0 0 15px rgba(155,77,202,0.15); }
+    .grid-tile.waiting { border-color: #d29922; border-left: 3px solid #d29922; }
+    .grid-tile.selected { border-color: #9b4dca; border-width: 2px; }
+
+    .grid-tile-header {
+      padding: 6px 10px;
+      background: #0d0d18;
+      border-bottom: 1px solid #1a1a2a;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .grid-tile-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .grid-tile-title .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .grid-tile-title .dot.working { background: #3fb950; }
+    .grid-tile-title .dot.waiting { background: #d29922; animation: pulse 1.5s infinite; }
+    .grid-tile-title .dot.idle { background: #484f58; }
+
+    .grid-tile-badges {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .grid-tile-badges .badge {
+      font-size: 9px;
+      padding: 1px 6px;
+      border-radius: 8px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .grid-tile-badges .badge.machine { background: #1c2333; color: #58a6ff; }
+    .grid-tile-badges .badge.mode-m { background: #0d1830; color: #58a6ff; }
+    .grid-tile-badges .badge.mode-a { background: #0d2818; color: #3fb950; }
+    .grid-tile-badges .badge.cost { background: #1a1a2e; color: #8b949e; }
+
+    .grid-tile-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px 10px;
+      font-family: 'JetBrains Mono', 'Cascadia Code', monospace;
+      font-size: 11px;
+      line-height: 1.5;
+      color: #8b949e;
+      min-height: 0;
+    }
+
+    .grid-tile-body .gl { white-space: pre-wrap; word-break: break-word; margin-bottom: 1px; }
+    .grid-tile-body .gl.system { color: #484f58; }
+    .grid-tile-body .gl.tool { color: #bc8cff; }
+    .grid-tile-body .gl.output { color: #c9d1d9; }
+    .grid-tile-body .gl.error { color: #f85149; }
+    .grid-tile-body .gl.success { color: #3fb950; }
+    .grid-tile-body .gl.prompt { color: #d29922; font-weight: 700; }
+
+    .grid-tile-footer {
+      padding: 4px 10px;
+      border-top: 1px solid #1a1a2a;
+      font-size: 10px;
+      color: #484f58;
+      display: flex;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    /* View Toggle Button */
+    .view-toggle {
+      display: flex;
+      align-items: center;
+      background: #0f0f18;
+      border: 1px solid #2a2a3a;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .view-toggle-btn {
+      padding: 5px 10px;
+      border: none;
+      background: transparent;
+      color: #64748b;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .view-toggle-btn:hover { color: #c9d1d9; }
+    .view-toggle-btn.active { background: #9b4dca; color: white; }
+
+    /* ── Cost Tracker ── */
+    .cost-tracker {
+      padding: 8px 16px;
+      border-top: 1px solid #1a1a2a;
+      background: #0a0a10;
+      font-size: 11px;
+      color: #64748b;
+      display: flex;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+
+    .cost-item { display: flex; gap: 4px; align-items: center; }
+    .cost-value { color: #3fb950; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+
+    /* ── Responsive ── */
+    @media (max-width: 1200px) {
+      .machine-panel { width: 260px; }
+      .prompt-panel { width: 300px; }
+    }
+    @media (max-width: 900px) {
+      .prompt-panel { display: none; }
+    }
+    @media (max-width: 700px) {
+      .machine-panel { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <div class="mc-header">
+    <div class="mc-title">
+      <h1>PIA MISSION CONTROL</h1>
+      <span class="subtitle">Claude Code Fleet Manager</span>
+    </div>
+    <div class="header-controls">
+      <div class="global-mode-toggle">
+        <span style="color:#64748b;font-size:11px;">Global:</span>
+        <button class="mode-btn manual active" onclick="setGlobalMode('manual')">Manual</button>
+        <button class="mode-btn auto" onclick="setGlobalMode('auto')">Auto</button>
+      </div>
+      <div class="view-toggle">
+        <button class="view-toggle-btn active" onclick="setView('single')" id="viewSingle">Single</button>
+        <button class="view-toggle-btn" onclick="setView('grid')" id="viewGrid">Grid</button>
+      </div>
+      <button class="btn purple" onclick="openSpawnModal()">+ Spawn Agent</button>
+      <div class="ws-status">
+        <div class="ws-dot"></div>
+        <span>Connected</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS BAR -->
+  <div class="stats-bar">
+    <div class="stat"><span class="stat-value blue">6</span><span class="stat-label">Machines</span></div>
+    <div class="stat"><span class="stat-value purple">4</span><span class="stat-label">Agents</span></div>
+    <div class="stat"><span class="stat-value green">2</span><span class="stat-label">Working</span></div>
+    <div class="stat"><span class="stat-value orange" id="statWaiting">2</span><span class="stat-label">Waiting</span></div>
+    <div class="stat"><span class="stat-value" style="color:#c9d1d9;">1</span><span class="stat-label">Idle</span></div>
+    <div class="stat"><span class="stat-value green">12</span><span class="stat-label">Done Today</span></div>
+    <div class="stat"><span class="stat-value red">1</span><span class="stat-label">Errors</span></div>
+    <div class="stat" style="margin-left:auto;"><span class="stat-label">Cost Today</span><span class="stat-value green" style="font-size:14px;">$2.47</span></div>
+    <div class="stat"><span class="stat-label">Tokens</span><span class="stat-value" style="font-size:14px;color:#bc8cff;">184K</span></div>
+  </div>
+
+  <!-- MAIN LAYOUT -->
+  <div class="mc-main">
+
+    <!-- LEFT: Machine Grid -->
+    <div class="machine-panel">
+      <div class="panel-header">
+        Machines <span class="count">6 online</span>
+      </div>
+      <div class="machine-list" id="machineList"></div>
+    </div>
+
+    <!-- CENTER: Agent Detail -->
+    <div class="center-panel">
+      <div class="agent-detail-header">
+        <div class="agent-detail-title">
+          <h2 id="centerTitle">Select a machine to view agents</h2>
+          <span class="mode-indicator manual" id="centerMode" style="display:none;">Manual</span>
+        </div>
+        <div class="agent-detail-actions" id="centerActions" style="display:none;">
+          <button class="btn ghost" onclick="toggleMode()">Toggle Mode</button>
+          <button class="btn blue" onclick="openSpawnModal()">+ Spawn</button>
+          <button class="btn red" onclick="killAgent()">Kill</button>
+        </div>
+      </div>
+
+      <div class="agent-tabs" id="agentTabs" style="display:none;">
+        <div class="agent-tab active" data-tab="terminal" onclick="switchAgentTab('terminal')">Terminal</div>
+        <div class="agent-tab" data-tab="journal" onclick="switchAgentTab('journal')">Journal</div>
+        <div class="agent-tab" data-tab="cost" onclick="switchAgentTab('cost')">Cost</div>
+      </div>
+
+      <!-- Terminal Output (mock) -->
+      <div class="terminal-view" id="terminalView">
+        <div class="terminal-output" id="terminalOutput">
+          <div class="term-line system">Welcome to PIA Mission Control.</div>
+          <div class="term-line system">Click a machine tile on the left to view its agent sessions.</div>
+          <div class="term-line system">Use "+ Spawn Agent" to start a new Claude Code agent on any machine.</div>
+          <div class="term-line system">Prompts requiring your input appear in the right panel.</div>
+        </div>
+      </div>
+
+      <!-- Grid View (all agents tiled) -->
+      <div class="grid-view" id="gridView"></div>
+
+      <!-- Journal View (hidden by default) -->
+      <div class="journal-view" id="journalView"></div>
+
+      <!-- Cost footer -->
+      <div class="cost-tracker" id="costTracker" style="display:none;">
+        <div class="cost-item">Session: <span class="cost-value" id="costSession">$0.00</span></div>
+        <div class="cost-item">Tokens in: <span class="cost-value" id="costIn">0</span></div>
+        <div class="cost-item">Tokens out: <span class="cost-value" id="costOut">0</span></div>
+        <div class="cost-item">Tool calls: <span class="cost-value" id="costTools">0</span></div>
+        <div class="cost-item">Duration: <span class="cost-value" id="costDuration">0m</span></div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Prompt Queue -->
+    <div class="prompt-panel">
+      <div class="panel-header">
+        Prompt Queue <span class="count" id="promptCount">2 pending</span>
+      </div>
+      <div class="prompt-list" id="promptList"></div>
+    </div>
+
+  </div>
+
+  <!-- SPAWN MODAL -->
+  <div class="modal-overlay" id="spawnModal">
+    <div class="modal">
+      <h2>Spawn New Agent</h2>
+      <label>Target Machine</label>
+      <select id="spawnMachine">
+        <option value="machine-1">DESKTOP-PIA (local)</option>
+        <option value="machine-2">TOWER-DEV (100.64.1.2)</option>
+        <option value="machine-3">MACBOOK-PRO (100.64.1.3)</option>
+        <option value="machine-4">CLOUD-GPU (100.64.1.4)</option>
+        <option value="machine-5">MINI-BUILD (100.64.1.5)</option>
+        <option value="machine-6">NUC-TEST (100.64.1.6)</option>
+      </select>
+      <label>Mode</label>
+      <select id="spawnMode">
+        <option value="api">API Mode (PIA drives Claude API)</option>
+        <option value="pty">PTY Mode (spawn real Claude CLI)</option>
+      </select>
+      <label>Working Directory</label>
+      <input type="text" id="spawnCwd" placeholder="C:\Users\mic\Projects\my-app" value="C:\Users\mic\Downloads\pia-system">
+      <label>Initial Task</label>
+      <textarea id="spawnTask" placeholder="Describe what this agent should work on...">Fix the failing unit tests in src/api/routes/</textarea>
+      <label>Initial Mode</label>
+      <select id="spawnInitMode">
+        <option value="manual">Manual (approve every action)</option>
+        <option value="auto">Auto (safety policy decides)</option>
+      </select>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeSpawnModal()">Cancel</button>
+        <button class="btn purple" onclick="spawnAgent()">Spawn Agent</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ── MOCK DATA ──
+const MACHINES = [
+  {
+    id: 'machine-1', name: 'DESKTOP-PIA', ip: '100.64.1.1 (local)',
+    status: 'online', mode: 'manual',
+    agents: [
+      { id: 'a1', name: 'Agent #1', status: 'working', task: 'Fixing test suite', mode: 'manual', cost: 0.82, tokensIn: 45200, tokensOut: 12300, tools: 23, duration: '12m' },
+      { id: 'a2', name: 'Agent #2', status: 'waiting', task: 'Refactoring database module', mode: 'manual', cost: 0.34, tokensIn: 18900, tokensOut: 5600, tools: 8, duration: '4m' },
+    ]
+  },
+  {
+    id: 'machine-2', name: 'TOWER-DEV', ip: '100.64.1.2',
+    status: 'online', mode: 'auto',
+    agents: [
+      { id: 'a3', name: 'Agent #3', status: 'working', task: 'Building new API endpoints', mode: 'auto', cost: 1.12, tokensIn: 62000, tokensOut: 18400, tools: 41, duration: '22m' },
+    ]
+  },
+  {
+    id: 'machine-3', name: 'MACBOOK-PRO', ip: '100.64.1.3',
+    status: 'online', mode: 'manual',
+    agents: [
+      { id: 'a4', name: 'Agent #4', status: 'waiting', task: 'Implementing auth flow', mode: 'manual', cost: 0.19, tokensIn: 10500, tokensOut: 3200, tools: 5, duration: '2m' },
+    ]
+  },
+  {
+    id: 'machine-4', name: 'CLOUD-GPU', ip: '100.64.1.4',
+    status: 'online', mode: 'auto',
+    agents: []
+  },
+  {
+    id: 'machine-5', name: 'MINI-BUILD', ip: '100.64.1.5',
+    status: 'offline', mode: 'manual',
+    agents: []
+  },
+  {
+    id: 'machine-6', name: 'NUC-TEST', ip: '100.64.1.6',
+    status: 'online', mode: 'auto',
+    agents: []
+  },
+];
+
+const PROMPTS = [
+  {
+    id: 'p1', agentId: 'a2', agentName: 'Agent #2', machine: 'DESKTOP-PIA',
+    timestamp: Date.now() - 45000,
+    question: 'I need to run `npm install better-sqlite3` to add the database driver. This will modify package.json and package-lock.json. Should I proceed?',
+    options: ['Yes, install it', 'No, skip this', 'Use a different package'],
+    type: 'tool_approval',
+    urgent: true,
+  },
+  {
+    id: 'p2', agentId: 'a4', agentName: 'Agent #4', machine: 'MACBOOK-PRO',
+    timestamp: Date.now() - 120000,
+    question: 'The auth module needs a JWT secret. How should I configure it?\n\n1. Environment variable (JWT_SECRET)\n2. Config file (config/auth.json)\n3. Hardcoded for development',
+    options: ['Environment variable (JWT_SECRET)', 'Config file (config/auth.json)', 'Ask me for the value'],
+    type: 'user_question',
+    urgent: true,
+  },
+];
+
+const MOCK_TERMINAL = {
+  a1: [
+    { type: 'system', text: 'Agent #1 started on DESKTOP-PIA (API mode, manual)' },
+    { type: 'system', text: 'Task: Fix the failing unit tests in src/api/routes/' },
+    { type: 'system', text: '────────────────────────────────────────' },
+    { type: 'output', text: 'Reading test files to understand failures...' },
+    { type: 'tool', text: 'Read  src/api/routes/__tests__/orchestrator.test.ts' },
+    { type: 'output', text: 'Found 3 failing tests in orchestrator.test.ts:' },
+    { type: 'error', text: '  FAIL  should return 404 for unknown agent' },
+    { type: 'error', text: '  FAIL  should validate request body schema' },
+    { type: 'error', text: '  FAIL  should handle concurrent requests' },
+    { type: 'output', text: 'Analyzing the test expectations vs implementation...' },
+    { type: 'tool', text: 'Read  src/api/routes/orchestrator.ts' },
+    { type: 'output', text: 'Found root cause: route handler missing validation middleware.' },
+    { type: 'output', text: 'Fixing orchestrator.ts...' },
+    { type: 'tool', text: 'Edit  src/api/routes/orchestrator.ts  (lines 42-58)' },
+    { type: 'success', text: 'Applied fix: Added request body validation.' },
+    { type: 'tool', text: 'Bash  npm test -- --grep "orchestrator"' },
+    { type: 'output', text: 'Running tests...' },
+    { type: 'success', text: '  PASS  should return 404 for unknown agent' },
+    { type: 'success', text: '  PASS  should validate request body schema' },
+    { type: 'output', text: 'Still working on concurrent request test...' },
+  ],
+  a2: [
+    { type: 'system', text: 'Agent #2 started on DESKTOP-PIA (API mode, manual)' },
+    { type: 'system', text: 'Task: Refactoring database module' },
+    { type: 'system', text: '────────────────────────────────────────' },
+    { type: 'output', text: 'Analyzing current database.ts structure...' },
+    { type: 'tool', text: 'Read  src/db/database.ts' },
+    { type: 'output', text: 'Database module uses better-sqlite3 but it is not in package.json.' },
+    { type: 'prompt', text: 'WAITING FOR INPUT: Need to install better-sqlite3 package.' },
+  ],
+  a3: [
+    { type: 'system', text: 'Agent #3 started on TOWER-DEV (PTY mode, auto)' },
+    { type: 'system', text: 'Task: Building new API endpoints' },
+    { type: 'system', text: '────────────────────────────────────────' },
+    { type: 'output', text: 'Creating new route files...' },
+    { type: 'tool', text: 'Write  src/api/routes/mission-control.ts' },
+    { type: 'success', text: 'Created mission-control.ts with 7 endpoints.' },
+    { type: 'tool', text: 'Read  src/api/server.ts  (checking existing route registration)' },
+    { type: 'tool', text: 'Edit  src/api/server.ts  (added mission-control route import)' },
+    { type: 'success', text: 'Route registered in server.ts.' },
+    { type: 'output', text: 'Auto-approved: Read file operation (safe)' },
+    { type: 'output', text: 'Auto-approved: Write new file (safe)' },
+    { type: 'output', text: 'Auto-approved: Edit existing file (safe - no destructive changes)' },
+    { type: 'tool', text: 'Bash  npx tsc --noEmit  (type checking)' },
+    { type: 'success', text: 'TypeScript compilation: 0 errors.' },
+  ],
+  a4: [
+    { type: 'system', text: 'Agent #4 started on MACBOOK-PRO (API mode, manual)' },
+    { type: 'system', text: 'Task: Implementing auth flow' },
+    { type: 'system', text: '────────────────────────────────────────' },
+    { type: 'output', text: 'Analyzing existing auth patterns...' },
+    { type: 'tool', text: 'Glob  src/**/*auth*' },
+    { type: 'output', text: 'No existing auth module found. Starting from scratch.' },
+    { type: 'prompt', text: 'WAITING FOR INPUT: How should JWT secret be configured?' },
+  ],
+};
+
+const MOCK_JOURNAL = {
+  a1: [
+    { time: '14:23:01', type: 'tool_call', content: 'Read src/api/routes/__tests__/orchestrator.test.ts' },
+    { time: '14:23:03', type: 'output', content: 'Found 3 failing tests. Analyzing root cause.' },
+    { time: '14:23:08', type: 'tool_call', content: 'Read src/api/routes/orchestrator.ts' },
+    { time: '14:23:12', type: 'output', content: 'Root cause: missing validation middleware on POST /api/orchestrator/task' },
+    { time: '14:23:15', type: 'tool_call', content: 'Edit src/api/routes/orchestrator.ts (lines 42-58): Added Zod validation schema' },
+    { time: '14:23:18', type: 'prompt', content: 'Want me to run the tests? [approved by user]' },
+    { time: '14:23:18', type: 'response', content: 'User selected: Yes, run tests' },
+    { time: '14:23:20', type: 'tool_call', content: 'Bash: npm test -- --grep "orchestrator"' },
+    { time: '14:23:28', type: 'output', content: '2/3 tests passing. Working on concurrent request fix.' },
+    { time: '14:23:30', type: 'cost', content: 'Running total: $0.82 | 45.2K in, 12.3K out | 23 tool calls' },
+  ],
+  a3: [
+    { time: '14:10:01', type: 'tool_call', content: 'Write src/api/routes/mission-control.ts (new file)' },
+    { time: '14:10:01', type: 'auto_approved', content: 'Auto: Write new file (matches safety policy)' },
+    { time: '14:10:05', type: 'output', content: 'Created 7 REST endpoints for mission control.' },
+    { time: '14:10:08', type: 'tool_call', content: 'Read src/api/server.ts' },
+    { time: '14:10:08', type: 'auto_approved', content: 'Auto: Read file (always safe)' },
+    { time: '14:10:12', type: 'tool_call', content: 'Edit src/api/server.ts (import + registration)' },
+    { time: '14:10:12', type: 'auto_approved', content: 'Auto: Edit file (no destructive changes detected)' },
+    { time: '14:10:15', type: 'tool_call', content: 'Bash: npx tsc --noEmit' },
+    { time: '14:10:15', type: 'auto_approved', content: 'Auto: Type check (read-only command)' },
+    { time: '14:10:22', type: 'output', content: 'All checks pass. No errors.' },
+    { time: '14:10:22', type: 'cost', content: 'Running total: $1.12 | 62K in, 18.4K out | 41 tool calls' },
+  ],
+};
+
+// ── STATE ──
+let selectedMachine = null;
+let selectedAgent = null;
+let activeAgentTab = 'terminal';
+
+// ── RENDER MACHINES ──
+function renderMachines() {
+  const list = document.getElementById('machineList');
+  list.innerHTML = MACHINES.map(m => {
+    const hasPrompt = m.agents.some(a => a.status === 'waiting');
+    const isSelected = selectedMachine === m.id;
+    return `
+      <div class="machine-tile ${isSelected ? 'selected' : ''} ${hasPrompt ? 'has-prompt' : ''}"
+           onclick="selectMachine('${m.id}')">
+        <div class="machine-name">
+          <div class="machine-status-dot ${m.status === 'online' ? (m.agents.some(a => a.status === 'working') ? 'busy' : 'online') : m.status}"></div>
+          ${esc(m.name)}
+        </div>
+        <div class="machine-meta">
+          <span class="machine-ip">${esc(m.ip)}</span>
+          <span>${m.agents.length} agent${m.agents.length !== 1 ? 's' : ''}</span>
+        </div>
+        ${m.agents.length > 0 ? `
+          <div class="machine-agents">
+            ${m.agents.map(a => `<span class="agent-chip ${a.status}">${esc(a.name)}: ${a.status}</span>`).join('')}
+          </div>
+        ` : ''}
+        <div class="machine-mode">
+          <span class="mode-indicator ${m.mode}">${m.mode}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ── SELECT MACHINE ──
+function selectMachine(machineId) {
+  selectedMachine = machineId;
+  const machine = MACHINES.find(m => m.id === machineId);
+  if (!machine) return;
+
+  // If machine has agents, select the first one
+  if (machine.agents.length > 0) {
+    selectAgent(machine.agents[0].id, machine);
+  } else {
+    selectedAgent = null;
+    document.getElementById('centerTitle').textContent = machine.name + ' — No agents running';
+    document.getElementById('centerMode').style.display = 'none';
+    document.getElementById('centerActions').style.display = 'flex';
+    document.getElementById('agentTabs').style.display = 'none';
+    document.getElementById('costTracker').style.display = 'none';
+
+    const output = document.getElementById('terminalOutput');
+    output.innerHTML = `
+      <div class="term-line system">Machine: ${esc(machine.name)} (${esc(machine.ip)})</div>
+      <div class="term-line system">Status: ${machine.status}</div>
+      <div class="term-line system">No agents running on this machine.</div>
+      <div class="term-line system">Click "+ Spawn Agent" to start one.</div>
+    `;
+  }
+
+  renderMachines();
+}
+
+// ── SELECT AGENT ──
+function selectAgent(agentId, machine) {
+  if (!machine) {
+    machine = MACHINES.find(m => m.agents.some(a => a.id === agentId));
+  }
+  const agent = machine?.agents.find(a => a.id === agentId);
+  if (!agent) return;
+
+  selectedAgent = agentId;
+
+  document.getElementById('centerTitle').textContent = `${machine.name} / ${agent.name} — ${agent.task}`;
+  document.getElementById('centerMode').style.display = '';
+  document.getElementById('centerMode').textContent = agent.mode;
+  document.getElementById('centerMode').className = 'mode-indicator ' + agent.mode;
+  document.getElementById('centerActions').style.display = 'flex';
+  document.getElementById('agentTabs').style.display = 'flex';
+  document.getElementById('costTracker').style.display = 'flex';
+
+  // Update cost
+  document.getElementById('costSession').textContent = '$' + agent.cost.toFixed(2);
+  document.getElementById('costIn').textContent = (agent.tokensIn / 1000).toFixed(1) + 'K';
+  document.getElementById('costOut').textContent = (agent.tokensOut / 1000).toFixed(1) + 'K';
+  document.getElementById('costTools').textContent = agent.tools;
+  document.getElementById('costDuration').textContent = agent.duration;
+
+  // Show terminal
+  switchAgentTab('terminal');
+  renderTerminal(agentId);
+  renderJournal(agentId);
+}
+
+// ── RENDER TERMINAL ──
+function renderTerminal(agentId) {
+  const output = document.getElementById('terminalOutput');
+  const lines = MOCK_TERMINAL[agentId] || [];
+
+  output.innerHTML = lines.map(l => {
+    if (l.type === 'tool') {
+      return `<div class="tool-call"><span class="tool-name">${esc(l.text)}</span></div>`;
+    }
+    return `<div class="term-line ${l.type}">${esc(l.text)}</div>`;
+  }).join('');
+
+  output.scrollTop = output.scrollHeight;
+}
+
+// ── RENDER JOURNAL ──
+function renderJournal(agentId) {
+  const view = document.getElementById('journalView');
+  const entries = MOCK_JOURNAL[agentId] || [];
+
+  if (entries.length === 0) {
+    view.innerHTML = '<div style="color:#64748b;text-align:center;padding:40px;">No journal entries yet.</div>';
+    return;
+  }
+
+  view.innerHTML = entries.map(e => `
+    <div class="journal-entry">
+      <div class="journal-entry-header">
+        <span class="journal-type ${e.type}">${e.type.replace('_', ' ')}</span>
+        <span class="journal-time">${e.time}</span>
+      </div>
+      <div class="journal-content">${esc(e.content)}</div>
+    </div>
+  `).join('');
+}
+
+// ── RENDER PROMPTS ──
+function renderPrompts() {
+  const list = document.getElementById('promptList');
+  const count = document.getElementById('promptCount');
+  count.textContent = PROMPTS.filter(p => !p.resolved).length + ' pending';
+
+  list.innerHTML = PROMPTS.map(p => `
+    <div class="prompt-card ${p.urgent ? 'urgent' : ''} ${p.resolved ? 'resolved' : ''}" id="prompt-${p.id}">
+      <div class="prompt-card-header">
+        <div>
+          <div class="prompt-agent-name">${esc(p.agentName)}</div>
+          <span class="prompt-machine-tag">${esc(p.machine)}</span>
+        </div>
+        <div class="prompt-time">${formatAgo(p.timestamp)}</div>
+      </div>
+      <div class="prompt-question">${esc(p.question)}</div>
+      ${p.resolved ? '<div style="color:#3fb950;font-size:12px;font-weight:600;">Responded: ' + esc(p.resolvedWith || '') + '</div>' : `
+        <div class="prompt-options">
+          ${p.options.map((opt, i) => `
+            <div class="prompt-option-btn" onclick="respondToPrompt('${p.id}', ${i + 1}, this)">
+              <span class="prompt-option-num">${i + 1}</span>
+              <span>${esc(opt)}</span>
+            </div>
+          `).join('')}
+        </div>
+        <div class="prompt-text-input">
+          <input type="text" placeholder="Or type a custom response..." id="promptInput-${p.id}">
+          <button onclick="respondCustom('${p.id}')">Send</button>
+        </div>
+      `}
+    </div>
+  `).join('');
+}
+
+// ── RESPOND TO PROMPT ──
+function respondToPrompt(promptId, choice, el) {
+  const prompt = PROMPTS.find(p => p.id === promptId);
+  if (!prompt) return;
+
+  // Visual feedback
+  el.classList.add('selected');
+
+  // Mark resolved
+  prompt.resolved = true;
+  prompt.resolvedWith = prompt.options[choice - 1];
+
+  showToast(`Responded to ${prompt.agentName}: Option ${choice}`);
+
+  // Update the waiting agent
+  const machine = MACHINES.find(m => m.agents.some(a => a.id === prompt.agentId));
+  const agent = machine?.agents.find(a => a.id === prompt.agentId);
+  if (agent) {
+    agent.status = 'working';
+    renderMachines();
+  }
+
+  // Update waiting count
+  const waitCount = MACHINES.flatMap(m => m.agents).filter(a => a.status === 'waiting').length;
+  document.getElementById('statWaiting').textContent = waitCount;
+
+  setTimeout(() => renderPrompts(), 500);
+}
+
+function respondCustom(promptId) {
+  const input = document.getElementById('promptInput-' + promptId);
+  const text = input.value.trim();
+  if (!text) return;
+
+  const prompt = PROMPTS.find(p => p.id === promptId);
+  if (!prompt) return;
+
+  prompt.resolved = true;
+  prompt.resolvedWith = text;
+
+  showToast(`Responded to ${prompt.agentName}: "${text}"`);
+
+  const machine = MACHINES.find(m => m.agents.some(a => a.id === prompt.agentId));
+  const agent = machine?.agents.find(a => a.id === prompt.agentId);
+  if (agent) {
+    agent.status = 'working';
+    renderMachines();
+  }
+
+  const waitCount = MACHINES.flatMap(m => m.agents).filter(a => a.status === 'waiting').length;
+  document.getElementById('statWaiting').textContent = waitCount;
+
+  setTimeout(() => renderPrompts(), 500);
+}
+
+// ── SWITCH AGENT TAB ──
+function switchAgentTab(tab) {
+  activeAgentTab = tab;
+  document.querySelectorAll('.agent-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+
+  document.getElementById('terminalView').style.display = tab === 'terminal' ? 'flex' : 'none';
+  document.getElementById('journalView').style.display = tab === 'journal' ? 'block' : 'none';
+  document.getElementById('journalView').classList.toggle('active', tab === 'journal');
+
+  if (tab === 'cost' && selectedAgent) {
+    // Show cost breakdown in terminal area
+    const machine = MACHINES.find(m => m.agents.some(a => a.id === selectedAgent));
+    const agent = machine?.agents.find(a => a.id === selectedAgent);
+    if (agent) {
+      document.getElementById('terminalView').style.display = 'flex';
+      document.getElementById('terminalOutput').innerHTML = `
+        <div class="term-line system">Cost Breakdown for ${esc(agent.name)}</div>
+        <div class="term-line system">────────────────────────────────────────</div>
+        <div class="term-line output">  Total Cost:     $${agent.cost.toFixed(2)}</div>
+        <div class="term-line output">  Tokens In:      ${(agent.tokensIn).toLocaleString()}</div>
+        <div class="term-line output">  Tokens Out:     ${(agent.tokensOut).toLocaleString()}</div>
+        <div class="term-line output">  Tool Calls:     ${agent.tools}</div>
+        <div class="term-line output">  Duration:       ${agent.duration}</div>
+        <div class="term-line system">────────────────────────────────────────</div>
+        <div class="term-line output">  Avg cost/tool:  $${(agent.cost / Math.max(agent.tools, 1)).toFixed(4)}</div>
+        <div class="term-line output">  Tokens/min:     ${Math.round((agent.tokensIn + agent.tokensOut) / parseInt(agent.duration)).toLocaleString()}</div>
+      `;
+    }
+  }
+}
+
+// ── MODAL ──
+function openSpawnModal() {
+  document.getElementById('spawnModal').classList.add('visible');
+  if (selectedMachine) {
+    document.getElementById('spawnMachine').value = selectedMachine;
+  }
+}
+
+function closeSpawnModal() {
+  document.getElementById('spawnModal').classList.remove('visible');
+}
+
+function spawnAgent() {
+  const machineId = document.getElementById('spawnMachine').value;
+  const mode = document.getElementById('spawnMode').value;
+  const task = document.getElementById('spawnTask').value.trim();
+  const initMode = document.getElementById('spawnInitMode').value;
+
+  const machine = MACHINES.find(m => m.id === machineId);
+  if (!machine) return;
+
+  const newId = 'a' + (Date.now() % 10000);
+  const newAgent = {
+    id: newId,
+    name: 'Agent #' + (MACHINES.flatMap(m => m.agents).length + 1),
+    status: 'working',
+    task: task || 'New task',
+    mode: initMode,
+    cost: 0,
+    tokensIn: 0,
+    tokensOut: 0,
+    tools: 0,
+    duration: '0m',
+  };
+
+  machine.agents.push(newAgent);
+
+  MOCK_TERMINAL[newId] = [
+    { type: 'system', text: `${newAgent.name} started on ${machine.name} (${mode} mode, ${initMode})` },
+    { type: 'system', text: `Task: ${task || 'New task'}` },
+    { type: 'system', text: '────────────────────────────────────────' },
+    { type: 'output', text: 'Initializing agent session...' },
+  ];
+
+  closeSpawnModal();
+  showToast(`Spawned ${newAgent.name} on ${machine.name}`);
+  renderMachines();
+  selectMachine(machineId);
+}
+
+// ── ACTIONS ──
+function toggleMode() {
+  if (!selectedAgent) return;
+  const machine = MACHINES.find(m => m.agents.some(a => a.id === selectedAgent));
+  const agent = machine?.agents.find(a => a.id === selectedAgent);
+  if (!agent) return;
+
+  agent.mode = agent.mode === 'manual' ? 'auto' : 'manual';
+  document.getElementById('centerMode').textContent = agent.mode;
+  document.getElementById('centerMode').className = 'mode-indicator ' + agent.mode;
+  showToast(`${agent.name} switched to ${agent.mode} mode`);
+  renderMachines();
+}
+
+function killAgent() {
+  if (!selectedAgent) return;
+  if (!confirm('Kill this agent session?')) return;
+
+  const machine = MACHINES.find(m => m.agents.some(a => a.id === selectedAgent));
+  if (machine) {
+    machine.agents = machine.agents.filter(a => a.id !== selectedAgent);
+  }
+
+  showToast('Agent killed');
+  selectedAgent = null;
+  selectMachine(selectedMachine);
+}
+
+function setGlobalMode(mode) {
+  document.querySelectorAll('.mode-btn.manual').forEach(b => b.classList.toggle('active', mode === 'manual'));
+  document.querySelectorAll('.mode-btn.auto').forEach(b => b.classList.toggle('active', mode === 'auto'));
+  MACHINES.forEach(m => m.mode = mode);
+  showToast(`Global mode set to ${mode}`);
+  renderMachines();
+}
+
+// ── UTILITIES ──
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function formatAgo(ts) {
+  const seconds = Math.floor((Date.now() - ts) / 1000);
+  if (seconds < 60) return seconds + 's ago';
+  return Math.floor(seconds / 60) + 'm ago';
+}
+
+function showToast(text) {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = text;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 4000);
+}
+
+// ── KEYBOARD SHORTCUTS ──
+document.addEventListener('keydown', (e) => {
+  // 1/2/3 quick response for first pending prompt
+  if (['1','2','3'].includes(e.key) && !e.ctrlKey && !e.altKey && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+    const pending = PROMPTS.find(p => !p.resolved);
+    if (pending && pending.options[parseInt(e.key) - 1]) {
+      const btn = document.querySelector(`#prompt-${pending.id} .prompt-option-btn:nth-child(${e.key})`);
+      if (btn) respondToPrompt(pending.id, parseInt(e.key), btn);
+    }
+  }
+});
+
+// ── VIEW TOGGLE (Single / Grid) ──
+let currentView = 'single';
+
+function setView(view) {
+  currentView = view;
+  document.getElementById('viewSingle').classList.toggle('active', view === 'single');
+  document.getElementById('viewGrid').classList.toggle('active', view === 'grid');
+
+  // Toggle visibility
+  const singleEls = ['terminalView', 'journalView', 'costTracker'];
+  const headerEls = ['agentTabs'];
+
+  if (view === 'grid') {
+    // Hide single-agent view elements
+    document.getElementById('terminalView').style.display = 'none';
+    document.getElementById('journalView').style.display = 'none';
+    document.getElementById('costTracker').style.display = 'none';
+    document.getElementById('agentTabs').style.display = 'none';
+    document.getElementById('gridView').classList.add('active');
+    document.getElementById('centerTitle').textContent = 'All Active Agents';
+    document.getElementById('centerMode').style.display = 'none';
+    document.getElementById('centerActions').style.display = 'none';
+    renderGridView();
+  } else {
+    document.getElementById('gridView').classList.remove('active');
+    // Restore single view
+    if (selectedAgent) {
+      const machine = MACHINES.find(m => m.agents.some(a => a.id === selectedAgent));
+      if (machine) selectAgent(selectedAgent, machine);
+    } else if (selectedMachine) {
+      selectMachine(selectedMachine);
+    } else {
+      document.getElementById('terminalView').style.display = 'flex';
+      document.getElementById('terminalOutput').innerHTML = `
+        <div class="term-line system">Single view — click a machine tile on the left.</div>
+      `;
+    }
+  }
+}
+
+function renderGridView() {
+  const grid = document.getElementById('gridView');
+  const allAgents = MACHINES.flatMap(m => m.agents.map(a => ({ ...a, machineName: m.name, machineId: m.id })));
+
+  if (allAgents.length === 0) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#64748b;padding:60px;font-size:14px;">No active agents. Click "+ Spawn Agent" to start one.</div>';
+    return;
+  }
+
+  grid.innerHTML = allAgents.map(a => {
+    const lines = MOCK_TERMINAL[a.id] || [];
+    const lastLines = lines.slice(-8); // show last 8 lines
+    return `
+      <div class="grid-tile ${a.status === 'waiting' ? 'waiting' : ''} ${selectedAgent === a.id ? 'selected' : ''}"
+           onclick="gridTileClick('${a.id}', '${a.machineId}')">
+        <div class="grid-tile-header">
+          <div class="grid-tile-title">
+            <div class="dot ${a.status}"></div>
+            <span>${esc(a.name)}</span>
+          </div>
+          <div class="grid-tile-badges">
+            <span class="badge machine">${esc(a.machineName)}</span>
+            <span class="badge ${a.mode === 'auto' ? 'mode-a' : 'mode-m'}">${a.mode}</span>
+            <span class="badge cost">$${a.cost.toFixed(2)}</span>
+          </div>
+        </div>
+        <div class="grid-tile-body">
+          <div class="gl system" style="color:#64748b;margin-bottom:4px;">${esc(a.task)}</div>
+          ${lastLines.map(l => `<div class="gl ${l.type}">${l.type === 'tool' ? '<span style="color:#bc8cff;">' + esc(l.text) + '</span>' : esc(l.text)}</div>`).join('')}
+        </div>
+        <div class="grid-tile-footer">
+          <span>${a.status.toUpperCase()}</span>
+          <span>${(a.tokensIn/1000).toFixed(0)}K in / ${(a.tokensOut/1000).toFixed(0)}K out</span>
+          <span>${a.duration}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function gridTileClick(agentId, machineId) {
+  // Double-click to expand to single view
+  if (selectedAgent === agentId && currentView === 'grid') {
+    setView('single');
+    return;
+  }
+  selectedMachine = machineId;
+  selectedAgent = agentId;
+  renderGridView();
+  renderMachines();
+}
+
+// ── INIT ──
+renderMachines();
+renderPrompts();
+
+// Update timestamps every 10s
+setInterval(() => renderPrompts(), 10000);
+</script>
+
+</body>
+</html>

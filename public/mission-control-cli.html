@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PIA Mission Control — CLI Experience</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0a10;
+      color: #c9d1d9;
+      font-family: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    .cli-header {
+      background: #050508;
+      border-bottom: 1px solid #1e1e30;
+      padding: 8px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .cli-header h1 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #bc8cff;
+    }
+
+    .cli-header .subtitle {
+      font-size: 11px;
+      color: #64748b;
+    }
+
+    .demo-controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .demo-btn {
+      background: #1a1a2e;
+      color: #bc8cff;
+      border: 1px solid #2a2a3e;
+      border-radius: 6px;
+      padding: 4px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+
+    .demo-btn:hover { background: #2a2a3e; }
+    .demo-btn.active { background: #8957e5; color: white; border-color: #8957e5; }
+
+    /* ── Terminal ── */
+    .terminal {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .line { white-space: pre-wrap; word-break: break-word; }
+    .line.dim { color: #484f58; }
+    .line.purple { color: #bc8cff; }
+    .line.blue { color: #58a6ff; }
+    .line.green { color: #3fb950; }
+    .line.yellow { color: #d29922; }
+    .line.red { color: #f85149; }
+    .line.white { color: #e6edf3; }
+    .line.bold { font-weight: 700; }
+    .line.header {
+      color: #bc8cff;
+      font-weight: 700;
+      border-bottom: 1px solid #1e1e30;
+      padding-bottom: 4px;
+      margin-bottom: 4px;
+      margin-top: 12px;
+    }
+
+    .prompt-line {
+      color: #3fb950;
+      margin-top: 8px;
+    }
+
+    .prompt-prefix { color: #bc8cff; font-weight: 700; }
+    .prompt-cursor {
+      display: inline-block;
+      width: 8px;
+      height: 16px;
+      background: #3fb950;
+      animation: blink 1s infinite;
+      vertical-align: text-bottom;
+      margin-left: 2px;
+    }
+
+    @keyframes blink { 0%,49% { opacity:1; } 50%,100% { opacity:0; } }
+
+    /* Quick response buttons */
+    .quick-btns {
+      display: flex;
+      gap: 8px;
+      margin: 8px 0;
+      flex-wrap: wrap;
+    }
+
+    .quick-btn {
+      background: #12121e;
+      color: #c9d1d9;
+      border: 1px solid #2a2a3e;
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .quick-btn:hover { border-color: #9b4dca; background: #1a1a2e; }
+    .quick-btn.selected { border-color: #3fb950; background: #0d2818; color: #3fb950; }
+
+    .quick-num {
+      background: #2a2a3e;
+      color: #bc8cff;
+      width: 20px; height: 20px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    /* Inline input */
+    .inline-input-row {
+      display: flex;
+      gap: 8px;
+      margin: 8px 0;
+      align-items: center;
+    }
+
+    .inline-input {
+      background: #0a0a15;
+      border: 1px solid #2a2a3e;
+      color: #c9d1d9;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      flex: 1;
+      max-width: 500px;
+    }
+
+    .inline-input:focus { border-color: #9b4dca; }
+
+    .send-btn {
+      background: #238636;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-family: inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Table formatting */
+    .table-row {
+      display: grid;
+      gap: 8px;
+      padding: 2px 0;
+      font-size: 13px;
+    }
+
+    .table-row.header-row {
+      color: #64748b;
+      font-weight: 700;
+      border-bottom: 1px solid #1e1e30;
+      margin-bottom: 2px;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+    }
+
+    .table-row.status-grid { grid-template-columns: 20px 140px 100px 160px 120px 80px; }
+    .table-row.prompt-grid { grid-template-columns: 30px 100px 120px 1fr 80px; }
+    .table-row.journal-grid { grid-template-columns: 80px 100px 1fr; }
+
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      margin-top: 5px;
+    }
+
+    .status-dot.green { background: #3fb950; }
+    .status-dot.yellow { background: #d29922; animation: blink 1.5s infinite; }
+    .status-dot.red { background: #f85149; }
+    .status-dot.gray { background: #484f58; }
+
+    /* Separator */
+    .sep { color: #1e1e30; margin: 4px 0; }
+
+    /* Input bar at bottom */
+    .input-bar {
+      background: #050508;
+      border-top: 1px solid #1e1e30;
+      padding: 10px 20px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .input-bar .prefix {
+      color: #bc8cff;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .input-bar input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #3fb950;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+    }
+
+    .input-bar .hint {
+      color: #484f58;
+      font-size: 11px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cli-header">
+    <div>
+      <h1>PIA MISSION CONTROL — CLI</h1>
+      <span class="subtitle">This mockup shows what the terminal experience looks like</span>
+    </div>
+    <div class="demo-controls">
+      <button class="demo-btn active" onclick="showDemo('status')">status</button>
+      <button class="demo-btn" onclick="showDemo('respond')">respond</button>
+      <button class="demo-btn" onclick="showDemo('journal')">journal</button>
+      <button class="demo-btn" onclick="showDemo('spawn')">spawn</button>
+      <button class="demo-btn" onclick="showDemo('full')">full session</button>
+    </div>
+  </div>
+
+  <div class="terminal" id="terminal"></div>
+
+  <div class="input-bar">
+    <span class="prefix">PIA&gt;</span>
+    <input type="text" id="cmdInput" placeholder="status | respond <id> | journal <id> | spawn | kill <id> | mode <id> auto|manual" autofocus>
+    <span class="hint">Press Enter to run</span>
+  </div>
+
+<script>
+const terminal = document.getElementById('terminal');
+const cmdInput = document.getElementById('cmdInput');
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── DEMO VIEWS ──
+const DEMOS = {
+
+  status: () => `
+<div class="line purple bold">PIA Mission Control v0.1.0</div>
+<div class="line dim">Connected to 6 machines via Tailscale | WebSocket: connected | Mode: manual</div>
+<div class="sep">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
+
+<div class="line header">MACHINES</div>
+<div class="table-row header-row status-grid">
+  <span></span><span>Machine</span><span>IP</span><span>Status</span><span>Agents</span><span>Mode</span>
+</div>
+<div class="table-row status-grid">
+  <div class="status-dot green"></div><span class="white">DESKTOP-PIA</span><span class="dim">100.64.1.1</span><span class="green">online</span><span class="yellow">2 (1 waiting)</span><span class="blue">manual</span>
+</div>
+<div class="table-row status-grid">
+  <div class="status-dot green"></div><span class="white">TOWER-DEV</span><span class="dim">100.64.1.2</span><span class="green">online</span><span class="green">1 (working)</span><span class="green">auto</span>
+</div>
+<div class="table-row status-grid">
+  <div class="status-dot green"></div><span class="white">MACBOOK-PRO</span><span class="dim">100.64.1.3</span><span class="green">online</span><span class="yellow">1 (waiting)</span><span class="blue">manual</span>
+</div>
+<div class="table-row status-grid">
+  <div class="status-dot green"></div><span class="white">CLOUD-GPU</span><span class="dim">100.64.1.4</span><span class="green">online</span><span class="dim">0 agents</span><span class="green">auto</span>
+</div>
+<div class="table-row status-grid">
+  <div class="status-dot gray"></div><span class="dim">MINI-BUILD</span><span class="dim">100.64.1.5</span><span class="dim">offline</span><span class="dim">—</span><span class="dim">—</span>
+</div>
+<div class="table-row status-grid">
+  <div class="status-dot green"></div><span class="white">NUC-TEST</span><span class="dim">100.64.1.6</span><span class="green">online</span><span class="dim">0 agents</span><span class="green">auto</span>
+</div>
+
+<div class="line header">ACTIVE AGENTS</div>
+<div class="table-row header-row prompt-grid">
+  <span>ID</span><span>Machine</span><span>Status</span><span>Task</span><span>Cost</span>
+</div>
+<div class="table-row prompt-grid">
+  <span class="purple">#1</span><span class="white">DESKTOP-PIA</span><span class="green">working</span><span>Fixing test suite</span><span class="green">$0.82</span>
+</div>
+<div class="table-row prompt-grid">
+  <span class="purple">#2</span><span class="white">DESKTOP-PIA</span><span class="yellow">WAITING</span><span>Refactoring database module</span><span class="green">$0.34</span>
+</div>
+<div class="table-row prompt-grid">
+  <span class="purple">#3</span><span class="white">TOWER-DEV</span><span class="green">working</span><span>Building new API endpoints</span><span class="green">$1.12</span>
+</div>
+<div class="table-row prompt-grid">
+  <span class="purple">#4</span><span class="white">MACBOOK-PRO</span><span class="yellow">WAITING</span><span>Implementing auth flow</span><span class="green">$0.19</span>
+</div>
+
+<div class="line header">PENDING PROMPTS (2)</div>
+<div class="table-row header-row prompt-grid">
+  <span>ID</span><span>Agent</span><span>Machine</span><span>Question</span><span>Age</span>
+</div>
+<div class="table-row prompt-grid">
+  <span class="yellow">#P1</span><span class="purple">Agent #2</span><span>DESKTOP-PIA</span><span class="yellow">Install better-sqlite3? [1/2/3]</span><span>45s</span>
+</div>
+<div class="table-row prompt-grid">
+  <span class="yellow">#P2</span><span class="purple">Agent #4</span><span>MACBOOK-PRO</span><span class="yellow">How to configure JWT secret? [1/2/3]</span><span>2m</span>
+</div>
+
+<div class="sep">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
+<div class="line dim">Total cost today: $2.47 | Tokens: 184K | Commands: respond &lt;id&gt; | journal &lt;id&gt; | spawn | kill &lt;id&gt;</div>
+`,
+
+  respond: () => `
+<div class="line dim">PIA&gt; <span class="green">respond 2</span></div>
+<div class="line"></div>
+<div class="line purple bold">Agent #2 on DESKTOP-PIA is asking:</div>
+<div class="line yellow bold">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
+<div class="line white">I need to run \`npm install better-sqlite3\` to add the database driver.</div>
+<div class="line white">This will modify package.json and package-lock.json.</div>
+<div class="line white">Should I proceed?</div>
+<div class="line yellow bold">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
+<div class="line"></div>
+<div class="line dim">Quick response — press a number key or click:</div>
+<div id="respondBtns" class="quick-btns">
+  <button class="quick-btn" onclick="selectQuickResponse(1, this)"><span class="quick-num">1</span> Yes, install it</button>
+  <button class="quick-btn" onclick="selectQuickResponse(2, this)"><span class="quick-num">2</span> No, skip this</button>
+  <button class="quick-btn" onclick="selectQuickResponse(3, this)"><span class="quick-num">3</span> Use a different package</button>
+</div>
+<div class="line dim">Or type a custom response:</div>
+<div class="inline-input-row">
+  <input class="inline-input" placeholder="Type your response here..." id="customResponse">
+  <button class="send-btn" onclick="sendCustomResponse()">Send</button>
+</div>
+`,
+
+  journal: () => `
+<div class="line dim">PIA&gt; <span class="green">journal 3</span></div>
+<div class="line"></div>
+<div class="line purple bold">Journal for Agent #3 on TOWER-DEV</div>
+<div class="line dim">Task: Building new API endpoints | Mode: auto | Cost: $1.12</div>
+<div class="sep">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
+
+<div class="table-row journal-grid">
+  <span class="dim">14:10:01</span><span class="purple">TOOL_CALL</span><span>Write src/api/routes/mission-control.ts (new file)</span>
+</div>
+<div class="table-row journal-grid">
+  <span class="dim">14:10:01</span><span class="green">AUTO_OK</span><span class="green">Auto-approved: Write new file (matches safety policy)</span>
+</div>
+<div class="table-row journal-grid">
+  <span class="dim">14:10:05</span><span class="blue">OUTPUT</span><span>Created 7 REST endpoints for mission control.</span>
+</div>
+<div class="table-row journal-grid">
+  <span class="dim">14:10:08</span><span class="purple">TOOL_CALL</span><span>Read src/api/server.ts</span>
+</div>
+<div class="table-row journal-grid">
+  <span class="dim">14:10:08</span><span class="green">AUTO_OK</span><span class="green">Auto-approved: Read file (always safe)</span>
+</div>
+<div class="table-row journal-grid">
+  <span class="dim">14:10:12</span><span class="purple">TOOL_CALL</span><span>Edit src/api/server.ts (import + route registration)</span>
+</div>
+<div class="table-row journal-grid">
+  <span class="dim">14:10:12</span><span class="green">AUTO_OK</span><span class="green">Auto-approved: Edit file (no destructive changes detected)</span>
+</div>
+<div class="table-row journal-grid">
+  <span class="dim">14:10:15</span><span class="purple">TOOL_CALL</span><span>Bash: npx tsc --noEmit</span>
+</div>
+<div class="table-row journal-grid">
+  <span class="dim">14:10:15</span><span class="green">AUTO_OK</span><span class="green">Auto-approved: Type check (read-only command)</span>
+</div>
+<div class="table-row journal-grid">
+  <span class="dim">14:10:22</span><span class="blue">OUTPUT</span><span>TypeScript compilation: 0 errors.</span>
+</div>
+<div class="table-row journal-grid">
+  <span class="dim">14:10:22</span><span class="dim">COST</span><span class="dim">$1.12 | 62K in, 18.4K out | 41 tool calls | 12m</span>
+</div>
+
+<div class="sep">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
+<div class="line dim">11 entries | Auto-approved: 5 | Human-approved: 0 | Denied: 0</div>
+`,
+
+  spawn: () => `
+<div class="line dim">PIA&gt; <span class="green">spawn</span></div>
+<div class="line"></div>
+<div class="line purple bold">Spawn New Agent</div>
+<div class="sep">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
+<div class="line dim">Select target machine:</div>
+<div class="quick-btns">
+  <button class="quick-btn" onclick="selectMachine(1, this)"><span class="quick-num">1</span> DESKTOP-PIA (local)</button>
+  <button class="quick-btn" onclick="selectMachine(2, this)"><span class="quick-num">2</span> TOWER-DEV</button>
+  <button class="quick-btn" onclick="selectMachine(3, this)"><span class="quick-num">3</span> MACBOOK-PRO</button>
+  <button class="quick-btn" onclick="selectMachine(4, this)"><span class="quick-num">4</span> CLOUD-GPU</button>
+</div>
+<div class="line"></div>
+<div class="line dim">Select mode:</div>
+<div class="quick-btns">
+  <button class="quick-btn" onclick="selectSpawnMode('api', this)"><span class="quick-num">A</span> API Mode (PIA drives Claude API)</button>
+  <button class="quick-btn" onclick="selectSpawnMode('pty', this)"><span class="quick-num">P</span> PTY Mode (spawn real Claude CLI)</button>
+</div>
+<div class="line"></div>
+<div class="line dim">Enter task description:</div>
+<div class="inline-input-row">
+  <input class="inline-input" placeholder="What should this agent work on?" id="spawnTaskInput">
+  <button class="send-btn" onclick="doSpawn()">Spawn</button>
+</div>
+`,
+
+  full: () => `
+<div class="line purple bold">PIA Mission Control v0.1.0</div>
+<div class="line dim">Starting session... Connected to hub at localhost:3001</div>
+<div class="line green">WebSocket connected. 4 machines online.</div>
+<div class="line"></div>
+
+<div class="line dim">PIA&gt; <span class="green">status</span></div>
+<div class="line dim">[Status output shown - 4 agents across 3 machines, 2 waiting for input]</div>
+<div class="line"></div>
+
+<div class="line yellow bold">*** PROMPT FROM Agent #2 on DESKTOP-PIA ***</div>
+<div class="line yellow">Install better-sqlite3? [1] Yes [2] No [3] Different package</div>
+<div class="line"></div>
+
+<div class="line dim">PIA&gt; <span class="green">1</span></div>
+<div class="line green">Sent response to Agent #2: "Yes, install it"</div>
+<div class="line dim">Agent #2 resuming work...</div>
+<div class="line"></div>
+
+<div class="line yellow bold">*** PROMPT FROM Agent #4 on MACBOOK-PRO ***</div>
+<div class="line yellow">How to configure JWT secret? [1] Env var [2] Config file [3] Ask me</div>
+<div class="line"></div>
+
+<div class="line dim">PIA&gt; <span class="green">respond 4</span></div>
+<div class="line dim">[Showing full prompt details for Agent #4...]</div>
+<div class="line dim">PIA&gt; <span class="green">Use environment variable JWT_SECRET, set it to a random 64-char hex string</span></div>
+<div class="line green">Sent custom response to Agent #4.</div>
+<div class="line dim">Agent #4 resuming work...</div>
+<div class="line"></div>
+
+<div class="line dim">PIA&gt; <span class="green">spawn</span></div>
+<div class="line dim">[Spawning agent on CLOUD-GPU, API mode, auto...]</div>
+<div class="line dim">Task: "Run the full integration test suite and fix any failures"</div>
+<div class="line green">Agent #5 spawned on CLOUD-GPU (auto mode).</div>
+<div class="line"></div>
+
+<div class="line dim">PIA&gt; <span class="green">journal 3</span></div>
+<div class="line dim">[Showing journal for Agent #3 on TOWER-DEV - 11 entries, all auto-approved]</div>
+<div class="line"></div>
+
+<div class="line blue">Agent #3 on TOWER-DEV completed task. Cost: $1.12 | Duration: 22m</div>
+<div class="line blue">Agent #2 on DESKTOP-PIA completed task. Cost: $0.51 | Duration: 8m</div>
+<div class="line"></div>
+
+<div class="line dim">PIA&gt; <span class="green">mode 5 manual</span></div>
+<div class="line green">Agent #5 on CLOUD-GPU switched to manual mode.</div>
+<div class="line"></div>
+
+<div class="line yellow bold">*** PROMPT FROM Agent #5 on CLOUD-GPU ***</div>
+<div class="line yellow">3 integration tests failing. Want me to fix them? [1] Yes [2] Show details first [3] Skip</div>
+<div class="line"></div>
+
+<div class="line dim">PIA&gt; <span class="green">2</span></div>
+<div class="line green">Sent response to Agent #5: "Show details first"</div>
+<div class="line"></div>
+
+<div class="line dim">PIA&gt; <span class="green">status</span></div>
+<div class="line dim">5 agents | 3 working | 0 waiting | 2 done | Cost today: $3.16</div>
+<div class="line"></div>
+
+<div class="line dim">PIA&gt; <span class="green">kill 1</span></div>
+<div class="line yellow">Killed Agent #1 on DESKTOP-PIA. Final cost: $0.82</div>
+<div class="line"></div>
+
+<div class="prompt-line"><span class="prompt-prefix">PIA&gt;</span> <span class="prompt-cursor"></span></div>
+`,
+};
+
+// ── INTERACTION HANDLERS ──
+function selectQuickResponse(num, el) {
+  document.querySelectorAll('#respondBtns .quick-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+
+  const responses = ['Yes, install it', 'No, skip this', 'Use a different package'];
+
+  setTimeout(() => {
+    const extra = document.createElement('div');
+    extra.innerHTML = `
+      <div class="line"></div>
+      <div class="line green bold">Sent response to Agent #2: "${responses[num-1]}"</div>
+      <div class="line dim">Agent #2 resuming work...</div>
+      <div class="line"></div>
+      <div class="prompt-line"><span class="prompt-prefix">PIA&gt;</span> <span class="prompt-cursor"></span></div>
+    `;
+    terminal.appendChild(extra);
+    terminal.scrollTop = terminal.scrollHeight;
+  }, 300);
+}
+
+function sendCustomResponse() {
+  const input = document.getElementById('customResponse');
+  const text = input.value.trim();
+  if (!text) return;
+
+  const extra = document.createElement('div');
+  extra.innerHTML = `
+    <div class="line"></div>
+    <div class="line green bold">Sent custom response to Agent #2: "${esc(text)}"</div>
+    <div class="line dim">Agent #2 resuming work...</div>
+    <div class="line"></div>
+    <div class="prompt-line"><span class="prompt-prefix">PIA&gt;</span> <span class="prompt-cursor"></span></div>
+  `;
+  terminal.appendChild(extra);
+  terminal.scrollTop = terminal.scrollHeight;
+  input.value = '';
+}
+
+function selectMachine(num, el) {
+  document.querySelectorAll('.quick-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function selectSpawnMode(mode, el) {
+  el.classList.add('selected');
+}
+
+function doSpawn() {
+  const task = document.getElementById('spawnTaskInput')?.value || 'New task';
+  const extra = document.createElement('div');
+  extra.innerHTML = `
+    <div class="line"></div>
+    <div class="line green bold">Agent #5 spawned successfully!</div>
+    <div class="line dim">Machine: selected | Mode: selected | Task: ${esc(task)}</div>
+    <div class="line"></div>
+    <div class="prompt-line"><span class="prompt-prefix">PIA&gt;</span> <span class="prompt-cursor"></span></div>
+  `;
+  terminal.appendChild(extra);
+  terminal.scrollTop = terminal.scrollHeight;
+}
+
+// ── DEMO SWITCHING ──
+function showDemo(name) {
+  document.querySelectorAll('.demo-btn').forEach(b => b.classList.toggle('active', b.textContent.trim() === name));
+  terminal.innerHTML = DEMOS[name]();
+  terminal.scrollTop = 0;
+}
+
+// ── COMMAND INPUT ──
+cmdInput.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter') return;
+  const cmd = cmdInput.value.trim().toLowerCase();
+  cmdInput.value = '';
+
+  if (cmd === 'status' || cmd === 's') showDemo('status');
+  else if (cmd.startsWith('respond') || cmd.startsWith('r ')) showDemo('respond');
+  else if (cmd.startsWith('journal') || cmd.startsWith('j ')) showDemo('journal');
+  else if (cmd === 'spawn') showDemo('spawn');
+  else if (cmd === 'help' || cmd === 'h') {
+    terminal.innerHTML = `
+      <div class="line purple bold">PIA Mission Control — Commands</div>
+      <div class="sep">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
+      <div class="line"><span class="green">status</span>          <span class="dim">Show all machines, agents, and pending prompts</span></div>
+      <div class="line"><span class="green">respond &lt;id&gt;</span>    <span class="dim">Respond to a waiting agent's prompt</span></div>
+      <div class="line"><span class="green">journal &lt;id&gt;</span>    <span class="dim">View activity journal for an agent</span></div>
+      <div class="line"><span class="green">spawn</span>           <span class="dim">Spawn a new agent on a machine</span></div>
+      <div class="line"><span class="green">kill &lt;id&gt;</span>       <span class="dim">Kill an agent session</span></div>
+      <div class="line"><span class="green">mode &lt;id&gt; auto|manual</span>  <span class="dim">Toggle agent mode</span></div>
+      <div class="line"><span class="green">1 | 2 | 3</span>       <span class="dim">Quick-respond to the most urgent prompt</span></div>
+      <div class="line"><span class="green">cost</span>            <span class="dim">Show cost summary across all agents</span></div>
+      <div class="line"><span class="green">help</span>            <span class="dim">Show this help</span></div>
+      <div class="line"></div>
+      <div class="line dim">Keyboard shortcuts: 1/2/3 = quick response | Ctrl+S = status | Ctrl+R = respond</div>
+    `;
+  } else if (['1','2','3'].includes(cmd)) {
+    showDemo('respond');
+    setTimeout(() => {
+      const btns = document.querySelectorAll('#respondBtns .quick-btn');
+      if (btns[parseInt(cmd)-1]) selectQuickResponse(parseInt(cmd), btns[parseInt(cmd)-1]);
+    }, 100);
+  } else {
+    const line = document.createElement('div');
+    line.innerHTML = `<div class="line red">Unknown command: ${esc(cmd)}. Type 'help' for available commands.</div>`;
+    terminal.appendChild(line);
+  }
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  if (document.activeElement !== cmdInput && ['1','2','3'].includes(e.key)) {
+    const btns = document.querySelectorAll('#respondBtns .quick-btn');
+    if (btns.length > 0 && btns[parseInt(e.key)-1]) {
+      selectQuickResponse(parseInt(e.key), btns[parseInt(e.key)-1]);
+    }
+  }
+});
+
+// Init
+showDemo('status');
+</script>
+
+</body>
+</html>
