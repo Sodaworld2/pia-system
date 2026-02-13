@@ -26,6 +26,12 @@ import reposRouter from './routes/repos.js';
 import webhooksRouter from './routes/webhooks.js';
 import pubsubRouter from './routes/pubsub.js';
 import securityRouter from './routes/security.js';
+import filesRouter from './routes/files.js';
+import execRouter from './routes/exec.js';
+import soulsRouter from './routes/souls.js';
+import workSessionsRouter from './routes/work-sessions.js';
+import missionControlRouter from './routes/mission-control.js';
+import daoModulesRouter from './routes/dao-modules.js';
 import { getNetworkSentinel } from '../security/network-sentinel.js';
 
 const logger = createLogger('API');
@@ -98,7 +104,7 @@ export function createServer(): Express {
     credentials: true,
   }));
 
-  app.use(express.json({ limit: '1mb' })); // Limit body size
+  app.use(express.json({ limit: '10mb' })); // Increased for file transfers
 
   // Request logging
   app.use((req: Request, _res: Response, next: NextFunction) => {
@@ -138,6 +144,12 @@ export function createServer(): Express {
   app.use('/api/webhooks', webhooksRouter);
   app.use('/api/pubsub', pubsubRouter);
   app.use('/api/security', securityRouter);
+  app.use('/api/files', filesRouter);
+  app.use('/api/exec', execRouter);
+  app.use('/api/souls', soulsRouter);
+  app.use('/api/work-sessions', workSessionsRouter);
+  app.use('/api/mc', missionControlRouter);
+  app.use('/api/modules', daoModulesRouter);
 
   // Health check
   app.get('/api/health', (_req: Request, res: Response) => {
@@ -193,6 +205,17 @@ export function createServer(): Express {
   // Serve static files (dashboard)
   const publicPath = join(process.cwd(), 'public');
   app.use(express.static(publicPath));
+
+  // Serve root-level HTML mockups (MASTER_DASHBOARD.html, etc.)
+  const rootPath = process.cwd();
+  app.get('/*.html', (req: Request, res: Response, next: Function) => {
+    const filePath = join(rootPath, req.path);
+    if (filePath.startsWith(rootPath) && !req.path.startsWith('/api')) {
+      res.sendFile(filePath, (err: any) => { if (err) next(); });
+    } else {
+      next();
+    }
+  });
 
   // SPA fallback - serve index.html for non-API routes
   app.get('*', (req: Request, res: Response) => {

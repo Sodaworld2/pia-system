@@ -250,6 +250,346 @@ function getMigrations(): Migration[] {
         CREATE INDEX IF NOT EXISTS idx_ai_cost_daily_date ON ai_cost_daily(date);
       `,
     },
+    {
+      name: '003_agent_souls',
+      sql: `
+        -- Agent Souls: persistent AI personalities
+        CREATE TABLE IF NOT EXISTS souls (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL UNIQUE,
+          role TEXT NOT NULL,
+          personality TEXT NOT NULL,
+          goals TEXT DEFAULT '[]',
+          relationships TEXT DEFAULT '{}',
+          system_prompt TEXT,
+          config TEXT DEFAULT '{}',
+          email TEXT,
+          status TEXT DEFAULT 'active' CHECK(status IN ('active', 'inactive', 'archived')),
+          created_at INTEGER DEFAULT (unixepoch()),
+          updated_at INTEGER DEFAULT (unixepoch())
+        );
+
+        -- Soul Memories: what agents have learned and done
+        CREATE TABLE IF NOT EXISTS soul_memories (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          soul_id TEXT NOT NULL REFERENCES souls(id) ON DELETE CASCADE,
+          category TEXT NOT NULL CHECK(category IN ('experience', 'decision', 'learning', 'interaction', 'observation', 'goal_progress', 'summary')),
+          content TEXT NOT NULL,
+          importance INTEGER DEFAULT 5 CHECK(importance BETWEEN 1 AND 10),
+          context TEXT,
+          is_summarized INTEGER DEFAULT 0,
+          created_at INTEGER DEFAULT (unixepoch())
+        );
+
+        -- Soul Interaction Log: track inter-agent communication
+        CREATE TABLE IF NOT EXISTS soul_interactions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          from_soul_id TEXT NOT NULL REFERENCES souls(id) ON DELETE CASCADE,
+          to_soul_id TEXT NOT NULL REFERENCES souls(id) ON DELETE CASCADE,
+          interaction_type TEXT NOT NULL CHECK(interaction_type IN ('task_request', 'review_request', 'status_update', 'question', 'response', 'notification')),
+          content TEXT NOT NULL,
+          metadata TEXT DEFAULT '{}',
+          created_at INTEGER DEFAULT (unixepoch())
+        );
+
+        -- Indexes for soul tables
+        CREATE INDEX IF NOT EXISTS idx_soul_memories_soul ON soul_memories(soul_id);
+        CREATE INDEX IF NOT EXISTS idx_soul_memories_category ON soul_memories(category);
+        CREATE INDEX IF NOT EXISTS idx_soul_memories_importance ON soul_memories(importance);
+        CREATE INDEX IF NOT EXISTS idx_soul_memories_created ON soul_memories(created_at);
+        CREATE INDEX IF NOT EXISTS idx_soul_interactions_from ON soul_interactions(from_soul_id);
+        CREATE INDEX IF NOT EXISTS idx_soul_interactions_to ON soul_interactions(to_soul_id);
+        CREATE INDEX IF NOT EXISTS idx_soul_interactions_created ON soul_interactions(created_at);
+      `,
+    },
+    {
+      name: '004_work_sessions',
+      sql: `
+        -- Work Sessions: track "sit down and work on a project" sessions
+        CREATE TABLE IF NOT EXISTS work_sessions (
+          id TEXT PRIMARY KEY,
+          project_name TEXT NOT NULL,
+          project_path TEXT NOT NULL,
+          machine_name TEXT NOT NULL,
+          status TEXT DEFAULT 'active' CHECK(status IN ('active', 'paused', 'completed')),
+          started_at INTEGER DEFAULT (unixepoch()),
+          ended_at INTEGER,
+          duration_seconds INTEGER,
+          notes TEXT,
+          git_branch TEXT,
+          git_commits_before TEXT,
+          git_commits_after TEXT,
+          files_changed INTEGER DEFAULT 0,
+          review_task_id TEXT,
+          review_status TEXT CHECK(review_status IN ('pending', 'running', 'completed', 'skipped')),
+          metadata TEXT DEFAULT '{}'
+        );
+
+        -- Known projects (remembered from past sessions)
+        CREATE TABLE IF NOT EXISTS known_projects (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL UNIQUE,
+          path TEXT NOT NULL,
+          machine_name TEXT,
+          github_repo TEXT,
+          last_session_id TEXT,
+          last_worked_at INTEGER,
+          session_count INTEGER DEFAULT 0,
+          metadata TEXT DEFAULT '{}',
+          created_at INTEGER DEFAULT (unixepoch())
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_work_sessions_status ON work_sessions(status);
+        CREATE INDEX IF NOT EXISTS idx_work_sessions_machine ON work_sessions(machine_name);
+        CREATE INDEX IF NOT EXISTS idx_work_sessions_started ON work_sessions(started_at);
+        CREATE INDEX IF NOT EXISTS idx_known_projects_name ON known_projects(name);
+        CREATE INDEX IF NOT EXISTS idx_known_projects_last ON known_projects(last_worked_at);
+      `,
+    },
+    {
+      name: '020_mission_control',
+      sql: `
+        -- Mission Control agent sessions
+        CREATE TABLE IF NOT EXISTS mc_agent_sessions (
+          id TEXT PRIMARY KEY,
+          machine_id TEXT NOT NULL DEFAULT 'local',
+          mode TEXT NOT NULL CHECK (mode IN ('api', 'pty')),
+          task TEXT NOT NULL,
+          cwd TEXT NOT NULL,
+          approval_mode TEXT NOT NULL DEFAULT 'manual' CHECK (approval_mode IN ('manual', 'auto')),
+          model TEXT DEFAULT 'claude-sonnet-4-5-20250929',
+          status TEXT NOT NULL DEFAULT 'starting',
+          cost_usd REAL DEFAULT 0,
+          tokens_in INTEGER DEFAULT 0,
+          tokens_out INTEGER DEFAULT 0,
+          tool_calls INTEGER DEFAULT 0,
+          error_message TEXT,
+          created_at INTEGER DEFAULT (unixepoch()),
+          completed_at INTEGER
+        );
+
+        -- Mission Control prompts queue
+        CREATE TABLE IF NOT EXISTS mc_prompts (
+          id TEXT PRIMARY KEY,
+          agent_id TEXT NOT NULL,
+          question TEXT NOT NULL,
+          options TEXT,
+          type TEXT NOT NULL DEFAULT 'tool_approval',
+          status TEXT NOT NULL DEFAULT 'pending',
+          response TEXT,
+          auto_reason TEXT,
+          created_at INTEGER DEFAULT (unixepoch()),
+          responded_at INTEGER,
+          FOREIGN KEY (agent_id) REFERENCES mc_agent_sessions(id) ON DELETE CASCADE
+        );
+
+        -- Mission Control activity journal
+        CREATE TABLE IF NOT EXISTS mc_journal (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          agent_id TEXT NOT NULL,
+          type TEXT NOT NULL,
+          content TEXT NOT NULL,
+          metadata TEXT,
+          created_at INTEGER DEFAULT (unixepoch()),
+          FOREIGN KEY (agent_id) REFERENCES mc_agent_sessions(id) ON DELETE CASCADE
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_mc_prompts_agent ON mc_prompts(agent_id);
+        CREATE INDEX IF NOT EXISTS idx_mc_prompts_status ON mc_prompts(status);
+        CREATE INDEX IF NOT EXISTS idx_mc_journal_agent ON mc_journal(agent_id);
+      `,
+    },
+    {
+      name: '025_dao_foundation',
+      sql: `
+        -- Users master table
+        CREATE TABLE IF NOT EXISTS users (
+          id TEXT PRIMARY KEY,
+          firebase_uid TEXT UNIQUE,
+          email TEXT UNIQUE,
+          display_name TEXT,
+          avatar_url TEXT,
+          role TEXT DEFAULT 'member',
+          wallet_address TEXT,
+          metadata TEXT DEFAULT '{}',
+          created_at TEXT DEFAULT (datetime('now')),
+          updated_at TEXT DEFAULT (datetime('now'))
+        );
+
+        -- DAOs
+        CREATE TABLE IF NOT EXISTS daos (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          slug TEXT,
+          description TEXT DEFAULT '',
+          mission TEXT,
+          phase TEXT DEFAULT 'inception',
+          governance_model TEXT DEFAULT 'founder_led',
+          treasury_address TEXT,
+          settings TEXT DEFAULT '{}',
+          founder_id TEXT,
+          created_at TEXT DEFAULT (datetime('now')),
+          updated_at TEXT DEFAULT (datetime('now'))
+        );
+
+        -- DAO Members
+        CREATE TABLE IF NOT EXISTS dao_members (
+          id TEXT PRIMARY KEY,
+          dao_id TEXT NOT NULL,
+          user_id TEXT NOT NULL,
+          role TEXT DEFAULT 'member',
+          joined_at TEXT DEFAULT (datetime('now')),
+          left_at TEXT,
+          voting_power REAL DEFAULT 1,
+          reputation_score REAL DEFAULT 0,
+          metadata TEXT DEFAULT '{}'
+        );
+
+        -- Agreements
+        CREATE TABLE IF NOT EXISTS agreements (
+          id TEXT PRIMARY KEY,
+          dao_id TEXT NOT NULL,
+          title TEXT NOT NULL,
+          type TEXT NOT NULL,
+          status TEXT DEFAULT 'draft',
+          version INTEGER DEFAULT 1,
+          content_markdown TEXT DEFAULT '',
+          terms TEXT DEFAULT '{}',
+          created_by TEXT NOT NULL,
+          parent_agreement_id TEXT,
+          created_at TEXT DEFAULT (datetime('now')),
+          updated_at TEXT DEFAULT (datetime('now'))
+        );
+
+        -- Agreement Signatures
+        CREATE TABLE IF NOT EXISTS agreement_signatures (
+          id TEXT PRIMARY KEY,
+          agreement_id TEXT NOT NULL,
+          user_id TEXT NOT NULL,
+          signed_at TEXT DEFAULT (datetime('now')),
+          signature_hash TEXT NOT NULL,
+          ip_address TEXT NOT NULL,
+          metadata TEXT DEFAULT '{}'
+        );
+
+        -- Proposals
+        CREATE TABLE IF NOT EXISTS proposals (
+          id TEXT PRIMARY KEY,
+          dao_id TEXT NOT NULL,
+          title TEXT NOT NULL,
+          description TEXT DEFAULT '',
+          type TEXT NOT NULL,
+          status TEXT DEFAULT 'draft',
+          author_id TEXT NOT NULL,
+          voting_starts_at TEXT,
+          voting_ends_at TEXT,
+          quorum_required REAL DEFAULT 0.5,
+          approval_threshold REAL DEFAULT 0.5,
+          execution_payload TEXT,
+          result_summary TEXT,
+          created_at TEXT DEFAULT (datetime('now')),
+          updated_at TEXT DEFAULT (datetime('now'))
+        );
+
+        -- Votes
+        CREATE TABLE IF NOT EXISTS votes (
+          id TEXT PRIMARY KEY,
+          proposal_id TEXT NOT NULL,
+          user_id TEXT NOT NULL,
+          choice TEXT NOT NULL,
+          weight REAL DEFAULT 1,
+          reason TEXT,
+          cast_at TEXT DEFAULT (datetime('now'))
+        );
+
+        -- AI Conversations
+        CREATE TABLE IF NOT EXISTS ai_conversations (
+          id TEXT PRIMARY KEY,
+          dao_id TEXT NOT NULL,
+          module_id TEXT NOT NULL,
+          user_id TEXT NOT NULL,
+          role TEXT NOT NULL,
+          content TEXT NOT NULL,
+          metadata TEXT DEFAULT '{}',
+          parent_message_id TEXT,
+          created_at TEXT DEFAULT (datetime('now'))
+        );
+
+        -- Knowledge Items
+        CREATE TABLE IF NOT EXISTS knowledge_items (
+          id TEXT PRIMARY KEY,
+          dao_id TEXT NOT NULL,
+          module_id TEXT NOT NULL,
+          category TEXT NOT NULL,
+          title TEXT NOT NULL,
+          content TEXT NOT NULL,
+          source TEXT NOT NULL,
+          confidence REAL DEFAULT 1.0,
+          tags TEXT DEFAULT '[]',
+          embedding_vector TEXT,
+          created_by TEXT NOT NULL,
+          expires_at TEXT,
+          created_at TEXT DEFAULT (datetime('now')),
+          updated_at TEXT DEFAULT (datetime('now'))
+        );
+
+        -- Bounties
+        CREATE TABLE IF NOT EXISTS bounties (
+          id TEXT PRIMARY KEY,
+          dao_id TEXT NOT NULL,
+          title TEXT NOT NULL,
+          description TEXT DEFAULT '',
+          reward_amount REAL NOT NULL,
+          reward_token TEXT DEFAULT 'USDC',
+          status TEXT DEFAULT 'open',
+          created_by TEXT NOT NULL,
+          claimed_by TEXT,
+          deadline TEXT,
+          deliverables TEXT DEFAULT '[]',
+          tags TEXT DEFAULT '[]',
+          created_at TEXT DEFAULT (datetime('now')),
+          updated_at TEXT DEFAULT (datetime('now'))
+        );
+
+        -- Marketplace Items
+        CREATE TABLE IF NOT EXISTS marketplace_items (
+          id TEXT PRIMARY KEY,
+          title TEXT NOT NULL,
+          description TEXT DEFAULT '',
+          type TEXT NOT NULL,
+          status TEXT DEFAULT 'draft',
+          price REAL DEFAULT 0,
+          currency TEXT DEFAULT 'USDC',
+          author_id TEXT NOT NULL,
+          dao_id TEXT,
+          download_count INTEGER DEFAULT 0,
+          rating_avg REAL DEFAULT 0,
+          rating_count INTEGER DEFAULT 0,
+          metadata TEXT DEFAULT '{}',
+          created_at TEXT DEFAULT (datetime('now')),
+          updated_at TEXT DEFAULT (datetime('now'))
+        );
+
+        -- Indexes for DAO tables
+        CREATE INDEX IF NOT EXISTS idx_dao_members_dao ON dao_members(dao_id);
+        CREATE INDEX IF NOT EXISTS idx_dao_members_user ON dao_members(user_id);
+        CREATE INDEX IF NOT EXISTS idx_agreements_dao ON agreements(dao_id);
+        CREATE INDEX IF NOT EXISTS idx_agreements_status ON agreements(status);
+        CREATE INDEX IF NOT EXISTS idx_agreement_sigs_agreement ON agreement_signatures(agreement_id);
+        CREATE INDEX IF NOT EXISTS idx_proposals_dao ON proposals(dao_id);
+        CREATE INDEX IF NOT EXISTS idx_proposals_status ON proposals(status);
+        CREATE INDEX IF NOT EXISTS idx_votes_proposal ON votes(proposal_id);
+        CREATE INDEX IF NOT EXISTS idx_ai_conversations_dao ON ai_conversations(dao_id);
+        CREATE INDEX IF NOT EXISTS idx_ai_conversations_module ON ai_conversations(module_id);
+        CREATE INDEX IF NOT EXISTS idx_knowledge_items_dao ON knowledge_items(dao_id);
+        CREATE INDEX IF NOT EXISTS idx_knowledge_items_module ON knowledge_items(module_id);
+        CREATE INDEX IF NOT EXISTS idx_knowledge_items_category ON knowledge_items(category);
+        CREATE INDEX IF NOT EXISTS idx_bounties_dao ON bounties(dao_id);
+        CREATE INDEX IF NOT EXISTS idx_bounties_status ON bounties(status);
+        CREATE INDEX IF NOT EXISTS idx_marketplace_items_type ON marketplace_items(type);
+        CREATE INDEX IF NOT EXISTS idx_marketplace_items_status ON marketplace_items(status);
+      `,
+    },
   ];
 }
 

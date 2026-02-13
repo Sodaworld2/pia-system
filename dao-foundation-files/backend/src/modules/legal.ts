@@ -10,7 +10,7 @@ import type {
   AgreementTerms,
   KnowledgeItem,
   KnowledgeCategory,
-} from '../../../types/foundation';
+} from '../types/foundation';
 import { BaseModule } from './base-module';
 import bus from '../events/bus';
 

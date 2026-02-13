@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fisher2050 — Project Manager</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <h1 class="logo">Fisher<span class="accent">2050</span></h1>
+        <span class="role-badge">Project Manager</span>
+      </div>
+      <div class="header-right">
+        <span class="health-indicator" id="health-score">---%</span>
+        <span class="connection-status" id="pia-status">PIA: ---</span>
+      </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="nav">
+      <button class="nav-btn active" data-view="dashboard" onclick="showView('dashboard')">Dashboard</button>
+      <button class="nav-btn" data-view="projects" onclick="showView('projects')">Projects</button>
+      <button class="nav-btn" data-view="tasks" onclick="showView('tasks')">Tasks</button>
+      <button class="nav-btn" data-view="meetings" onclick="showView('meetings')">Meetings</button>
+      <button class="nav-btn" data-view="souls" onclick="showView('souls')">Agent Souls</button>
+      <button class="nav-btn" data-view="scheduler" onclick="showView('scheduler')">Scheduler</button>
+      <button class="nav-btn" data-view="reports" onclick="showView('reports')">Reports</button>
+    </nav>
+
+    <!-- Views -->
+    <main class="main">
+      <!-- Dashboard View -->
+      <div class="view active" id="view-dashboard">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value" id="stat-projects">0</div>
+            <div class="stat-label">Active Projects</div>
+          </div>
+          <div class="stat-card warning">
+            <div class="stat-value" id="stat-overdue">0</div>
+            <div class="stat-label">Overdue Tasks</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-pending">0</div>
+            <div class="stat-label">Pending Tasks</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-meetings">0</div>
+            <div class="stat-label">Upcoming Meetings</div>
+          </div>
+        </div>
+
+        <div class="panel-grid">
+          <div class="panel">
+            <div class="panel-header">
+              <h3>Recent Activity</h3>
+            </div>
+            <div class="panel-body" id="activity-feed">
+              <div class="empty-state">Loading...</div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <h3>Quick Actions</h3>
+            </div>
+            <div class="panel-body">
+              <button class="action-btn" onclick="generateReport()">Generate Daily Report</button>
+              <button class="action-btn" onclick="triggerReview()">Trigger Ziggi Review</button>
+              <button class="action-btn" onclick="showCreateProject()">New Project</button>
+              <button class="action-btn" onclick="showCreateTask()">New Task</button>
+              <button class="action-btn" onclick="checkPiaConnection()">Test PIA Connection</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <h3>Latest Report</h3>
+          </div>
+          <div class="panel-body report-content" id="latest-report">
+            <div class="empty-state">No reports yet. Generate one!</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Projects View -->
+      <div class="view" id="view-projects">
+        <div class="view-header">
+          <h2>Projects</h2>
+          <button class="btn-primary" onclick="showCreateProject()">+ New Project</button>
+        </div>
+        <div class="list" id="projects-list">
+          <div class="empty-state">Loading projects...</div>
+        </div>
+      </div>
+
+      <!-- Tasks View -->
+      <div class="view" id="view-tasks">
+        <div class="view-header">
+          <h2>Tasks</h2>
+          <div class="view-filters">
+            <select id="task-filter-status" onchange="loadTasks()">
+              <option value="">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="in_progress">In Progress</option>
+              <option value="completed">Completed</option>
+              <option value="failed">Failed</option>
+            </select>
+            <button class="btn-primary" onclick="showCreateTask()">+ New Task</button>
+          </div>
+        </div>
+        <div class="list" id="tasks-list">
+          <div class="empty-state">Loading tasks...</div>
+        </div>
+      </div>
+
+      <!-- Meetings View -->
+      <div class="view" id="view-meetings">
+        <div class="view-header">
+          <h2>Meetings</h2>
+          <button class="btn-primary" onclick="showCreateMeeting()">+ New Meeting</button>
+        </div>
+        <div class="list" id="meetings-list">
+          <div class="empty-state">Loading meetings...</div>
+        </div>
+      </div>
+
+      <!-- Souls View -->
+      <div class="view" id="view-souls">
+        <div class="view-header">
+          <h2>Agent Souls</h2>
+        </div>
+        <div class="souls-grid" id="souls-list">
+          <div class="empty-state">Loading souls from PIA...</div>
+        </div>
+      </div>
+
+      <!-- Scheduler View -->
+      <div class="view" id="view-scheduler">
+        <div class="view-header">
+          <h2>Scheduled Jobs</h2>
+          <button class="btn-primary" onclick="showCreateJob()">+ New Job</button>
+        </div>
+        <div class="list" id="scheduler-list">
+          <div class="empty-state">Loading jobs...</div>
+        </div>
+      </div>
+
+      <!-- Reports View -->
+      <div class="view" id="view-reports">
+        <div class="view-header">
+          <h2>Reports</h2>
+          <button class="btn-primary" onclick="generateReport()">Generate Report</button>
+        </div>
+        <div class="list" id="reports-list">
+          <div class="empty-state">Loading reports...</div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modal" onclick="closeModal(event)">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="modal-title">Modal</h3>
+          <button class="modal-close" onclick="closeModalForce()">&times;</button>
+        </div>
+        <div class="modal-body" id="modal-body"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

@@ -5,7 +5,7 @@ import type {
   AgentResponse,
   KnowledgeItem,
   KnowledgeCategory,
-} from '../../../types/foundation';
+} from '../types/foundation';
 import { BaseModule } from './base-module';
 
 // ---------------------------------------------------------------------------

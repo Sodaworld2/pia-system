@@ -87,6 +87,11 @@ async function startHub(): Promise<void> {
   const doctor = getDoctor();
   doctor.start(60000); // Check every 60 seconds
 
+  // Seed default Agent Souls
+  logger.info('Seeding Agent Souls...');
+  const { seedDefaultSouls } = await import('./souls/seed-souls.js');
+  seedDefaultSouls();
+
   // Log startup complete
   logger.info('');
   logger.info('='.repeat(50));

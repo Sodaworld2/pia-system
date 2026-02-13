@@ -17,7 +17,8 @@ interface IncomingMessage {
   type: 'auth' | 'subscribe' | 'unsubscribe' | 'input' | 'resize' | 'ping' |
         'machine:register' | 'machine:heartbeat' | 'machine:status' |
         'agent:register' | 'agent:update' | 'agent:remove' | 'pong' |
-        'relay:register' | 'relay:send' | 'relay:broadcast';
+        'relay:register' | 'relay:send' | 'relay:broadcast' |
+        'mc:subscribe' | 'mc:respond';
   payload?: {
     token?: string;
     sessionId?: string;
@@ -37,11 +38,14 @@ interface IncomingMessage {
     progress?: number;
     current_task?: string;
     last_output?: string;
+    promptId?: string;
+    choice?: number | string;
   };
 }
 
 interface OutgoingMessage {
-  type: 'auth' | 'output' | 'buffer' | 'exit' | 'error' | 'pong' | 'agent:update' | 'alert' | 'machine:update' | 'command' | 'relay:message' | 'relay:registered';
+  type: 'auth' | 'output' | 'buffer' | 'exit' | 'error' | 'pong' | 'agent:update' | 'alert' | 'machine:update' | 'command' | 'relay:message' | 'relay:registered' |
+        'mc:prompt' | 'mc:output' | 'mc:status' | 'mc:journal' | 'mc:agent_spawned' | 'mc:agent_killed';
   success?: boolean;
   payload?: unknown;
   sessionId?: string;
@@ -50,6 +54,7 @@ interface OutgoingMessage {
 export class TunnelWebSocketServer {
   private wss: WebSocketServer;
   private clients: Map<WebSocket, Client> = new Map();
+  private mcSubscribers: Set<WebSocket> = new Set();
   private heartbeatInterval: NodeJS.Timeout | null = null;
 
   constructor(port: number) {
@@ -82,6 +87,7 @@ export class TunnelWebSocketServer {
 
       ws.on('close', () => {
         this.clients.delete(ws);
+        this.mcSubscribers.delete(ws);
         logger.info(`Client disconnected (${this.clients.size} remaining)`);
       });
 
@@ -146,6 +152,24 @@ export class TunnelWebSocketServer {
           return;
         }
         this.handleHubMessage(msg.type, msg.payload);
+        break;
+
+      // Mission Control messages
+      case 'mc:subscribe':
+        if (!client.authenticated) {
+          this.send(ws, { type: 'error', payload: 'Not authenticated' });
+          return;
+        }
+        this.mcSubscribers.add(ws);
+        logger.info('Client subscribed to Mission Control events');
+        break;
+
+      case 'mc:respond':
+        if (!client.authenticated) {
+          this.send(ws, { type: 'error', payload: 'Not authenticated' });
+          return;
+        }
+        this.handleMcRespond(msg.payload);
         break;
 
       // Cross-machine relay messages
@@ -298,6 +322,30 @@ export class TunnelWebSocketServer {
     } catch (error) {
       logger.error(`Failed to handle relay message: ${error}`);
       this.send(ws, { type: 'error', payload: `Relay error: ${error}` });
+    }
+  }
+
+  private async handleMcRespond(payload: IncomingMessage['payload']): Promise<void> {
+    if (!payload?.promptId || payload.choice === undefined) {
+      logger.warn('mc:respond missing promptId or choice');
+      return;
+    }
+    try {
+      const { getPromptManager } = await import('../mission-control/prompt-manager.js');
+      getPromptManager().respond(payload.promptId, payload.choice);
+    } catch (error) {
+      logger.error(`Failed to handle mc:respond: ${error}`);
+    }
+  }
+
+  // Broadcast to all Mission Control subscribers
+  broadcastMc(msg: OutgoingMessage): void {
+    for (const ws of this.mcSubscribers) {
+      if (ws.readyState === WebSocket.OPEN) {
+        this.send(ws, msg);
+      } else {
+        this.mcSubscribers.delete(ws);
+      }
     }
   }
 
