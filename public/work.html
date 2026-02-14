@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PIA — Start Working</title>
+  <style>
+    :root {
+      --bg: #0a0e14; --bg2: #111820; --bg3: #1a2230;
+      --border: #1e2a3a; --text: #e0e6ed; --dim: #6b7d8e;
+      --accent: #00d4ff; --accent2: #0088aa;
+      --green: #00cc88; --yellow: #ffbb00; --red: #ff4466;
+      --orange: #ff8844; --purple: #aa66ff;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    .container { max-width: 900px; margin: 0 auto; padding: 32px 24px; }
+
+    /* Header */
+    .header { text-align: center; margin-bottom: 40px; }
+    .header h1 { font-size: 32px; font-weight: 700; }
+    .header h1 span { color: var(--accent); }
+    .header .machine { font-size: 14px; color: var(--dim); margin-top: 8px; }
+    .header .machine strong { color: var(--accent); }
+
+    /* States */
+    .state { display: none; }
+    .state.active { display: block; }
+
+    /* ==================== */
+    /* STATE: No Active Session (Project Picker) */
+    /* ==================== */
+    .greeting { font-size: 20px; color: var(--text); margin-bottom: 8px; }
+    .subgreeting { font-size: 14px; color: var(--dim); margin-bottom: 32px; }
+
+    .project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; margin-bottom: 32px; }
+
+    .project-card {
+      background: var(--bg2); border: 2px solid var(--border); border-radius: 12px;
+      padding: 20px; cursor: pointer; transition: all 0.2s; position: relative;
+    }
+    .project-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,212,255,0.1); }
+    .project-card.selected { border-color: var(--accent); background: rgba(0,212,255,0.05); }
+    .project-card .name { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+    .project-card .path { font-size: 11px; color: var(--dim); word-break: break-all; }
+    .project-card .meta { font-size: 12px; color: var(--dim); margin-top: 8px; display: flex; gap: 12px; }
+    .project-card .meta span { display: flex; align-items: center; gap: 4px; }
+    .project-card .last-worked { font-size: 11px; color: var(--accent2); margin-top: 6px; }
+    .project-card .check {
+      position: absolute; top: 12px; right: 12px; width: 24px; height: 24px;
+      border-radius: 50%; border: 2px solid var(--border); display: flex;
+      align-items: center; justify-content: center; font-size: 14px; color: transparent;
+    }
+    .project-card.selected .check { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,0.1); }
+
+    .add-project-card {
+      background: var(--bg2); border: 2px dashed var(--border); border-radius: 12px;
+      padding: 20px; cursor: pointer; text-align: center; transition: all 0.2s;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 120px; color: var(--dim);
+    }
+    .add-project-card:hover { border-color: var(--accent); color: var(--accent); }
+    .add-project-card .plus { font-size: 32px; margin-bottom: 8px; }
+
+    .start-section { text-align: center; margin-top: 24px; }
+    .start-btn {
+      padding: 16px 48px; font-size: 18px; font-weight: 700;
+      background: var(--accent); color: #000; border: none; border-radius: 12px;
+      cursor: pointer; transition: all 0.2s; display: inline-block;
+    }
+    .start-btn:hover { transform: scale(1.02); box-shadow: 0 4px 24px rgba(0,212,255,0.3); }
+    .start-btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; box-shadow: none; }
+    .start-hint { font-size: 12px; color: var(--dim); margin-top: 8px; }
+
+    /* ==================== */
+    /* STATE: Active Session */
+    /* ==================== */
+    .session-banner {
+      background: linear-gradient(135deg, rgba(0,212,255,0.08), rgba(0,204,136,0.08));
+      border: 2px solid var(--accent); border-radius: 16px; padding: 32px;
+      text-align: center; margin-bottom: 32px;
+    }
+    .session-banner .working-on { font-size: 14px; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; }
+    .session-banner .project-name { font-size: 28px; font-weight: 700; color: var(--accent); margin-top: 4px; }
+    .session-banner .timer { font-size: 48px; font-weight: 700; color: var(--text); margin-top: 16px; font-variant-numeric: tabular-nums; }
+    .session-banner .branch { font-size: 13px; color: var(--dim); margin-top: 8px; }
+
+    .session-info { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 32px; }
+    .info-card {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+      padding: 20px; text-align: center;
+    }
+    .info-card .value { font-size: 24px; font-weight: 700; color: var(--accent); }
+    .info-card .label { font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+
+    .session-actions { display: flex; gap: 12px; justify-content: center; }
+    .end-btn {
+      padding: 14px 40px; font-size: 16px; font-weight: 700;
+      background: var(--red); color: #fff; border: none; border-radius: 10px;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .end-btn:hover { opacity: 0.9; }
+    .secondary-btn {
+      padding: 14px 24px; font-size: 14px;
+      background: var(--bg2); color: var(--text); border: 1px solid var(--border);
+      border-radius: 10px; cursor: pointer; transition: all 0.2s;
+    }
+    .secondary-btn:hover { border-color: var(--accent); }
+
+    /* ==================== */
+    /* STATE: Session Ended */
+    /* ==================== */
+    .summary-card {
+      background: var(--bg2); border: 2px solid var(--green); border-radius: 16px;
+      padding: 32px; text-align: center; margin-bottom: 24px;
+    }
+    .summary-card h2 { color: var(--green); margin-bottom: 16px; }
+    .summary-stats { display: flex; gap: 24px; justify-content: center; margin: 20px 0; }
+    .summary-stat { text-align: center; }
+    .summary-stat .val { font-size: 28px; font-weight: 700; color: var(--accent); }
+    .summary-stat .lbl { font-size: 11px; color: var(--dim); text-transform: uppercase; }
+    .review-status { margin-top: 16px; padding: 12px 20px; background: var(--bg3); border-radius: 8px; font-size: 14px; }
+
+    /* ==================== */
+    /* History */
+    /* ==================== */
+    .history { margin-top: 40px; }
+    .history h3 { font-size: 16px; color: var(--dim); margin-bottom: 12px; }
+    .history-item {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+      padding: 14px 18px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;
+    }
+    .history-item .name { font-weight: 600; }
+    .history-item .detail { font-size: 12px; color: var(--dim); margin-top: 2px; }
+    .history-item .duration { font-size: 14px; font-weight: 600; color: var(--accent); }
+
+    /* Modal */
+    .modal-overlay {
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 12px;
+      padding: 32px; width: 90%; max-width: 480px;
+    }
+    .modal h3 { margin-bottom: 20px; font-size: 18px; }
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 12px; color: var(--dim); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .field input {
+      width: 100%; padding: 12px 14px; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-size: 14px;
+    }
+    .field input:focus { outline: none; border-color: var(--accent); }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>PIA <span>System</span></h1>
+      <div class="machine">Machine: <strong id="machine-name">loading...</strong></div>
+    </div>
+
+    <!-- ==================== -->
+    <!-- STATE 1: Pick a project -->
+    <!-- ==================== -->
+    <div class="state active" id="state-picker">
+      <div class="greeting" id="greeting">Good morning, Mic</div>
+      <div class="subgreeting">What are you working on today?</div>
+
+      <div class="project-grid" id="project-grid">
+        <!-- Projects loaded dynamically -->
+      </div>
+
+      <div class="start-section">
+        <button class="start-btn" id="start-btn" disabled onclick="startSession()">Start Working</button>
+        <div class="start-hint">Select a project above to begin</div>
+      </div>
+
+      <div class="history" id="history-section">
+        <h3>Recent Sessions</h3>
+        <div id="history-list"></div>
+      </div>
+    </div>
+
+    <!-- ==================== -->
+    <!-- STATE 2: Working -->
+    <!-- ==================== -->
+    <div class="state" id="state-working">
+      <div class="session-banner">
+        <div class="working-on">Currently working on</div>
+        <div class="project-name" id="active-project-name">—</div>
+        <div class="timer" id="session-timer">00:00:00</div>
+        <div class="branch" id="active-branch">—</div>
+      </div>
+
+      <div class="session-info">
+        <div class="info-card">
+          <div class="value" id="info-machine">—</div>
+          <div class="label">Machine</div>
+        </div>
+        <div class="info-card">
+          <div class="value" id="info-started">—</div>
+          <div class="label">Started At</div>
+        </div>
+        <div class="info-card">
+          <div class="value" id="info-path">—</div>
+          <div class="label">Project Path</div>
+        </div>
+      </div>
+
+      <div class="session-actions">
+        <button class="end-btn" onclick="endSession(false)">End Session</button>
+        <button class="secondary-btn" onclick="endSession(true)">End Without Review</button>
+        <a class="secondary-btn" href="/visor.html" style="text-decoration:none; text-align:center;">Open Visor</a>
+      </div>
+    </div>
+
+    <!-- ==================== -->
+    <!-- STATE 3: Session ended -->
+    <!-- ==================== -->
+    <div class="state" id="state-ended">
+      <div class="summary-card">
+        <h2>Session Complete</h2>
+        <div id="end-message" style="color:var(--dim); margin-bottom:12px;"></div>
+        <div class="summary-stats">
+          <div class="summary-stat"><div class="val" id="end-duration">—</div><div class="lbl">Duration</div></div>
+          <div class="summary-stat"><div class="val" id="end-files">—</div><div class="lbl">Files Changed</div></div>
+          <div class="summary-stat"><div class="val" id="end-review">—</div><div class="lbl">Ziggi Review</div></div>
+        </div>
+        <div class="review-status" id="review-status" style="display:none"></div>
+      </div>
+      <div style="text-align:center">
+        <button class="start-btn" onclick="backToPicker()" style="background:var(--green)">Start Another Session</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Project Modal -->
+  <div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+    <div class="modal">
+      <h3>Add Project</h3>
+      <div class="field">
+        <label>Project Name</label>
+        <input type="text" id="new-project-name" placeholder="PIA System v2">
+      </div>
+      <div class="field">
+        <label>Project Path</label>
+        <input type="text" id="new-project-path" placeholder="C:\Users\mic\Downloads\pia-system">
+      </div>
+      <div class="field">
+        <label>GitHub Repo (optional)</label>
+        <input type="text" id="new-project-repo" placeholder="Sodaworld2/pia-system">
+      </div>
+      <div class="modal-actions">
+        <button class="secondary-btn" onclick="closeModal()">Cancel</button>
+        <button class="start-btn" onclick="addProject()" style="padding:10px 24px; font-size:14px;">Add Project</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API = '';
+    const TOKEN = 'pia-local-dev-token-2024';
+    let selectedProject = null;
+    let activeSession = null;
+    let timerInterval = null;
+
+    // API helper
+    async function api(path, options = {}) {
+      const res = await fetch(`${API}${path}`, {
+        ...options,
+        headers: { 'Content-Type': 'application/json', 'X-API-Token': TOKEN, ...options.headers },
+      });
+      return res.json();
+    }
+
+    // Time helpers
+    function formatTimer(seconds) {
+      const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
+      const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+      const s = (seconds % 60).toString().padStart(2, '0');
+      return `${h}:${m}:${s}`;
+    }
+
+    function timeAgo(ts) {
+      if (!ts) return 'never';
+      const s = Math.floor(Date.now() / 1000) - ts;
+      if (s < 60) return 'just now';
+      if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+      if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+      return `${Math.floor(s / 86400)}d ago`;
+    }
+
+    function friendlyDuration(seconds) {
+      if (!seconds) return '0m';
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      return h > 0 ? `${h}h ${m}m` : `${m}m`;
+    }
+
+    function getGreeting() {
+      const h = new Date().getHours();
+      if (h < 5) return 'Working late, Mic?';
+      if (h < 12) return 'Good morning, Mic';
+      if (h < 17) return 'Good afternoon, Mic';
+      if (h < 21) return 'Good evening, Mic';
+      return 'Burning the midnight oil, Mic?';
+    }
+
+    // Show/hide states
+    function showState(name) {
+      document.querySelectorAll('.state').forEach(s => s.classList.remove('active'));
+      document.getElementById(`state-${name}`).classList.add('active');
+    }
+
+    // ==================== INIT ====================
+    async function init() {
+      document.getElementById('greeting').textContent = getGreeting();
+
+      // Check for active session first
+      const active = await api('/api/work-sessions/active');
+      document.getElementById('machine-name').textContent = active.machine || 'unknown';
+
+      if (active.active) {
+        showActiveSession(active.session);
+        return;
+      }
+
+      // Load projects
+      await loadProjects();
+      await loadHistory();
+    }
+
+    // ==================== PROJECT PICKER ====================
+    async function loadProjects() {
+      const data = await api('/api/work-sessions/projects');
+      const grid = document.getElementById('project-grid');
+
+      let html = '';
+      if (data.projects && data.projects.length > 0) {
+        html = data.projects.map(p => `
+          <div class="project-card" onclick="selectProject(this, '${p.name}', '${p.path.replace(/\\/g, '\\\\')}')" data-name="${p.name}">
+            <div class="check">✓</div>
+            <div class="name">${p.name}</div>
+            <div class="path">${p.path}</div>
+            <div class="meta">
+              ${p.session_count ? `<span>${p.session_count} sessions</span>` : ''}
+              ${p.github_repo ? `<span>${p.github_repo}</span>` : ''}
+            </div>
+            ${p.last_worked_at ? `<div class="last-worked">Last worked: ${timeAgo(p.last_worked_at)}</div>` : ''}
+          </div>
+        `).join('');
+      }
+
+      html += `
+        <div class="add-project-card" onclick="openAddProject()">
+          <div class="plus">+</div>
+          <div>Add Project</div>
+        </div>
+      `;
+
+      grid.innerHTML = html;
+    }
+
+    function selectProject(el, name, path) {
+      document.querySelectorAll('.project-card').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedProject = { name, path };
+      document.getElementById('start-btn').disabled = false;
+    }
+
+    async function startSession() {
+      if (!selectedProject) return;
+      const btn = document.getElementById('start-btn');
+      btn.textContent = 'Starting...';
+      btn.disabled = true;
+
+      const result = await api('/api/work-sessions/start', {
+        method: 'POST',
+        body: JSON.stringify({ project_name: selectedProject.name, project_path: selectedProject.path }),
+      });
+
+      if (result.error) {
+        alert(result.error);
+        btn.textContent = 'Start Working';
+        btn.disabled = false;
+        return;
+      }
+
+      showActiveSession(result.session);
+    }
+
+    // ==================== ACTIVE SESSION ====================
+    function showActiveSession(session) {
+      activeSession = session;
+      showState('working');
+
+      document.getElementById('active-project-name').textContent = session.project_name;
+      document.getElementById('active-branch').textContent = session.git_branch ? `Branch: ${session.git_branch}` : '';
+      document.getElementById('info-machine').textContent = session.machine_name;
+      document.getElementById('info-started').textContent = new Date(session.started_at * 1000).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+      document.getElementById('info-path').style.fontSize = '12px';
+      document.getElementById('info-path').textContent = session.project_path;
+
+      // Start timer
+      if (timerInterval) clearInterval(timerInterval);
+      function updateTimer() {
+        const elapsed = Math.floor(Date.now() / 1000) - session.started_at;
+        document.getElementById('session-timer').textContent = formatTimer(elapsed);
+      }
+      updateTimer();
+      timerInterval = setInterval(updateTimer, 1000);
+    }
+
+    async function endSession(skipReview) {
+      if (!activeSession) return;
+      if (!confirm(skipReview ? 'End session without Ziggi review?' : 'End this work session? Ziggi will review your changes.')) return;
+
+      if (timerInterval) clearInterval(timerInterval);
+
+      const result = await api(`/api/work-sessions/${activeSession.id}/end`, {
+        method: 'POST',
+        body: JSON.stringify({ skip_review: skipReview }),
+      });
+
+      if (result.error) { alert(result.error); return; }
+
+      showSessionEnded(result);
+    }
+
+    // ==================== SESSION ENDED ====================
+    function showSessionEnded(result) {
+      showState('ended');
+
+      document.getElementById('end-message').textContent = result.message;
+      document.getElementById('end-duration').textContent = friendlyDuration(result.session.duration_seconds);
+      document.getElementById('end-files').textContent = result.session.files_changed || '0';
+
+      if (result.review) {
+        document.getElementById('end-review').textContent = 'Running';
+        document.getElementById('end-review').style.color = 'var(--accent)';
+        const revStatus = document.getElementById('review-status');
+        revStatus.style.display = 'block';
+        revStatus.innerHTML = `Ziggi is reviewing your code changes... <span style="color:var(--dim)">(Task: ${result.review.taskId})</span>`;
+      } else {
+        document.getElementById('end-review').textContent = result.session.review_status === 'skipped' ? 'Skipped' : 'No changes';
+        document.getElementById('end-review').style.color = 'var(--dim)';
+      }
+    }
+
+    function backToPicker() {
+      selectedProject = null;
+      showState('picker');
+      loadProjects();
+      loadHistory();
+    }
+
+    // ==================== HISTORY ====================
+    async function loadHistory() {
+      const sessions = await api('/api/work-sessions/history?limit=5');
+      const list = document.getElementById('history-list');
+
+      if (!sessions.length) {
+        list.innerHTML = '<div style="color:var(--dim); font-size:13px; padding:12px 0;">No sessions yet. Start your first one!</div>';
+        return;
+      }
+
+      list.innerHTML = sessions.map(s => `
+        <div class="history-item">
+          <div>
+            <div class="name">${s.project_name}</div>
+            <div class="detail">${s.machine_name} · ${timeAgo(s.started_at)} · ${s.files_changed || 0} files · ${s.review_status || 'no review'}</div>
+          </div>
+          <div class="duration">${friendlyDuration(s.duration_seconds)}</div>
+        </div>
+      `).join('');
+    }
+
+    // ==================== ADD PROJECT MODAL ====================
+    function openAddProject() {
+      document.getElementById('modal').classList.add('active');
+      document.getElementById('new-project-name').focus();
+    }
+    function closeModal() {
+      document.getElementById('modal').classList.remove('active');
+    }
+    async function addProject() {
+      const name = document.getElementById('new-project-name').value.trim();
+      const path = document.getElementById('new-project-path').value.trim();
+      const repo = document.getElementById('new-project-repo').value.trim();
+      if (!name || !path) { alert('Name and path are required'); return; }
+
+      await api('/api/work-sessions/projects', {
+        method: 'POST',
+        body: JSON.stringify({ name, path, github_repo: repo || undefined }),
+      });
+
+      closeModal();
+      document.getElementById('new-project-name').value = '';
+      document.getElementById('new-project-path').value = '';
+      document.getElementById('new-project-repo').value = '';
+      await loadProjects();
+    }
+
+    // ==================== GO ====================
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

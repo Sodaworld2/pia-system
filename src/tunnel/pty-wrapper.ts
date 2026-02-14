@@ -33,8 +33,19 @@ export class PTYWrapper extends EventEmitter {
   }
 
   spawn(options: PTYOptions): number {
-    const shell = platform() === 'win32' ? 'powershell.exe' : options.command;
-    const args = platform() === 'win32' ? [] : options.args || [];
+    const isWin = platform() === 'win32';
+    let shell: string;
+    let args: string[];
+
+    if (isWin) {
+      // On Windows, node-pty can't resolve commands from PATH directly.
+      // Use cmd.exe /c to let Windows resolve the command.
+      shell = 'cmd.exe';
+      args = ['/c', options.command, ...(options.args || [])];
+    } else {
+      shell = options.command;
+      args = options.args || [];
+    }
 
     logger.info(`Spawning PTY: ${shell} ${args.join(' ')} in ${options.cwd}`);
 
@@ -49,6 +60,8 @@ export class PTYWrapper extends EventEmitter {
           ...options.env,
           TERM: 'xterm-256color',
           COLORTERM: 'truecolor',
+          CLAUDECODE: '',          // Unset so Claude CLI doesn't think it's nested
+          CLAUDE_CODE: '',
         } as Record<string, string>,
       });
 

@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIA - How It All Works</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0a0e14; color: #c8d6e5; line-height: 1.7; }
+
+  /* ── Header ── */
+  .hero {
+    background: linear-gradient(135deg, #0d1117 0%, #1a1a2e 50%, #0d1117 100%);
+    padding: 60px 30px 50px;
+    text-align: center;
+    border-bottom: 1px solid #1e293b;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+    background: radial-gradient(circle at 30% 50%, rgba(0,255,136,0.03) 0%, transparent 50%),
+                radial-gradient(circle at 70% 50%, rgba(0,170,255,0.03) 0%, transparent 50%);
+  }
+  .hero h1 { font-size: 2.4em; font-weight: 800; color: #00ff88; position: relative; }
+  .hero .sub { font-size: 1.1em; color: #5a6a7a; margin-top: 8px; position: relative; }
+  .hero .badge { display: inline-block; margin-top: 16px; background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.2);
+    padding: 6px 18px; border-radius: 20px; font-size: 0.8em; color: #00ff88; position: relative; }
+
+  /* ── Nav ── */
+  .nav {
+    background: #111820; border-bottom: 1px solid #1e293b;
+    padding: 12px 20px; display: flex; gap: 8px; flex-wrap: wrap;
+    justify-content: center; position: sticky; top: 0; z-index: 100;
+  }
+  .nav a { text-decoration: none; color: #5a6a7a; font-weight: 600; font-size: 0.82em;
+    padding: 6px 14px; border-radius: 8px; transition: all 0.2s; }
+  .nav a:hover { background: #1e293b; color: #00ff88; }
+
+  /* ── Content ── */
+  .content { max-width: 1000px; margin: 0 auto; padding: 40px 24px; }
+
+  /* ── Sections ── */
+  .section { margin-bottom: 60px; scroll-margin-top: 70px; }
+  .section-header { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
+  .section-num { width: 44px; height: 44px; border-radius: 12px; display: flex;
+    align-items: center; justify-content: center; font-size: 1.2em; font-weight: 800; flex-shrink: 0; }
+  .section-header h2 { font-size: 1.5em; color: #e0e0e0; }
+  .section-header .tag { display: block; font-size: 0.5em; color: #5a6a7a; font-weight: 400; }
+
+  /* ── Cards ── */
+  .card { background: #111820; border: 1px solid #1e293b; border-radius: 12px;
+    padding: 24px; margin-bottom: 20px; }
+  .card h3 { color: #00aaff; font-size: 1.05em; margin-bottom: 10px; }
+  .card p { color: #8899aa; font-size: 0.92em; }
+  .card ul { color: #8899aa; font-size: 0.92em; padding-left: 20px; }
+  .card li { margin-bottom: 6px; }
+  .card li strong { color: #c8d6e5; }
+
+  /* ── Screenshot ── */
+  .screenshot {
+    margin: 20px 0; border-radius: 10px; overflow: hidden;
+    border: 1px solid #1e293b; background: #0d1117;
+  }
+  .screenshot img { width: 100%; display: block; }
+  .screenshot-label {
+    padding: 10px 16px; background: #161b22; color: #5a6a7a;
+    font-size: 0.8em; display: flex; align-items: center; gap: 8px;
+  }
+  .screenshot-label .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  /* ── Flow diagram ── */
+  .flow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    margin: 24px 0; justify-content: center; padding: 20px; }
+  .flow-box { background: #111820; border: 2px solid #1e293b; border-radius: 10px;
+    padding: 14px 20px; text-align: center; min-width: 120px; transition: all 0.2s; }
+  .flow-box:hover { border-color: #00ff88; transform: translateY(-2px); }
+  .flow-box .title { font-weight: 700; font-size: 0.85em; color: #00aaff; }
+  .flow-box .desc { font-size: 0.72em; color: #5a6a7a; margin-top: 4px; }
+  .flow-box.highlight { background: rgba(0,255,136,0.08); border-color: #00ff88; }
+  .flow-box.highlight .title { color: #00ff88; }
+  .flow-arrow { color: #00ff88; font-size: 1.4em; font-weight: 700; }
+
+  /* ── Stat grid ── */
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 20px 0; }
+  .stat-box { background: #111820; border: 1px solid #1e293b; border-radius: 10px;
+    padding: 20px; text-align: center; }
+  .stat-box .num { font-size: 2em; font-weight: 800; }
+  .stat-box .lbl { font-size: 0.75em; color: #5a6a7a; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+  /* ── Highlight boxes ── */
+  .tip { background: rgba(0,255,136,0.06); border-left: 3px solid #00ff88;
+    border-radius: 0 10px 10px 0; padding: 16px 20px; margin: 16px 0; }
+  .tip strong { color: #00ff88; }
+  .tip p { color: #8899aa; font-size: 0.9em; }
+
+  .warn { background: rgba(255,170,0,0.06); border-left: 3px solid #ffaa00;
+    border-radius: 0 10px 10px 0; padding: 16px 20px; margin: 16px 0; }
+  .warn strong { color: #ffaa00; }
+
+  /* ── Code block ── */
+  .code { background: #0d1117; border: 1px solid #1e293b; border-radius: 8px;
+    padding: 16px 20px; margin: 16px 0; font-family: 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 0.85em; color: #8899aa; overflow-x: auto; white-space: pre; line-height: 1.5; }
+  .code .g { color: #00ff88; } /* green */
+  .code .b { color: #00aaff; } /* blue */
+  .code .y { color: #ffaa00; } /* yellow */
+  .code .p { color: #bc8cff; } /* purple */
+  .code .d { color: #5a6a7a; } /* dim */
+
+  /* ── Two-col ── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
+
+  /* ── Footer ── */
+  .footer { text-align: center; padding: 40px 20px; color: #333; font-size: 0.8em;
+    border-top: 1px solid #1e293b; margin-top: 40px; }
+  .footer a { color: #00aaff; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>How PIA Works</h1>
+  <div class="sub">A visual guide to the Project Intelligence Agent system</div>
+  <div class="badge">43+ Agents &bull; 28 API Services &bull; 4 Machines &bull; Real-time WebSocket</div>
+</div>
+
+<div class="nav">
+  <a href="#overview">Overview</a>
+  <a href="#architecture">Architecture</a>
+  <a href="#fleet">Fleet Matrix</a>
+  <a href="#mc">Mission Control</a>
+  <a href="#ai">AI Models</a>
+  <a href="#tunnel">CLI Tunnel</a>
+  <a href="#hooks">Hooks</a>
+  <a href="#doctor">Doctor</a>
+  <a href="#api">API Services</a>
+  <a href="#dao">DAO Modules</a>
+  <a href="#checklist">Checklist</a>
+</div>
+
+<div class="content">
+
+  <!-- ════════════════════════════════════════════════════════ -->
+  <!-- Section 1: Overview -->
+  <!-- ════════════════════════════════════════════════════════ -->
+  <div class="section" id="overview">
+    <div class="section-header">
+      <div class="section-num" style="background:rgba(0,255,136,0.1);color:#00ff88">1</div>
+      <h2>What is PIA?<span class="tag">The Big Picture</span></h2>
+    </div>
+
+    <div class="card">
+      <h3>Project Intelligence Agent</h3>
+      <p>PIA is a <strong style="color:#00ff88">multi-agent orchestration platform</strong> that manages a fleet of AI agents across multiple machines. Think of it as an air traffic control system for AI workers &mdash; it spawns them, monitors them, routes tasks between them, and heals them when they get stuck.</p>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-box"><div class="num" style="color:#00ff88">43+</div><div class="lbl">AI Agents</div></div>
+      <div class="stat-box"><div class="num" style="color:#00aaff">28</div><div class="lbl">API Services</div></div>
+      <div class="stat-box"><div class="num" style="color:#ffaa00">4</div><div class="lbl">Machines</div></div>
+      <div class="stat-box"><div class="num" style="color:#bc8cff">245+</div><div class="lbl">API Endpoints</div></div>
+    </div>
+
+    <div class="flow">
+      <div class="flow-box"><div class="title">You</div><div class="desc">Give a task</div></div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-box highlight"><div class="title">PIA Hub</div><div class="desc">Orchestrates</div></div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-box"><div class="title">AI Agent</div><div class="desc">Does the work</div></div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-box"><div class="title">Result</div><div class="desc">Code / Docs / Analysis</div></div>
+    </div>
+
+    <div class="tip">
+      <strong>Key Idea:</strong>
+      <p>PIA doesn't replace AI &mdash; it manages fleets of AI agents the same way Kubernetes manages containers. One dashboard, many workers, automatic healing.</p>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════ -->
+  <!-- Section 2: Architecture -->
+  <!-- ════════════════════════════════════════════════════════ -->
+  <div class="section" id="architecture">
+    <div class="section-header">
+      <div class="section-num" style="background:rgba(0,170,255,0.1);color:#00aaff">2</div>
+      <h2>System Architecture<span class="tag">How the pieces fit together</span></h2>
+    </div>
+
+    <div class="card">
+      <p>PIA runs as a <strong style="color:#00aaff">Node.js/TypeScript server</strong> with Express API (port 3000) and WebSocket (port 3001). It uses SQLite for persistent storage and connects to multiple AI providers.</p>
+    </div>
+
+    <div class="code"><span class="d">// Core Stack</span>
+<span class="b">Express API</span>  &rarr; 28 route modules &rarr; 245+ endpoints
+<span class="b">WebSocket</span>   &rarr; Real-time events &rarr; Dashboard updates
+<span class="b">SQLite DB</span>   &rarr; Agents, machines, alerts, sessions, hooks
+<span class="b">PTY Layer</span>   &rarr; node-pty &rarr; Real Claude CLI terminals
+<span class="b">AI Router</span>   &rarr; Ollama (free) | Claude | Gemini | GPT | Grok</div>
+
+    <div class="flow">
+      <div class="flow-box"><div class="title">Browser</div><div class="desc">Dashboard UI</div></div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-box"><div class="title">Express</div><div class="desc">REST API</div></div>
+      <div class="flow-arrow">&harr;</div>
+      <div class="flow-box highlight"><div class="title">SQLite</div><div class="desc">Database</div></div>
+      <div class="flow-arrow">&harr;</div>
+      <div class="flow-box"><div class="title">WebSocket</div><div class="desc">Real-time</div></div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-box"><div class="title">PTY / API</div><div class="desc">Agent Workers</div></div>
+    </div>
+
+    <div class="screenshot">
+      <img src="/screenshots/15-api-health.png" alt="API Health Check" loading="lazy">
+      <div class="screenshot-label"><div class="dot" style="background:#00ff88"></div> API Health Check &mdash; System running in Hub mode</div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════ -->
+  <!-- Section 3: Fleet Matrix -->
+  <!-- ════════════════════════════════════════════════════════ -->
+  <div class="section" id="fleet">
+    <div class="section-header">
+      <div class="section-num" style="background:rgba(0,255,136,0.1);color:#00ff88">3</div>
+      <h2>Fleet Matrix<span class="tag">See all agents at a glance</span></h2>
+    </div>
+
+    <div class="card">
+      <h3>Your Agent Fleet Dashboard</h3>
+      <p>The Fleet Matrix is the main view &mdash; it shows every AI agent across all machines as a card grid. Each card shows the agent's name, type, current task, status, and last output. Cards are color-coded by status: <span style="color:#00ff88">green = working</span>, <span style="color:#ffaa00">yellow = waiting</span>, <span style="color:#ff4444">red = error</span>, <span style="color:#5a6a7a">grey = idle</span>.</p>
+    </div>
+
+    <div class="screenshot">
+      <img src="/screenshots/current-fleet.png" alt="Fleet Matrix - Live" loading="lazy">
+      <div class="screenshot-label"><div class="dot" style="background:#00ff88"></div> Fleet Matrix &mdash; 8 agents across multiple machines, all visible at once</div>
+    </div>
+
+    <div class="tip">
+      <strong>How to use it:</strong>
+      <p>Filter by machine or status using the dropdowns. Click any agent card to see its full output, journal, and controls. The top stats bar shows totals for machines, agents, working count, alerts, and AI spend.</p>
+    </div>
+
+    <div class="screenshot">
+      <img src="/screenshots/fleet-with-agents.png" alt="Fleet with spawned agents" loading="lazy">
+      <div class="screenshot-label"><div class="dot" style="background:#00aaff"></div> Fleet after spawning new agents &mdash; cards appear in real-time</div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════ -->
+  <!-- Section 4: Mission Control -->
+  <!-- ════════════════════════════════════════════════════════ -->
+  <div class="section" id="mc">
+    <div class="section-header">
+      <div class="section-num" style="background:rgba(255,102,170,0.1);color:#ff66aa">4</div>
+      <h2>Mission Control<span class="tag">Spawn and control Claude agents</span></h2>
+    </div>
+
+    <div class="card">
+      <h3>Direct Agent Control</h3>
+      <p>Mission Control lets you <strong style="color:#ff66aa">spawn real Claude Code agents</strong> and watch them work in real time. Pick a machine, give a task, and MC spawns a Claude CLI process via PTY. You see the parsed output live &mdash; tool calls, file reads, code writes, everything.</p>
+      <ul>
+        <li><strong>PTY Mode:</strong> Spawns real <code>claude</code> CLI &mdash; full power, real terminal</li>
+        <li><strong>API Mode:</strong> Uses Claude API directly via autonomous-worker &mdash; faster, cheaper</li>
+        <li><strong>Manual/Auto:</strong> Toggle whether agent needs approval for each tool call</li>
+        <li><strong>Grid View:</strong> See multiple agents side-by-side</li>
+      </ul>
+    </div>
+
+    <div class="screenshot">
+      <img src="/screenshots/mc-overview.png" alt="Mission Control" loading="lazy">
+      <div class="screenshot-label"><div class="dot" style="background:#ff66aa"></div> Mission Control &mdash; 4 machines listed, prompt queue, spawn button ready</div>
+    </div>
+
+    <div class="flow">
+      <div class="flow-box"><div class="title">+ Spawn Agent</div><div class="desc">Pick machine + task</div></div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-box"><div class="title">PTY Spawn</div><div class="desc">claude CLI starts</div></div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-box highlight"><div class="title">Stream JSON</div><div class="desc">Parse output live</div></div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-box"><div class="title">Terminal</div><div class="desc">Clean text display</div></div>
+    </div>
+
+    <div class="warn">
+      <strong>How PTY parsing works:</strong>
+      <p style="color:#8899aa;font-size:0.9em">Claude CLI outputs <code>--output-format stream-json</code>. PIA strips ANSI escape codes, reassembles JSON that may be wrapped across PTY line boundaries, parses each event, and emits clean text to the WebSocket. The terminal width is set to 16,000 columns to prevent JSON wrapping.</p>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════ -->
+  <!-- Section 5: AI Models -->
+  <!-- ════════════════════════════════════════════════════════ -->
+  <div class="section" id="ai">
+    <div class="section-header">
+      <div class="section-num" style="background:rgba(255,170,0,0.1);color:#ffaa00">5</div>
+      <h2>AI Model Router<span class="tag">Multiple providers, cost-aware routing</span></h2>
+    </div>
+
+    <div class="card">
+      <h3>Smart AI Routing</h3>
+      <p>PIA doesn't lock you into one AI provider. It has a <strong style="color:#ffaa00">cost-aware router</strong> that can send requests to whichever provider makes sense:</p>
+      <ul>
+        <li><strong>Ollama (Local):</strong> Free, runs on your machine, good for bulk tasks</li>
+        <li><strong>Claude (Anthropic):</strong> Haiku for cheap fast tasks, Sonnet for complex coding</li>
+        <li><strong>Gemini (Google):</strong> Document generation, analysis</li>
+        <li><strong>OpenAI GPT:</strong> General tasks</li>
+        <li><strong>Grok (xAI):</strong> Alternative reasoning</li>
+      </ul>
+    </div>
+
+    <div class="screenshot">
+      <img src="/screenshots/07-ai-models.png" alt="AI Models Panel" loading="lazy">
+      <div class="screenshot-label"><div class="dot" style="background:#ffaa00"></div> AI Models panel &mdash; Provider status, cost tracking, model selection</div>
+    </div>
+
+    <div class="code"><span class="d">// Example: Send to cheapest available provider</span>
+POST /api/ai/generate
+{
+  "<span class="g">prompt</span>": "Summarize this code",
+  "<span class="y">provider</span>": "ollama",     <span class="d">// free local AI</span>
+  "<span class="b">model</span>": "llama3.2",
+  "<span class="p">maxTokens</span>": 500
+}</div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════ -->
+  <!-- Section 6: CLI Tunnel -->
+  <!-- ════════════════════════════════════════════════════════ -->
+  <div class="section" id="tunnel">
+    <div class="section-header">
+      <div class="section-num" style="background:rgba(0,212,255,0.1);color:#00d4ff">6</div>
+      <h2>CLI Tunnel<span class="tag">Remote terminal access to any machine</span></h2>
+    </div>
+
+    <div class="card">
+      <h3>Remote Terminal Access</h3>
+      <p>The CLI Tunnel gives you a <strong style="color:#00d4ff">real terminal</strong> to any machine in your fleet. It uses node-pty to spawn shell processes and streams them to xterm.js in the browser via WebSocket. You can run commands, start Claude, or manage files &mdash; all from the dashboard.</p>
+    </div>
+
+    <div class="screenshot">
+      <img src="/screenshots/03-cli-tunnel.png" alt="CLI Tunnel" loading="lazy">
+      <div class="screenshot-label"><div class="dot" style="background:#00d4ff"></div> CLI Tunnel &mdash; Full terminal access to remote machines from browser</div>
+    </div>
+
+    <div class="screenshot">
+      <img src="/screenshots/claude-in-control.png" alt="Claude controlling terminal" loading="lazy">
+      <div class="screenshot-label"><div class="dot" style="background:#00ff88"></div> Claude agent working inside a remote terminal &mdash; real CLI, real output</div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════ -->
+  <!-- Section 7: Hooks -->
+  <!-- ════════════════════════════════════════════════════════ -->
+  <div class="section" id="hooks">
+    <div class="section-header">
+      <div class="section-num" style="background:rgba(155,77,202,0.1);color:#9b4dca">7</div>
+      <h2>Hooks System<span class="tag">Event-driven automation</span></h2>
+    </div>
+
+    <div class="card">
+      <h3>Automatic Reactions</h3>
+      <p>Hooks let you define <strong style="color:#9b4dca">automatic reactions</strong> to agent events. When Claude calls a tool, completes a task, or hits an error &mdash; hooks fire. You can use them to log activity, trigger alerts, chain tasks, or notify external services.</p>
+    </div>
+
+    <div class="screenshot">
+      <img src="/screenshots/05-hooks.png" alt="Hooks Dashboard" loading="lazy">
+      <div class="screenshot-label"><div class="dot" style="background:#9b4dca"></div> Hooks panel &mdash; Event types, triggers, and recent hook activity</div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════ -->
+  <!-- Section 8: Doctor -->
+  <!-- ════════════════════════════════════════════════════════ -->
+  <div class="section" id="doctor">
+    <div class="section-header">
+      <div class="section-num" style="background:rgba(233,69,96,0.1);color:#e94560">8</div>
+      <h2>Doctor (Auto-Healer)<span class="tag">Self-healing agent management</span></h2>
+    </div>
+
+    <div class="card">
+      <h3>Automatic Health Management</h3>
+      <p>The Doctor monitors all agents and machines continuously. If an agent gets <strong style="color:#e94560">stuck, crashes, or goes silent</strong> &mdash; Doctor detects it and can automatically restart, reassign, or alert you. It tracks healthy/stuck/errored counts and maintains an action log.</p>
+    </div>
+
+    <div class="screenshot">
+      <img src="/screenshots/current-doctor.png" alt="Doctor Dashboard" loading="lazy">
+      <div class="screenshot-label"><div class="dot" style="background:#e94560"></div> Doctor &mdash; 8 total agents, 7 healthy, 0 stuck, 0 errored. 4 machines, 1 online.</div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════ -->
+  <!-- Section 9: API Services -->
+  <!-- ════════════════════════════════════════════════════════ -->
+  <div class="section" id="api">
+    <div class="section-header">
+      <div class="section-num" style="background:rgba(88,166,255,0.1);color:#58a6ff">9</div>
+      <h2>All 28 API Services<span class="tag">The full endpoint map</span></h2>
+    </div>
+
+    <div class="card">
+      <h3>API-First Design</h3>
+      <p>Everything in PIA is accessible via REST API. The dashboard is just a consumer &mdash; any tool, script, or AI agent can call the same endpoints. All routes are protected by token authentication.</p>
+    </div>
+
+    <div class="code"><span class="d">// All 28 API route modules</span>
+<span class="g">Core:</span>       /api/health, /api/stats, /api/machines, /api/agents
+<span class="b">Sessions:</span>   /api/sessions, /api/work-sessions, /api/checkpoints
+<span class="y">AI:</span>         /api/ai, /api/orchestrator, /api/factory, /api/delegation
+<span class="p">Comms:</span>      /api/alerts, /api/messages, /api/pubsub, /api/webhooks, /api/relay
+<span class="g">Security:</span>   /api/security, /api/hooks, /api/doctor
+<span class="b">Infra:</span>      /api/files, /api/exec, /api/repos, /api/mcps
+<span class="y">Agents:</span>     /api/souls, /api/tasks, /api/mc (Mission Control)
+<span class="p">DAO:</span>        /api/modules, /api/dao-proxy</div>
+
+    <div class="two-col">
+      <div class="screenshot">
+        <img src="/screenshots/14-api-machines.png" alt="Machines API" loading="lazy">
+        <div class="screenshot-label"><div class="dot" style="background:#00ff88"></div> Machine Registry</div>
+      </div>
+      <div class="screenshot">
+        <img src="/screenshots/12-api-doctor-health.png" alt="Doctor API" loading="lazy">
+        <div class="screenshot-label"><div class="dot" style="background:#e94560"></div> Doctor Health Check</div>
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="screenshot">
+        <img src="/screenshots/08-api-factory-templates.png" alt="Factory Templates" loading="lazy">
+        <div class="screenshot-label"><div class="dot" style="background:#ffaa00"></div> Factory Templates</div>
+      </div>
+      <div class="screenshot">
+        <img src="/screenshots/10-api-tasks-stats.png" alt="Tasks API" loading="lazy">
+        <div class="screenshot-label"><div class="dot" style="background:#00aaff"></div> Task Queue</div>
+      </div>
+    </div>
+
+    <div class="tip">
+      <strong>Authentication:</strong>
+      <p>All API requests require <code>x-api-token</code> header or <code>Authorization: Bearer &lt;token&gt;</code>. Health check is the only unauthenticated endpoint.</p>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════ -->
+  <!-- Section 10: DAO Modules -->
+  <!-- ════════════════════════════════════════════════════════ -->
+  <div class="section" id="dao">
+    <div class="section-header">
+      <div class="section-num" style="background:rgba(188,140,255,0.1);color:#bc8cff">10</div>
+      <h2>DAO Modules<span class="tag">Decentralized governance layer</span></h2>
+    </div>
+
+    <div class="card">
+      <h3>AI-Powered DAO</h3>
+      <p>PIA includes a full DAO (Decentralized Autonomous Organization) backend with <strong style="color:#bc8cff">9 AI modules</strong>: Coach, Legal, Treasury, Voting, Marketplace, Contracts, Milestones, Signatures, and Council. Each module has its own AI brain, API endpoints, and governance rules.</p>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-box"><div class="num" style="color:#bc8cff">9</div><div class="lbl">AI Modules</div></div>
+      <div class="stat-box"><div class="num" style="color:#00aaff">38</div><div class="lbl">DAO Endpoints</div></div>
+      <div class="stat-box"><div class="num" style="color:#ffaa00">LLM</div><div class="lbl">Integrated</div></div>
+      <div class="stat-box"><div class="num" style="color:#00ff88">Live</div><div class="lbl">Status</div></div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════ -->
+  <!-- Section 11: Service Checklist -->
+  <!-- ════════════════════════════════════════════════════════ -->
+  <div class="section" id="checklist">
+    <div class="section-header">
+      <div class="section-num" style="background:rgba(0,255,136,0.1);color:#00ff88">11</div>
+      <h2>Service Checklist<span class="tag">Live verification of all services</span></h2>
+    </div>
+
+    <div class="card">
+      <h3>Verified Services (Last Test: Feb 14, 2026)</h3>
+      <p>All 28 API services tested systematically. 24 passed, 4 returned 404 on sub-paths (routes registered but specific handlers not yet implemented).</p>
+    </div>
+
+    <div id="checklist-table" style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;background:#111820;border-radius:10px;overflow:hidden;border:1px solid #1e293b">
+        <thead>
+          <tr style="background:#161b22">
+            <th style="padding:10px 16px;text-align:left;color:#5a6a7a;font-size:0.8em;font-weight:600">STATUS</th>
+            <th style="padding:10px 16px;text-align:left;color:#5a6a7a;font-size:0.8em;font-weight:600">SERVICE</th>
+            <th style="padding:10px 16px;text-align:left;color:#5a6a7a;font-size:0.8em;font-weight:600">ENDPOINT</th>
+            <th style="padding:10px 16px;text-align:left;color:#5a6a7a;font-size:0.8em;font-weight:600">DETAILS</th>
+          </tr>
+        </thead>
+        <tbody id="checklist-body"></tbody>
+      </table>
+    </div>
+
+    <div class="tip" style="margin-top:20px">
+      <strong>Run live checks:</strong>
+      <p>Visit <a href="/checklist.html" style="color:#00aaff">/checklist.html</a> to run the full interactive Agent Checklist with real-time API testing.</p>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  PIA System &mdash; How It Works Guide &mdash; Generated Feb 14, 2026
+  <br><a href="/">Dashboard</a> &bull; <a href="/mission-control.html">Mission Control</a> &bull; <a href="/checklist.html">Agent Checklist</a>
+</div>
+
+<script>
+// Populate checklist table
+const services = [
+  ['PASS', 'Health Check', '/api/health', 'status: ok, mode: hub'],
+  ['PASS', 'System Stats', '/api/stats', '4 machines, 8 agents'],
+  ['PASS', 'Machine Registry', '/api/machines', '4 machines registered'],
+  ['PASS', 'Agent Registry', '/api/agents', '8 agents registered'],
+  ['PASS', 'Active Sessions', '/api/sessions', 'PTY sessions tracked'],
+  ['PASS', 'Alert System', '/api/alerts', '508 alerts logged'],
+  ['PASS', 'MCP Servers', '/api/mcps', 'browsermcp + others'],
+  ['PASS', 'Checkpoints', '/api/checkpoints', 'Checkpoint storage ready'],
+  ['PASS', 'AI Provider Status', '/api/ai/status', 'Ollama + Claude available'],
+  ['PASS', 'AI Generate', '/api/ai/generate', 'Claude Haiku responded, $0.002'],
+  ['PASS', 'Orchestrator', '/api/orchestrator/instances', 'Instance management active'],
+  ['PASS', 'Hook Events', '/api/hooks/events', '48+ events tracked'],
+  ['PASS', 'Factory Templates', '/api/factory/templates', 'local-coder + others'],
+  ['PASS', 'Task Queue', '/api/tasks', '2 tasks tracked'],
+  ['PASS', 'Doctor', '/api/doctor/status', '8 agents, 7 healthy'],
+  ['PASS', 'Repositories', '/api/repos', 'Repo tracking active'],
+  ['PASS', 'Webhooks', '/api/webhooks', 'Webhook registry ready'],
+  ['PASS', 'PubSub Topics', '/api/pubsub/topics', 'Topic bus active'],
+  ['PASS', 'Security Events', '/api/security/events', '1 event logged'],
+  ['PASS', 'File System', '/api/files/list', 'Directory listing works'],
+  ['PASS', 'Agent Souls', '/api/souls', 'Eliyahu + others'],
+  ['PASS', 'Mission Control', '/api/mc/agents', 'Agent spawning works'],
+  ['PASS', 'MC Prompts', '/api/mc/prompts', 'Prompt queue active'],
+  ['PASS', 'DAO Modules', '/api/modules', 'coach, legal + 7 more'],
+  ['FAIL', 'Messages', '/api/messages', 'Sub-path not implemented'],
+  ['FAIL', 'Delegation Queue', '/api/delegation/queue', 'Sub-path not implemented'],
+  ['FAIL', 'Relay Status', '/api/relay/status', 'Sub-path not implemented'],
+  ['FAIL', 'Work Sessions', '/api/work-sessions', 'Sub-path not implemented'],
+];
+
+const tbody = document.getElementById('checklist-body');
+for (const [status, name, endpoint, detail] of services) {
+  const pass = status === 'PASS';
+  const color = pass ? '#00ff88' : '#ff4444';
+  const icon = pass ? '\u2713' : '\u2717';
+  tbody.innerHTML += `<tr style="border-bottom:1px solid #1e293b">
+    <td style="padding:8px 16px"><span style="color:${color};font-weight:700;font-size:0.85em">${icon} ${status}</span></td>
+    <td style="padding:8px 16px;color:#e0e0e0;font-size:0.88em;font-weight:600">${name}</td>
+    <td style="padding:8px 16px;font-family:'Cascadia Code',monospace;font-size:0.78em;color:#5a6a7a">${endpoint}</td>
+    <td style="padding:8px 16px;font-size:0.82em;color:${pass ? '#8899aa' : '#ff6666'}">${detail}</td>
+  </tr>`;
+}
+</script>
+</body>
+</html>

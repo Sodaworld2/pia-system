@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Agents — The Simple Guide for Everyone</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #fafbfc; color: #2d3748; line-height: 1.8; }
+
+  /* Hero */
+  .hero {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 60px 24px;
+    text-align: center;
+    color: #fff;
+  }
+  .hero h1 { font-size: 2.4em; font-weight: 800; margin-bottom: 8px; }
+  .hero .sub { font-size: 1.15em; opacity: 0.9; max-width: 600px; margin: 0 auto; }
+  .hero .tag { display: inline-block; margin-top: 16px; background: rgba(255,255,255,0.2); padding: 6px 18px; border-radius: 20px; font-size: 0.85em; }
+
+  /* Nav */
+  .nav { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 12px 20px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; position: sticky; top: 0; z-index: 100; }
+  .nav a { text-decoration: none; color: #667eea; font-weight: 600; font-size: 0.88em; padding: 6px 14px; border-radius: 8px; transition: all 0.2s; }
+  .nav a:hover { background: #667eea; color: #fff; }
+
+  /* Content */
+  .content { max-width: 800px; margin: 0 auto; padding: 30px 20px; }
+
+  /* Section */
+  .section { margin-bottom: 50px; scroll-margin-top: 60px; }
+  .section-header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+  .section-icon { width: 50px; height: 50px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.6em; flex-shrink: 0; }
+  .section-header h2 { font-size: 1.5em; color: #2d3748; }
+  .section-header .subtitle { display: block; font-size: 0.55em; color: #718096; font-weight: 400; }
+
+  /* Cards */
+  .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 24px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .card h3 { color: #4a5568; font-size: 1.1em; margin-bottom: 10px; }
+  .card p { color: #718096; font-size: 0.95em; }
+
+  /* Analogy boxes */
+  .analogy { background: linear-gradient(135deg, #ebf4ff, #e8f0fe); border-left: 4px solid #667eea; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+  .analogy .label { font-weight: 700; color: #667eea; font-size: 0.8em; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .analogy p { color: #4a5568; font-size: 0.95em; }
+
+  /* Key point */
+  .key-point { background: #fff5f5; border-left: 4px solid #fc8181; border-radius: 0 12px 12px 0; padding: 16px 20px; margin: 16px 0; }
+  .key-point strong { color: #e53e3e; }
+
+  /* Success box */
+  .success { background: #f0fff4; border-left: 4px solid #68d391; border-radius: 0 12px 12px 0; padding: 16px 20px; margin: 16px 0; }
+  .success strong { color: #38a169; }
+
+  /* Comparison table */
+  .compare { width: 100%; border-collapse: collapse; margin: 16px 0; background: #fff; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; }
+  .compare th { background: #667eea; color: #fff; padding: 12px 16px; text-align: left; font-size: 0.9em; }
+  .compare td { padding: 12px 16px; border-bottom: 1px solid #edf2f7; font-size: 0.92em; color: #4a5568; }
+  .compare tr:last-child td { border-bottom: none; }
+  .compare tr:hover td { background: #f7fafc; }
+
+  /* Visual diagram */
+  .diagram { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 20px 0; justify-content: center; }
+  .diagram .box { background: #fff; border: 2px solid #667eea; border-radius: 12px; padding: 12px 18px; text-align: center; min-width: 100px; }
+  .diagram .box .title { font-weight: 700; color: #667eea; font-size: 0.85em; }
+  .diagram .box .desc { font-size: 0.75em; color: #718096; margin-top: 4px; }
+  .diagram .arrow { color: #667eea; font-size: 1.4em; font-weight: 700; }
+  .diagram .box.highlight { background: #667eea; border-color: #667eea; }
+  .diagram .box.highlight .title { color: #fff; }
+  .diagram .box.highlight .desc { color: rgba(255,255,255,0.8); }
+
+  /* Numbered steps */
+  .steps { counter-reset: step; }
+  .step { display: flex; gap: 16px; margin-bottom: 20px; align-items: flex-start; }
+  .step::before { counter-increment: step; content: counter(step); width: 36px; height: 36px; background: #667eea; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9em; flex-shrink: 0; }
+  .step-content h4 { color: #2d3748; margin-bottom: 4px; }
+  .step-content p { color: #718096; font-size: 0.92em; }
+
+  /* Two column */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 600px) { .two-col { grid-template-columns: 1fr; } }
+
+  /* Quote */
+  .quote { background: #f7fafc; border-radius: 12px; padding: 20px; margin: 16px 0; text-align: center; }
+  .quote p { font-style: italic; color: #4a5568; font-size: 1.05em; }
+  .quote .author { margin-top: 8px; font-size: 0.8em; color: #a0aec0; font-style: normal; }
+
+  /* Footer */
+  .footer { text-align: center; padding: 40px 20px; color: #a0aec0; font-size: 0.82em; border-top: 1px solid #e2e8f0; margin-top: 40px; }
+  .footer a { color: #667eea; text-decoration: none; }
+
+  /* Emoji size fix */
+  .emoji { font-size: 1.2em; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>AI Agents: The Simple Guide</h1>
+  <div class="sub">No code. No jargon. Just plain English about how to give an AI a personality, knowledge, and a job to do.</div>
+  <div class="tag">Written for founders, managers, and anyone curious about AI agents</div>
+</div>
+
+<div class="nav">
+  <a href="#what">What's an Agent?</a>
+  <a href="#soul">The Soul</a>
+  <a href="#packs">Two Packs</a>
+  <a href="#memory">Memory</a>
+  <a href="#tools">Tools & Skills</a>
+  <a href="#limits">Limits</a>
+  <a href="#build">How to Build One</a>
+  <a href="#donts">Common Mistakes</a>
+  <a href="#glossary">Glossary</a>
+</div>
+
+<div class="content">
+
+  <!-- SECTION 1: What is an AI Agent? -->
+  <div class="section" id="what">
+    <div class="section-header">
+      <div class="section-icon" style="background: #ebf4ff;">🤖</div>
+      <h2>What is an AI Agent? <span class="subtitle">The basics in 60 seconds</span></h2>
+    </div>
+
+    <div class="card">
+      <p>An <strong>AI Agent</strong> is a piece of software that can think, make decisions, and take action — on its own. Unlike a chatbot that just answers questions, an agent can actually <em>do things</em>: write code, manage files, send reports, follow schedules.</p>
+    </div>
+
+    <div class="analogy">
+      <div class="label">Think of it like this</div>
+      <p>A <strong>chatbot</strong> is like a receptionist — they answer when you ask something. An <strong>AI agent</strong> is like a new employee — you give them a job description, some training, and they go do the work. They make decisions, follow rules, and report back.</p>
+    </div>
+
+    <div class="card">
+      <h3>What makes an agent different from a chatbot?</h3>
+      <table class="compare">
+        <tr><th>Chatbot</th><th>AI Agent</th></tr>
+        <tr><td>Waits for you to ask</td><td>Can start work on its own</td></tr>
+        <tr><td>Answers questions</td><td>Takes actions (writes files, runs code)</td></tr>
+        <tr><td>Forgets everything between chats</td><td>Has memory — remembers past work</td></tr>
+        <tr><td>One personality for everyone</td><td>Has a unique identity and role</td></tr>
+        <tr><td>No schedule</td><td>Can run tasks on a timer (daily reports, reviews)</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- SECTION 2: The Soul -->
+  <div class="section" id="soul">
+    <div class="section-header">
+      <div class="section-icon" style="background: #fef3c7;">✨</div>
+      <h2>The Agent's "Soul" <span class="subtitle">What makes each agent unique</span></h2>
+    </div>
+
+    <div class="card">
+      <p>Every AI agent in our system has a <strong>"Soul"</strong> — a set of information that defines who the agent is, how it thinks, and how it behaves. Just like every employee has their own personality, strengths, and way of working.</p>
+    </div>
+
+    <div class="analogy">
+      <div class="label">Think of it like this</div>
+      <p>An agent's Soul is like a <strong>detailed job posting + personality profile + employee handbook</strong> all rolled into one. It tells the AI: "You are Fisher, a project manager. You're organized, proactive, and you use bullet points. You care about deadlines. You check in with the team every morning at 9 AM."</p>
+    </div>
+
+    <div class="card">
+      <h3>What goes into a Soul? (7 Layers)</h3>
+      <p>Think of it as building a person from the ground up:</p>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-content">
+          <h4>Identity — "Who am I?"</h4>
+          <p>Name, role, a one-line description. Like a name badge at work. <em>Example: "Fisher2050 — Project Manager, keeps the crew on track."</em></p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-content">
+          <h4>Personality — "How do I act?"</h4>
+          <p>Communication style, tone, habits. Are they formal or casual? Do they use emojis? Bullet points? <em>Example: "Uses bullet points, calls the team 'the crew', shows confidence percentages."</em></p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-content">
+          <h4>Goals — "What am I trying to achieve?"</h4>
+          <p>3-6 specific objectives. Like OKRs for the AI. <em>Example: "Keep all tasks on schedule, catch blockers early, generate weekly reports."</em></p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-content">
+          <h4>Relationships — "Who do I work with?"</h4>
+          <p>Other agents or people this agent knows about. <em>Example: "Ziggi is the code reviewer — send code to him. Eliyahu tracks knowledge — ask him for context."</em></p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-content">
+          <h4>Rules — "What can and can't I do?"</h4>
+          <p>Guardrails and limits. What's off-limits, what requires approval. <em>Example: "Never delete files without asking. Maximum $1 budget per task. No destructive commands."</em></p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-content">
+          <h4>Memory — "What do I remember?"</h4>
+          <p>Past experiences, lessons learned, important decisions. Gets built up over time. <em>Example: "Last time we deployed on Friday it broke — avoid Friday deploys."</em></p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-content">
+          <h4>Schedule — "When do I do things?"</h4>
+          <p>Timed actions. Morning reviews, evening summaries, weekly reports. <em>Example: "09:00 — morning standup. 18:00 — daily summary. Every Sunday — weekly report."</em></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="success">
+      <strong>Key insight:</strong> The more specific the Soul, the better the agent performs. A vague agent is like a new hire with no job description — they'll try their best but make lots of mistakes.
+    </div>
+  </div>
+
+  <!-- SECTION 3: Two Packs -->
+  <div class="section" id="packs">
+    <div class="section-header">
+      <div class="section-icon" style="background: #e9d8fd;">📦</div>
+      <h2>The Two-Pack System <span class="subtitle">Agent identity vs Project knowledge</span></h2>
+    </div>
+
+    <div class="card">
+      <p>Here's a key concept that even experts are just figuring out in 2026: an agent needs <strong>two separate packs</strong> of information to work well.</p>
+    </div>
+
+    <div class="two-col">
+      <div class="card" style="border-top: 4px solid #667eea;">
+        <h3 style="color: #667eea;">Pack 1: The Agent Pack</h3>
+        <p><strong>"Who am I?"</strong></p>
+        <p>This is the agent's identity — personality, goals, skills, memories, voice. It's portable: the same agent can work on different projects and still be "themselves."</p>
+        <p style="margin-top: 10px; font-size: 0.85em; color: #a0aec0;">Industry names: SOUL.md, Agent Config, Persona File</p>
+      </div>
+      <div class="card" style="border-top: 4px solid #ed8936;">
+        <h3 style="color: #ed8936;">Pack 2: The Project Pack</h3>
+        <p><strong>"What am I working on?"</strong></p>
+        <p>This is the project context — tech stack, file structure, coding rules, build commands, what's been done so far. It's portable too: different agents can join the same project.</p>
+        <p style="margin-top: 10px; font-size: 0.85em; color: #a0aec0;">Industry names: CLAUDE.md, AGENTS.md, Project Config</p>
+      </div>
+    </div>
+
+    <div class="analogy">
+      <div class="label">Think of it like this</div>
+      <p>The <strong>Agent Pack</strong> is like an employee's CV, personality, and career experience — it travels with them from job to job. The <strong>Project Pack</strong> is like a company's onboarding manual — it's the same for every new hire at that company. When someone starts a new job, they bring their CV (Agent Pack) and receive the company manual (Project Pack). Together, they can do the work.</p>
+    </div>
+
+    <div class="diagram">
+      <div class="box">
+        <div class="title">Agent Pack</div>
+        <div class="desc">Who I am</div>
+      </div>
+      <div class="arrow">+</div>
+      <div class="box">
+        <div class="title">Project Pack</div>
+        <div class="desc">What I'm working on</div>
+      </div>
+      <div class="arrow">=</div>
+      <div class="box highlight">
+        <div class="title">Working Agent</div>
+        <div class="desc">Ready to go!</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Why separate them?</h3>
+      <table class="compare">
+        <tr><th>Scenario</th><th>What changes</th></tr>
+        <tr><td>Same agent, new project</td><td>Keep Agent Pack, swap Project Pack</td></tr>
+        <tr><td>New agent, same project</td><td>Swap Agent Pack, keep Project Pack</td></tr>
+        <tr><td>Same agent, same project, new task</td><td>Both packs stay, only the task changes</td></tr>
+      </table>
+    </div>
+
+    <div class="key-point">
+      <strong>Why this matters for you:</strong> When you're setting up a new agent, think about these separately. First: "Who should this agent be?" (Agent Pack). Then: "What does it need to know about the project?" (Project Pack). Don't mix them up — a personality trait is not a coding rule, and a build command is not a personality trait.
+    </div>
+  </div>
+
+  <!-- SECTION 4: Memory -->
+  <div class="section" id="memory">
+    <div class="section-header">
+      <div class="section-icon" style="background: #fed7d7;">🧠</div>
+      <h2>Agent Memory <span class="subtitle">How agents learn and remember</span></h2>
+    </div>
+
+    <div class="card">
+      <p>Agents can <strong>remember things</strong> between conversations. Not everything — just the important stuff. The memory system automatically decides what's worth keeping based on how important it is.</p>
+    </div>
+
+    <div class="analogy">
+      <div class="label">Think of it like this</div>
+      <p>Agent memory works like <strong>human memory</strong>. You remember the big moments (first day at work, a major mistake, a big win) but forget what you had for lunch on a random Tuesday. The agent does the same — important events get stored permanently, routine stuff fades away.</p>
+    </div>
+
+    <div class="card">
+      <h3>Types of memories</h3>
+      <table class="compare">
+        <tr><th>Memory Type</th><th>What it is</th><th>Example</th></tr>
+        <tr><td><strong>Experience</strong></td><td>Tasks completed</td><td>"Built the login page on Feb 10"</td></tr>
+        <tr><td><strong>Decision</strong></td><td>Choices made and why</td><td>"Chose React over Vue because team knows it"</td></tr>
+        <tr><td><strong>Learning</strong></td><td>Lessons from mistakes</td><td>"The API needs auth headers — got a 401 without them"</td></tr>
+        <tr><td><strong>Observation</strong></td><td>Things noticed</td><td>"User uploads spike every Monday morning"</td></tr>
+        <tr><td><strong>Goal Progress</strong></td><td>Progress on objectives</td><td>"3 of 5 milestones complete"</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>How memory works in practice</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-content">
+            <h4>Something happens</h4>
+            <p>The agent completes a task, makes a decision, or learns something new.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-content">
+            <h4>It gets an importance score (1-10)</h4>
+            <p>Routine stuff scores low (1-3). Major decisions or errors score high (7-10).</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-content">
+            <h4>High-importance memories stick around</h4>
+            <p>Memories scoring 7+ are loaded every time the agent starts. Low-scoring ones fade after 30 days.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="success">
+      <strong>What you need to do:</strong> Nothing! Memory is automatic. But you can manually add important memories if needed — like telling a new employee about important company history on their first day.
+    </div>
+  </div>
+
+  <!-- SECTION 5: Tools & Skills -->
+  <div class="section" id="tools">
+    <div class="section-header">
+      <div class="section-icon" style="background: #c6f6d5;">🔧</div>
+      <h2>Tools & Skills <span class="subtitle">What an agent can actually do</span></h2>
+    </div>
+
+    <div class="card">
+      <p>An agent without tools is like an employee who can think but can't use a computer, phone, or pen. <strong>Tools</strong> are the actions an agent can take in the real world.</p>
+    </div>
+
+    <div class="card">
+      <h3>Common tools agents have</h3>
+      <table class="compare">
+        <tr><th>Tool</th><th>What it does</th><th>Like an employee using...</th></tr>
+        <tr><td><strong>Run Command</strong></td><td>Execute terminal commands</td><td>The command line / terminal</td></tr>
+        <tr><td><strong>Read File</strong></td><td>Look at a file's contents</td><td>Opening a document</td></tr>
+        <tr><td><strong>Write File</strong></td><td>Create or modify files</td><td>Saving a document</td></tr>
+        <tr><td><strong>List Directory</strong></td><td>See what files exist</td><td>Browsing folders</td></tr>
+        <tr><td><strong>Report Progress</strong></td><td>Send updates on task status</td><td>Sending a status email</td></tr>
+        <tr><td><strong>Web Search</strong></td><td>Search the internet for info</td><td>Googling something</td></tr>
+      </table>
+    </div>
+
+    <div class="analogy">
+      <div class="label">Think of it like this</div>
+      <p><strong>Skills</strong> are reusable recipes that combine multiple tools. A "Deploy Website" skill might: (1) run tests, (2) build the project, (3) upload files, (4) report success. Instead of explaining all 4 steps every time, the agent just runs the "Deploy" skill.</p>
+    </div>
+
+    <div class="key-point">
+      <strong>Safety first:</strong> Agents have guardrails. They can't delete important files, spend more than a budget limit, or run dangerous commands. Think of it like giving a new employee a company credit card with a spending limit.
+    </div>
+  </div>
+
+  <!-- SECTION 6: Limits -->
+  <div class="section" id="limits">
+    <div class="section-header">
+      <div class="section-icon" style="background: #bee3f8;">📏</div>
+      <h2>Understanding Limits <span class="subtitle">How much can an agent handle?</span></h2>
+    </div>
+
+    <div class="card">
+      <h3>The "Context Window" — an agent's working memory</h3>
+      <p>Every AI has a <strong>context window</strong> — think of it as the agent's desk. It can only hold so many papers at once. Everything the agent needs to know (its identity, the project, the current task, conversation history) has to fit on that desk.</p>
+    </div>
+
+    <div class="analogy">
+      <div class="label">Think of it like this</div>
+      <p>Imagine a desk that holds <strong>200 pages</strong> of paper. The agent's Soul (identity, personality, goals) takes up about <strong>4-8 pages</strong>. The project information takes about <strong>5-15 pages</strong>. That leaves <strong>175+ pages</strong> for actual work. That's a LOT of room — most tasks fit easily.</p>
+    </div>
+
+    <div class="card">
+      <h3>Key limits to know</h3>
+      <table class="compare">
+        <tr><th>What</th><th>Limit</th><th>In plain terms</th></tr>
+        <tr><td>Total context (desk size)</td><td>200,000 tokens</td><td>~200 pages of text</td></tr>
+        <tr><td>Agent Soul size</td><td>~4,000-8,000 tokens</td><td>4-8 pages — plenty for a full personality</td></tr>
+        <tr><td>Project Pack size</td><td>~5,000-15,000 tokens</td><td>5-15 pages — enough for full project context</td></tr>
+        <tr><td>Memories loaded per session</td><td>~30 memories</td><td>20 recent + 10 most important</td></tr>
+        <tr><td>Budget per task</td><td>$1.00 (configurable)</td><td>Most tasks cost $0.05-0.50</td></tr>
+        <tr><td>Max steps per task</td><td>30 turns</td><td>30 think-act cycles before stopping</td></tr>
+      </table>
+    </div>
+
+    <div class="success">
+      <strong>Bottom line:</strong> You have way more room than you think. The agent's identity uses about 2-4% of available space. Don't be afraid to give it a rich personality, detailed goals, and lots of project context — there's plenty of room.
+    </div>
+  </div>
+
+  <!-- SECTION 7: How to Build One -->
+  <div class="section" id="build">
+    <div class="section-header">
+      <div class="section-icon" style="background: #fefcbf;">🏗️</div>
+      <h2>How to Build an Agent <span class="subtitle">Step by step, no code needed</span></h2>
+    </div>
+
+    <div class="card">
+      <p>Building an agent is more like writing a really good job posting than writing code. You're describing a person — what they do, how they think, what they know.</p>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-content">
+          <h4>Choose their role</h4>
+          <p>What job will this agent do? Project manager? Code reviewer? Data analyst? Knowledge keeper? Be specific — "Project Manager who tracks deadlines and catches blockers early" is better than just "helper."</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-content">
+          <h4>Define their personality</h4>
+          <p>How should they communicate? Formal or casual? Brief or detailed? Do they have catchphrases? Think about a real person you'd want in this role.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-content">
+          <h4>Set 3-6 goals</h4>
+          <p>What are they trying to achieve? Make them measurable. "Keep all tasks moving" is okay; "Ensure no task is stuck for more than 24 hours" is better.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-content">
+          <h4>Map their relationships</h4>
+          <p>Who do they work with? Other agents? You? External services? Write a sentence about each relationship: "Ziggi — the code reviewer, send code to him for quality checks."</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-content">
+          <h4>Set boundaries</h4>
+          <p>What should they NEVER do? What should they ALWAYS do? "Never deploy to production without testing first." "Always report progress after each task."</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-content">
+          <h4>Give them project context</h4>
+          <p>Separately from who they are, tell them about the project: tech stack, folder structure, coding rules, what's been done, what's next.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-content">
+          <h4>Seed initial memories</h4>
+          <p>Give them a few important memories to start with — like telling a new hire about the company's biggest lessons learned.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-content">
+          <h4>Test and refine</h4>
+          <p>Run the agent on a small task. Watch what it does. Adjust the personality, goals, or rules based on results. Repeat until it feels right.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="success">
+      <strong>Pro tip:</strong> Start simple. 3 goals, 1 paragraph of personality, basic rules. You can always add more later. A focused agent beats a bloated one every time.
+    </div>
+  </div>
+
+  <!-- SECTION 8: Common Mistakes -->
+  <div class="section" id="donts">
+    <div class="section-header">
+      <div class="section-icon" style="background: #fed7d7;">🚫</div>
+      <h2>Common Mistakes <span class="subtitle">Things to avoid when building agents</span></h2>
+    </div>
+
+    <div class="two-col">
+      <div class="card" style="border-top: 3px solid #fc8181;">
+        <h3 style="color: #e53e3e;">DON'T: Be too vague</h3>
+        <p>"Be helpful and write good code" tells the agent nothing. It's like a job posting that says "do stuff." Be specific about exactly what "good" means.</p>
+      </div>
+      <div class="card" style="border-top: 3px solid #68d391;">
+        <h3 style="color: #38a169;">DO: Be specific</h3>
+        <p>"Write TypeScript with strict types. Use functional components. Run tests before committing. Use conventional commits." Now the agent knows what to do.</p>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card" style="border-top: 3px solid #fc8181;">
+        <h3 style="color: #e53e3e;">DON'T: Contradict yourself</h3>
+        <p>"Be brief but thorough. Be formal but casual. Be careful but fast." Contradictions confuse the AI and lead to inconsistent behavior.</p>
+      </div>
+      <div class="card" style="border-top: 3px solid #68d391;">
+        <h3 style="color: #38a169;">DO: Pick a lane</h3>
+        <p>"Communication: brief bullet points, max 3 per update. Tone: professional but friendly — first-name basis. Pace: prioritize accuracy over speed."</p>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card" style="border-top: 3px solid #fc8181;">
+        <h3 style="color: #e53e3e;">DON'T: Dump everything in</h3>
+        <p>A 50-page configuration file wastes the agent's limited attention. Most of that info won't be relevant to the current task and can actually hurt performance.</p>
+      </div>
+      <div class="card" style="border-top: 3px solid #68d391;">
+        <h3 style="color: #38a169;">DO: Keep it focused</h3>
+        <p>Industry best practice: ~150-200 instructions max. Start minimal, add only what the agent needs. Every instruction loads every time — make them count.</p>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card" style="border-top: 3px solid #fc8181;">
+        <h3 style="color: #e53e3e;">DON'T: Mix identity with project info</h3>
+        <p>Don't put coding rules in the personality section, or personality traits in the project config. They serve different purposes and change at different rates.</p>
+      </div>
+      <div class="card" style="border-top: 3px solid #68d391;">
+        <h3 style="color: #38a169;">DO: Separate the Two Packs</h3>
+        <p>Agent Pack = who they are (travels with the agent). Project Pack = what they're working on (stays with the project). Clean separation = flexible agents.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 9: Quick Glossary -->
+  <div class="section" id="glossary">
+    <div class="section-header">
+      <div class="section-icon" style="background: #e9d8fd;">📖</div>
+      <h2>Quick Glossary <span class="subtitle">Key terms in plain English</span></h2>
+    </div>
+
+    <div class="card">
+      <table class="compare">
+        <tr><th>Term</th><th>What it means</th></tr>
+        <tr><td><strong>AI Agent</strong></td><td>Software that can think and take actions on its own (not just answer questions)</td></tr>
+        <tr><td><strong>Soul</strong></td><td>The complete identity package for an agent — personality, goals, memories, rules</td></tr>
+        <tr><td><strong>Agent Pack</strong></td><td>The agent's identity file — portable across different projects (also called SOUL.md)</td></tr>
+        <tr><td><strong>Project Pack</strong></td><td>Project-specific instructions — portable across different agents (also called CLAUDE.md or AGENTS.md)</td></tr>
+        <tr><td><strong>Context Window</strong></td><td>The agent's "working memory" — how much info it can hold at once (like a desk)</td></tr>
+        <tr><td><strong>Token</strong></td><td>A unit of text (~1 word). The context window is measured in tokens (200,000 = ~200 pages)</td></tr>
+        <tr><td><strong>Memory</strong></td><td>Things the agent remembers between conversations — past tasks, lessons, decisions</td></tr>
+        <tr><td><strong>System Prompt</strong></td><td>The hidden instructions that tell the AI who it is and how to behave (built from the Soul)</td></tr>
+        <tr><td><strong>Tools</strong></td><td>Actions the agent can take — reading files, running commands, searching the web</td></tr>
+        <tr><td><strong>Skills</strong></td><td>Reusable recipes that combine multiple tools into one action (like "Deploy" or "Review Code")</td></tr>
+        <tr><td><strong>Guardrails</strong></td><td>Safety rules that prevent the agent from doing dangerous things (budget limits, blocked commands)</td></tr>
+        <tr><td><strong>Orchestrator</strong></td><td>The system that coordinates multiple agents — assigns tasks, manages schedules</td></tr>
+        <tr><td><strong>MCP</strong></td><td>Model Context Protocol — a standard way for AI agents to connect to external tools and services</td></tr>
+        <tr><td><strong>LLM</strong></td><td>Large Language Model — the AI brain that powers agents (like Claude, GPT, Gemini)</td></tr>
+        <tr><td><strong>Autonomous Worker</strong></td><td>An agent running on its own, making decisions without asking for help</td></tr>
+        <tr><td><strong>Zero Questions Policy</strong></td><td>A rule that says "don't ask the user questions — make your best decision and report what you did"</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Learning Resources -->
+  <div class="section" id="learn">
+    <div class="section-header">
+      <div class="section-icon" style="background: #bee3f8;">🎓</div>
+      <h2>Free Learning Resources <span class="subtitle">Recommended courses and guides (Feb 2026)</span></h2>
+    </div>
+
+    <div class="card">
+      <h3>Google (Free)</h3>
+      <table class="compare">
+        <tr><th>Course</th><th>What you'll learn</th><th>Time</th></tr>
+        <tr><td><strong>Build Intelligent Agents with ADK</strong></td><td>Hands-on agent building with Google's framework</td><td>~3 hours</td></tr>
+        <tr><td><strong>Deploy Multi-Agent Systems</strong></td><td>How multiple agents work together</td><td>~3 hours</td></tr>
+        <tr><td><strong>5-Day AI Agents Intensive (Kaggle)</strong></td><td>Complete crash course on agent design</td><td>5 days</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Official Documentation</h3>
+      <table class="compare">
+        <tr><th>Resource</th><th>What it covers</th></tr>
+        <tr><td><strong>Anthropic: CLAUDE.md Guide</strong></td><td>How to write project configuration files for Claude agents</td></tr>
+        <tr><td><strong>OpenAI: AGENTS.md Guide</strong></td><td>How to write agent instructions for Codex</td></tr>
+        <tr><td><strong>Google ADK Docs</strong></td><td>Agent Development Kit — identity, tools, multi-agent systems</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Related PIA Documents</h3>
+      <table class="compare">
+        <tr><th>Document</th><th>What it is</th></tr>
+        <tr><td><a href="/handbook.html" style="color: #667eea;"><strong>PIA Agent Handbook</strong></a></td><td>Technical reference — 10 chapters, full specifications, API details</td></tr>
+        <tr><td><a href="/terminology.html" style="color: #667eea;"><strong>Terminology Reference</strong></a></td><td>52 terms with code examples and source file references</td></tr>
+        <tr><td><a href="/agent-generator.html" style="color: #667eea;"><strong>Agent Generator</strong></a></td><td>Interactive form for creating new agent configurations</td></tr>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  PIA System — Simple Guide for Non-Technical People — February 2026<br>
+  <a href="/knowledge.html">Back to Knowledge Index</a> · <a href="/handbook.html">Technical Handbook</a> · <a href="/terminology.html">Terminology</a>
+</div>
+
+</body>
+</html>

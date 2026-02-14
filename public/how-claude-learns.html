@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How Claude Learns — The Simple Guide</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0a0a0f; color: #e0e0e0; line-height: 1.7; }
+
+  /* Header */
+  .hero { background: linear-gradient(135deg, #0f3460 0%, #16213e 40%, #1a1a2e 70%, #e94560 200%); padding: 50px 20px; text-align: center; border-bottom: 3px solid #e94560; }
+  .hero h1 { font-size: 2.4em; color: #fff; letter-spacing: 1px; }
+  .hero .sub { color: #c0c0d0; font-size: 1.15em; margin-top: 8px; max-width: 600px; margin-left: auto; margin-right: auto; }
+  .hero .updated { color: #666; font-size: 0.8em; margin-top: 14px; }
+
+  .content { max-width: 960px; margin: 0 auto; padding: 30px 20px 60px; }
+
+  /* Big Idea */
+  .big-idea { background: linear-gradient(135deg, rgba(233,69,96,0.08), rgba(15,52,96,0.15)); border: 1px solid rgba(233,69,96,0.2); border-radius: 16px; padding: 30px; margin-bottom: 40px; text-align: center; }
+  .big-idea h2 { color: #e94560; font-size: 1.3em; margin-bottom: 12px; }
+  .big-idea p { color: #b0b0c0; font-size: 1.05em; max-width: 700px; margin: 0 auto; }
+
+  /* Flow Diagram */
+  .flow { margin: 40px 0; }
+  .flow h2 { color: #e94560; font-size: 1.4em; margin-bottom: 20px; text-align: center; }
+  .flow-steps { display: flex; flex-direction: column; gap: 0; align-items: center; }
+  .flow-step { background: #12121a; border: 2px solid #1e1e2e; border-radius: 14px; padding: 20px 24px; width: 100%; max-width: 700px; position: relative; }
+  .flow-step.auto { border-color: #50c878; }
+  .flow-step.demand { border-color: #6495ed; }
+  .flow-step.event { border-color: #ffa500; }
+  .flow-step.manual { border-color: #ba55d3; }
+  .flow-arrow { font-size: 1.8em; color: #333; text-align: center; padding: 4px 0; }
+  .flow-step .step-badge { display: inline-block; font-size: 0.7em; padding: 3px 10px; border-radius: 10px; font-weight: 600; margin-bottom: 8px; }
+  .badge-auto { background: rgba(80,200,120,0.15); color: #50c878; }
+  .badge-demand { background: rgba(100,149,237,0.15); color: #6495ed; }
+  .badge-event { background: rgba(255,165,0,0.15); color: #ffa500; }
+  .badge-manual { background: rgba(186,85,211,0.15); color: #ba55d3; }
+  .flow-step h3 { color: #fff; font-size: 1.1em; margin-bottom: 6px; }
+  .flow-step p { color: #999; font-size: 0.9em; }
+  .flow-step .file-path { font-family: 'Cascadia Code', 'Fira Code', monospace; background: #0a0a12; padding: 3px 8px; border-radius: 4px; font-size: 0.82em; color: #e94560; }
+
+  /* Section Chapters */
+  .chapter { margin: 50px 0; scroll-margin-top: 20px; }
+  .chapter-head { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid #e94560; }
+  .chapter-head .num { font-size: 2em; font-weight: 900; color: rgba(233,69,96,0.25); min-width: 50px; }
+  .chapter-head h2 { font-size: 1.4em; color: #fff; }
+
+  /* Cards */
+  .card { background: #12121a; border: 1px solid #1e1e2e; border-radius: 12px; padding: 22px; margin-bottom: 16px; }
+  .card h3 { color: #e94560; font-size: 1.05em; margin-bottom: 8px; }
+  .card p, .card li { color: #a0a0b0; font-size: 0.92em; }
+  .card ul { padding-left: 20px; margin: 8px 0; }
+  .card li { margin-bottom: 4px; }
+
+  /* Analogy boxes */
+  .analogy { background: rgba(80,200,120,0.04); border-left: 4px solid #50c878; padding: 16px 20px; border-radius: 0 10px 10px 0; margin: 14px 0; }
+  .analogy strong { color: #50c878; }
+  .analogy p { color: #a0b0a0; font-size: 0.92em; }
+
+  /* Warning boxes */
+  .note { background: rgba(100,149,237,0.04); border-left: 4px solid #6495ed; padding: 16px 20px; border-radius: 0 10px 10px 0; margin: 14px 0; }
+  .note strong { color: #6495ed; }
+  .note p { color: #a0a0c0; font-size: 0.92em; }
+
+  /* Code blocks */
+  .code { background: #0a0a12; border: 1px solid #1e1e2e; border-radius: 8px; padding: 16px; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 0.82em; color: #888; white-space: pre-wrap; overflow-x: auto; margin: 12px 0; line-height: 1.8; }
+  .code .comment { color: #444; }
+  .code .key { color: #e94560; }
+  .code .str { color: #50c878; }
+  .code .highlight { color: #fff; background: rgba(233,69,96,0.1); padding: 1px 4px; border-radius: 3px; }
+
+  /* Comparison Table */
+  .compare-table { width: 100%; border-collapse: collapse; margin: 16px 0; border-radius: 10px; overflow: hidden; }
+  .compare-table th { background: #1a1a2e; color: #e94560; padding: 12px 14px; text-align: left; font-size: 0.82em; text-transform: uppercase; letter-spacing: 0.5px; }
+  .compare-table td { padding: 12px 14px; border-bottom: 1px solid #1a1a2a; font-size: 0.88em; color: #b0b0b0; }
+  .compare-table tr:hover td { background: rgba(233,69,96,0.03); }
+  .compare-table .auto-tag { color: #50c878; font-weight: 600; }
+  .compare-table .demand-tag { color: #6495ed; font-weight: 600; }
+  .compare-table .event-tag { color: #ffa500; font-weight: 600; }
+  .compare-table .manual-tag { color: #ba55d3; font-weight: 600; }
+  .compare-table code { background: #0a0a12; padding: 2px 6px; border-radius: 3px; font-size: 0.9em; color: #e94560; }
+
+  /* Visual diagram */
+  .brain-diagram { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 20px 0; }
+  @media (max-width: 700px) { .brain-diagram { grid-template-columns: 1fr; } }
+  .brain-layer { border-radius: 12px; padding: 18px; position: relative; overflow: hidden; }
+  .brain-layer::before { content: attr(data-layer); position: absolute; top: -5px; right: 10px; font-size: 3em; font-weight: 900; opacity: 0.06; color: #fff; }
+  .brain-layer h4 { font-size: 0.95em; margin-bottom: 6px; }
+  .brain-layer p { font-size: 0.82em; opacity: 0.8; }
+  .brain-layer ul { font-size: 0.82em; opacity: 0.8; padding-left: 16px; margin-top: 4px; }
+  .layer-core { background: linear-gradient(135deg, #1a0a0a, #2a1515); border: 1px solid #e94560; }
+  .layer-core h4 { color: #e94560; }
+  .layer-rules { background: linear-gradient(135deg, #0a1a0a, #152a15); border: 1px solid #50c878; }
+  .layer-rules h4 { color: #50c878; }
+  .layer-tools { background: linear-gradient(135deg, #0a0a1a, #15152a); border: 1px solid #6495ed; }
+  .layer-tools h4 { color: #6495ed; }
+  .layer-memory { background: linear-gradient(135deg, #1a1a0a, #2a2a15); border: 1px solid #ffa500; }
+  .layer-memory h4 { color: #ffa500; }
+
+  /* Format examples */
+  .format-example { display: grid; grid-template-columns: 120px 1fr; gap: 0; margin: 14px 0; border-radius: 10px; overflow: hidden; border: 1px solid #1e1e2e; }
+  .format-label { background: #1a1a2e; padding: 14px; display: flex; align-items: center; justify-content: center; font-size: 0.85em; font-weight: 600; }
+  .format-label.md { color: #e94560; }
+  .format-label.json { color: #6495ed; }
+  .format-label.yaml { color: #50c878; }
+  .format-content { background: #0a0a12; padding: 14px; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 0.78em; color: #888; white-space: pre-wrap; line-height: 1.7; }
+
+  /* TOC */
+  .toc { margin: 30px 0; }
+  .toc h2 { color: #e94560; font-size: 1.1em; margin-bottom: 14px; }
+  .toc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 8px; }
+  .toc-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #12121a; border: 1px solid #1e1e2e; border-radius: 8px; text-decoration: none; color: #b0b0b0; font-size: 0.88em; transition: all 0.2s; }
+  .toc-item:hover { border-color: #e94560; color: #fff; transform: translateX(4px); }
+  .toc-item .tnum { width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; background: #1e1e2e; border-radius: 50%; font-size: 0.75em; font-weight: 700; color: #666; flex-shrink: 0; }
+  .toc-item:hover .tnum { background: #e94560; color: #fff; }
+
+  /* Footer */
+  .footer { text-align: center; padding: 40px 20px; color: #333; font-size: 0.8em; border-top: 1px solid #1a1a2a; margin-top: 40px; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>How Claude Learns</h1>
+  <p class="sub">A simple guide to every file that shapes what Claude knows, how it behaves, and what it can do</p>
+  <p class="updated">Updated February 2026 &mdash; Claude Code CLI</p>
+</div>
+
+<div class="content">
+
+<!-- Big idea -->
+<div class="big-idea">
+  <h2>The Core Idea</h2>
+  <p>Claude starts every conversation as a blank slate. It doesn't remember yesterday. The files in your project are what teach it who it is, what it knows, and how it should work. <strong>No files = generic Claude. Good files = your expert assistant.</strong></p>
+</div>
+
+<!-- TOC -->
+<div class="toc">
+  <h2>Contents</h2>
+  <div class="toc-grid">
+    <a href="#overview" class="toc-item"><span class="tnum">1</span> The Big Picture</a>
+    <a href="#claude-md" class="toc-item"><span class="tnum">2</span> CLAUDE.md &mdash; The Brain</a>
+    <a href="#rules" class="toc-item"><span class="tnum">3</span> Rules &mdash; Targeted Instructions</a>
+    <a href="#memory" class="toc-item"><span class="tnum">4</span> Memory &mdash; What It Remembers</a>
+    <a href="#agents" class="toc-item"><span class="tnum">5</span> Agents &mdash; Specialist Workers</a>
+    <a href="#skills" class="toc-item"><span class="tnum">6</span> Skills &mdash; Reusable Commands</a>
+    <a href="#hooks" class="toc-item"><span class="tnum">7</span> Hooks &mdash; Automatic Triggers</a>
+    <a href="#settings" class="toc-item"><span class="tnum">8</span> Settings &mdash; Permissions & Config</a>
+    <a href="#mcp" class="toc-item"><span class="tnum">9</span> MCP Servers &mdash; External Tools</a>
+    <a href="#loading" class="toc-item"><span class="tnum">10</span> Loading Order &mdash; What Happens at Startup</a>
+    <a href="#formats" class="toc-item"><span class="tnum">11</span> File Formats &mdash; How to Write Them</a>
+    <a href="#cheatsheet" class="toc-item"><span class="tnum">12</span> Cheat Sheet</a>
+  </div>
+</div>
+
+<!-- Chapter 1: Overview -->
+<div class="chapter" id="overview">
+  <div class="chapter-head">
+    <span class="num">01</span>
+    <h2>The Big Picture</h2>
+  </div>
+
+  <div class="analogy">
+    <strong>Think of it like hiring a contractor.</strong>
+    <p>Claude shows up to your project knowing nothing about you. CLAUDE.md is the welcome packet you hand them on day one. Agents are the specialist subcontractors. Skills are their standard procedures. Hooks are the safety rules on the job site. Settings are their access badge.</p>
+  </div>
+
+  <div class="brain-diagram">
+    <div class="brain-layer layer-core" data-layer="CORE">
+      <h4>Identity &amp; Rules</h4>
+      <p>Who Claude is, what it should do, project context</p>
+      <ul>
+        <li>CLAUDE.md (all scopes)</li>
+        <li>.claude/rules/*.md</li>
+        <li>CLAUDE.local.md</li>
+      </ul>
+    </div>
+    <div class="brain-layer layer-memory" data-layer="MEMORY">
+      <h4>What It Remembers</h4>
+      <p>Patterns learned across sessions</p>
+      <ul>
+        <li>MEMORY.md (auto-loaded)</li>
+        <li>Topic files (on-demand)</li>
+      </ul>
+    </div>
+    <div class="brain-layer layer-tools" data-layer="TOOLS">
+      <h4>What It Can Do</h4>
+      <p>Abilities, permissions, external tools</p>
+      <ul>
+        <li>settings.json (permissions)</li>
+        <li>.mcp.json (external tools)</li>
+        <li>Hooks (automation)</li>
+      </ul>
+    </div>
+    <div class="brain-layer layer-rules" data-layer="TEAM">
+      <h4>Its Team</h4>
+      <p>Specialists it can delegate to</p>
+      <ul>
+        <li>.claude/agents/*.md</li>
+        <li>.claude/skills/*/SKILL.md</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Chapter 2: CLAUDE.md -->
+<div class="chapter" id="claude-md">
+  <div class="chapter-head">
+    <span class="num">02</span>
+    <h2>CLAUDE.md &mdash; The Brain</h2>
+  </div>
+
+  <div class="card">
+    <h3>What is it?</h3>
+    <p>A plain text file (Markdown) that gets loaded into Claude's system prompt every time a session starts. Everything you write in here, Claude reads before you even say hello. This is the single most important file for shaping Claude's behavior.</p>
+  </div>
+
+  <div class="analogy">
+    <strong>Analogy:</strong>
+    <p>CLAUDE.md is like the employee handbook you give a new hire. It tells them the company culture, the project they're working on, the rules, and how things are done around here.</p>
+  </div>
+
+  <div class="card">
+    <h3>Where does it live? (Multiple scopes, all auto-load)</h3>
+    <table class="compare-table">
+      <tr><th>Scope</th><th>Path</th><th>Who it affects</th></tr>
+      <tr><td>Global (you)</td><td><code>~/.claude/CLAUDE.md</code></td><td>Every project on your machine</td></tr>
+      <tr><td>Project (shared)</td><td><code>./CLAUDE.md</code></td><td>Everyone working on this project</td></tr>
+      <tr><td>Project alt</td><td><code>./.claude/CLAUDE.md</code></td><td>Same as above, different spot</td></tr>
+      <tr><td>Project (private)</td><td><code>./CLAUDE.local.md</code></td><td>Only you, auto-gitignored</td></tr>
+      <tr><td>Subfolder</td><td><code>./src/CLAUDE.md</code></td><td>Only when working in that folder</td></tr>
+    </table>
+    <p style="margin-top: 10px; color: #666; font-size: 0.85em;">More specific scopes override broader ones. Your subfolder rules beat your global rules.</p>
+  </div>
+
+  <div class="card">
+    <h3>What should you put in it?</h3>
+    <ul>
+      <li><strong>Project description</strong> &mdash; what this codebase is, what it does</li>
+      <li><strong>Tech stack</strong> &mdash; languages, frameworks, database, etc.</li>
+      <li><strong>Code style rules</strong> &mdash; "use single quotes", "never use any", "always add tests"</li>
+      <li><strong>Architecture notes</strong> &mdash; "the API lives in src/api, the DB layer is in src/db"</li>
+      <li><strong>Do's and Don'ts</strong> &mdash; "never delete migration files", "always run linting before committing"</li>
+      <li><strong>Build commands</strong> &mdash; how to run, test, and deploy</li>
+      <li><strong>Key decisions</strong> &mdash; "we chose SQLite because..."</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>Example</h3>
+    <div class="format-example">
+      <div class="format-label md">CLAUDE.md</div>
+      <div class="format-content"># My Project
+
+This is a React + Express web app for managing tasks.
+
+## Tech Stack
+- Frontend: React 18 + TypeScript
+- Backend: Express + Prisma + PostgreSQL
+- Testing: Vitest
+
+## Rules
+- Always use TypeScript strict mode
+- Write tests for every new feature
+- Use functional components, never class components
+- API routes go in src/api/routes/
+
+## Commands
+- `npm run dev` — start dev server
+- `npm test` — run tests
+- `npm run build` — production build
+
+## Important
+- NEVER modify migration files that are already committed
+- The auth system uses JWT, tokens expire after 24h</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Importing other files</h3>
+    <p>You can pull in content from other files using the <code>@</code> syntax:</p>
+    <div class="code"><span class="comment"># In your CLAUDE.md:</span>
+<span class="key">@</span><span class="str">docs/architecture.md</span>
+<span class="key">@</span><span class="str">docs/api-conventions.md</span>
+<span class="key">@</span><span class="str">CODING_STANDARDS.md</span></div>
+    <p style="color: #666; font-size: 0.85em; margin-top: 8px;">These get expanded inline. Max 5 levels of nesting. First import asks for your approval.</p>
+  </div>
+</div>
+
+<!-- Chapter 3: Rules -->
+<div class="chapter" id="rules">
+  <div class="chapter-head">
+    <span class="num">03</span>
+    <h2>Rules &mdash; Targeted Instructions</h2>
+  </div>
+
+  <div class="card">
+    <h3>What are they?</h3>
+    <p>Rules are like CLAUDE.md but split into separate files and can target <strong>specific file types</strong>. Instead of one big document, you can have focused rule files that only apply when Claude is working with certain files.</p>
+  </div>
+
+  <div class="analogy">
+    <strong>Analogy:</strong>
+    <p>If CLAUDE.md is the general employee handbook, rules are the department-specific guidelines. "When working in the kitchen, wear a hairnet" &mdash; it only applies in the kitchen.</p>
+  </div>
+
+  <div class="card">
+    <h3>Where do they live?</h3>
+    <p><code>.claude/rules/*.md</code> &mdash; any markdown file in this directory auto-loads.</p>
+    <p style="margin-top: 6px;">You can also put user-level rules in <code>~/.claude/rules/*.md</code> to apply across all projects.</p>
+  </div>
+
+  <div class="card">
+    <h3>Path-specific rules (the magic part)</h3>
+    <p>Add a YAML frontmatter block to target specific files:</p>
+    <div class="format-example">
+      <div class="format-label yaml">YAML + MD</div>
+      <div class="format-content">---
+paths:
+  - "src/**/*.tsx"
+  - "src/**/*.ts"
+---
+
+When writing TypeScript components:
+- Always use interfaces, never type aliases for props
+- Export components as named exports, not default
+- Include JSDoc comments on public functions</div>
+    </div>
+    <p style="margin-top: 8px; color: #666; font-size: 0.85em;">This rule only activates when Claude is working with .tsx or .ts files under src/. Rules without a <code>paths</code> field apply everywhere.</p>
+  </div>
+</div>
+
+<!-- Chapter 4: Memory -->
+<div class="chapter" id="memory">
+  <div class="chapter-head">
+    <span class="num">04</span>
+    <h2>Memory &mdash; What It Remembers</h2>
+  </div>
+
+  <div class="card">
+    <h3>What is it?</h3>
+    <p>Claude normally forgets everything when you close a session. Memory files are how it carries knowledge between sessions. Claude writes notes to itself about patterns it noticed, mistakes it made, and things it learned.</p>
+  </div>
+
+  <div class="analogy">
+    <strong>Analogy:</strong>
+    <p>Memory is Claude's personal notebook. At the end of the day, it jots down "learned that the build breaks if you forget to run migrations first" so tomorrow-Claude doesn't make the same mistake.</p>
+  </div>
+
+  <div class="card">
+    <h3>Where does it live?</h3>
+    <p><code>~/.claude/projects/&lt;project-hash&gt;/memory/MEMORY.md</code></p>
+    <p style="margin-top: 8px; color: #888; font-size: 0.9em;">You don't need to know the exact path. Claude manages this automatically. Each project gets its own memory folder.</p>
+  </div>
+
+  <div class="card">
+    <h3>How it works</h3>
+    <ul>
+      <li><strong>MEMORY.md</strong> &mdash; the index file. First 200 lines auto-load at startup.</li>
+      <li><strong>Topic files</strong> &mdash; like <code>debugging.md</code>, <code>patterns.md</code> &mdash; loaded on demand when relevant</li>
+      <li>Claude reads and writes these during sessions</li>
+      <li>You can also ask Claude to remember things: <em>"remember: always use bun instead of npm"</em></li>
+      <li>You can ask it to forget: <em>"stop remembering that"</em></li>
+    </ul>
+  </div>
+
+  <div class="note">
+    <strong>Important:</strong>
+    <p>Only the first 200 lines of MEMORY.md load automatically. If it gets too long, Claude should organize into topic files and keep MEMORY.md as a short index.</p>
+  </div>
+</div>
+
+<!-- Chapter 5: Agents -->
+<div class="chapter" id="agents">
+  <div class="chapter-head">
+    <span class="num">05</span>
+    <h2>Agents &mdash; Specialist Workers</h2>
+  </div>
+
+  <div class="card">
+    <h3>What are they?</h3>
+    <p>Agents are sub-Claudes with their own personality, tools, and instructions. The main Claude can delegate tasks to them. Each agent gets its own system prompt and can only use the tools you allow.</p>
+  </div>
+
+  <div class="analogy">
+    <strong>Analogy:</strong>
+    <p>Claude is the lead contractor. Agents are the specialist subcontractors &mdash; the electrician, the plumber, the painter. Each one has their own toolbox and knows their specific trade. The lead delegates work to the right specialist.</p>
+  </div>
+
+  <div class="card">
+    <h3>Where do they live?</h3>
+    <ul>
+      <li><strong>Project agents:</strong> <code>.claude/agents/my-agent.md</code></li>
+      <li><strong>Personal agents:</strong> <code>~/.claude/agents/my-agent.md</code></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>Format</h3>
+    <p>Each agent is a single Markdown file with a YAML header (frontmatter) + instructions in the body:</p>
+    <div class="format-example">
+      <div class="format-label yaml">YAML + MD</div>
+      <div class="format-content">---
+name: code-reviewer
+description: Reviews code for bugs, security issues, and style problems
+tools: [Read, Grep, Glob]
+model: sonnet
+---
+
+You are a code reviewer. Your job is to:
+
+1. Read the code carefully
+2. Check for security vulnerabilities
+3. Check for bugs and edge cases
+4. Suggest improvements
+
+Be constructive. Explain WHY something is a problem,
+not just that it is one.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>All the frontmatter fields</h3>
+    <table class="compare-table">
+      <tr><th>Field</th><th>Required?</th><th>What it does</th></tr>
+      <tr><td><code>name</code></td><td>Yes</td><td>The agent's name (lowercase, hyphens). Used to invoke it.</td></tr>
+      <tr><td><code>description</code></td><td>Yes</td><td>When to use this agent. Claude reads this to decide who to delegate to.</td></tr>
+      <tr><td><code>tools</code></td><td>No</td><td>Which tools the agent can use: <code>[Read, Grep, Glob, Edit, Write, Bash, Task, WebSearch]</code> etc.</td></tr>
+      <tr><td><code>disallowedTools</code></td><td>No</td><td>Specific tools the agent CAN'T use.</td></tr>
+      <tr><td><code>model</code></td><td>No</td><td><code>opus</code>, <code>sonnet</code>, <code>haiku</code>, or <code>inherit</code> (use parent's model)</td></tr>
+      <tr><td><code>maxTurns</code></td><td>No</td><td>Maximum number of back-and-forth steps before stopping.</td></tr>
+      <tr><td><code>color</code></td><td>No</td><td>Terminal color: <code>green</code>, <code>magenta</code>, <code>blue</code>, etc.</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>How to use them</h3>
+    <p>Claude auto-delegates to agents when a task matches the agent's <code>description</code>. You can also:</p>
+    <ul>
+      <li>Explicitly ask: <em>"use the code-reviewer agent for this"</em></li>
+      <li>List available agents with <code>/agents</code></li>
+    </ul>
+  </div>
+</div>
+
+<!-- Chapter 6: Skills -->
+<div class="chapter" id="skills">
+  <div class="chapter-head">
+    <span class="num">06</span>
+    <h2>Skills &mdash; Reusable Commands</h2>
+  </div>
+
+  <div class="card">
+    <h3>What are they?</h3>
+    <p>Skills are like saved recipes &mdash; reusable procedures you can trigger with a slash command. Instead of explaining a complex task every time, you define it once and invoke it with <code>/skill-name</code>.</p>
+  </div>
+
+  <div class="analogy">
+    <strong>Analogy:</strong>
+    <p>Skills are like the labeled buttons on a microwave. Instead of typing "heat at 50% power for 2 minutes, then full power for 30 seconds", you just press "Defrost". Same idea.</p>
+  </div>
+
+  <div class="card">
+    <h3>Where do they live?</h3>
+    <p>Each skill is a folder with a <code>SKILL.md</code> file inside:</p>
+    <div class="code">.claude/skills/
+  deploy/
+    SKILL.md          <span class="comment"># The skill definition</span>
+    deploy-checklist.md   <span class="comment"># Supporting files (optional)</span>
+  onboard/
+    SKILL.md
+  review-pr/
+    SKILL.md</div>
+  </div>
+
+  <div class="card">
+    <h3>Format</h3>
+    <div class="format-example">
+      <div class="format-label yaml">YAML + MD</div>
+      <div class="format-content">---
+name: deploy
+description: Deploy the app to production with safety checks
+argument-hint: "[environment]"
+---
+
+# Deploy Skill
+
+When invoked, follow these steps:
+
+1. Run all tests: `npm test`
+2. Check for uncommitted changes
+3. Build: `npm run build`
+4. Deploy to $ARGUMENTS[0] (default: staging)
+5. Run smoke tests
+6. Report results</div>
+    </div>
+    <p style="margin-top: 8px; color: #888; font-size: 0.85em;">Invoke with: <code>/deploy production</code> &mdash; the word "production" becomes <code>$ARGUMENTS[0]</code></p>
+  </div>
+
+  <div class="card">
+    <h3>Key differences from Agents</h3>
+    <table class="compare-table">
+      <tr><th></th><th>Agents</th><th>Skills</th></tr>
+      <tr><td>Invoked by</td><td>Claude auto-delegates or you ask</td><td>You type <code>/skill-name</code></td></tr>
+      <tr><td>Has its own context?</td><td>Yes (separate sub-conversation)</td><td>No (runs in main conversation)</td></tr>
+      <tr><td>Takes arguments?</td><td>No</td><td>Yes (<code>$ARGUMENTS</code>)</td></tr>
+      <tr><td>Best for</td><td>Ongoing specialized work</td><td>One-shot procedures / commands</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- Chapter 7: Hooks -->
+<div class="chapter" id="hooks">
+  <div class="chapter-head">
+    <span class="num">07</span>
+    <h2>Hooks &mdash; Automatic Triggers</h2>
+  </div>
+
+  <div class="card">
+    <h3>What are they?</h3>
+    <p>Hooks are scripts that run automatically when certain things happen. They're defined in your settings file (not separate files). They can <strong>block</strong> actions, <strong>log</strong> things, <strong>modify</strong> behavior, or <strong>add context</strong>.</p>
+  </div>
+
+  <div class="analogy">
+    <strong>Analogy:</strong>
+    <p>Hooks are like the automatic doors, security cameras, and alarm systems in a building. They react to events without anyone pressing a button. Door opens? Camera records. Fire detected? Alarm sounds. Claude writes to a file? Your hook logs it.</p>
+  </div>
+
+  <div class="card">
+    <h3>When do they fire?</h3>
+    <table class="compare-table">
+      <tr><th>Hook Event</th><th>When it fires</th><th>Common use</th></tr>
+      <tr><td><code>SessionStart</code></td><td>Session begins or resumes</td><td>Set up environment, check configs</td></tr>
+      <tr><td><code>UserPromptSubmit</code></td><td>You send a message</td><td>Route tasks, add context</td></tr>
+      <tr><td><code>PreToolUse</code></td><td>Before Claude uses any tool</td><td>Block dangerous commands, security gate</td></tr>
+      <tr><td><code>PostToolUse</code></td><td>After a tool succeeds</td><td>Log changes, track edits</td></tr>
+      <tr><td><code>SubagentStart</code></td><td>A sub-agent is spawned</td><td>Track agent usage</td></tr>
+      <tr><td><code>SubagentStop</code></td><td>A sub-agent finishes</td><td>Track results</td></tr>
+      <tr><td><code>Stop</code></td><td>Claude finishes responding</td><td>Cleanup, reporting</td></tr>
+      <tr><td><code>PreCompact</code></td><td>Before conversation is compressed</td><td>Save important context</td></tr>
+      <tr><td><code>SessionEnd</code></td><td>Session closes</td><td>Final cleanup</td></tr>
+    </table>
+    <p style="margin-top: 8px; color: #666; font-size: 0.85em;">There are 14 total events. These are the most common ones.</p>
+  </div>
+
+  <div class="card">
+    <h3>Where are they configured?</h3>
+    <p>Inside your settings file (not separate files):</p>
+    <div class="format-example">
+      <div class="format-label json">JSON</div>
+      <div class="format-content">{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./security-check.sh"
+          }
+        ]
+      }
+    ]
+  }
+}</div>
+    </div>
+    <p style="margin-top: 8px; color: #888; font-size: 0.85em;">This example runs <code>security-check.sh</code> every time Claude tries to run a bash command. If the script exits with code 2, the command is blocked.</p>
+  </div>
+
+  <div class="note">
+    <strong>Key concept:</strong>
+    <p>Unlike CLAUDE.md instructions (which Claude <em>should</em> follow), hooks are <strong>guaranteed</strong> code execution. Claude can't ignore a hook. If your hook blocks a command, it's blocked. Period.</p>
+  </div>
+</div>
+
+<!-- Chapter 8: Settings -->
+<div class="chapter" id="settings">
+  <div class="chapter-head">
+    <span class="num">08</span>
+    <h2>Settings &mdash; Permissions &amp; Config</h2>
+  </div>
+
+  <div class="card">
+    <h3>What is it?</h3>
+    <p>A JSON file that controls what Claude is allowed to do, which model it uses, hooks, and other configuration. Think of it as the access badge + company policy combined.</p>
+  </div>
+
+  <div class="card">
+    <h3>Where does it live?</h3>
+    <table class="compare-table">
+      <tr><th>Scope</th><th>Path</th><th>Shared?</th></tr>
+      <tr><td>User (all projects)</td><td><code>~/.claude/settings.json</code></td><td>No</td></tr>
+      <tr><td>Project (team)</td><td><code>.claude/settings.json</code></td><td>Yes (commit to git)</td></tr>
+      <tr><td>Project (private)</td><td><code>.claude/settings.local.json</code></td><td>No (gitignored)</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Key settings</h3>
+    <div class="format-example">
+      <div class="format-label json">JSON</div>
+      <div class="format-content">{
+  "model": "claude-sonnet-4-5-20250929",
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(git *)",
+      "Read",
+      "Edit",
+      "Write"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Read(.env)"
+    ]
+  },
+  "hooks": { },
+  "env": {
+    "NODE_ENV": "development"
+  }
+}</div>
+    </div>
+    <p style="margin-top: 10px; color: #888; font-size: 0.88em;"><strong>allow</strong> = Claude can do this without asking you. <strong>deny</strong> = Claude can never do this. Everything else = Claude asks you each time.</p>
+  </div>
+</div>
+
+<!-- Chapter 9: MCP -->
+<div class="chapter" id="mcp">
+  <div class="chapter-head">
+    <span class="num">09</span>
+    <h2>MCP Servers &mdash; External Tools</h2>
+  </div>
+
+  <div class="card">
+    <h3>What are they?</h3>
+    <p>MCP (Model Context Protocol) servers give Claude access to external tools &mdash; databases, APIs, browsers, Slack, GitHub, etc. Each server is a small program that runs alongside Claude and provides specific capabilities.</p>
+  </div>
+
+  <div class="analogy">
+    <strong>Analogy:</strong>
+    <p>MCP servers are like USB peripherals you plug into a computer. Plug in a printer? Now the computer can print. Plug in a Playwright MCP? Now Claude can browse the web. Plug in a GitHub MCP? Now Claude can create PRs.</p>
+  </div>
+
+  <div class="card">
+    <h3>Where is it configured?</h3>
+    <p><code>.mcp.json</code> in your project root, or <code>~/.claude/mcp.json</code> for global tools.</p>
+    <div class="format-example">
+      <div class="format-label json">.mcp.json</div>
+      <div class="format-content">{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest"]
+    },
+    "github": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_TOKEN": "ghp_..."
+      }
+    }
+  }
+}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Chapter 10: Loading Order -->
+<div class="chapter" id="loading">
+  <div class="chapter-head">
+    <span class="num">10</span>
+    <h2>Loading Order &mdash; What Happens at Startup</h2>
+  </div>
+
+  <div class="card">
+    <h3>When you type <code>claude</code> and press enter, this happens:</h3>
+  </div>
+
+  <div class="flow">
+    <div class="flow-steps">
+      <div class="flow-step auto">
+        <span class="step-badge badge-auto">AUTO-LOADS</span>
+        <h3>1. CLAUDE.md files (all scopes)</h3>
+        <p>Global &rarr; User &rarr; Project &rarr; Local &mdash; merged together, specific beats general</p>
+      </div>
+      <div class="flow-arrow">&darr;</div>
+      <div class="flow-step auto">
+        <span class="step-badge badge-auto">AUTO-LOADS</span>
+        <h3>2. Rules</h3>
+        <p><span class="file-path">.claude/rules/*.md</span> &mdash; all rule files loaded, path-specific ones activate later</p>
+      </div>
+      <div class="flow-arrow">&darr;</div>
+      <div class="flow-step auto">
+        <span class="step-badge badge-auto">AUTO-LOADS</span>
+        <h3>3. Settings &amp; Permissions</h3>
+        <p><span class="file-path">.claude/settings.json</span> + <span class="file-path">settings.local.json</span> &mdash; what Claude can and can't do</p>
+      </div>
+      <div class="flow-arrow">&darr;</div>
+      <div class="flow-step auto">
+        <span class="step-badge badge-auto">AUTO-LOADS</span>
+        <h3>4. Memory (first 200 lines)</h3>
+        <p><span class="file-path">~/.claude/projects/.../memory/MEMORY.md</span> &mdash; notes from past sessions</p>
+      </div>
+      <div class="flow-arrow">&darr;</div>
+      <div class="flow-step event">
+        <span class="step-badge badge-event">EVENT-DRIVEN</span>
+        <h3>5. SessionStart hooks fire</h3>
+        <p>Any startup scripts run now</p>
+      </div>
+      <div class="flow-arrow">&darr;</div>
+      <div class="flow-step auto">
+        <span class="step-badge badge-auto">AUTO-LOADS</span>
+        <h3>6. MCP servers start</h3>
+        <p><span class="file-path">.mcp.json</span> &mdash; external tool servers boot up</p>
+      </div>
+      <div class="flow-arrow">&darr;</div>
+      <div class="flow-step demand">
+        <span class="step-badge badge-demand">ON-DEMAND</span>
+        <h3>7. Agent &amp; Skill descriptions loaded</h3>
+        <p>Claude knows they exist. Full content loads when they're actually used.</p>
+      </div>
+      <div class="flow-arrow">&darr;</div>
+      <div class="flow-step" style="border-color: #50c878; text-align: center;">
+        <h3 style="color: #50c878;">Ready. Claude knows who it is.</h3>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chapter 11: Formats -->
+<div class="chapter" id="formats">
+  <div class="chapter-head">
+    <span class="num">11</span>
+    <h2>File Formats &mdash; How to Write Them</h2>
+  </div>
+
+  <div class="card">
+    <h3>Only 3 formats to know</h3>
+    <table class="compare-table">
+      <tr><th>Format</th><th>Used by</th><th>What it looks like</th></tr>
+      <tr><td><strong>Plain Markdown</strong></td><td>CLAUDE.md, Memory, rules (without targets)</td><td>Just write normal text, headings, lists, code blocks</td></tr>
+      <tr><td><strong>Markdown + YAML frontmatter</strong></td><td>Agents, Skills, Rules (with targets)</td><td>Start with <code>---</code>, add fields, close with <code>---</code>, then Markdown body</td></tr>
+      <tr><td><strong>JSON</strong></td><td>Settings, MCP config</td><td>Standard JSON with specific field names</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>YAML Frontmatter explained</h3>
+    <p>If you've never seen YAML frontmatter, it's just metadata at the top of a Markdown file between two <code>---</code> lines:</p>
+    <div class="code"><span class="comment">---</span>
+<span class="key">name</span>: my-thing
+<span class="key">description</span>: <span class="str">"What this does"</span>
+<span class="key">tools</span>: [Read, Grep, Glob]
+<span class="comment">---</span>
+
+Everything below the second --- is normal Markdown.
+This becomes the instructions / content.</div>
+    <p style="margin-top: 8px; color: #888; font-size: 0.85em;">The top part (between the dashes) is structured data. The bottom part is free text. That's it!</p>
+  </div>
+</div>
+
+<!-- Chapter 12: Cheat Sheet -->
+<div class="chapter" id="cheatsheet">
+  <div class="chapter-head">
+    <span class="num">12</span>
+    <h2>The Complete Cheat Sheet</h2>
+  </div>
+
+  <div class="card">
+    <table class="compare-table">
+      <tr>
+        <th>File</th>
+        <th>Format</th>
+        <th>Loads</th>
+        <th>What it does</th>
+      </tr>
+      <tr>
+        <td><code>CLAUDE.md</code></td>
+        <td>Markdown</td>
+        <td class="auto-tag">Auto</td>
+        <td>Identity, rules, project context. The single most important file.</td>
+      </tr>
+      <tr>
+        <td><code>CLAUDE.local.md</code></td>
+        <td>Markdown</td>
+        <td class="auto-tag">Auto</td>
+        <td>Same as CLAUDE.md but private to you (gitignored).</td>
+      </tr>
+      <tr>
+        <td><code>.claude/rules/*.md</code></td>
+        <td>MD + YAML</td>
+        <td class="auto-tag">Auto</td>
+        <td>Targeted rules for specific file types.</td>
+      </tr>
+      <tr>
+        <td><code>memory/MEMORY.md</code></td>
+        <td>Markdown</td>
+        <td class="auto-tag">Auto (200 lines)</td>
+        <td>Cross-session memory. Claude writes notes to itself.</td>
+      </tr>
+      <tr>
+        <td><code>.claude/agents/*.md</code></td>
+        <td>MD + YAML</td>
+        <td class="demand-tag">On-demand</td>
+        <td>Specialist sub-agents with their own tools and instructions.</td>
+      </tr>
+      <tr>
+        <td><code>.claude/skills/*/SKILL.md</code></td>
+        <td>MD + YAML</td>
+        <td class="demand-tag">/command</td>
+        <td>Reusable procedures triggered with slash commands.</td>
+      </tr>
+      <tr>
+        <td><code>.claude/settings.json</code></td>
+        <td>JSON</td>
+        <td class="auto-tag">Auto</td>
+        <td>Permissions, hooks, model choice, environment variables.</td>
+      </tr>
+      <tr>
+        <td><code>.claude/settings.local.json</code></td>
+        <td>JSON</td>
+        <td class="auto-tag">Auto</td>
+        <td>Same as above but private (gitignored).</td>
+      </tr>
+      <tr>
+        <td><code>.mcp.json</code></td>
+        <td>JSON</td>
+        <td class="auto-tag">Auto</td>
+        <td>External tool connections (browser, GitHub, Slack, etc).</td>
+      </tr>
+      <tr>
+        <td><code>Hooks</code> (in settings)</td>
+        <td>JSON config</td>
+        <td class="event-tag">Event-driven</td>
+        <td>Scripts that auto-run on specific events. Can block actions.</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>The simplest way to start</h3>
+    <p>You don't need all of this. Start with just one file:</p>
+    <div class="code" style="font-size: 0.9em; color: #50c878;">1. Create <span class="highlight">CLAUDE.md</span> in your project root
+2. Write what your project is and how you want Claude to work
+3. That's it. You're already ahead of 90% of users.</div>
+    <p style="margin-top: 12px; color: #888;">Add agents, skills, hooks, and rules later as you need them. Each one solves a specific problem &mdash; don't add complexity until you feel the pain.</p>
+  </div>
+</div>
+
+</div><!-- /content -->
+
+<div class="footer">
+  How Claude Learns &mdash; A PIA System Research Document &mdash; February 2026
+</div>
+
+</body>
+</html>

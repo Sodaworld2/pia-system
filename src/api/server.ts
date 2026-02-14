@@ -32,6 +32,7 @@ import soulsRouter from './routes/souls.js';
 import workSessionsRouter from './routes/work-sessions.js';
 import missionControlRouter from './routes/mission-control.js';
 import daoModulesRouter from './routes/dao-modules.js';
+import daoProxyRouter from './routes/dao-proxy.js';
 import { getNetworkSentinel } from '../security/network-sentinel.js';
 
 const logger = createLogger('API');
@@ -150,6 +151,7 @@ export function createServer(): Express {
   app.use('/api/work-sessions', workSessionsRouter);
   app.use('/api/mc', missionControlRouter);
   app.use('/api/modules', daoModulesRouter);
+  app.use('/api/dao-proxy', daoProxyRouter);
 
   // Health check
   app.get('/api/health', (_req: Request, res: Response) => {

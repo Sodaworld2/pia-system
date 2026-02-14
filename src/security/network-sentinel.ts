@@ -300,8 +300,8 @@ export class NetworkSentinel {
         return;
       }
 
-      // Check rate limit
-      if (this.checkRateLimit(state)) {
+      // Check rate limit (skip for localhost — it's the admin dashboard)
+      if (!state.isLocalhost && this.checkRateLimit(state)) {
         res.status(429).json({ error: 'Rate limit exceeded' });
         return;
       }

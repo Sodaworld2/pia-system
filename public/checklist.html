@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIA Agent Checklist</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0a0e14; color: #c8d6e5; line-height: 1.6; }
+
+  .header {
+    background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+    border-bottom: 1px solid #1e293b;
+    padding: 20px 30px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .header h1 { font-size: 1.6em; color: #00ff88; }
+  .header .sub { color: #5a6a7a; font-size: 0.85em; margin-left: 12px; }
+  .header-right { display: flex; gap: 12px; align-items: center; }
+  .run-btn {
+    background: #00ff88; color: #0a0e14; border: none; padding: 10px 24px;
+    border-radius: 8px; font-weight: 700; font-size: 0.9em; cursor: pointer;
+    transition: all 0.2s;
+  }
+  .run-btn:hover { background: #00cc6a; transform: translateY(-1px); }
+  .run-btn:disabled { background: #333; color: #666; cursor: not-allowed; transform: none; }
+
+  .summary-bar {
+    display: flex; gap: 20px; padding: 16px 30px;
+    background: #111820; border-bottom: 1px solid #1e293b;
+    flex-wrap: wrap; align-items: center;
+  }
+  .summary-stat { text-align: center; min-width: 80px; }
+  .summary-stat .val { font-size: 1.8em; font-weight: 800; }
+  .summary-stat .lbl { font-size: 0.7em; text-transform: uppercase; letter-spacing: 1px; color: #5a6a7a; }
+  .val-pass { color: #00ff88; }
+  .val-fail { color: #ff4444; }
+  .val-skip { color: #ffaa00; }
+  .val-total { color: #00aaff; }
+  .progress-bar { flex: 1; min-width: 200px; height: 8px; background: #1e293b; border-radius: 4px; overflow: hidden; align-self: center; }
+  .progress-fill { height: 100%; background: #00ff88; border-radius: 4px; transition: width 0.3s; width: 0%; }
+  .timestamp { color: #5a6a7a; font-size: 0.8em; margin-left: auto; }
+
+  .content { padding: 20px 30px; max-width: 1400px; margin: 0 auto; }
+
+  /* Category sections */
+  .category { margin-bottom: 30px; }
+  .category-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 0; border-bottom: 1px solid #1e293b; margin-bottom: 12px;
+  }
+  .category-icon { font-size: 1.2em; width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; }
+  .category-header h2 { font-size: 1.1em; color: #e0e0e0; }
+  .category-header .count { margin-left: auto; color: #5a6a7a; font-size: 0.8em; }
+
+  /* Check items */
+  .check-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 10px; }
+  .check-item {
+    display: flex; align-items: center; gap: 12px;
+    background: #111820; border: 1px solid #1e293b; border-radius: 8px;
+    padding: 12px 16px; transition: all 0.2s;
+  }
+  .check-item:hover { border-color: #2a3a4a; }
+  .check-item.pass { border-left: 3px solid #00ff88; }
+  .check-item.fail { border-left: 3px solid #ff4444; }
+  .check-item.skip { border-left: 3px solid #ffaa00; }
+  .check-item.pending { border-left: 3px solid #333; }
+  .check-item.running { border-left: 3px solid #00aaff; animation: pulse-border 1s infinite; }
+
+  @keyframes pulse-border { 0%,100% { border-left-color: #00aaff; } 50% { border-left-color: #004488; } }
+
+  .check-icon { width: 28px; height: 28px; border-radius: 50%; display: flex;
+    align-items: center; justify-content: center; font-size: 0.8em; font-weight: 700; flex-shrink: 0; }
+  .check-icon.pass { background: rgba(0,255,136,0.15); color: #00ff88; }
+  .check-icon.fail { background: rgba(255,68,68,0.15); color: #ff4444; }
+  .check-icon.skip { background: rgba(255,170,0,0.15); color: #ffaa00; }
+  .check-icon.pending { background: rgba(90,106,122,0.15); color: #5a6a7a; }
+  .check-icon.running { background: rgba(0,170,255,0.15); color: #00aaff; }
+
+  .check-info { flex: 1; min-width: 0; }
+  .check-name { font-weight: 600; font-size: 0.9em; color: #e0e0e0; }
+  .check-endpoint { font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 0.75em; color: #5a6a7a; }
+  .check-detail { font-size: 0.75em; color: #00ff88; margin-top: 2px; }
+  .check-detail.error { color: #ff4444; }
+
+  .check-status { font-size: 0.75em; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; flex-shrink: 0; }
+  .check-status.pass { color: #00ff88; }
+  .check-status.fail { color: #ff4444; }
+  .check-status.skip { color: #ffaa00; }
+  .check-status.pending { color: #5a6a7a; }
+
+  .check-ms { font-size: 0.7em; color: #5a6a7a; flex-shrink: 0; min-width: 50px; text-align: right; }
+
+  /* Architecture section */
+  .arch-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+  .arch-box {
+    flex: 1; min-width: 200px; background: #111820; border: 1px solid #1e293b;
+    border-radius: 8px; padding: 16px; text-align: center;
+  }
+  .arch-box h3 { color: #00aaff; font-size: 0.9em; margin-bottom: 8px; }
+  .arch-box p { color: #5a6a7a; font-size: 0.8em; }
+  .arch-box .count { font-size: 2em; font-weight: 800; color: #00ff88; }
+
+  .footer { text-align: center; padding: 30px; color: #333; font-size: 0.8em; border-top: 1px solid #1e293b; margin-top: 40px; }
+
+  @media (max-width: 768px) {
+    .check-grid { grid-template-columns: 1fr; }
+    .summary-bar { gap: 12px; }
+    .header { flex-direction: column; gap: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div style="display:flex;align-items:baseline">
+    <h1>PIA Agent Checklist</h1>
+    <span class="sub">System Health Verification</span>
+  </div>
+  <div class="header-right">
+    <span id="run-status" style="color:#5a6a7a;font-size:0.85em"></span>
+    <button class="run-btn" id="runBtn" onclick="runAllChecks()">Run All Checks</button>
+  </div>
+</div>
+
+<div class="summary-bar">
+  <div class="summary-stat"><div class="val val-total" id="s-total">0</div><div class="lbl">Total</div></div>
+  <div class="summary-stat"><div class="val val-pass" id="s-pass">0</div><div class="lbl">Pass</div></div>
+  <div class="summary-stat"><div class="val val-fail" id="s-fail">0</div><div class="lbl">Fail</div></div>
+  <div class="summary-stat"><div class="val val-skip" id="s-skip">0</div><div class="lbl">Skip</div></div>
+  <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+  <div class="timestamp" id="timestamp">Not run yet</div>
+</div>
+
+<div class="content" id="content"></div>
+
+<div class="footer">PIA System &mdash; Agent Checklist &mdash; Auto-generated verification suite</div>
+
+<script>
+const API = '';
+const TOKEN = 'pia-local-dev-token-2024';
+
+const CHECKS = [
+  { cat: 'Core Infrastructure', icon: '#0a84ff', items: [
+    { name: 'Health Check', endpoint: '/api/health', auth: false, validate: d => d.status === 'ok' ? `mode: ${d.mode}` : null },
+    { name: 'System Stats', endpoint: '/api/stats', validate: d => `${d.machines?.total || 0} machines, ${d.agents?.total || 0} agents` },
+    { name: 'Security Events', endpoint: '/api/security/events', validate: d => `${(d.events||d||[]).length || 0} events logged` },
+    { name: 'File System Access', endpoint: '/api/files/list?path=.', validate: d => `${(d.files||d||[]).length || 0} entries` },
+  ]},
+  { cat: 'Fleet Management', icon: '#00ff88', items: [
+    { name: 'Machine Registry', endpoint: '/api/machines', validate: d => { const m = d.machines||d||[]; return `${m.length} machines registered`; } },
+    { name: 'Agent Registry', endpoint: '/api/agents', validate: d => { const a = d.agents||d||[]; return `${a.length} agents registered`; } },
+    { name: 'Agent Souls', endpoint: '/api/souls', validate: d => { const s = d.souls||d||[]; return `${s.length} souls defined`; } },
+    { name: 'Agent Doctor', endpoint: '/api/doctor/status', validate: d => `${d.agents?.healthy||d.healthy||0} healthy, ${d.agents?.total||d.total||0} total` },
+  ]},
+  { cat: 'Communication', icon: '#9b4dca', items: [
+    { name: 'Agent Bus (PubSub)', endpoint: '/api/pubsub/topics', validate: d => `${(d.topics||d||[]).length} topics` },
+    { name: 'Alert System', endpoint: '/api/alerts', validate: d => { const a = d.alerts||d||[]; return `${a.length} alerts`; } },
+    { name: 'Webhook Registry', endpoint: '/api/webhooks', validate: d => `${(d.webhooks||d||[]).length} webhooks` },
+    { name: 'Relay Status', endpoint: '/api/relay', validate: d => typeof d === 'object' ? 'relay active' : null },
+  ]},
+  { cat: 'AI & Models', icon: '#ffaa00', items: [
+    { name: 'AI Provider Status', endpoint: '/api/ai/status', validate: d => { const p = d.providers||d||{}; return `${Object.keys(p).length} providers configured`; } },
+    { name: 'AI Generate (Live)', endpoint: '/api/ai/generate', method: 'POST', body: { prompt: 'Say OK', provider: 'ollama', model: 'llama3.2', maxTokens: 10 }, validate: d => d.content ? `response: "${d.content.substring(0,40)}..."` : null },
+    { name: 'Cost Tracking', endpoint: '/api/ai/status', validate: d => d.providers ? 'cost tracking active' : null },
+  ]},
+  { cat: 'Orchestration', icon: '#00d4ff', items: [
+    { name: 'Orchestrator Instances', endpoint: '/api/orchestrator/instances', validate: d => `${(d.instances||d||[]).length} instances` },
+    { name: 'Task Queue', endpoint: '/api/tasks', validate: d => { const t = d.tasks||d||[]; return `${t.length} tasks`; } },
+    { name: 'Delegation Engine', endpoint: '/api/delegation', validate: d => typeof d === 'object' ? 'delegation active' : null },
+    { name: 'Factory Templates', endpoint: '/api/factory/templates', validate: d => { const t = d.templates||d||[]; return `${t.length} templates`; } },
+  ]},
+  { cat: 'Sessions & Tunnels', icon: '#e94560', items: [
+    { name: 'Active Sessions', endpoint: '/api/sessions', validate: d => { const s = d.sessions||d||[]; return `${s.length} sessions`; } },
+    { name: 'Hook Events', endpoint: '/api/hooks/events', validate: d => { const e = d.events||d||[]; return `${e.length} events`; } },
+    { name: 'MCP Servers', endpoint: '/api/mcps', validate: d => { const m = d.mcps||d||[]; return `${m.length} MCPs registered`; } },
+    { name: 'Checkpoints', endpoint: '/api/checkpoints', validate: d => `${(d.checkpoints||d||[]).length} checkpoints` },
+  ]},
+  { cat: 'Mission Control', icon: '#ff66aa', items: [
+    { name: 'MC Agent List', endpoint: '/api/mc/agents', validate: d => `${(d.agents||d||[]).length} active MC agents` },
+    { name: 'MC Prompt Queue', endpoint: '/api/mc/prompts', validate: d => `${(d.prompts||d||[]).length} pending prompts` },
+    { name: 'MC Spawn (PTY)', endpoint: '/api/mc/agents', method: 'POST', body: { task: 'echo health-check-ok', cwd: 'C:/Users/mic/Downloads/pia-system', mode: 'pty', machineId: 'local' }, validate: d => d.id ? `spawned: ${d.id}` : null },
+  ]},
+  { cat: 'DAO Modules', icon: '#bc8cff', items: [
+    { name: 'Module Registry', endpoint: '/api/modules', validate: d => { const m = d.modules||d||[]; return `${m.length || Object.keys(d).length} modules`; } },
+    { name: 'Repository Tracker', endpoint: '/api/repos', validate: d => `${(d.repos||d||[]).count || 0} repos tracked` },
+    { name: 'Work Sessions', endpoint: '/api/work-sessions', validate: d => typeof d === 'object' ? 'sessions active' : null },
+  ]},
+];
+
+let results = { pass: 0, fail: 0, skip: 0, total: 0 };
+
+function renderChecks() {
+  const container = document.getElementById('content');
+  container.innerHTML = '';
+
+  for (const cat of CHECKS) {
+    const section = document.createElement('div');
+    section.className = 'category';
+    section.innerHTML = `
+      <div class="category-header">
+        <div class="category-icon" style="background:${cat.icon}22;color:${cat.icon}">${cat.items.length}</div>
+        <h2>${cat.cat}</h2>
+        <span class="count">${cat.items.length} checks</span>
+      </div>
+      <div class="check-grid" id="cat-${cat.cat.replace(/\s+/g,'-')}"></div>
+    `;
+    container.appendChild(section);
+
+    const grid = section.querySelector('.check-grid');
+    for (const item of cat.items) {
+      const el = document.createElement('div');
+      el.className = 'check-item pending';
+      el.id = `check-${item.endpoint.replace(/[^a-z0-9]/gi, '-')}`;
+      el.innerHTML = `
+        <div class="check-icon pending">-</div>
+        <div class="check-info">
+          <div class="check-name">${item.name}</div>
+          <div class="check-endpoint">${item.method || 'GET'} ${item.endpoint}</div>
+          <div class="check-detail" id="detail-${item.endpoint.replace(/[^a-z0-9]/gi, '-')}"></div>
+        </div>
+        <div class="check-ms" id="ms-${item.endpoint.replace(/[^a-z0-9]/gi, '-')}"></div>
+        <div class="check-status pending" id="status-${item.endpoint.replace(/[^a-z0-9]/gi, '-')}">PENDING</div>
+      `;
+      grid.appendChild(el);
+    }
+  }
+}
+
+async function runCheck(item) {
+  const key = item.endpoint.replace(/[^a-z0-9]/gi, '-');
+  const el = document.getElementById(`check-${key}`);
+  const icon = el.querySelector('.check-icon');
+  const detail = document.getElementById(`detail-${key}`);
+  const ms = document.getElementById(`ms-${key}`);
+  const status = document.getElementById(`status-${key}`);
+
+  // Set running state
+  el.className = 'check-item running';
+  icon.className = 'check-icon running';
+  icon.textContent = '...';
+  status.className = 'check-status pending';
+  status.textContent = 'RUNNING';
+
+  const start = performance.now();
+  try {
+    const opts = { headers: {} };
+    if (item.auth !== false) opts.headers['x-api-token'] = TOKEN;
+    if (item.method === 'POST') {
+      opts.method = 'POST';
+      opts.headers['Content-Type'] = 'application/json';
+      opts.body = JSON.stringify(item.body);
+    }
+
+    const resp = await fetch(API + item.endpoint, opts);
+    const elapsed = Math.round(performance.now() - start);
+    ms.textContent = `${elapsed}ms`;
+
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+    const data = await resp.json();
+    const msg = item.validate(data);
+
+    if (msg) {
+      el.className = 'check-item pass';
+      icon.className = 'check-icon pass';
+      icon.textContent = '\u2713';
+      detail.className = 'check-detail';
+      detail.textContent = msg;
+      status.className = 'check-status pass';
+      status.textContent = 'PASS';
+      results.pass++;
+    } else {
+      throw new Error('Validation failed');
+    }
+  } catch (err) {
+    const elapsed = Math.round(performance.now() - start);
+    ms.textContent = `${elapsed}ms`;
+    el.className = 'check-item fail';
+    icon.className = 'check-icon fail';
+    icon.textContent = '\u2717';
+    detail.className = 'check-detail error';
+    detail.textContent = err.message;
+    status.className = 'check-status fail';
+    status.textContent = 'FAIL';
+    results.fail++;
+  }
+
+  results.total++;
+  updateSummary();
+}
+
+function updateSummary() {
+  const allItems = CHECKS.reduce((n, c) => n + c.items.length, 0);
+  document.getElementById('s-total').textContent = allItems;
+  document.getElementById('s-pass').textContent = results.pass;
+  document.getElementById('s-fail').textContent = results.fail;
+  document.getElementById('s-skip').textContent = allItems - results.total;
+  document.getElementById('progress').style.width = `${(results.total / allItems) * 100}%`;
+
+  if (results.fail > 0) {
+    document.getElementById('progress').style.background = results.fail > allItems / 2 ? '#ff4444' : 'linear-gradient(90deg, #00ff88, #ffaa00)';
+  }
+}
+
+async function runAllChecks() {
+  const btn = document.getElementById('runBtn');
+  btn.disabled = true;
+  btn.textContent = 'Running...';
+  document.getElementById('run-status').textContent = '';
+  results = { pass: 0, fail: 0, skip: 0, total: 0 };
+
+  document.getElementById('timestamp').textContent = new Date().toLocaleString();
+
+  // Run sequentially for clean progress
+  for (const cat of CHECKS) {
+    for (const item of cat.items) {
+      await runCheck(item);
+      // Small delay for visual effect
+      await new Promise(r => setTimeout(r, 80));
+    }
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Run Again';
+  const pct = Math.round((results.pass / results.total) * 100);
+  document.getElementById('run-status').textContent = `${pct}% pass rate`;
+  document.getElementById('run-status').style.color = pct >= 80 ? '#00ff88' : pct >= 50 ? '#ffaa00' : '#ff4444';
+}
+
+// Render on load
+renderChecks();
+// Update total count
+const allItems = CHECKS.reduce((n, c) => n + c.items.length, 0);
+document.getElementById('s-total').textContent = allItems;
+document.getElementById('s-skip').textContent = allItems;
+</script>
+</body>
+</html>

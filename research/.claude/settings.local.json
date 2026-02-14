@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(BRIEFING)",
+      "Bash(souls \")",
+      "WebSearch",
+      "Bash(wc:*)",
+      "WebFetch(domain:claudefa.st)",
+      "WebFetch(domain:code.charliegleason.com)",
+      "Bash(cat:*)",
+      "Bash(find:*)",
+      "mcp__playwright__browser_navigate",
+      "Bash(npx -y http-server:*)",
+      "mcp__windows-mcp__Wait",
+      "Bash(start http-server:*)",
+      "Bash(powershell -Command \"Start-Process ''C:\\\\Users\\\\mic\\\\Downloads\\\\pia-system\\\\public\\\\terminology.html''\")",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:cdn.openai.com)",
+      "WebFetch(domain:amirbrooks.com.au)",
+      "Bash(powershell -Command \"Start-Process ''C:\\\\Users\\\\mic\\\\Downloads\\\\pia-system\\\\public\\\\agent-generator.html''\")",
+      "Bash(powershell -Command \"Start-Process ''C:\\\\Users\\\\mic\\\\Downloads\\\\pia-system\\\\public\\\\handbook.html''\")",
+      "WebFetch(domain:martinfowler.com)",
+      "WebFetch(domain:www.emergentmind.com)",
+      "mcp__windows-mcp__Shell",
+      "WebFetch(domain:developers.openai.com)",
+      "WebFetch(domain:www.aihero.dev)",
+      "WebFetch(domain:dometrain.com)",
+      "Bash(done)",
+      "Bash(powershell -Command \"Start-Process ''C:\\\\Users\\\\mic\\\\Downloads\\\\pia-system\\\\public\\\\how-claude-learns.html''\")"
+    ]
+  }
+}

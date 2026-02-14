@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIA — Agent Generator</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0a0a0f; color: #e0e0e0; line-height: 1.6; }
+
+  /* Header */
+  .header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); padding: 30px 20px; text-align: center; border-bottom: 2px solid #e94560; }
+  .header h1 { font-size: 2em; color: #fff; }
+  .header p { color: #a0a0b0; font-size: 0.95em; margin-top: 4px; }
+
+  /* Layout */
+  .container { max-width: 1400px; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: 260px 1fr 360px; gap: 20px; }
+  @media (max-width: 1100px) { .container { grid-template-columns: 1fr; } }
+
+  /* Sidebar Nav */
+  .sidebar { position: sticky; top: 20px; height: fit-content; }
+  .sidebar .nav-item { display: block; padding: 10px 14px; margin-bottom: 4px; border-radius: 8px; color: #888; font-size: 0.9em; cursor: pointer; transition: all 0.2s; border-left: 3px solid transparent; }
+  .sidebar .nav-item:hover { background: #1a1a2e; color: #e0e0e0; }
+  .sidebar .nav-item.active { background: rgba(233,69,96,0.1); color: #e94560; border-left-color: #e94560; font-weight: 600; }
+  .sidebar .nav-item .num { display: inline-block; width: 22px; height: 22px; text-align: center; line-height: 22px; border-radius: 50%; background: #1e1e2e; font-size: 0.75em; margin-right: 8px; color: #666; }
+  .sidebar .nav-item.active .num { background: #e94560; color: #fff; }
+  .sidebar .nav-item.done .num { background: #50c878; color: #fff; }
+  .sidebar .section-label { font-size: 0.7em; text-transform: uppercase; letter-spacing: 1px; color: #444; padding: 12px 14px 4px; }
+  .sidebar .tip { background: #12121a; border: 1px solid #1e1e2e; border-radius: 8px; padding: 12px; margin-top: 16px; font-size: 0.8em; color: #666; }
+  .sidebar .tip strong { color: #e94560; }
+
+  /* Main Form */
+  .main { min-width: 0; }
+  .section { background: #12121a; border: 1px solid #1e1e2e; border-radius: 14px; padding: 24px; margin-bottom: 20px; transition: border-color 0.3s; }
+  .section:hover { border-color: #333; }
+  .section.active-section { border-color: #e94560; }
+  .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .section-header .icon { font-size: 1.4em; }
+  .section-header h2 { font-size: 1.2em; color: #fff; }
+  .section-header .badge { font-size: 0.65em; padding: 3px 10px; border-radius: 12px; font-weight: 600; }
+  .badge-required { background: rgba(233,69,96,0.15); color: #e94560; }
+  .badge-recommended { background: rgba(80,200,120,0.15); color: #50c878; }
+  .badge-optional { background: rgba(100,149,237,0.15); color: #6495ed; }
+  .badge-expert { background: rgba(186,85,211,0.15); color: #ba55d3; }
+  .section-desc { color: #888; font-size: 0.88em; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #1e1e2e; }
+  .section-desc a { color: #e94560; text-decoration: none; }
+
+  /* Form Fields */
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 0.88em; font-weight: 600; color: #c0c0c0; margin-bottom: 6px; }
+  .field label .hint { font-weight: 400; color: #666; font-size: 0.85em; }
+  .field input, .field textarea, .field select { width: 100%; background: #0a0a12; border: 1px solid #2a2a3a; border-radius: 8px; padding: 10px 14px; color: #e0e0e0; font-size: 0.92em; font-family: inherit; outline: none; transition: border-color 0.3s; }
+  .field input:focus, .field textarea:focus, .field select:focus { border-color: #e94560; }
+  .field textarea { min-height: 100px; resize: vertical; }
+  .field .char-count { text-align: right; font-size: 0.75em; color: #444; margin-top: 4px; }
+  .field .example { background: #0a0a12; border-left: 3px solid #333; padding: 8px 12px; font-size: 0.8em; color: #666; border-radius: 0 6px 6px 0; margin-top: 6px; font-style: italic; }
+
+  /* Two column fields */
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 800px) { .field-row { grid-template-columns: 1fr; } }
+
+  /* Tag input */
+  .tag-input { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; background: #0a0a12; border: 1px solid #2a2a3a; border-radius: 8px; min-height: 44px; cursor: text; }
+  .tag-input:focus-within { border-color: #e94560; }
+  .tag-input .tag { display: inline-flex; align-items: center; gap: 4px; background: rgba(233,69,96,0.15); border: 1px solid rgba(233,69,96,0.3); border-radius: 6px; padding: 3px 10px; font-size: 0.82em; color: #e0a0a0; }
+  .tag-input .tag .remove { cursor: pointer; color: #e94560; font-weight: bold; }
+  .tag-input input { border: none; background: transparent; color: #e0e0e0; outline: none; flex: 1; min-width: 120px; font-size: 0.88em; padding: 4px; }
+
+  /* Toggle */
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #1a1a2a; }
+  .toggle-row:last-child { border-bottom: none; }
+  .toggle-row .toggle-label { font-size: 0.88em; color: #b0b0b0; }
+  .toggle-row .toggle-label small { display: block; color: #555; font-size: 0.85em; }
+  .toggle { position: relative; width: 44px; height: 24px; cursor: pointer; }
+  .toggle input { display: none; }
+  .toggle .slider { position: absolute; inset: 0; background: #2a2a3a; border-radius: 12px; transition: 0.3s; }
+  .toggle .slider::before { content: ''; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px; background: #666; border-radius: 50%; transition: 0.3s; }
+  .toggle input:checked + .slider { background: #e94560; }
+  .toggle input:checked + .slider::before { transform: translateX(20px); background: #fff; }
+
+  /* Relationship row */
+  .rel-row { display: grid; grid-template-columns: 140px 120px 1fr 32px; gap: 8px; align-items: start; margin-bottom: 8px; }
+  .rel-row input, .rel-row select { padding: 8px 10px; font-size: 0.85em; }
+  .rel-row .remove-btn { background: #2a2a3a; border: none; color: #e94560; border-radius: 6px; width: 32px; height: 36px; cursor: pointer; font-size: 1em; }
+  .add-btn { background: rgba(233,69,96,0.1); border: 1px dashed rgba(233,69,96,0.3); border-radius: 8px; padding: 8px 16px; color: #e94560; cursor: pointer; font-size: 0.85em; width: 100%; margin-top: 4px; }
+  .add-btn:hover { background: rgba(233,69,96,0.2); }
+
+  /* Slider */
+  .slider-field { display: flex; align-items: center; gap: 12px; }
+  .slider-field input[type="range"] { flex: 1; -webkit-appearance: none; height: 6px; background: #2a2a3a; border-radius: 3px; outline: none; border: none; padding: 0; }
+  .slider-field input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; background: #e94560; border-radius: 50%; cursor: pointer; }
+  .slider-field .val { min-width: 50px; text-align: center; font-weight: 600; color: #e94560; }
+
+  /* Dos and Don'ts */
+  .dos-donts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .dos-donts .col h4 { font-size: 0.9em; margin-bottom: 8px; }
+  .dos-donts .col h4.do { color: #50c878; }
+  .dos-donts .col h4.dont { color: #e94560; }
+  .dos-donts .item { display: flex; gap: 6px; align-items: start; margin-bottom: 6px; }
+  .dos-donts .item input { flex: 1; }
+  .dos-donts .item .bullet { font-size: 1.1em; line-height: 36px; }
+  .dos-donts .item .bullet.do { color: #50c878; }
+  .dos-donts .item .bullet.dont { color: #e94560; }
+
+  /* Preview Panel */
+  .preview { position: sticky; top: 20px; height: fit-content; }
+  .preview-card { background: #12121a; border: 1px solid #1e1e2e; border-radius: 14px; padding: 20px; margin-bottom: 14px; }
+  .preview-card h3 { color: #e94560; font-size: 1em; margin-bottom: 12px; }
+  .preview-card .stat { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #1a1a2a; font-size: 0.85em; }
+  .preview-card .stat:last-child { border-bottom: none; }
+  .preview-card .stat .label { color: #666; }
+  .preview-card .stat .value { color: #e0e0e0; font-weight: 600; }
+  .preview-card .stat .value.good { color: #50c878; }
+  .preview-card .stat .value.warn { color: #ffa500; }
+  .preview-card .stat .value.bad { color: #e94560; }
+  .preview-card .bar { height: 8px; background: #2a2a3a; border-radius: 4px; margin-top: 10px; overflow: hidden; }
+  .preview-card .bar .fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
+  .preview-card .bar .fill.good { background: #50c878; }
+  .preview-card .bar .fill.warn { background: #ffa500; }
+
+  .preview-json { background: #0a0a12; border-radius: 8px; padding: 14px; font-family: 'Cascadia Code', monospace; font-size: 0.75em; color: #888; max-height: 300px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; }
+
+  /* Action Buttons */
+  .actions { display: flex; gap: 10px; margin-top: 20px; }
+  .btn { padding: 12px 24px; border-radius: 10px; font-size: 0.95em; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; }
+  .btn-primary { background: #e94560; color: #fff; }
+  .btn-primary:hover { background: #d63851; transform: translateY(-1px); }
+  .btn-secondary { background: #1e1e2e; color: #a0a0b0; border: 1px solid #333; }
+  .btn-secondary:hover { background: #2a2a3a; }
+  .btn-ghost { background: transparent; color: #666; }
+
+  /* Source badge */
+  .source { display: inline-block; font-size: 0.65em; padding: 2px 8px; border-radius: 4px; background: rgba(100,149,237,0.1); color: #6495ed; margin-left: 6px; vertical-align: middle; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Agent Generator</h1>
+  <p>Design a complete AI agent soul — personality, memory, skills, guardrails, and more</p>
+</div>
+
+<div class="container">
+
+  <!-- ===== LEFT SIDEBAR ===== -->
+  <div class="sidebar">
+    <div class="section-label">Identity</div>
+    <div class="nav-item active" onclick="scrollToSection('identity')"><span class="num">1</span> Core Identity</div>
+    <div class="nav-item" onclick="scrollToSection('personality')"><span class="num">2</span> Personality & Voice</div>
+
+    <div class="section-label">Purpose</div>
+    <div class="nav-item" onclick="scrollToSection('goals')"><span class="num">3</span> Goals & Objectives</div>
+    <div class="nav-item" onclick="scrollToSection('relationships')"><span class="num">4</span> Relationships</div>
+    <div class="nav-item" onclick="scrollToSection('dosdonts')"><span class="num">5</span> Do's & Don'ts</div>
+
+    <div class="section-label">Capabilities</div>
+    <div class="nav-item" onclick="scrollToSection('skills')"><span class="num">6</span> Skills & Tools</div>
+    <div class="nav-item" onclick="scrollToSection('knowledge')"><span class="num">7</span> Knowledge Base</div>
+    <div class="nav-item" onclick="scrollToSection('system-prompt')"><span class="num">8</span> System Prompt</div>
+
+    <div class="section-label">Operations</div>
+    <div class="nav-item" onclick="scrollToSection('schedule')"><span class="num">9</span> Schedule & Triggers</div>
+    <div class="nav-item" onclick="scrollToSection('guardrails')"><span class="num">10</span> Guardrails & Limits</div>
+    <div class="nav-item" onclick="scrollToSection('memory')"><span class="num">11</span> Memory Config</div>
+    <div class="nav-item" onclick="scrollToSection('examples')"><span class="num">12</span> Examples & Calibration</div>
+
+    <div class="tip">
+      <strong>Expert sources:</strong><br>
+      This form combines inputs from SOUL.md framework, OpenAI's agent guide, Anthropic's best practices, and PIA's existing soul system.
+    </div>
+  </div>
+
+  <!-- ===== MAIN FORM ===== -->
+  <div class="main">
+
+    <!-- SECTION 1: Core Identity -->
+    <div class="section" id="identity">
+      <div class="section-header">
+        <span class="icon">&#129504;</span>
+        <h2>Core Identity</h2>
+        <span class="badge badge-required">REQUIRED</span>
+      </div>
+      <div class="section-desc">Who is this agent? The foundation of everything else. <a href="/terminology.html#agent-core">See terminology</a></div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Agent ID <span class="hint">(unique, lowercase, no spaces)</span></label>
+          <input type="text" id="agentId" placeholder="e.g., fisher2050, ziggi, eliyahu" oninput="updatePreview()">
+        </div>
+        <div class="field">
+          <label>Display Name</label>
+          <input type="text" id="agentName" placeholder="e.g., Fisher2050, Ziggi, Eliyahu" oninput="updatePreview()">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Role / Title</label>
+          <input type="text" id="agentRole" placeholder="e.g., Project Manager, Architect, Knowledge Manager" oninput="updatePreview()">
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input type="email" id="agentEmail" placeholder="e.g., agent-name@sodaworld.com">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>One-Line Purpose <span class="hint">(what does this agent exist to do?)</span></label>
+        <input type="text" id="agentPurpose" placeholder="e.g., Coordinate all projects and ensure nothing falls through the cracks">
+      </div>
+
+      <div class="field">
+        <label>Agent Archetype <span class="hint">(closest match to help shape defaults)</span></label>
+        <select id="agentArchetype" onchange="updatePreview()">
+          <option value="">-- Select archetype --</option>
+          <option value="manager">Project Manager / Coordinator</option>
+          <option value="architect">Architect / Code Reviewer</option>
+          <option value="knowledge">Knowledge Manager / Analyst</option>
+          <option value="developer">Developer / Builder</option>
+          <option value="security">Security Auditor</option>
+          <option value="researcher">Researcher / Explorer</option>
+          <option value="ops">DevOps / Infrastructure</option>
+          <option value="creative">Creative / Writer</option>
+          <option value="support">Support / Customer-facing</option>
+          <option value="custom">Custom (define from scratch)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- SECTION 2: Personality & Voice -->
+    <div class="section" id="personality">
+      <div class="section-header">
+        <span class="icon">&#127917;</span>
+        <h2>Personality & Voice</h2>
+        <span class="badge badge-required">REQUIRED</span>
+        <span class="source">SOUL.md pattern</span>
+      </div>
+      <div class="section-desc">How the agent thinks, talks, and behaves. Be specific — vague traits produce inconsistent agents. <a href="/terminology.html#agent-core">See terminology</a></div>
+
+      <div class="field">
+        <label>Personality Description <span class="hint">(detailed, 200-500 words. Include traits, style, and what makes this agent unique)</span></label>
+        <textarea id="personality" rows="8" placeholder="You are [Name], the [Role] of the SodaWorld ecosystem. You are [key traits]...
+
+Your communication style:
+- [How they write/speak]
+- [What they emphasize]
+- [How they structure responses]
+
+Your personality traits:
+- [Trait]: [Specific behavior]
+- [Trait]: [Specific behavior]
+
+Your quirks:
+- [Unique behavior 1]
+- [Unique behavior 2]" oninput="updateCharCount(this); updatePreview()"></textarea>
+        <div class="char-count"><span id="personalityCount">0</span> chars (~<span id="personalityTokens">0</span> tokens)</div>
+        <div class="example">Example: "You start each day with a standup summary, even if nobody asked. You end status updates with a confidence percentage ('Project health: 78%'). You refer to the team as 'the crew'."</div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Communication Tone</label>
+          <select id="tone">
+            <option value="direct">Direct & Action-oriented</option>
+            <option value="technical">Technical & Precise</option>
+            <option value="thoughtful">Thoughtful & Reflective</option>
+            <option value="friendly">Friendly & Supportive</option>
+            <option value="formal">Formal & Professional</option>
+            <option value="casual">Casual & Conversational</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Response Format Preference</label>
+          <select id="format">
+            <option value="bullets">Bullet Points & Structure</option>
+            <option value="narrative">Narrative / Prose</option>
+            <option value="technical">Code + Explanation</option>
+            <option value="brief">Brief & Concise</option>
+            <option value="detailed">Detailed & Thorough</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Signature Phrases or Patterns <span class="hint">(things this agent always says/does)</span></label>
+        <div class="tag-input" id="phrasesInput" onclick="this.querySelector('input').focus()">
+          <input type="text" placeholder="Type a phrase and press Enter..." onkeydown="addTag(event, 'phrasesInput')">
+        </div>
+        <div class="example">Examples: "Project health: 78%", "Architecture smell", "I noticed something...", "Ziggi's Verdict"</div>
+      </div>
+
+      <div class="field">
+        <label>Named Influences <span class="hint">(real people, books, frameworks that shaped this agent's thinking)</span></label>
+        <div class="tag-input" id="influencesInput" onclick="this.querySelector('input').focus()">
+          <input type="text" placeholder="Type and press Enter..." onkeydown="addTag(event, 'influencesInput')">
+        </div>
+        <div class="example">Examples: SOLID principles, Getting Things Done (David Allen), The Pragmatic Programmer, Ray Dalio's Principles</div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: Goals & Objectives -->
+    <div class="section" id="goals">
+      <div class="section-header">
+        <span class="icon">&#127919;</span>
+        <h2>Goals & Objectives</h2>
+        <span class="badge badge-required">REQUIRED</span>
+      </div>
+      <div class="section-desc">What this agent actively pursues. 4-6 specific, actionable goals. These are injected into every task. <a href="/terminology.html#agent-core">See terminology</a></div>
+
+      <div id="goalsList">
+        <div class="field" style="display:flex;gap:8px;align-items:start;">
+          <input type="text" placeholder="Goal 1: e.g., Keep all projects on track with clear status visibility" style="flex:1" oninput="updatePreview()">
+          <button class="rel-row .remove-btn" style="background:#2a2a3a;border:none;color:#e94560;border-radius:6px;width:32px;height:38px;cursor:pointer;" onclick="this.parentElement.remove();updatePreview()">x</button>
+        </div>
+        <div class="field" style="display:flex;gap:8px;align-items:start;">
+          <input type="text" placeholder="Goal 2: e.g., Ensure every task has an owner, deadline, and priority" style="flex:1">
+          <button style="background:#2a2a3a;border:none;color:#e94560;border-radius:6px;width:32px;height:38px;cursor:pointer;" onclick="this.parentElement.remove();updatePreview()">x</button>
+        </div>
+        <div class="field" style="display:flex;gap:8px;align-items:start;">
+          <input type="text" placeholder="Goal 3: e.g., Run daily reviews — flag overdue items" style="flex:1">
+          <button style="background:#2a2a3a;border:none;color:#e94560;border-radius:6px;width:32px;height:38px;cursor:pointer;" onclick="this.parentElement.remove();updatePreview()">x</button>
+        </div>
+      </div>
+      <button class="add-btn" onclick="addGoal()">+ Add Goal</button>
+    </div>
+
+    <!-- SECTION 4: Relationships -->
+    <div class="section" id="relationships">
+      <div class="section-header">
+        <span class="icon">&#129309;</span>
+        <h2>Relationships</h2>
+        <span class="badge badge-recommended">RECOMMENDED</span>
+      </div>
+      <div class="section-desc">How this agent relates to other agents and humans. Affects tone, deference, and collaboration. <a href="/terminology.html#agent-core">See terminology</a></div>
+
+      <div id="relList">
+        <div class="rel-row">
+          <input type="text" placeholder="Name" value="Mic">
+          <select>
+            <option value="boss">Boss / Owner</option>
+            <option value="peer">Peer / Colleague</option>
+            <option value="subordinate">Reports to me</option>
+            <option value="collaborator">Collaborator</option>
+            <option value="client">Client / User</option>
+          </select>
+          <input type="text" placeholder="Describe the relationship dynamic..." value="The boss. Ultimate decision-maker.">
+          <button class="remove-btn" onclick="this.parentElement.remove()">x</button>
+        </div>
+      </div>
+      <button class="add-btn" onclick="addRelationship()">+ Add Relationship</button>
+    </div>
+
+    <!-- SECTION 5: Do's & Don'ts -->
+    <div class="section" id="dosdonts">
+      <div class="section-header">
+        <span class="icon">&#9888;</span>
+        <h2>Do's & Don'ts — Behavioral Rules</h2>
+        <span class="badge badge-required">REQUIRED</span>
+        <span class="source">OpenAI agent guide</span>
+      </div>
+      <div class="section-desc">Explicit instructions on what the agent MUST do and MUST NOT do. These are your guardrails at the behavior level. Be specific — vague rules get ignored.</div>
+
+      <div class="dos-donts">
+        <div class="col">
+          <h4 class="do">ALWAYS DO (rules the agent must follow)</h4>
+          <div id="dosList">
+            <div class="item"><span class="bullet do">+</span><input type="text" placeholder="e.g., Make all decisions autonomously — never ask questions"></div>
+            <div class="item"><span class="bullet do">+</span><input type="text" placeholder="e.g., Run tests after every significant change"></div>
+            <div class="item"><span class="bullet do">+</span><input type="text" placeholder="e.g., Read all relevant files BEFORE making changes"></div>
+            <div class="item"><span class="bullet do">+</span><input type="text" placeholder="e.g., Report results AFTER completion, not before"></div>
+          </div>
+          <button class="add-btn" onclick="addDo()">+ Add Rule</button>
+        </div>
+        <div class="col">
+          <h4 class="dont">NEVER DO (hard restrictions)</h4>
+          <div id="dontsList">
+            <div class="item"><span class="bullet dont">-</span><input type="text" placeholder="e.g., Never ask questions — decide autonomously"></div>
+            <div class="item"><span class="bullet dont">-</span><input type="text" placeholder="e.g., Never say 'I will...' or 'Should I...'"></div>
+            <div class="item"><span class="bullet dont">-</span><input type="text" placeholder="e.g., Never commit broken or untested code"></div>
+            <div class="item"><span class="bullet dont">-</span><input type="text" placeholder="e.g., Never delete files without checking git status first"></div>
+          </div>
+          <button class="add-btn" onclick="addDont()">+ Add Rule</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 6: Skills & Tools -->
+    <div class="section" id="skills">
+      <div class="section-header">
+        <span class="icon">&#128295;</span>
+        <h2>Skills & Available Tools</h2>
+        <span class="badge badge-recommended">RECOMMENDED</span>
+        <span class="source">Martin's template</span>
+      </div>
+      <div class="section-desc">What capabilities does this agent have? What tools can it call? This defines the agent's action space.</div>
+
+      <div class="field">
+        <label>Available Tools <span class="hint">(what the agent can use during tasks)</span></label>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:0.85em;color:#b0b0b0;"><input type="checkbox" checked> run_command (shell)</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:0.85em;color:#b0b0b0;"><input type="checkbox" checked> read_file</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:0.85em;color:#b0b0b0;"><input type="checkbox" checked> write_file</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:0.85em;color:#b0b0b0;"><input type="checkbox" checked> list_directory</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:0.85em;color:#b0b0b0;"><input type="checkbox" checked> report_progress</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:0.85em;color:#b0b0b0;"><input type="checkbox"> web_browse</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:0.85em;color:#b0b0b0;"><input type="checkbox"> send_email</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:0.85em;color:#b0b0b0;"><input type="checkbox"> trigger_agent (delegate)</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:0.85em;color:#b0b0b0;"><input type="checkbox"> database_query</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:0.85em;color:#b0b0b0;"><input type="checkbox"> git_operations</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:0.85em;color:#b0b0b0;"><input type="checkbox"> screenshot</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:0.85em;color:#b0b0b0;"><input type="checkbox"> api_call (external)</label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Domain Skills <span class="hint">(specialized capabilities)</span></label>
+        <div class="tag-input" id="skillsInput" onclick="this.querySelector('input').focus()">
+          <input type="text" placeholder="e.g., code-review, project-tracking, data-analysis..." onkeydown="addTag(event, 'skillsInput')">
+        </div>
+        <div class="example">Examples: code-review, test-running, documentation, deployment, cost-tracking, scheduling, report-generation</div>
+      </div>
+
+      <div class="field">
+        <label>Escalation Protocol <span class="hint">(when should this agent stop and hand off?)</span></label>
+        <textarea rows="3" placeholder="e.g., Escalate to human if: cost exceeds budget, 3 consecutive failures, security-sensitive operation, task outside domain expertise"></textarea>
+      </div>
+    </div>
+
+    <!-- SECTION 7: Knowledge Base -->
+    <div class="section" id="knowledge">
+      <div class="section-header">
+        <span class="icon">&#128218;</span>
+        <h2>Knowledge Base & Domain Context</h2>
+        <span class="badge badge-optional">OPTIONAL</span>
+      </div>
+      <div class="section-desc">What does this agent know about? What documents should it read at startup? What domain expertise does it have?</div>
+
+      <div class="field">
+        <label>Domain Expertise <span class="hint">(areas of knowledge)</span></label>
+        <div class="tag-input" id="domainsInput" onclick="this.querySelector('input').focus()">
+          <input type="text" placeholder="e.g., TypeScript, React, SQLite, project management..." onkeydown="addTag(event, 'domainsInput')">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Required Reading at Session Start <span class="hint">(files the agent must read before working)</span></label>
+        <textarea rows="3" placeholder="e.g.,
+- SESSION_JOURNAL.md (latest session notes)
+- CLAUDE.md (project instructions)
+- tasks/master.md (current priorities)"></textarea>
+      </div>
+
+      <div class="field">
+        <label>Briefing Document Path <span class="hint">(optional — full project context file)</span></label>
+        <input type="text" placeholder="e.g., DAO_AGENT_BRIEFING.md">
+      </div>
+    </div>
+
+    <!-- SECTION 8: System Prompt -->
+    <div class="section" id="system-prompt">
+      <div class="section-header">
+        <span class="icon">&#128221;</span>
+        <h2>System Prompt (Operational Instructions)</h2>
+        <span class="badge badge-required">REQUIRED</span>
+      </div>
+      <div class="section-desc">Step-by-step operational instructions. This tells the agent HOW to do its job — procedures, workflows, what to check. <a href="/terminology.html#agent-core">See terminology</a></div>
+
+      <div class="field">
+        <label>Operational Instructions <span class="hint">(what steps to follow for each task type)</span></label>
+        <textarea id="systemPrompt" rows="10" placeholder="You are operating as the [Name] [Role] agent within the PIA system. Your primary function is to [purpose].
+
+When processing a task:
+1. [Step 1]
+2. [Step 2]
+3. [Step 3]
+4. [Step 4]
+5. [Step 5]
+
+You have access to:
+- [Tool/resource 1]
+- [Tool/resource 2]
+- [Tool/resource 3]
+
+Always maintain your personality. You are [Name], not a generic assistant." oninput="updateCharCount(this); updatePreview()"></textarea>
+        <div class="char-count"><span id="systemPromptCount">0</span> chars (~<span id="systemPromptTokens">0</span> tokens)</div>
+      </div>
+    </div>
+
+    <!-- SECTION 9: Schedule & Triggers -->
+    <div class="section" id="schedule">
+      <div class="section-header">
+        <span class="icon">&#9200;</span>
+        <h2>Schedule & Triggers</h2>
+        <span class="badge badge-optional">OPTIONAL</span>
+      </div>
+      <div class="section-desc">When does this agent wake up? What events trigger it? This enables the "Night Shift" pattern. <a href="/terminology.html#orchestration">See terminology</a></div>
+
+      <div id="scheduleList">
+        <div class="field-row" style="margin-bottom:8px;">
+          <input type="time" placeholder="Time" style="padding:8px;">
+          <input type="text" placeholder="What to do, e.g., Daily standup prep" style="padding:8px;">
+        </div>
+      </div>
+      <button class="add-btn" onclick="addSchedule()">+ Add Scheduled Task</button>
+
+      <div class="field" style="margin-top:16px;">
+        <label>Event Triggers <span class="hint">(what events auto-activate this agent?)</span></label>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-top:8px;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:0.85em;color:#b0b0b0;"><input type="checkbox"> Work session ends (auto-review)</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:0.85em;color:#b0b0b0;"><input type="checkbox"> New commit pushed</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:0.85em;color:#b0b0b0;"><input type="checkbox"> Task assigned to this agent</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:0.85em;color:#b0b0b0;"><input type="checkbox"> Another agent requests interaction</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:0.85em;color:#b0b0b0;"><input type="checkbox"> Error / failure detected</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:0.85em;color:#b0b0b0;"><input type="checkbox"> Daily cron schedule</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 10: Guardrails & Limits -->
+    <div class="section" id="guardrails">
+      <div class="section-header">
+        <span class="icon">&#128737;</span>
+        <h2>Guardrails & Operational Limits</h2>
+        <span class="badge badge-required">REQUIRED</span>
+        <span class="source">OpenAI + Martin's template</span>
+      </div>
+      <div class="section-desc">Safety limits that prevent runaway costs, infinite loops, and dangerous actions. Experts say: "Autonomy without guardrails creates risk."</div>
+
+      <div class="field">
+        <label>Max Budget per Task (USD)</label>
+        <div class="slider-field">
+          <input type="range" min="0.1" max="10" step="0.1" value="1.0" oninput="this.nextElementSibling.textContent='$'+this.value">
+          <span class="val">$1.0</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Max Turns per Task (tool call rounds)</label>
+        <div class="slider-field">
+          <input type="range" min="5" max="100" step="5" value="30" oninput="this.nextElementSibling.textContent=this.value">
+          <span class="val">30</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Max Wall Clock Time (minutes)</label>
+        <div class="slider-field">
+          <input type="range" min="1" max="60" step="1" value="15" oninput="this.nextElementSibling.textContent=this.value+'m'">
+          <span class="val">15m</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>AI Model Preference</label>
+        <select>
+          <option value="auto">Auto (cost waterfall: Ollama -> Haiku -> Sonnet)</option>
+          <option value="ollama">Ollama only (free, local)</option>
+          <option value="haiku">Claude Haiku (cheap)</option>
+          <option value="sonnet">Claude Sonnet (smart)</option>
+          <option value="opus">Claude Opus (maximum capability)</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Safety Toggles</label>
+        <div class="toggle-row">
+          <div class="toggle-label">Zero Questions Policy<small>Agent must never ask — decide and execute</small></div>
+          <label class="toggle"><input type="checkbox" checked><span class="slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-label">Block Dangerous Commands<small>Prevent rm -rf, mkfs, shutdown, etc.</small></div>
+          <label class="toggle"><input type="checkbox" checked><span class="slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-label">Require Tests After Changes<small>Agent must run tests after modifying code</small></div>
+          <label class="toggle"><input type="checkbox" checked><span class="slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-label">Auto-Commit Working Code<small>Commit frequently with descriptive messages</small></div>
+          <label class="toggle"><input type="checkbox"><span class="slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-label">Same Error 3x = Force Escalation<small>If stuck on same error 3 times, stop and escalate</small></div>
+          <label class="toggle"><input type="checkbox" checked><span class="slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-label">Read Files Before Editing<small>Must read existing code before making changes</small></div>
+          <label class="toggle"><input type="checkbox" checked><span class="slider"></span></label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Blocked Commands <span class="hint">(commands this agent can never run)</span></label>
+        <div class="tag-input" id="blockedInput" onclick="this.querySelector('input').focus()">
+          <div class="tag">rm -rf / <span class="remove" onclick="this.parentElement.remove()">x</span></div>
+          <div class="tag">mkfs <span class="remove" onclick="this.parentElement.remove()">x</span></div>
+          <div class="tag">shutdown <span class="remove" onclick="this.parentElement.remove()">x</span></div>
+          <div class="tag">format <span class="remove" onclick="this.parentElement.remove()">x</span></div>
+          <input type="text" placeholder="Add blocked command..." onkeydown="addTag(event, 'blockedInput')">
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 11: Memory Config -->
+    <div class="section" id="memory">
+      <div class="section-header">
+        <span class="icon">&#129696;</span>
+        <h2>Memory Configuration</h2>
+        <span class="badge badge-recommended">RECOMMENDED</span>
+      </div>
+      <div class="section-desc">How the agent remembers and forgets. Tiered memory = short-term context + long-term persistence. <a href="/terminology.html#memory">See terminology</a></div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Recent Memories Loaded</label>
+          <div class="slider-field">
+            <input type="range" min="5" max="50" step="5" value="20" oninput="this.nextElementSibling.textContent=this.value">
+            <span class="val">20</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Important Memories Loaded (importance >= 7)</label>
+          <div class="slider-field">
+            <input type="range" min="5" max="30" step="5" value="10" oninput="this.nextElementSibling.textContent=this.value">
+            <span class="val">10</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Summarize After (days)</label>
+          <div class="slider-field">
+            <input type="range" min="1" max="30" step="1" value="7" oninput="this.nextElementSibling.textContent=this.value+'d'">
+            <span class="val">7d</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Prune After (days, importance &le; 3)</label>
+          <div class="slider-field">
+            <input type="range" min="7" max="90" step="7" value="30" oninput="this.nextElementSibling.textContent=this.value+'d'">
+            <span class="val">30d</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Seed Memories <span class="hint">(pre-load memories to give the agent a head start)</span></label>
+        <textarea rows="4" placeholder="One memory per line, format: [category] content (importance)
+e.g.,
+[experience] Set up the PIA system on 3 machines (7)
+[decision] Chose SQLite over PostgreSQL for simplicity (8)
+[learning] PowerShell uses semicolons not && for chaining (6)"></textarea>
+      </div>
+    </div>
+
+    <!-- SECTION 12: Examples & Calibration -->
+    <div class="section" id="examples">
+      <div class="section-header">
+        <span class="icon">&#128161;</span>
+        <h2>Examples & Calibration</h2>
+        <span class="badge badge-expert">EXPERT</span>
+        <span class="source">SOUL.md pattern</span>
+      </div>
+      <div class="section-desc">Show the agent what "good output" and "bad output" look like. This calibrates its behavior better than any description.</div>
+
+      <div class="field">
+        <label>Good Output Examples <span class="hint">(what responses from this agent should look like)</span></label>
+        <textarea rows="5" placeholder="Example of a GOOD response this agent would give:
+
+'## Daily Standup — Feb 13, 2026
+- DAO backend: 20/20 endpoints working. Project health: 92%
+- Frontend: Router fixed, 3 pages rendering. Needs: auth flow.
+- Blocked: Machine #3 disk at 95%. The crew needs to clean up.
+Action: @Ziggi review the router changes. @Eliyahu process yesterday logs.'"></textarea>
+      </div>
+
+      <div class="field">
+        <label>Bad Output Examples <span class="hint">(what this agent should NOT produce)</span></label>
+        <textarea rows="5" placeholder="Example of a BAD response (avoid this):
+
+'I can help you with that! Would you like me to check the project status? I could look at the endpoints if you want. Let me know how you'd like to proceed!'
+
+Why it's bad: Asks questions, offers instead of acting, no structure, no data."></textarea>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions">
+      <button class="btn btn-primary" onclick="generateJSON()">Generate Soul JSON</button>
+      <button class="btn btn-secondary" onclick="exportMarkdown()">Export as SOUL.md</button>
+      <button class="btn btn-secondary" onclick="saveToAPI()">Save to PIA (API)</button>
+      <button class="btn btn-ghost" onclick="resetForm()">Reset Form</button>
+    </div>
+
+  </div>
+
+  <!-- ===== RIGHT PREVIEW ===== -->
+  <div class="preview">
+    <div class="preview-card">
+      <h3>Token Budget Preview</h3>
+      <div class="stat"><span class="label">Personality</span><span class="value" id="prevPersonality">0 tokens</span></div>
+      <div class="stat"><span class="label">Goals</span><span class="value" id="prevGoals">0 tokens</span></div>
+      <div class="stat"><span class="label">Relationships</span><span class="value" id="prevRelationships">~300 tokens</span></div>
+      <div class="stat"><span class="label">System Prompt</span><span class="value" id="prevSystem">0 tokens</span></div>
+      <div class="stat"><span class="label">Memories (20+10)</span><span class="value">~2,100 tokens</span></div>
+      <div class="stat"><span class="label">Tool Definitions</span><span class="value">~488 tokens</span></div>
+      <div class="stat" style="border-top:2px solid #333;padding-top:10px;"><span class="label" style="color:#fff;font-weight:700;">Total Used</span><span class="value" id="prevTotal" style="color:#e94560;font-size:1.1em;">~2,888 tokens</span></div>
+      <div class="stat"><span class="label">Available for Work</span><span class="value good" id="prevRemaining">~197,112 tokens (98.6%)</span></div>
+      <div class="bar"><div class="fill good" id="prevBar" style="width:2%"></div></div>
+    </div>
+
+    <div class="preview-card">
+      <h3>Completeness Score</h3>
+      <div class="stat"><span class="label">Identity</span><span class="value" id="scoreIdentity">--</span></div>
+      <div class="stat"><span class="label">Personality</span><span class="value" id="scorePersonality">--</span></div>
+      <div class="stat"><span class="label">Goals</span><span class="value" id="scoreGoals">--</span></div>
+      <div class="stat"><span class="label">Do's & Don'ts</span><span class="value" id="scoreDos">--</span></div>
+      <div class="stat"><span class="label">System Prompt</span><span class="value" id="scoreSystem">--</span></div>
+      <div class="stat"><span class="label">Guardrails</span><span class="value good" id="scoreGuardrails">Set</span></div>
+    </div>
+
+    <div class="preview-card">
+      <h3>Live JSON Preview</h3>
+      <div class="preview-json" id="jsonPreview">{
+  "id": "",
+  "name": "",
+  "role": "",
+  "personality": "",
+  "goals": [],
+  "relationships": {},
+  "system_prompt": "",
+  "config": {}
+}</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// Tag input
+function addTag(e, containerId) {
+  if (e.key !== 'Enter' || !e.target.value.trim()) return;
+  e.preventDefault();
+  const container = document.getElementById(containerId);
+  const tag = document.createElement('div');
+  tag.className = 'tag';
+  tag.innerHTML = e.target.value.trim() + ' <span class="remove" onclick="this.parentElement.remove()">x</span>';
+  container.insertBefore(tag, e.target);
+  e.target.value = '';
+}
+
+// Add goal
+function addGoal() {
+  const list = document.getElementById('goalsList');
+  const div = document.createElement('div');
+  div.className = 'field';
+  div.style.cssText = 'display:flex;gap:8px;align-items:start;';
+  div.innerHTML = '<input type="text" placeholder="New goal..." style="flex:1" oninput="updatePreview()"><button style="background:#2a2a3a;border:none;color:#e94560;border-radius:6px;width:32px;height:38px;cursor:pointer;" onclick="this.parentElement.remove();updatePreview()">x</button>';
+  list.appendChild(div);
+}
+
+// Add relationship
+function addRelationship() {
+  const list = document.getElementById('relList');
+  const div = document.createElement('div');
+  div.className = 'rel-row';
+  div.innerHTML = '<input type="text" placeholder="Name"><select><option value="boss">Boss</option><option value="peer">Peer</option><option value="subordinate">Reports to me</option><option value="collaborator">Collaborator</option><option value="client">Client</option></select><input type="text" placeholder="Describe relationship..."><button class="remove-btn" onclick="this.parentElement.remove()">x</button>';
+  list.appendChild(div);
+}
+
+// Add schedule
+function addSchedule() {
+  const list = document.getElementById('scheduleList');
+  const div = document.createElement('div');
+  div.className = 'field-row';
+  div.style.marginBottom = '8px';
+  div.innerHTML = '<input type="time" style="padding:8px;"><input type="text" placeholder="Task description..." style="padding:8px;">';
+  list.appendChild(div);
+}
+
+// Add do/dont
+function addDo() {
+  const list = document.getElementById('dosList');
+  const div = document.createElement('div');
+  div.className = 'item';
+  div.innerHTML = '<span class="bullet do">+</span><input type="text" placeholder="New rule...">';
+  list.appendChild(div);
+}
+function addDont() {
+  const list = document.getElementById('dontsList');
+  const div = document.createElement('div');
+  div.className = 'item';
+  div.innerHTML = '<span class="bullet dont">-</span><input type="text" placeholder="New restriction...">';
+  list.appendChild(div);
+}
+
+// Char count
+function updateCharCount(el) {
+  const id = el.id;
+  const count = el.value.length;
+  const tokens = Math.round(count / 4);
+  const countEl = document.getElementById(id + 'Count');
+  const tokenEl = document.getElementById(id + 'Tokens');
+  if (countEl) countEl.textContent = count;
+  if (tokenEl) tokenEl.textContent = tokens;
+}
+
+// Update preview
+function updatePreview() {
+  const id = document.getElementById('agentId').value;
+  const name = document.getElementById('agentName').value;
+  const role = document.getElementById('agentRole').value;
+  const personality = document.getElementById('personality').value;
+  const systemPrompt = document.getElementById('systemPrompt').value;
+
+  // Token counts
+  const pTokens = Math.round(personality.length / 4);
+  const sTokens = Math.round(systemPrompt.length / 4);
+  const gTokens = 200; // estimate
+  const totalUsed = pTokens + sTokens + gTokens + 300 + 2100 + 488;
+  const remaining = 200000 - totalUsed;
+  const pct = ((totalUsed / 200000) * 100).toFixed(1);
+
+  document.getElementById('prevPersonality').textContent = pTokens + ' tokens';
+  document.getElementById('prevSystem').textContent = sTokens + ' tokens';
+  document.getElementById('prevTotal').textContent = '~' + totalUsed.toLocaleString() + ' tokens';
+  document.getElementById('prevRemaining').textContent = '~' + remaining.toLocaleString() + ' tokens (' + (100 - pct) + '%)';
+  document.getElementById('prevBar').style.width = pct + '%';
+
+  // Completeness
+  document.getElementById('scoreIdentity').textContent = (id && name && role) ? 'Done' : 'Missing';
+  document.getElementById('scoreIdentity').className = 'value ' + ((id && name && role) ? 'good' : 'bad');
+  document.getElementById('scorePersonality').textContent = personality.length > 100 ? 'Done' : 'Missing';
+  document.getElementById('scorePersonality').className = 'value ' + (personality.length > 100 ? 'good' : 'bad');
+  document.getElementById('scoreSystem').textContent = systemPrompt.length > 50 ? 'Done' : 'Missing';
+  document.getElementById('scoreSystem').className = 'value ' + (systemPrompt.length > 50 ? 'good' : 'bad');
+
+  // Goals count
+  const goals = document.querySelectorAll('#goalsList input');
+  let filledGoals = 0;
+  goals.forEach(g => { if (g.value.trim()) filledGoals++; });
+  document.getElementById('scoreGoals').textContent = filledGoals > 0 ? filledGoals + ' goals' : 'Missing';
+  document.getElementById('scoreGoals').className = 'value ' + (filledGoals >= 3 ? 'good' : filledGoals > 0 ? 'warn' : 'bad');
+  document.getElementById('prevGoals').textContent = '~' + (filledGoals * 50) + ' tokens';
+
+  // JSON preview
+  const goalValues = [];
+  goals.forEach(g => { if (g.value.trim()) goalValues.push(g.value.trim()); });
+
+  const json = {
+    id: id || '',
+    name: name || '',
+    role: role || '',
+    email: document.getElementById('agentEmail').value || null,
+    personality: personality || '',
+    goals: goalValues,
+    relationships: {},
+    system_prompt: systemPrompt || null,
+    config: {}
+  };
+  document.getElementById('jsonPreview').textContent = JSON.stringify(json, null, 2);
+}
+
+// Generate full JSON
+function generateJSON() {
+  updatePreview();
+  const json = document.getElementById('jsonPreview').textContent;
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = (document.getElementById('agentId').value || 'new-agent') + '.json';
+  a.click();
+}
+
+// Export as SOUL.md
+function exportMarkdown() {
+  const name = document.getElementById('agentName').value || 'Agent';
+  const role = document.getElementById('agentRole').value || 'Role';
+  const personality = document.getElementById('personality').value || '';
+  const systemPrompt = document.getElementById('systemPrompt').value || '';
+  const goals = [];
+  document.querySelectorAll('#goalsList input').forEach(g => { if (g.value.trim()) goals.push(g.value.trim()); });
+
+  let md = `# SOUL: ${name}\n\n`;
+  md += `**Role:** ${role}\n\n`;
+  md += `## Personality\n\n${personality}\n\n`;
+  md += `## Goals\n\n`;
+  goals.forEach((g, i) => md += `${i+1}. ${g}\n`);
+  md += `\n## System Prompt\n\n${systemPrompt}\n`;
+
+  const blob = new Blob([md], { type: 'text/markdown' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = (document.getElementById('agentId').value || 'new-agent') + '.soul.md';
+  a.click();
+}
+
+// Save to API
+function saveToAPI() {
+  alert('Would POST to /api/souls with the generated JSON.\nNot connected yet — this is a mockup.');
+}
+
+// Reset
+function resetForm() {
+  if (confirm('Reset all fields?')) location.reload();
+}
+
+// Scroll
+function scrollToSection(id) {
+  document.getElementById(id).scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.querySelectorAll('.sidebar .nav-item').forEach(n => n.classList.remove('active'));
+  event.target.closest('.nav-item').classList.add('active');
+}
+
+// Init
+updatePreview();
+</script>
+
+</body>
+</html>

@@ -35,7 +35,10 @@ async function wireEvents(): Promise<void> {
     });
 
     mgr.on('complete', (evt: { sessionId: string }) => {
-      ws.broadcastMc({ type: 'mc:status', payload: { sessionId: evt.sessionId, status: 'done' } });
+      // Use actual session status (may be 'idle' for PTY sessions that accept follow-ups)
+      const s = mgr.getSession(evt.sessionId);
+      const actualStatus = s ? s.status : 'done';
+      ws.broadcastMc({ type: 'mc:status', payload: { sessionId: evt.sessionId, status: actualStatus } });
     });
 
     mgr.on('error', (evt: { sessionId: string; error: string }) => {
@@ -57,8 +60,8 @@ async function wireEvents(): Promise<void> {
  * Spawn a new agent session
  */
 router.post('/agents', async (req: Request, res: Response): Promise<void> => {
-  wireEvents();
   try {
+    await wireEvents();
     const { machineId = 'local', mode = 'api', task, cwd, approvalMode = 'manual', model, maxBudget } = req.body;
 
     if (!task) {

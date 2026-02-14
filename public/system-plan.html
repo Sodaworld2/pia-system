@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PIA System v2 — Full System Plan & Wireframes</title>
+  <style>
+    :root {
+      --bg: #0a0e14;
+      --bg2: #111820;
+      --bg3: #1a2230;
+      --border: #1e2a3a;
+      --text: #e0e6ed;
+      --dim: #6b7d8e;
+      --accent: #00d4ff;
+      --accent2: #0088aa;
+      --green: #00cc88;
+      --yellow: #ffbb00;
+      --red: #ff4466;
+      --orange: #ff8844;
+      --purple: #aa66ff;
+      --pink: #ff66aa;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', -apple-system, sans-serif; background: var(--bg); color: var(--text); }
+
+    /* Top Header */
+    .top-bar {
+      background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+      border-bottom: 2px solid var(--accent);
+      padding: 20px 32px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .top-bar h1 { font-size: 28px; }
+    .top-bar h1 span { color: var(--accent); }
+    .top-bar .subtitle { color: var(--dim); font-size: 14px; margin-top: 4px; }
+    .top-bar .badge { background: var(--accent); color: #000; padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 12px; }
+
+    /* Navigation */
+    .nav {
+      display: flex; gap: 0; background: var(--bg2); border-bottom: 1px solid var(--border);
+      overflow-x: auto; position: sticky; top: 0; z-index: 100;
+    }
+    .nav-btn {
+      padding: 14px 24px; background: none; border: none; color: var(--dim);
+      cursor: pointer; font-size: 13px; font-weight: 600; white-space: nowrap;
+      border-bottom: 3px solid transparent; transition: all 0.2s;
+    }
+    .nav-btn:hover { color: var(--text); background: var(--bg3); }
+    .nav-btn.active { color: var(--accent); border-bottom-color: var(--accent); background: rgba(0,212,255,0.05); }
+
+    /* Sections */
+    .section { display: none; padding: 32px; max-width: 1400px; margin: 0 auto; }
+    .section.active { display: block; }
+    .section-title { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+    .section-desc { color: var(--dim); font-size: 15px; margin-bottom: 32px; line-height: 1.6; }
+
+    /* Architecture Diagram */
+    .arch-container { position: relative; width: 100%; }
+    .arch-box {
+      background: var(--bg2); border: 2px solid var(--border); border-radius: 12px;
+      padding: 20px; margin-bottom: 16px; position: relative;
+    }
+    .arch-box.highlight { border-color: var(--accent); box-shadow: 0 0 20px rgba(0,212,255,0.1); }
+    .arch-box.green { border-color: var(--green); }
+    .arch-box.purple { border-color: var(--purple); }
+    .arch-box.orange { border-color: var(--orange); }
+    .arch-box.pink { border-color: var(--pink); }
+    .arch-box h3 { font-size: 16px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+    .arch-box h3 .icon { font-size: 20px; }
+    .arch-box .desc { font-size: 13px; color: var(--dim); line-height: 1.5; }
+    .arch-box .tech { font-size: 11px; color: var(--accent2); margin-top: 8px; }
+    .arch-box .port { position: absolute; top: 12px; right: 16px; font-size: 11px; background: var(--bg); padding: 2px 8px; border-radius: 4px; color: var(--accent); }
+
+    .arch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .arch-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    @media (max-width: 900px) { .arch-grid, .arch-grid-3 { grid-template-columns: 1fr; } }
+
+    .arrow-down {
+      text-align: center; padding: 12px 0; color: var(--accent); font-size: 24px;
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+    }
+    .arrow-down .label { font-size: 12px; color: var(--dim); }
+    .arrow-both { color: var(--green); }
+
+    /* Mockup Screens */
+    .mockup {
+      background: var(--bg2); border: 2px solid var(--border); border-radius: 12px;
+      overflow: hidden; margin-bottom: 32px;
+    }
+    .mockup-titlebar {
+      background: var(--bg); padding: 10px 16px; display: flex; align-items: center; gap: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .mockup-dots { display: flex; gap: 6px; }
+    .mockup-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .mockup-dot.r { background: var(--red); }
+    .mockup-dot.y { background: var(--yellow); }
+    .mockup-dot.g { background: var(--green); }
+    .mockup-url { background: var(--bg3); padding: 4px 12px; border-radius: 4px; font-size: 12px; color: var(--dim); flex: 1; }
+    .mockup-body { padding: 0; }
+
+    /* Mini dashboard components */
+    .m-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 20px; border-bottom: 1px solid var(--border); background: var(--bg);
+    }
+    .m-header .logo { font-weight: 700; font-size: 18px; }
+    .m-header .logo span { color: var(--accent); }
+    .m-header .status { font-size: 12px; color: var(--green); }
+
+    .m-nav {
+      display: flex; gap: 2px; padding: 8px 20px; background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+    .m-nav-item {
+      padding: 6px 14px; font-size: 12px; color: var(--dim); border-radius: 4px; cursor: default;
+    }
+    .m-nav-item.active { color: var(--accent); background: rgba(0,212,255,0.1); }
+
+    .m-content { padding: 20px; }
+
+    .m-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+    .m-stat {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+      padding: 16px; text-align: center;
+    }
+    .m-stat .num { font-size: 28px; font-weight: 700; color: var(--accent); }
+    .m-stat .num.red { color: var(--red); }
+    .m-stat .num.green { color: var(--green); }
+    .m-stat .num.yellow { color: var(--yellow); }
+    .m-stat .lbl { font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+
+    .m-panel { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 16px; }
+    .m-panel-head { padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 13px; font-weight: 600; display: flex; justify-content: space-between; }
+    .m-panel-body { padding: 12px 16px; font-size: 13px; color: var(--dim); }
+
+    .m-row { display: flex; gap: 16px; }
+    .m-row > * { flex: 1; }
+
+    .m-list-item {
+      padding: 10px 0; border-bottom: 1px solid var(--border); display: flex;
+      justify-content: space-between; align-items: center;
+    }
+    .m-list-item:last-child { border-bottom: none; }
+    .m-badge {
+      display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px;
+      font-weight: 600; text-transform: uppercase;
+    }
+    .m-badge.active { background: rgba(0,204,136,0.15); color: var(--green); }
+    .m-badge.pending { background: rgba(255,187,0,0.15); color: var(--yellow); }
+    .m-badge.running { background: rgba(0,212,255,0.15); color: var(--accent); }
+    .m-badge.overdue { background: rgba(255,68,102,0.15); color: var(--red); }
+    .m-badge.p1 { background: rgba(255,68,102,0.15); color: var(--red); }
+    .m-badge.p2 { background: rgba(255,136,68,0.15); color: var(--orange); }
+    .m-badge.p3 { background: rgba(255,187,0,0.15); color: var(--yellow); }
+
+    .m-btn {
+      display: inline-block; padding: 6px 14px; background: var(--accent); color: #000;
+      border-radius: 6px; font-size: 11px; font-weight: 700; cursor: default;
+    }
+    .m-btn.secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+
+    /* Soul Cards */
+    .soul-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .soul-card {
+      background: var(--bg2); border: 2px solid var(--border); border-radius: 12px; padding: 24px;
+      transition: border-color 0.3s;
+    }
+    .soul-card:hover { border-color: var(--accent); }
+    .soul-card .name { font-size: 20px; font-weight: 700; color: var(--accent); }
+    .soul-card .role { font-size: 13px; color: var(--dim); margin-top: 2px; }
+    .soul-card .email { font-size: 11px; color: var(--accent2); margin-top: 4px; }
+    .soul-card .personality { font-size: 13px; color: var(--text); margin-top: 12px; line-height: 1.5; border-left: 3px solid var(--accent2); padding-left: 12px; }
+    .soul-card .goals { margin-top: 12px; }
+    .soul-card .goals h4 { font-size: 11px; text-transform: uppercase; color: var(--accent2); letter-spacing: 0.5px; margin-bottom: 6px; }
+    .soul-card .goals li { font-size: 12px; color: var(--dim); padding: 2px 0; list-style: none; }
+    .soul-card .goals li::before { content: '› '; color: var(--accent); }
+
+    /* Timeline / Schedule */
+    .timeline { position: relative; padding-left: 40px; }
+    .timeline::before { content: ''; position: absolute; left: 15px; top: 0; bottom: 0; width: 2px; background: var(--border); }
+    .timeline-item { position: relative; margin-bottom: 24px; }
+    .timeline-item::before {
+      content: ''; position: absolute; left: -33px; top: 4px; width: 14px; height: 14px;
+      border-radius: 50%; border: 2px solid var(--accent); background: var(--bg);
+    }
+    .timeline-item.active::before { background: var(--accent); }
+    .timeline-item .time { font-size: 14px; font-weight: 700; color: var(--accent); }
+    .timeline-item .agent { font-size: 13px; color: var(--text); margin-top: 2px; }
+    .timeline-item .task { font-size: 12px; color: var(--dim); margin-top: 4px; line-height: 1.5; }
+
+    /* Data Flow */
+    .flow-step {
+      display: flex; align-items: center; gap: 16px; margin-bottom: 16px;
+    }
+    .flow-num {
+      width: 36px; height: 36px; border-radius: 50%; background: var(--accent);
+      color: #000; display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 14px; flex-shrink: 0;
+    }
+    .flow-content { flex: 1; }
+    .flow-content .title { font-weight: 600; font-size: 14px; }
+    .flow-content .desc { font-size: 13px; color: var(--dim); margin-top: 2px; }
+
+    /* Phase cards */
+    .phase-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 16px; }
+    .phase-card {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 12px;
+      padding: 24px; position: relative; overflow: hidden;
+    }
+    .phase-card.done { border-color: var(--green); }
+    .phase-card.current { border-color: var(--accent); box-shadow: 0 0 20px rgba(0,212,255,0.1); }
+    .phase-card .phase-num {
+      position: absolute; top: -8px; right: -8px; font-size: 72px; font-weight: 900;
+      color: rgba(255,255,255,0.03); pointer-events: none;
+    }
+    .phase-card h3 { font-size: 16px; margin-bottom: 4px; }
+    .phase-card .status-tag { font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 700; text-transform: uppercase; }
+    .phase-card .status-tag.done { background: rgba(0,204,136,0.15); color: var(--green); }
+    .phase-card .status-tag.current { background: rgba(0,212,255,0.15); color: var(--accent); }
+    .phase-card .status-tag.upcoming { background: rgba(136,153,170,0.1); color: var(--dim); }
+    .phase-card ul { margin-top: 12px; font-size: 13px; color: var(--dim); list-style: none; }
+    .phase-card li { padding: 3px 0; }
+    .phase-card li::before { content: '✓ '; color: var(--green); }
+    .phase-card.current li::before { content: '› '; color: var(--accent); }
+    .phase-card:not(.done):not(.current) li::before { content: '○ '; color: var(--dim); }
+
+    /* Connection Lines Visualization */
+    .conn-table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    .conn-table th { text-align: left; padding: 10px 16px; font-size: 12px; color: var(--accent); border-bottom: 2px solid var(--border); text-transform: uppercase; letter-spacing: 0.5px; }
+    .conn-table td { padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .conn-table tr:hover td { background: var(--bg3); }
+
+    .separator { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header -->
+  <div class="top-bar">
+    <div>
+      <h1>PIA <span>System v2</span> — Full Build Plan</h1>
+      <div class="subtitle">Your AI-powered business operating system — every screen, every connection, visualized</div>
+    </div>
+    <div class="badge">PHASE 1 IN PROGRESS</div>
+  </div>
+
+  <!-- Navigation -->
+  <div class="nav">
+    <button class="nav-btn active" onclick="show('overview')">System Overview</button>
+    <button class="nav-btn" onclick="show('architecture')">Architecture Map</button>
+    <button class="nav-btn" onclick="show('agents')">The Agents</button>
+    <button class="nav-btn" onclick="show('pia-dash')">PIA Dashboard</button>
+    <button class="nav-btn" onclick="show('fisher')">Fisher2050 App</button>
+    <button class="nav-btn" onclick="show('souls')">Soul Manager</button>
+    <button class="nav-btn" onclick="show('comms')">Communication</button>
+    <button class="nav-btn" onclick="show('nightshift')">Night Shift</button>
+    <button class="nav-btn" onclick="show('phases')">Build Phases</button>
+    <button class="nav-btn" onclick="show('dataflow')">Data Flow</button>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION: System Overview -->
+  <!-- ============================================================ -->
+  <div class="section active" id="s-overview">
+    <h2 class="section-title">The Big Picture</h2>
+    <p class="section-desc">
+      PIA System v2 is a <strong>full operating system for running your business with AI agents</strong>.
+      Not just a dashboard — a team of AI personalities that work for you, communicate with each other,
+      manage projects, and keep working when you're asleep.
+    </p>
+
+    <!-- The 6 pieces -->
+    <div class="arch-grid-3">
+      <div class="arch-box highlight">
+        <h3><span class="icon">🧠</span> Agent Souls</h3>
+        <div class="desc">Persistent AI personalities with memory, goals, and relationships. Each agent has a unique identity that survives across sessions.</div>
+        <div class="tech">soul-engine.ts · memory-manager.ts · SQLite</div>
+      </div>
+      <div class="arch-box green">
+        <h3><span class="icon">📋</span> Fisher2050</h3>
+        <div class="desc">Your AI Project Manager. Manages projects, tasks, meetings, sends emails, runs daily reviews, and coordinates all agents.</div>
+        <div class="tech">Separate Express app · Port 3002 · Own database</div>
+      </div>
+      <div class="arch-box purple">
+        <h3><span class="icon">🏗️</span> Ziggi (Architect)</h3>
+        <div class="desc">Reviews code after every session. Updates specs, docs, and architecture notes. Does deep reviews at 2am.</div>
+        <div class="tech">Soul + Autonomous Worker · Triggered by Fisher2050</div>
+      </div>
+      <div class="arch-box orange">
+        <h3><span class="icon">📚</span> Eliyahu (Knowledge)</h3>
+        <div class="desc">Processes all information. Sends insights, tracks decisions, asks probing questions, generates morning briefings.</div>
+        <div class="tech">Soul + Autonomous Worker · Daily summaries</div>
+      </div>
+      <div class="arch-box pink">
+        <h3><span class="icon">📧</span> Communication Layer</h3>
+        <div class="desc">Every agent and machine gets an email. Gmail API for sending/receiving. Inter-app webhooks for Farcake, DAO, SodaWorld.</div>
+        <div class="tech">Gmail API · Webhooks · Agent Bus</div>
+      </div>
+      <div class="arch-box">
+        <h3><span class="icon">🌙</span> Night Shift</h3>
+        <div class="desc">Automated scheduled tasks. Ziggi reviews at 2am, Eliyahu briefing at 6am, Fisher standup at 9am. Custom instructions per day.</div>
+        <div class="tech">node-cron · Scheduler · PIA Orchestrator</div>
+      </div>
+    </div>
+
+    <hr class="separator">
+
+    <h2 class="section-title" style="margin-top:16px">Your Decisions</h2>
+    <table class="conn-table">
+      <tr><th>Decision</th><th>Choice</th><th>Why</th></tr>
+      <tr><td>Fisher2050</td><td style="color:var(--accent)">Separate app</td><td>Own web app, own DB, talks to PIA via API. Clean separation.</td></tr>
+      <tr><td>Mobile</td><td style="color:var(--accent)">PWA first</td><td>Improve existing PIA PWA for phones. Native app later.</td></tr>
+      <tr><td>Transcriber</td><td style="color:var(--accent)">Cloud API only</td><td>Taqtic or Google Speech-to-Text. No local processing.</td></tr>
+      <tr><td>Build first</td><td style="color:var(--accent)">Agent Souls + Fisher2050</td><td>The core brain of the system. Everything else builds on top.</td></tr>
+    </table>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION: Architecture Map -->
+  <!-- ============================================================ -->
+  <div class="section" id="s-architecture">
+    <h2 class="section-title">Architecture Map — How Everything Connects</h2>
+    <p class="section-desc">Every box is a real component. Every arrow is a real API call or data flow.</p>
+
+    <!-- YOU -->
+    <div class="arch-box highlight" style="text-align:center; border-width:3px;">
+      <h3 style="justify-content:center"><span class="icon">👤</span> YOU (Mic) — Phone, Laptop, Anywhere</h3>
+      <div class="desc">"Start the DAO project" · "What happened today?" · "Check overdue tasks"</div>
+    </div>
+
+    <div class="arrow-down">▼ <span class="label">Browser / PWA</span> ▼</div>
+
+    <!-- Main Apps -->
+    <div class="arch-grid">
+      <div class="arch-box highlight">
+        <span class="port">:3000</span>
+        <h3><span class="icon">🎛️</span> PIA Dashboard (Visor)</h3>
+        <div class="desc">
+          <strong>The control center.</strong><br>
+          • Machine fleet monitoring<br>
+          • Agent souls viewer/editor<br>
+          • Autonomous worker (Claude API tool loop)<br>
+          • Terminal access (PTY/WebSocket)<br>
+          • Task queue, Agent bus, Alerts<br>
+          • AI cost tracking & budgets
+        </div>
+        <div class="tech">Express + SQLite + WebSocket · PIA Hub</div>
+      </div>
+      <div class="arch-box green">
+        <span class="port">:3002</span>
+        <h3><span class="icon">📋</span> Fisher2050 (Project Manager)</h3>
+        <div class="desc">
+          <strong>Manages your work.</strong><br>
+          • Projects & tasks (CRUD)<br>
+          • Meetings & calendar<br>
+          • Email & communications<br>
+          • Daily AI review & reports<br>
+          • Scheduler (cron jobs)<br>
+          • Triggers Ziggi & Eliyahu
+        </div>
+        <div class="tech">Express + SQLite + node-cron · Own app</div>
+      </div>
+    </div>
+
+    <div class="arrow-down arrow-both">◄─── <span class="label">REST API (bidirectional)</span> ───►</div>
+
+    <!-- Soul Engine -->
+    <div class="arch-box purple" style="text-align:center;">
+      <h3 style="justify-content:center"><span class="icon">🧠</span> Agent Souls Engine (inside PIA)</h3>
+      <div class="desc" style="text-align:left; max-width:700px; margin:0 auto;">
+        <strong>Every agent has a soul:</strong> personality + memory + goals + email<br><br>
+        <div style="display:grid; grid-template-columns: repeat(4,1fr); gap:12px; text-align:center;">
+          <div><strong style="color:var(--green)">Fisher2050</strong><br><span style="font-size:11px">Project Manager</span></div>
+          <div><strong style="color:var(--purple)">Ziggi</strong><br><span style="font-size:11px">Architect</span></div>
+          <div><strong style="color:var(--orange)">Eliyahu</strong><br><span style="font-size:11px">Knowledge Mgr</span></div>
+          <div><strong style="color:var(--dim)">Machine Agents</strong><br><span style="font-size:11px">Workers</span></div>
+        </div>
+      </div>
+      <div class="tech">soul-engine.ts · memory-manager.ts · /api/souls/*</div>
+    </div>
+
+    <div class="arrow-down">▼ <span class="label">Soul loaded into Claude API system prompt</span> ▼</div>
+
+    <!-- Communication Layer -->
+    <div class="arch-box pink">
+      <h3><span class="icon">📡</span> Communication Layer</h3>
+      <div class="desc">
+        <div style="display:grid; grid-template-columns: repeat(4,1fr); gap:16px;">
+          <div><strong>Email</strong><br>Gmail API<br>Each agent has @sodaworld.com</div>
+          <div><strong>Cross-Machine</strong><br>Tailscale relay<br>Hub ↔ Workers</div>
+          <div><strong>Inter-App</strong><br>Webhooks<br>Farcake, DAO, SodaWorld</div>
+          <div><strong>Google Sync</strong><br>Tasks + Calendar<br>2-way sync</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow-down">▼ <span class="label">Tasks dispatched to machines</span> ▼</div>
+
+    <!-- Machines -->
+    <div class="arch-grid">
+      <div class="arch-box">
+        <h3><span class="icon">🖥️</span> Machine #1 (izzit7)</h3>
+        <div class="desc">
+          PIA Hub · Fisher2050 · GPU<br>
+          Ziggi runs here · Primary build machine<br>
+          <span style="color:var(--accent)">machine1@sodaworld.com</span>
+        </div>
+      </div>
+      <div class="arch-box">
+        <h3><span class="icon">🖥️</span> Machine #3 (soda-yeti)</h3>
+        <div class="desc">
+          PIA Worker · Build/test/deploy<br>
+          DAO backend · Secondary machine<br>
+          <span style="color:var(--accent)">machine3@sodaworld.com</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow-down">▼ <span class="label">Scheduled operations</span> ▼</div>
+
+    <!-- Night Shift -->
+    <div class="arch-box" style="background: linear-gradient(135deg, #0d1117, #1a1530);">
+      <h3><span class="icon">🌙</span> Night Shift (Scheduled Operations)</h3>
+      <div class="desc">
+        <div style="display:grid; grid-template-columns: repeat(4,1fr); gap:16px; text-align:center;">
+          <div><strong style="color:var(--purple)">2:00 AM</strong><br>Ziggi deep review<br>Update all docs</div>
+          <div><strong style="color:var(--orange)">6:00 AM</strong><br>Eliyahu summary<br>Morning report</div>
+          <div><strong style="color:var(--green)">9:00 AM</strong><br>Fisher standup<br>Overdue check</div>
+          <div><strong style="color:var(--accent)">Custom</strong><br>Per-day instructions<br>Special tasks</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION: The Agents -->
+  <!-- ============================================================ -->
+  <div class="section" id="s-agents">
+    <h2 class="section-title">The Agents — Your AI Team</h2>
+    <p class="section-desc">Each agent has a persistent soul: personality, memory, goals, and relationships that survive across sessions and machines.</p>
+
+    <div class="soul-cards">
+      <div class="soul-card" style="border-color: var(--green);">
+        <div class="name" style="color:var(--green)">Fisher2050</div>
+        <div class="role">Project Manager</div>
+        <div class="email">fisher2050@sodaworld.com</div>
+        <div class="personality">Organized, proactive, follows up, never lets things slip. Starts each day with a standup summary. Ends updates with a confidence percentage. Refers to the team as "the crew".</div>
+        <div class="goals">
+          <h4>Goals</h4>
+          <ul>
+            <li>Keep all projects on track</li>
+            <li>Every task has an owner + deadline</li>
+            <li>Run daily reviews, flag overdue items</li>
+            <li>Coordinate Ziggi and Eliyahu</li>
+            <li>Send morning briefings + evening summaries</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="soul-card" style="border-color: var(--purple);">
+        <div class="name" style="color:var(--purple)">Ziggi</div>
+        <div class="role">Architect</div>
+        <div class="email">ziggi@sodaworld.com</div>
+        <div class="personality">Meticulous, opinionated about code quality, documents everything. Rates code quality 1-10 in every review. Uses "architecture smell" for structural issues. Ends reviews with "Ziggi's Verdict".</div>
+        <div class="goals">
+          <h4>Goals</h4>
+          <ul>
+            <li>Review all code after every session</li>
+            <li>Maintain technical specs for every project</li>
+            <li>Track and manage technical debt</li>
+            <li>Deep reviews at 2am + web browsing</li>
+            <li>Report findings to Fisher2050</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="soul-card" style="border-color: var(--orange);">
+        <div class="name" style="color:var(--orange)">Eliyahu</div>
+        <div class="role">Knowledge Manager</div>
+        <div class="email">eliyahu@sodaworld.com</div>
+        <div class="personality">Curious, analytical, asks probing questions. Starts insights with "I noticed something...". Keeps a Decision Log. Rates confidence of insights. Ends reports with "Key Takeaway" and "Open Questions".</div>
+        <div class="goals">
+          <h4>Goals</h4>
+          <ul>
+            <li>Process all session logs daily</li>
+            <li>Send morning knowledge briefings</li>
+            <li>Track decisions and outcomes</li>
+            <li>Ask questions that surface hidden problems</li>
+            <li>Weekly "State of the System" reports</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin-bottom:16px">How a Soul Works</h3>
+    <div class="flow-step"><div class="flow-num">1</div><div class="flow-content"><div class="title">Soul is stored in SQLite</div><div class="desc">Name, role, personality prompt, goals, relationships, config — all in the <code>souls</code> table</div></div></div>
+    <div class="flow-step"><div class="flow-num">2</div><div class="flow-content"><div class="title">Agent wakes up → Soul is loaded</div><div class="desc">The soul-engine reads the personality and recent memories, builds a system prompt</div></div></div>
+    <div class="flow-step"><div class="flow-num">3</div><div class="flow-content"><div class="title">Claude API call with soul as system prompt</div><div class="desc">The autonomous worker injects the full soul (personality + memories + goals) into Claude's system prompt</div></div></div>
+    <div class="flow-step"><div class="flow-num">4</div><div class="flow-content"><div class="title">Agent does work, stays in character</div><div class="desc">Claude responds and acts according to the soul's personality and style</div></div></div>
+    <div class="flow-step"><div class="flow-num">5</div><div class="flow-content"><div class="title">New memories saved back</div><div class="desc">What was done, decisions made, learnings — all stored as memories with importance scores</div></div></div>
+    <div class="flow-step"><div class="flow-num">6</div><div class="flow-content"><div class="title">Memories summarized periodically</div><div class="desc">Old memories are compressed into summaries so context doesn't grow forever</div></div></div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION: PIA Dashboard -->
+  <!-- ============================================================ -->
+  <div class="section" id="s-pia-dash">
+    <h2 class="section-title">PIA Dashboard (Visor) — Port 3000</h2>
+    <p class="section-desc">The central control interface. Monitor machines, manage souls, run autonomous tasks, access terminals.</p>
+
+    <div class="mockup">
+      <div class="mockup-titlebar">
+        <div class="mockup-dots"><div class="mockup-dot r"></div><div class="mockup-dot y"></div><div class="mockup-dot g"></div></div>
+        <div class="mockup-url">http://localhost:3000/visor.html</div>
+      </div>
+      <div class="mockup-body">
+        <div class="m-header">
+          <div class="logo">PIA <span>Visor</span></div>
+          <div class="status">● Hub Online</div>
+        </div>
+        <div class="m-nav">
+          <div class="m-nav-item active">Fleet Matrix</div>
+          <div class="m-nav-item">Command Center</div>
+          <div class="m-nav-item">CLI Tunnel</div>
+          <div class="m-nav-item">Agent Souls</div>
+          <div class="m-nav-item">Task Queue</div>
+          <div class="m-nav-item">AI Models</div>
+          <div class="m-nav-item">Doctor</div>
+          <div class="m-nav-item">Alerts</div>
+        </div>
+        <div class="m-content">
+          <div class="m-stats">
+            <div class="m-stat"><div class="num">2</div><div class="lbl">Machines Online</div></div>
+            <div class="m-stat"><div class="num green">3</div><div class="lbl">Agent Souls</div></div>
+            <div class="m-stat"><div class="num">5</div><div class="lbl">Active Tasks</div></div>
+            <div class="m-stat"><div class="num yellow">$2.41</div><div class="lbl">AI Cost Today</div></div>
+          </div>
+          <div class="m-row">
+            <div class="m-panel">
+              <div class="m-panel-head">Machine Fleet</div>
+              <div class="m-panel-body">
+                <div class="m-list-item"><span>izzit7 (Machine #1)</span> <span class="m-badge active">online</span></div>
+                <div class="m-list-item"><span>soda-yeti (Machine #3)</span> <span class="m-badge active">online</span></div>
+              </div>
+            </div>
+            <div class="m-panel">
+              <div class="m-panel-head">Agent Souls <span class="m-btn" style="font-size:10px">+ New Soul</span></div>
+              <div class="m-panel-body">
+                <div class="m-list-item"><span style="color:var(--green)">Fisher2050</span> <span style="color:var(--dim)">Project Manager</span></div>
+                <div class="m-list-item"><span style="color:var(--purple)">Ziggi</span> <span style="color:var(--dim)">Architect</span></div>
+                <div class="m-list-item"><span style="color:var(--orange)">Eliyahu</span> <span style="color:var(--dim)">Knowledge Manager</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="m-panel">
+            <div class="m-panel-head">Recent Autonomous Tasks</div>
+            <div class="m-panel-body">
+              <div class="m-list-item"><span>[Ziggi] Post-session code review — pia-system</span> <span class="m-badge active">completed · $0.34</span></div>
+              <div class="m-list-item"><span>[Fisher2050] Daily standup prep</span> <span class="m-badge running">running</span></div>
+              <div class="m-list-item"><span>[Eliyahu] Morning knowledge briefing</span> <span class="m-badge pending">queued</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin-bottom:12px">Key PIA API Endpoints</h3>
+    <table class="conn-table">
+      <tr><th>Endpoint</th><th>What it does</th></tr>
+      <tr><td style="color:var(--accent)">POST /api/orchestrator/run</td><td>Run autonomous task (with optional soulId for personality)</td></tr>
+      <tr><td style="color:var(--accent)">GET /api/souls</td><td>List all agent souls</td></tr>
+      <tr><td style="color:var(--accent)">GET /api/souls/:id/prompt</td><td>Generate full system prompt with personality + memories</td></tr>
+      <tr><td style="color:var(--accent)">POST /api/souls/:id/memories</td><td>Add a memory to an agent</td></tr>
+      <tr><td style="color:var(--accent)">POST /api/souls/interact</td><td>Log interaction between two agents</td></tr>
+    </table>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION: Fisher2050 App -->
+  <!-- ============================================================ -->
+  <div class="section" id="s-fisher">
+    <h2 class="section-title">Fisher2050 — Project Manager App — Port 3002</h2>
+    <p class="section-desc">A separate web app that manages your projects, meetings, tasks, and communications. Talks to PIA via REST API.</p>
+
+    <div class="mockup">
+      <div class="mockup-titlebar">
+        <div class="mockup-dots"><div class="mockup-dot r"></div><div class="mockup-dot y"></div><div class="mockup-dot g"></div></div>
+        <div class="mockup-url">http://localhost:3002</div>
+      </div>
+      <div class="mockup-body">
+        <div class="m-header">
+          <div class="logo">Fisher<span>2050</span> <span style="font-size:11px; color:var(--dim); font-weight:normal; margin-left:8px">Project Manager</span></div>
+          <div><span style="color:var(--green); font-weight:700; margin-right:12px">82%</span> <span style="font-size:12px; color:var(--dim)">PIA: ok</span></div>
+        </div>
+        <div class="m-nav">
+          <div class="m-nav-item active">Dashboard</div>
+          <div class="m-nav-item">Projects</div>
+          <div class="m-nav-item">Tasks</div>
+          <div class="m-nav-item">Meetings</div>
+          <div class="m-nav-item">Agent Souls</div>
+          <div class="m-nav-item">Scheduler</div>
+          <div class="m-nav-item">Reports</div>
+        </div>
+        <div class="m-content">
+          <!-- Dashboard Stats -->
+          <div class="m-stats">
+            <div class="m-stat"><div class="num">4</div><div class="lbl">Active Projects</div></div>
+            <div class="m-stat"><div class="num red">3</div><div class="lbl">Overdue Tasks</div></div>
+            <div class="m-stat"><div class="num">12</div><div class="lbl">Pending Tasks</div></div>
+            <div class="m-stat"><div class="num green">2</div><div class="lbl">Upcoming Meetings</div></div>
+          </div>
+
+          <div class="m-row">
+            <!-- Recent Activity -->
+            <div class="m-panel">
+              <div class="m-panel-head">Recent Activity</div>
+              <div class="m-panel-body">
+                <div class="m-list-item"><span style="color:var(--accent)">create project</span> — PIA System v2 <span style="color:var(--dim); font-size:11px">2m ago</span></div>
+                <div class="m-list-item"><span style="color:var(--accent)">create task</span> — Build soul engine <span style="color:var(--dim); font-size:11px">5m ago</span></div>
+                <div class="m-list-item"><span style="color:var(--accent)">trigger review</span> — Ziggi: pia-system <span style="color:var(--dim); font-size:11px">1h ago</span></div>
+                <div class="m-list-item"><span style="color:var(--accent)">generate report</span> — Daily Report <span style="color:var(--dim); font-size:11px">3h ago</span></div>
+              </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="m-panel">
+              <div class="m-panel-head">Quick Actions</div>
+              <div class="m-panel-body">
+                <div style="margin-bottom:8px"><span class="m-btn">Generate Daily Report</span></div>
+                <div style="margin-bottom:8px"><span class="m-btn secondary">Trigger Ziggi Review</span></div>
+                <div style="margin-bottom:8px"><span class="m-btn secondary">New Project</span></div>
+                <div style="margin-bottom:8px"><span class="m-btn secondary">New Task</span></div>
+                <div><span class="m-btn secondary">Test PIA Connection</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Latest Report Preview -->
+          <div class="m-panel">
+            <div class="m-panel-head">Latest Report</div>
+            <div class="m-panel-body" style="white-space:pre-line; font-size:12px; line-height:1.7;">
+<strong># Fisher2050 Daily Report</strong>
+<strong>Date:</strong> 2026-02-13
+
+<strong>## Active Projects</strong>
+- <strong>PIA System v2</strong> — 8 open tasks
+- <strong>Farcake</strong> — 3 open tasks
+- <strong>DAO</strong> — 5 open tasks
+- <strong>SodaWorld</strong> — 2 open tasks
+
+<strong>## Overdue Tasks</strong>
+- <strong>Fix API rate limiting</strong> (PIA) — due Feb 10, assigned to Machine #1
+- <strong>Deploy DAO Phase B</strong> (DAO) — due Feb 11, unassigned
+- <strong>Update Farcake thumbnails</strong> (Farcake) — due Feb 12, assigned to Machine #3
+
+<strong>---</strong>
+<strong>Project Health: 82%</strong>
+<em>— Fisher2050, Project Manager</em>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tasks View -->
+    <h3 style="margin:24px 0 16px">Tasks View</h3>
+    <div class="mockup">
+      <div class="mockup-titlebar">
+        <div class="mockup-dots"><div class="mockup-dot r"></div><div class="mockup-dot y"></div><div class="mockup-dot g"></div></div>
+        <div class="mockup-url">http://localhost:3002/#tasks</div>
+      </div>
+      <div class="mockup-body">
+        <div class="m-header">
+          <div class="logo">Fisher<span>2050</span></div>
+          <div style="font-size:12px; color:var(--dim)">Tasks</div>
+        </div>
+        <div class="m-content">
+          <div style="display:flex; justify-content:space-between; margin-bottom:16px; align-items:center;">
+            <h3 style="font-size:18px">Tasks</h3>
+            <div style="display:flex; gap:8px">
+              <span class="m-btn secondary" style="font-size:11px">Filter: All Status ▼</span>
+              <span class="m-btn">+ New Task</span>
+            </div>
+          </div>
+          <div class="m-panel" style="border-left: 3px solid var(--red);">
+            <div class="m-panel-body">
+              <div style="display:flex; justify-content:space-between"><strong>Fix API rate limiting</strong> <span class="m-badge overdue">overdue</span></div>
+              <div style="font-size:12px; color:var(--dim); margin-top:4px">Priority: 1 · Assigned: Machine #1 · Due: Feb 10 · PIA System v2</div>
+            </div>
+          </div>
+          <div class="m-panel" style="border-left: 3px solid var(--orange);">
+            <div class="m-panel-body">
+              <div style="display:flex; justify-content:space-between"><strong>Deploy DAO Phase B</strong> <span class="m-badge pending">pending</span></div>
+              <div style="font-size:12px; color:var(--dim); margin-top:4px">Priority: 2 · Unassigned · Due: Feb 15 · DAO</div>
+            </div>
+          </div>
+          <div class="m-panel" style="border-left: 3px solid var(--yellow);">
+            <div class="m-panel-body">
+              <div style="display:flex; justify-content:space-between"><strong>Build soul engine</strong> <span class="m-badge active">completed</span></div>
+              <div style="font-size:12px; color:var(--dim); margin-top:4px">Priority: 3 · Assigned: Claude · Completed 2h ago · PIA System v2</div>
+            </div>
+          </div>
+          <div class="m-panel" style="border-left: 3px solid var(--accent);">
+            <div class="m-panel-body">
+              <div style="display:flex; justify-content:space-between"><strong>Create Fisher2050 dashboard</strong> <span class="m-badge running">in progress</span></div>
+              <div style="font-size:12px; color:var(--dim); margin-top:4px">Priority: 3 · Assigned: Claude · Started 30m ago · PIA System v2</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION: Soul Manager -->
+  <!-- ============================================================ -->
+  <div class="section" id="s-souls">
+    <h2 class="section-title">Soul Manager — View & Edit Agent Personalities</h2>
+    <p class="section-desc">Accessible from both PIA Dashboard and Fisher2050. Edit personality, add goals, view memories, check interaction history.</p>
+
+    <div class="mockup">
+      <div class="mockup-titlebar">
+        <div class="mockup-dots"><div class="mockup-dot r"></div><div class="mockup-dot y"></div><div class="mockup-dot g"></div></div>
+        <div class="mockup-url">http://localhost:3002/#souls</div>
+      </div>
+      <div class="mockup-body">
+        <div class="m-header">
+          <div class="logo">Agent <span>Souls</span></div>
+          <div><span class="m-btn secondary" style="font-size:11px">+ New Soul</span></div>
+        </div>
+        <div class="m-content">
+          <!-- Soul Cards -->
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;">
+            <div class="m-panel" style="border-top: 3px solid var(--green);">
+              <div class="m-panel-body">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start">
+                  <div>
+                    <div style="font-size:18px; font-weight:700; color:var(--green)">Fisher2050</div>
+                    <div style="font-size:12px; color:var(--dim)">Project Manager</div>
+                    <div style="font-size:11px; color:var(--accent2); margin-top:2px">fisher2050@sodaworld.com</div>
+                  </div>
+                  <span class="m-badge active">active</span>
+                </div>
+                <div style="margin-top:12px; font-size:12px; color:var(--dim); border-left:2px solid var(--green); padding-left:10px;">
+                  Organized, proactive, relentless about follow-through. Never lets things slip.
+                </div>
+                <div style="margin-top:12px; font-size:11px; color:var(--accent2)">GOALS</div>
+                <div style="font-size:12px; color:var(--dim)">
+                  › Keep all projects on track<br>
+                  › Every task has an owner + deadline<br>
+                  › Run daily reviews
+                </div>
+                <div style="margin-top:12px; display:flex; gap:6px;">
+                  <span class="m-btn secondary" style="font-size:10px">42 Memories</span>
+                  <span class="m-btn secondary" style="font-size:10px">View Prompt</span>
+                  <span class="m-btn secondary" style="font-size:10px">Edit</span>
+                </div>
+              </div>
+            </div>
+            <div class="m-panel" style="border-top: 3px solid var(--purple);">
+              <div class="m-panel-body">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start">
+                  <div>
+                    <div style="font-size:18px; font-weight:700; color:var(--purple)">Ziggi</div>
+                    <div style="font-size:12px; color:var(--dim)">Architect</div>
+                    <div style="font-size:11px; color:var(--accent2); margin-top:2px">ziggi@sodaworld.com</div>
+                  </div>
+                  <span class="m-badge active">active</span>
+                </div>
+                <div style="margin-top:12px; font-size:12px; color:var(--dim); border-left:2px solid var(--purple); padding-left:10px;">
+                  Meticulous, opinionated about code quality. Documents everything. Rates code 1-10.
+                </div>
+                <div style="margin-top:12px; font-size:11px; color:var(--accent2)">GOALS</div>
+                <div style="font-size:12px; color:var(--dim)">
+                  › Review all code after every session<br>
+                  › Maintain technical specs<br>
+                  › Deep reviews at 2am
+                </div>
+                <div style="margin-top:12px; display:flex; gap:6px;">
+                  <span class="m-btn secondary" style="font-size:10px">28 Memories</span>
+                  <span class="m-btn secondary" style="font-size:10px">View Prompt</span>
+                  <span class="m-btn secondary" style="font-size:10px">Edit</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Memory Viewer -->
+          <div class="m-panel">
+            <div class="m-panel-head">Fisher2050's Recent Memories <span style="font-size:11px; color:var(--dim)">42 total · avg importance: 5.8</span></div>
+            <div class="m-panel-body" style="font-size:12px;">
+              <div class="m-list-item">
+                <div>
+                  <span class="m-badge running" style="font-size:9px">experience</span>
+                  <span style="margin-left:6px">Started autonomous task: Build soul engine and memory manager</span>
+                </div>
+                <span style="color:var(--dim); font-size:11px">importance: 5 · 2h ago</span>
+              </div>
+              <div class="m-list-item">
+                <div>
+                  <span class="m-badge active" style="font-size:9px">decision</span>
+                  <span style="margin-left:6px">Decided to use SQLite for soul storage — simpler, no extra services</span>
+                </div>
+                <span style="color:var(--dim); font-size:11px">importance: 8 · 3h ago</span>
+              </div>
+              <div class="m-list-item">
+                <div>
+                  <span class="m-badge pending" style="font-size:9px">learning</span>
+                  <span style="margin-left:6px">Express 5 types req.params as string|string[] — need helper function</span>
+                </div>
+                <span style="color:var(--dim); font-size:11px">importance: 6 · 3h ago</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION: Communication -->
+  <!-- ============================================================ -->
+  <div class="section" id="s-comms">
+    <h2 class="section-title">Communication Layer — How Agents Talk</h2>
+    <p class="section-desc">Every machine and key agent gets an email. Inter-app webhooks connect all your projects.</p>
+
+    <h3 style="margin-bottom:16px">Email Addresses</h3>
+    <table class="conn-table">
+      <tr><th>Entity</th><th>Email</th><th>Purpose</th></tr>
+      <tr><td style="color:var(--green)">Fisher2050</td><td>fisher2050@sodaworld.com</td><td>Send project updates, reminders, daily reports</td></tr>
+      <tr><td style="color:var(--purple)">Ziggi</td><td>ziggi@sodaworld.com</td><td>Send code review reports, architecture updates</td></tr>
+      <tr><td style="color:var(--orange)">Eliyahu</td><td>eliyahu@sodaworld.com</td><td>Send knowledge briefings, insights, questions</td></tr>
+      <tr><td>Machine #1</td><td>machine1@sodaworld.com</td><td>Receive wake-up commands, send build results</td></tr>
+      <tr><td>Machine #3</td><td>machine3@sodaworld.com</td><td>Receive tasks, send deployment results</td></tr>
+    </table>
+
+    <hr class="separator">
+
+    <h3 style="margin-bottom:16px">Wake-Up Flow — How an Agent Gets Activated</h3>
+    <div class="flow-step"><div class="flow-num">1</div><div class="flow-content"><div class="title">Trigger arrives</div><div class="desc">Email received / Scheduled cron fires / Fisher2050 sends API call / You click a button</div></div></div>
+    <div class="flow-step"><div class="flow-num">2</div><div class="flow-content"><div class="title">PIA loads the soul</div><div class="desc">soul-engine.ts reads personality + recent memories from SQLite</div></div></div>
+    <div class="flow-step"><div class="flow-num">3</div><div class="flow-content"><div class="title">System prompt generated</div><div class="desc">Personality + goals + memories + current context → one coherent system prompt</div></div></div>
+    <div class="flow-step"><div class="flow-num">4</div><div class="flow-content"><div class="title">Claude API called with tools</div><div class="desc">Autonomous worker sends task to Claude with tool definitions (run_command, read_file, write_file, etc.)</div></div></div>
+    <div class="flow-step"><div class="flow-num">5</div><div class="flow-content"><div class="title">Agent works in a loop</div><div class="desc">Claude uses tools → worker executes → results back to Claude → loop until done</div></div></div>
+    <div class="flow-step"><div class="flow-num">6</div><div class="flow-content"><div class="title">Results saved + reported</div><div class="desc">New memories stored, results reported to Fisher2050, email sent if needed</div></div></div>
+
+    <hr class="separator">
+
+    <h3 style="margin-bottom:16px">Inter-App Webhook Registry</h3>
+    <table class="conn-table">
+      <tr><th>App</th><th>Webhook URL</th><th>Events</th></tr>
+      <tr><td>PIA System</td><td style="color:var(--accent)">http://localhost:3000/api/webhooks</td><td>task_complete, agent_error, alert</td></tr>
+      <tr><td>Fisher2050</td><td style="color:var(--accent)">http://localhost:3002/api/webhooks</td><td>project_update, task_overdue, report_ready</td></tr>
+      <tr><td>Farcake</td><td style="color:var(--dim)">TBD</td><td>deploy_complete, error</td></tr>
+      <tr><td>DAO</td><td style="color:var(--dim)">TBD</td><td>proposal_created, vote_complete</td></tr>
+      <tr><td>SodaWorld</td><td style="color:var(--dim)">TBD</td><td>content_published, user_signup</td></tr>
+    </table>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION: Night Shift -->
+  <!-- ============================================================ -->
+  <div class="section" id="s-nightshift">
+    <h2 class="section-title">Night Shift — Scheduled Operations</h2>
+    <p class="section-desc">Your AI team works while you sleep. Automated tasks run at specific times, every day.</p>
+
+    <div class="mockup">
+      <div class="mockup-titlebar">
+        <div class="mockup-dots"><div class="mockup-dot r"></div><div class="mockup-dot y"></div><div class="mockup-dot g"></div></div>
+        <div class="mockup-url">http://localhost:3002/#scheduler</div>
+      </div>
+      <div class="mockup-body">
+        <div class="m-header">
+          <div class="logo">Night <span>Shift</span> Scheduler</div>
+          <span class="m-btn">+ New Job</span>
+        </div>
+        <div class="m-content">
+          <div class="m-panel" style="border-left:3px solid var(--purple)">
+            <div class="m-panel-body">
+              <div style="display:flex; justify-content:space-between"><strong>Ziggi Deep Review</strong> <span class="m-badge active">enabled</span></div>
+              <div style="font-size:12px; color:var(--dim); margin-top:4px"><strong>Cron:</strong> 0 2 * * * (2:00 AM daily) · <strong>Soul:</strong> ziggi</div>
+              <div style="font-size:12px; color:var(--dim); margin-top:2px">Deep code review, update all docs, browse web for dependency updates</div>
+              <div style="font-size:11px; color:var(--dim); margin-top:4px">Last run: 8h ago</div>
+            </div>
+          </div>
+          <div class="m-panel" style="border-left:3px solid var(--orange)">
+            <div class="m-panel-body">
+              <div style="display:flex; justify-content:space-between"><strong>Eliyahu Morning Briefing</strong> <span class="m-badge active">enabled</span></div>
+              <div style="font-size:12px; color:var(--dim); margin-top:4px"><strong>Cron:</strong> 0 6 * * * (6:00 AM daily) · <strong>Soul:</strong> eliyahu</div>
+              <div style="font-size:12px; color:var(--dim); margin-top:2px">Process yesterday's work, identify patterns, generate morning briefing</div>
+              <div style="font-size:11px; color:var(--dim); margin-top:4px">Last run: 4h ago</div>
+            </div>
+          </div>
+          <div class="m-panel" style="border-left:3px solid var(--green)">
+            <div class="m-panel-body">
+              <div style="display:flex; justify-content:space-between"><strong>Daily Standup Prep</strong> <span class="m-badge active">enabled</span></div>
+              <div style="font-size:12px; color:var(--dim); margin-top:4px"><strong>Cron:</strong> 0 9 * * * (9:00 AM daily) · <strong>Soul:</strong> fisher2050</div>
+              <div style="font-size:12px; color:var(--dim); margin-top:2px">Review active projects, check overdue tasks, prepare status summary</div>
+              <div style="font-size:11px; color:var(--dim); margin-top:4px">Last run: 1h ago</div>
+            </div>
+          </div>
+          <div class="m-panel" style="border-left:3px solid var(--green)">
+            <div class="m-panel-body">
+              <div style="display:flex; justify-content:space-between"><strong>Evening Summary</strong> <span class="m-badge active">enabled</span></div>
+              <div style="font-size:12px; color:var(--dim); margin-top:4px"><strong>Cron:</strong> 0 18 * * * (6:00 PM daily) · <strong>Soul:</strong> fisher2050</div>
+              <div style="font-size:12px; color:var(--dim); margin-top:2px">What was accomplished, what's planned for tomorrow, risks and blockers</div>
+              <div style="font-size:11px; color:var(--dim); margin-top:4px">Never run</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin:24px 0 16px">24-Hour Schedule Timeline</h3>
+    <div class="timeline">
+      <div class="timeline-item active"><div class="time">2:00 AM</div><div class="agent" style="color:var(--purple)">Ziggi (Architect)</div><div class="task">Deep code review across all projects. Update technical specs. Browse web for dependency updates. Generate comprehensive review report.</div></div>
+      <div class="timeline-item active"><div class="time">6:00 AM</div><div class="agent" style="color:var(--orange)">Eliyahu (Knowledge Manager)</div><div class="task">Process yesterday's session journals and work logs. Identify patterns and insights. Generate morning knowledge briefing for Mic.</div></div>
+      <div class="timeline-item active"><div class="time">9:00 AM</div><div class="agent" style="color:var(--green)">Fisher2050 (Project Manager)</div><div class="task">Daily standup prep. Review all active projects. Check overdue tasks. Identify blockers. Prepare status summary. Send to Mic.</div></div>
+      <div class="timeline-item"><div class="time">12:00 PM</div><div class="agent" style="color:var(--dim)">On-Demand</div><div class="task">Post-session reviews triggered by Fisher2050 after work sessions. Ziggi reviews code, updates docs.</div></div>
+      <div class="timeline-item active"><div class="time">6:00 PM</div><div class="agent" style="color:var(--green)">Fisher2050 (Project Manager)</div><div class="task">End-of-day summary. What was accomplished. What's planned for tomorrow. Any risks or blockers. Project health score.</div></div>
+      <div class="timeline-item"><div class="time">Custom</div><div class="agent" style="color:var(--accent)">Programmable</div><div class="task">Special instructions for specific days. "On Friday, generate weekly report." "On Monday, check all GitHub issues."</div></div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION: Build Phases -->
+  <!-- ============================================================ -->
+  <div class="section" id="s-phases">
+    <h2 class="section-title">Build Phases — What's Done, What's Next</h2>
+    <p class="section-desc">The system is built in phases. Each phase adds a major capability.</p>
+
+    <div class="phase-grid">
+      <div class="phase-card done">
+        <div class="phase-num">1</div>
+        <h3>Phase 1: Foundations <span class="status-tag done">done</span></h3>
+        <ul>
+          <li>Soul database schema (3 tables)</li>
+          <li>Soul engine (load, save, update, generate prompts)</li>
+          <li>Memory manager (add, summarize, prune)</li>
+          <li>Fisher2050, Ziggi, Eliyahu soul definitions</li>
+          <li>Soul API routes (full CRUD)</li>
+          <li>Fisher2050 app scaffold (Express + SQLite)</li>
+          <li>Fisher2050 ↔ PIA API connection</li>
+          <li>Autonomous worker soul injection</li>
+          <li>Scheduler with 4 default jobs</li>
+        </ul>
+      </div>
+
+      <div class="phase-card current">
+        <div class="phase-num">2</div>
+        <h3>Phase 2: Project Management <span class="status-tag current">next</span></h3>
+        <ul>
+          <li>Project CRUD (create, list, load, archive)</li>
+          <li>Auto GitHub repo creation (via gh CLI)</li>
+          <li>Task management (create, assign, track)</li>
+          <li>Google Tasks API (2-way sync)</li>
+          <li>Fisher2050 dashboard polish</li>
+        </ul>
+      </div>
+
+      <div class="phase-card">
+        <div class="phase-num">3</div>
+        <h3>Phase 3: Communication <span class="status-tag upcoming">upcoming</span></h3>
+        <ul>
+          <li>Gmail API setup (OAuth)</li>
+          <li>Email sending (Fisher2050 sends emails)</li>
+          <li>Email receiving (poll or webhook)</li>
+          <li>Machine wake-up via email</li>
+          <li>Inter-app webhook registry</li>
+        </ul>
+      </div>
+
+      <div class="phase-card">
+        <div class="phase-num">4</div>
+        <h3>Phase 4: Automated Agents <span class="status-tag upcoming">upcoming</span></h3>
+        <ul>
+          <li>Ziggi post-session code review</li>
+          <li>Ziggi 2am deep review + web browsing</li>
+          <li>Eliyahu daily summary + recommendations</li>
+          <li>Fisher2050 daily AI review (overdue, nudges)</li>
+        </ul>
+      </div>
+
+      <div class="phase-card">
+        <div class="phase-num">5</div>
+        <h3>Phase 5: Meetings & Transcription <span class="status-tag upcoming">upcoming</span></h3>
+        <ul>
+          <li>Meeting CRUD in Fisher2050</li>
+          <li>Google Calendar integration</li>
+          <li>Cloud transcriber (Taqtic/Google Speech)</li>
+          <li>AI meeting notes generation</li>
+          <li>Action item extraction → task list</li>
+        </ul>
+      </div>
+
+      <div class="phase-card">
+        <div class="phase-num">6</div>
+        <h3>Phase 6: Mobile PWA + Polish <span class="status-tag upcoming">upcoming</span></h3>
+        <ul>
+          <li>PIA PWA for mobile (responsive, notifications)</li>
+          <li>Fisher2050 PWA mobile view</li>
+          <li>Push notifications (web push / email)</li>
+          <li>Voice recording → cloud transcriber</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION: Data Flow -->
+  <!-- ============================================================ -->
+  <div class="section" id="s-dataflow">
+    <h2 class="section-title">Data Flow — How Everything Connects</h2>
+    <p class="section-desc">Step-by-step: what happens when you say "Review the PIA code".</p>
+
+    <h3 style="margin-bottom:16px">Example: Post-Session Code Review</h3>
+    <div class="flow-step"><div class="flow-num">1</div><div class="flow-content"><div class="title">You finish working on PIA</div><div class="desc">You click "Trigger Ziggi Review" in Fisher2050, or the scheduler fires automatically</div></div></div>
+    <div class="flow-step"><div class="flow-num">2</div><div class="flow-content"><div class="title">Fisher2050 calls PIA API</div><div class="desc"><code>POST /api/orchestrator/run { task: "Review PIA code", soulId: "ziggi" }</code></div></div></div>
+    <div class="flow-step"><div class="flow-num">3</div><div class="flow-content"><div class="title">PIA loads Ziggi's soul</div><div class="desc">soul-engine reads Ziggi's personality, goals, and last 20 memories from SQLite</div></div></div>
+    <div class="flow-step"><div class="flow-num">4</div><div class="flow-content"><div class="title">System prompt built</div><div class="desc">"You are Ziggi, the Architect..." + memories + "Review recent git changes in /pia-system"</div></div></div>
+    <div class="flow-step"><div class="flow-num">5</div><div class="flow-content"><div class="title">Claude API called with tools</div><div class="desc">Claude (as Ziggi) runs: <code>git log --since=24h</code>, reads changed files, analyzes quality</div></div></div>
+    <div class="flow-step"><div class="flow-num">6</div><div class="flow-content"><div class="title">Ziggi writes review</div><div class="desc">Creates review report with code quality rating, tech debt items, "Ziggi's Verdict"</div></div></div>
+    <div class="flow-step"><div class="flow-num">7</div><div class="flow-content"><div class="title">Memory saved</div><div class="desc">"Reviewed PIA code: quality 8/10, found 2 tech debt items, soul system well structured"</div></div></div>
+    <div class="flow-step"><div class="flow-num">8</div><div class="flow-content"><div class="title">Interaction logged</div><div class="desc">Fisher2050 → Ziggi: review_request / Ziggi → Fisher2050: response</div></div></div>
+    <div class="flow-step"><div class="flow-num">9</div><div class="flow-content"><div class="title">Fisher2050 confirms</div><div class="desc">Fisher2050 checks the result, updates task status, logs activity</div></div></div>
+
+    <hr class="separator">
+
+    <h3 style="margin-bottom:16px">Database Architecture</h3>
+    <div class="arch-grid">
+      <div class="arch-box highlight">
+        <h3>PIA Database (pia.db)</h3>
+        <div class="desc" style="font-family: monospace; font-size: 12px; line-height: 1.8;">
+          <strong style="color:var(--accent)">souls</strong> — id, name, role, personality, goals, relationships, email<br>
+          <strong style="color:var(--accent)">soul_memories</strong> — soul_id, category, content, importance<br>
+          <strong style="color:var(--accent)">soul_interactions</strong> — from_soul, to_soul, type, content<br>
+          <strong style="color:var(--dim)">machines</strong> — id, name, hostname, status<br>
+          <strong style="color:var(--dim)">agents</strong> — id, machine_id, name, type, status<br>
+          <strong style="color:var(--dim)">tasks</strong> — id, agent_id, title, status<br>
+          <strong style="color:var(--dim)">ai_usage</strong> — provider, model, tokens, cost<br>
+          <strong style="color:var(--dim)">alerts</strong> — type, message, acknowledged
+        </div>
+      </div>
+      <div class="arch-box green">
+        <h3>Fisher2050 Database (fisher2050.db)</h3>
+        <div class="desc" style="font-family: monospace; font-size: 12px; line-height: 1.8;">
+          <strong style="color:var(--green)">projects</strong> — id, name, status, github_repo, plan<br>
+          <strong style="color:var(--green)">tasks</strong> — project_id, title, priority, assigned_to, due_date<br>
+          <strong style="color:var(--green)">meetings</strong> — project_id, title, scheduled_at, notes, action_items<br>
+          <strong style="color:var(--green)">reports</strong> — type, title, content, sent_to<br>
+          <strong style="color:var(--green)">activity_log</strong> — action, entity_type, details<br>
+          <strong style="color:var(--green)">scheduled_jobs</strong> — cron_expression, soul_id, task_description
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- JavaScript -->
+  <!-- ============================================================ -->
+  <script>
+    function show(name) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('s-' + name).classList.add('active');
+      event.target.classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  </script>
+</body>
+</html>

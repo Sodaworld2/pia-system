@@ -1,0 +1,656 @@
+=== backend/src/routes/agreements.test.ts ===
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import supertest from 'supertest';
+import app from '../index';
+import db from '../database';
+
+// Mock the database
+vi.mock('../database');
+
+const request = supertest(app);
+
+let mockDbStore: any;
+
+const resetMockDb = () => {
+    mockDbStore = {
+        agreements: [{
+            id: 'AGMT_001',
+            type: 'adviser',
+            title: 'Advisor Agreement: Sarah',
+            party: JSON.stringify({ name: 'Sarah', walletAddress: '0xSarahWallet' }),
+            termOfEngagement: 2,
+            startDate: '2023-01-01',
+            status: 'Active',
+            details: JSON.stringify({
+                sections: [{ key: 'role_term', title: 'Role & Term', decision: 'PENDING' }]
+            }),
+        }]
+    };
+};
+
+
+describe('Agreements API', () => {
+    beforeEach(() => {
+        resetMockDb();
+        vi.mocked(db).mockImplementation((table: string) => ({
+            select: vi.fn().mockReturnThis(),
+            where: vi.fn(function (this: any, key: string, value: any) {
+                this.query = { table, key, value };
+                return this;
+            }),
+            first: vi.fn(function (this: any) {
+                const { table, key, value } = this.query;
+                const result = mockDbStore[table]?.find((item: any) => item[key] === value);
+                return Promise.resolve(result);
+            }),
+            update: vi.fn(function (this: any, data: any) {
+                const { table, key, value } = this.query;
+                const itemIndex = mockDbStore[table]?.findIndex((item: any) => item[key] === value);
+                if (itemIndex > -1) {
+                    mockDbStore[table][itemIndex] = { ...mockDbStore[table][itemIndex], ...data };
+                }
+                return Promise.resolve(1);
+            }),
+        } as any));
+    });
+
+    it('GET /api/agreements/:id should return a single agreement', async () => {
+        const response = await request.get('/api/agreements/AGMT_001');
+        expect(response.status).toBe(200);
+        expect(response.body.id).toBe('AGMT_001');
+        expect(response.body.party.name).toBe('Sarah'); // Check that JSON was parsed
+    });
+
+    it('POST /api/agreements/:agreementId/sections/:sectionKey/decide should update a section', async () => {
+        const response = await request
+            .post('/api/agreements/AGMT_001/sections/role_term/decide')
+            .send({ decision: 'accept' });
+
+        expect(response.status).toBe(200);
+
+        const updatedDetails = response.body.details; // This is already an object
+        const updatedSection = updatedDetails.sections.find((s: any) => s.key === 'role_term');
+
+        expect(updatedSection.decision).toBe('ACCEPTED');
+    });
+});
+
+--- END ---
+
+=== backend/src/routes/bubbles.test.ts ===
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import supertest from 'supertest';
+import app from '../index';
+import db from '../database';
+
+// Mock the database
+vi.mock('../database');
+
+const request = supertest(app);
+
+const mockBubble = {
+    id: 'BUBBLE_001',
+    name: 'Test Bubble',
+    team: JSON.stringify([]),
+    treasury: JSON.stringify({}),
+    roadmap: JSON.stringify([]),
+    updates: JSON.stringify([]),
+};
+
+describe('Bubbles API', () => {
+    beforeEach(() => {
+        vi.mocked(db).mockReturnValue({
+            select: vi.fn().mockResolvedValue([mockBubble]),
+            insert: vi.fn().mockResolvedValue([1]),
+        } as any);
+    });
+
+    it('GET /api/bubbles should return a list of bubbles', async () => {
+        const response = await request.get('/api/bubbles');
+        expect(response.status).toBe(200);
+        expect(response.body).toBeInstanceOf(Array);
+        expect(response.body[0].id).toBe('BUBBLE_001');
+        expect(response.body[0].team).toBeInstanceOf(Array); // Check that JSON was parsed
+    });
+
+    it('POST /api/bubbles should create a new bubble', async () => {
+        const newBubbleData = { name: 'New Test Bubble', type: 'Event' };
+        const response = await request
+            .post('/api/bubbles')
+            .send(newBubbleData);
+
+        expect(response.status).toBe(201);
+        expect(response.body.name).toBe('New Test Bubble');
+        expect(vi.mocked(db)().insert).toHaveBeenCalled();
+    });
+});
+
+--- END ---
+
+=== backend/src/routes/firstborn-agreements.test.ts ===
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import supertest from 'supertest';
+import app from '../index';
+import db from '../database';
+
+// Mock the database
+vi.mock('../database');
+
+// Mock Google Generative AI
+vi.mock('@google/generative-ai', () => ({
+    GoogleGenerativeAI: vi.fn().mockImplementation(() => ({
+        getGenerativeModel: vi.fn().mockReturnValue({
+            generateContent: vi.fn().mockResolvedValue({
+                response: {
+                    text: () => 'Generated First Born Investment Agreement Contract...',
+                },
+            }),
+        }),
+    })),
+}));
+
+const request = supertest(app);
+
+let mockDbStore: {
+    council_members: any[];
+    agreements: any[];
+    token_release_schedule: any[];
+    generated_contracts: any[];
+    agreement_workflow_log: any[];
+    daos: any[];
+};
+
+const resetMockDb = () => {
+    mockDbStore = {
+        daos: [{
+            id: 'dao_001',
+            name: 'Test DAO',
+            total_supply: 100000000,
+        }],
+        council_members: [{
+            id: 1,
+            dao_id: 'dao_001',
+            name: 'John',
+            surname: 'Investor',
+            email: 'john@investor.com',
+            wallet_address: '0x1234567890abcdef1234567890abcdef12345678',
+            role_type: 'firstborn',
+            role_category: 'investor',
+            token_allocation_total: 1000000,
+            status: 'draft',
+            agreement_id: 1,
+        }],
+        agreements: [{
+            id: 1,
+            dao_id: 'dao_001',
+            title: 'First Born Agreement - John Investor',
+            description: 'Early Investor Capital Contribution',
+            type: 'First Born Agreement',
+            status: 'Draft',
+            party: JSON.stringify({
+                name: 'John',
+                surname: 'Investor',
+                email: 'john@investor.com',
+                walletAddress: '0x1234567890abcdef1234567890abcdef12345678',
+            }),
+            details: JSON.stringify({
+                capital_contribution: {
+                    amount: 10000,
+                    currency: 'USD',
+                    transaction_hash: null,
+                },
+                token_reward: {
+                    amount: 1000000,
+                    vesting_months: 24,
+                    cliff_months: 6,
+                },
+                cultural_benefits: ['voting_rights', 'early_access'],
+                legal_framework: 'Swiss Foundation',
+            }),
+        }],
+        token_release_schedule: [
+            {
+                id: 1,
+                council_member_id: 1,
+                agreement_id: 1,
+                release_date: '2024-06-01',
+                token_amount: 250000,
+                release_type: 'cliff',
+                status: 'scheduled',
+            },
+            {
+                id: 2,
+                council_member_id: 1,
+                agreement_id: 1,
+                release_date: '2024-07-01',
+                token_amount: 41667,
+                release_type: 'vesting',
+                status: 'scheduled',
+            },
+        ],
+        generated_contracts: [{
+            id: 1,
+            agreement_id: 1,
+            council_member_id: 1,
+            contract_text: 'Sample contract text...',
+            contract_version: 1,
+            status: 'generated',
+        }],
+        agreement_workflow_log: [],
+    };
+};
+
+// Helper to create mock query builder
+const createMockQueryBuilder = () => {
+    let queryState: { table: string; conditions: any[]; } = { table: '', conditions: [] };
+
+    return {
+        select: vi.fn().mockReturnThis(),
+        where: vi.fn(function(this: any, ...args: any[]) {
+            if (typeof args[0] === 'string') {
+                queryState.conditions.push({ key: args[0], value: args[1] });
+            }
+            return this;
+        }),
+        whereNotIn: vi.fn().mockReturnThis(),
+        leftJoin: vi.fn().mockReturnThis(),
+        orderBy: vi.fn().mockReturnThis(),
+        sum: vi.fn().mockReturnThis(),
+        first: vi.fn(function() {
+            const { table, conditions } = queryState;
+            let items = mockDbStore[table as keyof typeof mockDbStore] || [];
+            for (const cond of conditions) {
+                items = items.filter((item: any) => item[cond.key] === cond.value);
+            }
+            return Promise.resolve(items[0] || null);
+        }),
+        insert: vi.fn(function(data: any) {
+            const table = queryState.table;
+            const newId = (mockDbStore[table as keyof typeof mockDbStore]?.length || 0) + 100;
+            const newItem = { id: newId, ...data };
+            if (mockDbStore[table as keyof typeof mockDbStore]) {
+                mockDbStore[table as keyof typeof mockDbStore].push(newItem);
+            }
+            return {
+                returning: vi.fn().mockResolvedValue([newId]),
+            };
+        }),
+        update: vi.fn().mockResolvedValue(1),
+        returning: vi.fn().mockReturnThis(),
+        transaction: vi.fn(async (callback: any) => {
+            const trx = createMockQueryBuilder();
+            return callback(trx);
+        }),
+    };
+};
+
+describe('First Born Agreements API', () => {
+    beforeEach(() => {
+        resetMockDb();
+        vi.mocked(db).mockImplementation((table: string) => {
+            const builder = createMockQueryBuilder();
+            (builder as any).queryState = { table, conditions: [] };
+            return builder as any;
+        });
+    });
+
+    afterEach(() => {
+        vi.clearAllMocks();
+    });
+
+    describe('GET /api/agreements/firstborn', () => {
+        it('should return all firstborn agreements', async () => {
+            vi.mocked(db).mockImplementation(() => ({
+                where: vi.fn().mockReturnThis(),
+                select: vi.fn().mockReturnThis(),
+                leftJoin: vi.fn().mockReturnThis(),
+                orderBy: vi.fn().mockResolvedValue(mockDbStore.council_members.filter(
+                    m => m.role_type === 'firstborn'
+                )),
+            } as any));
+
+            const response = await request.get('/api/agreements/firstborn');
+
+            expect(response.status).toBe(200);
+            expect(response.body.success).toBe(true);
+            expect(Array.isArray(response.body.data)).toBe(true);
+        });
+
+        it('should filter by dao_id when provided', async () => {
+            vi.mocked(db).mockImplementation(() => ({
+                where: vi.fn().mockReturnThis(),
+                select: vi.fn().mockReturnThis(),
+                leftJoin: vi.fn().mockReturnThis(),
+                orderBy: vi.fn().mockResolvedValue([mockDbStore.council_members[0]]),
+            } as any));
+
+            const response = await request.get('/api/agreements/firstborn?dao_id=dao_001');
+
+            expect(response.status).toBe(200);
+            expect(response.body.success).toBe(true);
+        });
+    });
+
+    describe('GET /api/agreements/firstborn/:id', () => {
+        it('should return a specific firstborn agreement with vesting schedule', async () => {
+            const mockMember = mockDbStore.council_members[0];
+            const mockVesting = mockDbStore.token_release_schedule;
+            const mockContracts = mockDbStore.generated_contracts;
+
+            vi.mocked(db).mockImplementation((table: string) => ({
+                where: vi.fn().mockReturnThis(),
+                select: vi.fn().mockReturnThis(),
+                leftJoin: vi.fn().mockReturnThis(),
+                orderBy: vi.fn().mockResolvedValue(
+                    table === 'token_release_schedule' ? mockVesting :
+                    table === 'generated_contracts' ? mockContracts : []
+                ),
+                first: vi.fn().mockResolvedValue(
+                    table === 'council_members' ? { ...mockMember, agreement_details: mockDbStore.agreements[0].details } : null
+                ),
+            } as any));
+
+            const response = await request.get('/api/agreements/firstborn/1');
+
+            expect(response.status).toBe(200);
+            expect(response.body.success).toBe(true);
+            expect(response.body.data).toBeDefined();
+        });
+
+        it('should return 404 for non-existent agreement', async () => {
+            vi.mocked(db).mockImplementation(() => ({
+                where: vi.fn().mockReturnThis(),
+                select: vi.fn().mockReturnThis(),
+                leftJoin: vi.fn().mockReturnThis(),
+                first: vi.fn().mockResolvedValue(null),
+            } as any));
+
+            const response = await request.get('/api/agreements/firstborn/999');
+
+            expect(response.status).toBe(404);
+            expect(response.body.success).toBe(false);
+            expect(response.body.code).toBe('NOT_FOUND');
+        });
+    });
+
+    describe('POST /api/agreements/firstborn', () => {
+        const validPayload = {
+            dao_id: 'dao_001',
+            personal_details: {
+                name: 'Jane',
+                surname: 'NewInvestor',
+                email: 'jane@newinvestor.com',
+                wallet_address: '0xabcdef1234567890abcdef1234567890abcdef12',
+            },
+            capital_contribution: {
+                amount: 5000,
+                currency: 'USD',
+            },
+            token_reward: {
+                amount: 500000,
+                vesting_months: 24,
+                cliff_months: 6,
+            },
+            cultural_benefits: ['voting_rights'],
+            legal_framework: 'Swiss Foundation',
+        };
+
+        it('should return 400 for missing required fields', async () => {
+            const response = await request
+                .post('/api/agreements/firstborn')
+                .send({});
+
+            expect(response.status).toBe(400);
+            expect(response.body.success).toBe(false);
+            expect(response.body.code).toBe('MISSING_FIELDS');
+        });
+
+        it('should return 400 for invalid currency', async () => {
+            const response = await request
+                .post('/api/agreements/firstborn')
+                .send({
+                    ...validPayload,
+                    capital_contribution: {
+                        amount: 5000,
+                        currency: 'INVALID_CURRENCY',
+                    },
+                });
+
+            expect(response.status).toBe(400);
+            expect(response.body.code).toBe('INVALID_CURRENCY');
+        });
+
+        it('should return 400 for invalid wallet address', async () => {
+            const response = await request
+                .post('/api/agreements/firstborn')
+                .send({
+                    ...validPayload,
+                    personal_details: {
+                        ...validPayload.personal_details,
+                        wallet_address: 'short',
+                    },
+                });
+
+            expect(response.status).toBe(400);
+            expect(response.body.code).toBe('INVALID_WALLET_ADDRESS');
+        });
+
+        it('should return 400 for zero contribution amount', async () => {
+            const response = await request
+                .post('/api/agreements/firstborn')
+                .send({
+                    ...validPayload,
+                    capital_contribution: {
+                        amount: 0,
+                        currency: 'USD',
+                    },
+                });
+
+            expect(response.status).toBe(400);
+            expect(response.body.code).toBe('INVALID_CONTRIBUTION_AMOUNT');
+        });
+    });
+
+    describe('PUT /api/agreements/firstborn/:id/status', () => {
+        it('should return 400 for missing required fields', async () => {
+            const response = await request
+                .put('/api/agreements/firstborn/1/status')
+                .send({});
+
+            expect(response.status).toBe(400);
+            expect(response.body.code).toBe('MISSING_FIELDS');
+        });
+
+        it('should return 400 for invalid status', async () => {
+            const response = await request
+                .put('/api/agreements/firstborn/1/status')
+                .send({ status: 'invalid_status', changed_by: 'admin' });
+
+            expect(response.status).toBe(400);
+            expect(response.body.code).toBe('INVALID_STATUS');
+        });
+    });
+
+    describe('GET /api/agreements/firstborn/:id/vesting', () => {
+        it('should return vesting schedule for a member', async () => {
+            vi.mocked(db).mockImplementation((table: string) => ({
+                where: vi.fn().mockReturnThis(),
+                orderBy: vi.fn().mockResolvedValue(mockDbStore.token_release_schedule),
+                first: vi.fn().mockResolvedValue(mockDbStore.council_members[0]),
+            } as any));
+
+            const response = await request.get('/api/agreements/firstborn/1/vesting');
+
+            expect(response.status).toBe(200);
+            expect(response.body.success).toBe(true);
+            expect(response.body.data.schedule).toBeDefined();
+        });
+
+        it('should return 404 for non-existent member', async () => {
+            vi.mocked(db).mockImplementation(() => ({
+                where: vi.fn().mockReturnThis(),
+                first: vi.fn().mockResolvedValue(null),
+            } as any));
+
+            const response = await request.get('/api/agreements/firstborn/999/vesting');
+
+            expect(response.status).toBe(404);
+            expect(response.body.code).toBe('NOT_FOUND');
+        });
+    });
+
+    describe('PUT /api/agreements/firstborn/:id/vesting/:releaseId/release', () => {
+        it('should return 400 for missing released_by', async () => {
+            const response = await request
+                .put('/api/agreements/firstborn/1/vesting/1/release')
+                .send({});
+
+            expect(response.status).toBe(400);
+            expect(response.body.code).toBe('MISSING_FIELDS');
+        });
+    });
+});
+
+--- END ---
+
+=== backend/src/routes/gemini.test.ts ===
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
+import request from 'supertest';
+import app from '../index';
+import db from '../database';
+
+// Mock the Google Generative AI client
+vi.mock('@google/generative-ai', () => {
+  const mockSendMessage = vi.fn().mockResolvedValue({
+    response: {
+      text: () => 'This is a mocked AI response.',
+    },
+  });
+  const mockStartChat = vi.fn(() => ({
+    sendMessage: mockSendMessage,
+  }));
+  return {
+    GoogleGenerativeAI: vi.fn(() => ({
+      getGenerativeModel: vi.fn(() => ({
+        startChat: mockStartChat,
+      })),
+    })),
+    mockStartChat, // Export for inspection in tests
+    mockSendMessage, // Export for inspection in tests
+  };
+});
+
+describe('/api/mentor/chat', () => {
+  beforeEach(async () => {
+    // Ensure the table is clean before each test
+    await db.schema.dropTableIfExists('messages');
+    await db.schema.createTable('messages', (table) => {
+      table.increments('id').primary();
+      table.string('sessionId').notNullable();
+      table.string('sender').notNullable();
+      table.text('text').notNullable();
+      table.timestamp('timestamp').defaultTo(db.fn.now());
+    });
+  });
+
+  afterEach(async () => {
+    // Clean up the table after each test
+    await db.schema.dropTableIfExists('messages');
+    vi.clearAllMocks();
+  });
+
+  it('should save user and AI messages to the database', async () => {
+    const sessionId = 'test-session-123';
+    const prompt = 'Hello, AI!';
+
+    const response = await request(app)
+      .post('/api/mentor/chat')
+      .send({ sessionId, prompt });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ text: 'This is a mocked AI response.' });
+
+    // Verify messages were saved in the database
+    const messages = await db('messages').where({ sessionId }).orderBy('timestamp');
+    expect(messages).toHaveLength(2);
+
+    expect(messages[0]).toMatchObject({
+      sessionId,
+      sender: 'user',
+      text: prompt,
+    });
+
+    expect(messages[1]).toMatchObject({
+      sessionId,
+      sender: 'model',
+      text: 'This is a mocked AI response.',
+    });
+  });
+
+  it('should load history for an existing session', async () => {
+    const { mockStartChat } = await import('@google/generative-ai');
+    const sessionId = 'test-session-456';
+    const firstPrompt = 'This is the first message.';
+    const secondPrompt = 'This is the second message.';
+
+    // First interaction
+    await request(app)
+      .post('/api/mentor/chat')
+      .send({ sessionId, prompt: firstPrompt });
+
+    // Second interaction
+    await request(app)
+      .post('/api/mentor/chat')
+      .send({ sessionId, prompt: secondPrompt });
+
+    // Verify that the chat was started with the history of the first interaction
+    const history = mockStartChat.mock.calls[1][0].history;
+    expect(history).toHaveLength(2);
+    expect(history[0]).toEqual({
+      role: 'user',
+      parts: [{ text: firstPrompt }],
+    });
+    expect(history[1]).toEqual({
+      role: 'model',
+      parts: [{ text: 'This is a mocked AI response.' }],
+    });
+  });
+});
+
+--- END ---
+
+
+supertest: NOT INSTALLED
+
+=== backend/src/index.ts (first 30 lines) ===
+import 'dotenv/config';
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import geminiRouter from './routes/gemini';
+import daoRouter from './routes/dao';
+import treasuryRouter from './routes/treasury';
+import agreementsRouter from './routes/agreements';
+import founderAgreementsRouter from './routes/founder-agreements';
+import advisorAgreementsRouter from './routes/advisor-agreements';
+import contributorAgreementsRouter from './routes/contributor-agreements';
+import firstbornAgreementsRouter from './routes/firstborn-agreements';
+import councilRouter from './routes/council';
+import milestonesRouter from './routes/milestones';
+import signaturesRouter from './routes/signatures';
+import contractsRouter from './routes/contracts';
+import bubblesRouter from './routes/bubbles';
+import proposalsRouter from './routes/proposals';
+import tokenDistributionRouter from './routes/token_distribution';
+import tokensRouter from './routes/tokens';
+import marketplaceRouter from './routes/marketplace';
+import adminRouter from './routes/admin';
+import healthRouter from './routes/health';
+import brainRouter from './routes/brain';
+import modulesRouter from './routes/modules';
+import { initializeDatabase } from './database';
+import { ModuleRegistry } from './modules';
+import { initializeRAG } from './ai';
+import logger from './utils/logger';
+import { requestLoggerMiddleware } from './middleware/requestLogger';
+--- END ---

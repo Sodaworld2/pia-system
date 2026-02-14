@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIA Agent Handbook — Complete Guide</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0a0a0f; color: #e0e0e0; line-height: 1.7; }
+
+  /* Header */
+  .hero { background: linear-gradient(135deg, #0f3460 0%, #16213e 40%, #1a1a2e 70%, #e94560 200%); padding: 50px 20px; text-align: center; border-bottom: 3px solid #e94560; }
+  .hero h1 { font-size: 2.6em; color: #fff; letter-spacing: 1px; }
+  .hero .sub { color: #a0a0b0; font-size: 1.1em; margin-top: 6px; }
+  .hero .meta { margin-top: 16px; display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; font-size: 0.85em; color: #666; }
+  .hero .meta span { background: rgba(255,255,255,0.05); padding: 4px 14px; border-radius: 20px; }
+
+  /* TOC */
+  .toc { max-width: 1000px; margin: 30px auto; padding: 0 20px; }
+  .toc h2 { color: #e94560; font-size: 1.3em; margin-bottom: 14px; }
+  .toc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; }
+  .toc-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #12121a; border: 1px solid #1e1e2e; border-radius: 8px; text-decoration: none; color: #b0b0b0; font-size: 0.9em; transition: all 0.2s; }
+  .toc-item:hover { border-color: #e94560; color: #fff; transform: translateX(4px); }
+  .toc-item .num { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; background: #1e1e2e; border-radius: 50%; font-size: 0.8em; font-weight: 700; color: #666; flex-shrink: 0; }
+  .toc-item:hover .num { background: #e94560; color: #fff; }
+
+  /* Content */
+  .content { max-width: 1000px; margin: 0 auto; padding: 20px; }
+
+  /* Chapter */
+  .chapter { margin-bottom: 50px; scroll-margin-top: 20px; }
+  .chapter-header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 2px solid #e94560; }
+  .chapter-header .ch-num { font-size: 2em; font-weight: 900; color: rgba(233,69,96,0.3); }
+  .chapter-header h2 { font-size: 1.5em; color: #fff; }
+
+  /* Cards */
+  .card { background: #12121a; border: 1px solid #1e1e2e; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+  .card h3 { color: #e94560; font-size: 1.05em; margin-bottom: 10px; }
+  .card p { color: #a0a0b0; font-size: 0.92em; margin-bottom: 10px; }
+
+  /* Limits Table */
+  .limits-table { width: 100%; border-collapse: collapse; margin: 14px 0; }
+  .limits-table th { background: #1a1a2e; color: #e94560; padding: 10px 12px; text-align: left; font-size: 0.85em; border-bottom: 2px solid #e94560; }
+  .limits-table td { padding: 10px 12px; border-bottom: 1px solid #1a1a2a; font-size: 0.88em; color: #b0b0b0; }
+  .limits-table tr:hover td { background: rgba(233,69,96,0.03); }
+  .limits-table .val { color: #50c878; font-weight: 700; }
+  .limits-table .warn { color: #ffa500; font-weight: 600; }
+  .limits-table .max { color: #e94560; font-weight: 600; }
+
+  /* Code */
+  .code { background: #0a0a12; border: 1px solid #1e1e2e; border-radius: 8px; padding: 14px; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 0.82em; color: #888; white-space: pre-wrap; overflow-x: auto; margin: 10px 0; }
+  .code .comment { color: #444; }
+  .code .key { color: #e94560; }
+  .code .str { color: #50c878; }
+  .code .num { color: #6495ed; }
+
+  /* Tip/Warning boxes */
+  .tip { background: rgba(80,200,120,0.05); border-left: 4px solid #50c878; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 0.9em; }
+  .tip strong { color: #50c878; }
+  .warning { background: rgba(255,165,0,0.05); border-left: 4px solid #ffa500; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 0.9em; }
+  .warning strong { color: #ffa500; }
+  .danger { background: rgba(233,69,96,0.05); border-left: 4px solid #e94560; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 0.9em; }
+  .danger strong { color: #e94560; }
+
+  /* Flow diagrams */
+  .flow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 14px 0; }
+  .flow .step { background: #1a1a2e; border: 1px solid #2a2a3a; border-radius: 8px; padding: 8px 14px; font-size: 0.85em; color: #b0b0b0; }
+  .flow .arrow { color: #e94560; font-weight: 700; }
+
+  /* Grid */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 700px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  /* Badge */
+  .badge { display: inline-block; font-size: 0.7em; padding: 2px 8px; border-radius: 4px; font-weight: 600; vertical-align: middle; margin-left: 6px; }
+  .b-green { background: rgba(80,200,120,0.15); color: #50c878; }
+  .b-orange { background: rgba(255,165,0,0.15); color: #ffa500; }
+  .b-red { background: rgba(233,69,96,0.15); color: #e94560; }
+  .b-blue { background: rgba(100,149,237,0.15); color: #6495ed; }
+
+  /* Checklist */
+  .checklist { list-style: none; }
+  .checklist li { padding: 6px 0; font-size: 0.9em; color: #a0a0b0; display: flex; align-items: start; gap: 8px; }
+  .checklist li::before { content: ''; display: inline-block; width: 18px; height: 18px; border: 2px solid #333; border-radius: 4px; flex-shrink: 0; margin-top: 3px; }
+
+  /* Progress bar */
+  .progress { height: 10px; background: #1e1e2e; border-radius: 5px; overflow: hidden; margin: 6px 0; }
+  .progress .fill { height: 100%; border-radius: 5px; }
+  .fill-green { background: #50c878; }
+  .fill-orange { background: #ffa500; }
+  .fill-red { background: #e94560; }
+
+  /* Nav links */
+  .nav-links { display: flex; gap: 12px; flex-wrap: wrap; margin: 20px 0; }
+  .nav-links a { background: #1a1a2e; border: 1px solid #2a2a3a; border-radius: 8px; padding: 8px 16px; color: #a0a0b0; text-decoration: none; font-size: 0.88em; transition: all 0.2s; }
+  .nav-links a:hover { border-color: #e94560; color: #fff; }
+
+  /* Footer */
+  .footer { text-align: center; padding: 40px; color: #333; font-size: 0.8em; border-top: 1px solid #1a1a1a; margin-top: 40px; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>PIA Agent Handbook</h1>
+  <div class="sub">Complete guide to building, configuring, and running AI agents in the PIA system</div>
+  <div class="meta">
+    <span>Phase 1 Research Complete</span>
+    <span>2026-02-13</span>
+    <span>v1.1 — Two-Pack Update</span>
+  </div>
+</div>
+
+<!-- TABLE OF CONTENTS -->
+<div class="toc">
+  <h2>Contents</h2>
+  <div class="toc-grid">
+    <a class="toc-item" href="#ch1"><span class="num">1</span> Token Limits & Budget Guide</a>
+    <a class="toc-item" href="#ch2"><span class="num">2</span> The 7 Layers (with limits)</a>
+    <a class="toc-item" href="#ch3"><span class="num">3</span> How to Create an Agent (step by step)</a>
+    <a class="toc-item" href="#ch4"><span class="num">4</span> Memory System Guide</a>
+    <a class="toc-item" href="#ch5"><span class="num">5</span> Do's and Don'ts Best Practices</a>
+    <a class="toc-item" href="#ch6"><span class="num">6</span> File Structure & Where Data Lives</a>
+    <a class="toc-item" href="#ch7"><span class="num">7</span> API Reference (Quick)</a>
+    <a class="toc-item" href="#ch8"><span class="num">8</span> The Two-Pack Architecture</a>
+    <a class="toc-item" href="#ch9"><span class="num">9</span> Expert Sources & Research (2026)</a>
+    <a class="toc-item" href="#ch10"><span class="num">10</span> Complete Terminology</a>
+    <a class="toc-item" href="#ch11"><span class="num">11</span> Research Journal</a>
+  </div>
+  <div class="nav-links" style="margin-top: 16px;">
+    <a href="/simple-guide.html">Simple Guide (Non-Technical)</a>
+    <a href="/terminology.html">Full Terminology (52 terms)</a>
+    <a href="/agent-generator.html">Agent Generator Form</a>
+    <a href="/knowledge.html">Knowledge Index</a>
+    <a href="/system-plan.html">System Architecture</a>
+  </div>
+</div>
+
+<div class="content">
+
+<!-- ========== CHAPTER 1: LIMITS ========== -->
+<div class="chapter" id="ch1">
+  <div class="chapter-header">
+    <span class="ch-num">01</span>
+    <h2>Token Limits & Budget Guide</h2>
+  </div>
+
+  <div class="card">
+    <h3>Context Window — The Hard Ceiling</h3>
+    <table class="limits-table">
+      <tr><th>Model</th><th>Standard Window</th><th>Extended (Beta)</th><th>Max Output</th></tr>
+      <tr><td>Claude Opus 4.6</td><td class="val">200,000 tokens</td><td class="val">1,000,000 tokens</td><td>128,000 tokens</td></tr>
+      <tr><td>Claude Sonnet 4.5</td><td class="val">200,000 tokens</td><td class="val">1,000,000 tokens</td><td>64,000 tokens</td></tr>
+      <tr><td>Claude Haiku 4.5</td><td class="val">200,000 tokens</td><td>—</td><td>~40,000 tokens</td></tr>
+      <tr><td>Ollama (local)</td><td>4,096 - 128,000</td><td>—</td><td>Varies by model</td></tr>
+    </table>
+    <p><strong>1 token = ~4 characters = ~0.75 words.</strong> So 200K tokens = ~150K words = ~300 pages of text.</p>
+  </div>
+
+  <div class="card">
+    <h3>What Eats the Budget (200K standard window)</h3>
+    <table class="limits-table">
+      <tr><th>Component</th><th>Tokens Used</th><th>% of 200K</th><th>Can You Control?</th></tr>
+      <tr><td>Claude Code system prompt (built-in)</td><td>~3,200</td><td>1.6%</td><td class="max">NO — fixed</td></tr>
+      <tr><td>Tool schemas + MCP definitions</td><td>~500-2,000</td><td>0.5-1%</td><td class="warn">Partially</td></tr>
+      <tr><td>CLAUDE.md project instructions</td><td>~500-2,000</td><td>0.5-1%</td><td class="val">YES</td></tr>
+      <tr><td>Reserved buffer (response + compaction)</td><td>~33,000</td><td>16.5%</td><td class="max">NO — reserved</td></tr>
+      <tr style="background:rgba(233,69,96,0.05);"><td><strong>OVERHEAD TOTAL</strong></td><td><strong>~37,000-40,000</strong></td><td><strong>~20%</strong></td><td></td></tr>
+      <tr style="background:rgba(80,200,120,0.05);"><td><strong>AVAILABLE FOR WORK</strong></td><td class="val"><strong>~160,000</strong></td><td class="val"><strong>~80%</strong></td><td></td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Soul System Token Budget (what you control)</h3>
+    <table class="limits-table">
+      <tr><th>Layer</th><th>Current</th><th>Recommended Max</th><th>Hard Limit</th><th>Notes</th></tr>
+      <tr><td>Personality description</td><td class="val">~875</td><td class="warn">~4,000</td><td class="max">~10,000</td><td>Be specific, not verbose. Quirks > paragraphs.</td></tr>
+      <tr><td>Goals (4-6 items)</td><td class="val">~200</td><td class="warn">~500</td><td class="max">~1,000</td><td>Keep actionable. More goals = less focus.</td></tr>
+      <tr><td>Relationships (4 entries)</td><td class="val">~300</td><td class="warn">~800</td><td class="max">~2,000</td><td>One sentence per relationship is ideal.</td></tr>
+      <tr><td>System prompt (instructions)</td><td class="val">~250</td><td class="warn">~2,000</td><td class="max">~5,000</td><td>Step-by-step procedures. Don't repeat personality.</td></tr>
+      <tr><td>Config (JSON)</td><td class="val">~50</td><td class="warn">~200</td><td class="max">~500</td><td>Timing, thresholds, flags.</td></tr>
+      <tr><td>20 recent memories</td><td class="val">~1,400</td><td class="warn">~3,000</td><td class="max">~5,000</td><td>Auto-managed. More = more context, slower.</td></tr>
+      <tr><td>10 important memories</td><td class="val">~700</td><td class="warn">~1,500</td><td class="max">~3,000</td><td>Only importance >= 7. Quality over quantity.</td></tr>
+      <tr><td>Tool definitions</td><td class="val">~488</td><td>~488</td><td>~1,000</td><td>Fixed by autonomous worker.</td></tr>
+      <tr><td>Briefing document (optional)</td><td class="val">~4,500</td><td class="warn">~10,000</td><td class="max">~20,000</td><td>Only for complex tasks. Don't always inject.</td></tr>
+      <tr style="background:rgba(233,69,96,0.05);"><td><strong>TOTAL SOUL SYSTEM</strong></td><td><strong>~4,000-8,800</strong></td><td><strong>~22,500</strong></td><td class="max"><strong>~47,500</strong></td><td></td></tr>
+    </table>
+
+    <div class="tip"><strong>Rule of thumb:</strong> Keep total soul injection under 10,000 tokens for standard tasks. You can go up to 25,000 for complex tasks with briefing docs. Beyond that, you're eating into working space.</div>
+  </div>
+
+  <div class="card">
+    <h3>Visual: How the 200K Budget Gets Split</h3>
+    <p style="font-size:0.85em;color:#888;">Standard task with soul + memories (no briefing doc):</p>
+    <div style="display:flex;height:30px;border-radius:6px;overflow:hidden;margin:10px 0;">
+      <div style="width:1.6%;background:#e94560;" title="Claude system prompt"></div>
+      <div style="width:1%;background:#ffa500;" title="Tools + MCP"></div>
+      <div style="width:2%;background:#ba55d3;" title="Soul (personality+goals+system prompt)"></div>
+      <div style="width:1%;background:#6495ed;" title="Memories (30)"></div>
+      <div style="width:16.5%;background:#333;" title="Reserved buffer"></div>
+      <div style="width:77.9%;background:#1a3a1a;" title="Available for work"></div>
+    </div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:0.75em;color:#888;margin-top:6px;">
+      <span><span style="color:#e94560;">&#9632;</span> System prompt (1.6%)</span>
+      <span><span style="color:#ffa500;">&#9632;</span> Tools (1%)</span>
+      <span><span style="color:#ba55d3;">&#9632;</span> Soul (2%)</span>
+      <span><span style="color:#6495ed;">&#9632;</span> Memories (1%)</span>
+      <span><span style="color:#333;">&#9632;</span> Reserved (16.5%)</span>
+      <span><span style="color:#1a3a1a;">&#9632;</span> Available for work (77.9%)</span>
+    </div>
+
+    <div class="warning" style="margin-top:14px;"><strong>Auto-compaction triggers at ~83% (167K tokens).</strong> Older conversation turns get summarized. Soul data in the system prompt is NOT affected. For long sessions, save important context to files before compaction hits.</div>
+  </div>
+</div>
+
+<!-- ========== CHAPTER 2: 7 LAYERS ========== -->
+<div class="chapter" id="ch2">
+  <div class="chapter-header">
+    <span class="ch-num">02</span>
+    <h2>The 7 Layers of Agent Programming</h2>
+  </div>
+
+  <div class="card">
+    <h3>Layer 1: Personality <span class="badge b-red">REQUIRED</span></h3>
+    <p><strong>What:</strong> Multi-paragraph description of how the agent thinks, communicates, and behaves.</p>
+    <table class="limits-table">
+      <tr><th>Metric</th><th>Minimum</th><th>Sweet Spot</th><th>Maximum</th></tr>
+      <tr><td>Length</td><td>200 chars</td><td class="val">800-2,000 chars</td><td class="max">10,000 chars</td></tr>
+      <tr><td>Traits listed</td><td>3</td><td class="val">5-7</td><td class="max">12</td></tr>
+      <tr><td>Quirks listed</td><td>1</td><td class="val">3-5</td><td class="max">8</td></tr>
+      <tr><td>Style bullets</td><td>2</td><td class="val">4-6</td><td class="max">10</td></tr>
+    </table>
+    <div class="tip"><strong>Expert tip (SOUL.md):</strong> Specificity beats length. "Ends updates with confidence %" is better than "Is very analytical and detail-oriented." Real quirks and phrases anchor personality better than adjectives.</div>
+  </div>
+
+  <div class="card">
+    <h3>Layer 2: Goals <span class="badge b-red">REQUIRED</span></h3>
+    <p><strong>What:</strong> Specific objectives the agent actively pursues during every task.</p>
+    <table class="limits-table">
+      <tr><th>Metric</th><th>Minimum</th><th>Sweet Spot</th><th>Maximum</th></tr>
+      <tr><td>Number of goals</td><td>2</td><td class="val">4-6</td><td class="max">10</td></tr>
+      <tr><td>Words per goal</td><td>5</td><td class="val">8-15</td><td class="max">30</td></tr>
+    </table>
+    <div class="tip"><strong>Expert tip (OpenAI):</strong> Goals should be actionable and measurable. "Run daily reviews and flag overdue items" is better than "Help manage projects." Each goal should answer "what would I see this agent DOING?"</div>
+  </div>
+
+  <div class="card">
+    <h3>Layer 3: Relationships <span class="badge b-green">RECOMMENDED</span></h3>
+    <p><strong>What:</strong> How the agent relates to other agents and humans. Affects tone and behavior.</p>
+    <table class="limits-table">
+      <tr><th>Metric</th><th>Minimum</th><th>Sweet Spot</th><th>Maximum</th></tr>
+      <tr><td>Number of relationships</td><td>1 (boss)</td><td class="val">3-5</td><td class="max">10</td></tr>
+      <tr><td>Words per relationship</td><td>10</td><td class="val">15-30</td><td class="max">50</td></tr>
+    </table>
+    <div class="tip"><strong>Best practice:</strong> Always define the relationship with Mic (boss/owner). Then add relationships with other active agents. Include the dynamic, not just the role: "The Architect. Triggers Ziggi for code reviews. Respects Ziggi's thoroughness."</div>
+  </div>
+
+  <div class="card">
+    <h3>Layer 4: System Prompt <span class="badge b-red">REQUIRED</span></h3>
+    <p><strong>What:</strong> Operational instructions — what tools are available, what steps to follow, what boundaries to respect.</p>
+    <table class="limits-table">
+      <tr><th>Metric</th><th>Minimum</th><th>Sweet Spot</th><th>Maximum</th></tr>
+      <tr><td>Total length</td><td>200 chars</td><td class="val">500-2,000 chars</td><td class="max">5,000 chars</td></tr>
+      <tr><td>Procedure steps</td><td>3</td><td class="val">5-7</td><td class="max">15</td></tr>
+      <tr><td>Tool/resource list</td><td>2</td><td class="val">4-6</td><td class="max">12</td></tr>
+    </table>
+    <div class="warning"><strong>Don't repeat personality here.</strong> The system prompt is about WHAT TO DO, not WHO YOU ARE. Personality goes in Layer 1.</div>
+  </div>
+
+  <div class="card">
+    <h3>Layer 5: Memories <span class="badge b-green">RECOMMENDED</span></h3>
+    <p><strong>What:</strong> Accumulated experience from past work. Auto-managed by the memory system.</p>
+    <table class="limits-table">
+      <tr><th>Metric</th><th>Current Default</th><th>Sweet Spot</th><th>Maximum</th></tr>
+      <tr><td>Recent memories loaded</td><td>20</td><td class="val">15-25</td><td class="max">50</td></tr>
+      <tr><td>Important memories loaded</td><td>10</td><td class="val">10-15</td><td class="max">30</td></tr>
+      <tr><td>Chars per memory</td><td>~150</td><td class="val">100-300</td><td class="max">500</td></tr>
+      <tr><td>Summarize after</td><td>7 days</td><td class="val">5-10 days</td><td class="max">30 days</td></tr>
+      <tr><td>Prune after</td><td>30 days</td><td class="val">21-60 days</td><td class="max">90 days</td></tr>
+      <tr><td>Prune importance threshold</td><td>&le; 3</td><td class="val">&le; 3</td><td class="max">&le; 5</td></tr>
+    </table>
+    <div class="tip"><strong>Expert tip:</strong> Quality > quantity. A memory that says "PowerShell uses semicolons not && for chaining commands" (importance: 8) is worth more than 10 memories about routine file edits (importance: 3).</div>
+  </div>
+
+  <div class="card">
+    <h3>Layer 6: Config <span class="badge b-blue">OPTIONAL</span></h3>
+    <p><strong>What:</strong> Timing, thresholds, and behavior switches.</p>
+    <table class="limits-table">
+      <tr><th>Metric</th><th>Minimum</th><th>Sweet Spot</th><th>Maximum</th></tr>
+      <tr><td>Config keys</td><td>0</td><td class="val">3-6</td><td class="max">15</td></tr>
+    </table>
+    <p>Common config keys: schedule times, quality thresholds, feature flags, follow-up intervals, max items per batch.</p>
+  </div>
+
+  <div class="card">
+    <h3>Layer 7: Briefing Document <span class="badge b-blue">OPTIONAL</span></h3>
+    <p><strong>What:</strong> Full project context — tech stack, database schemas, API routes, build plan, rules.</p>
+    <table class="limits-table">
+      <tr><th>Metric</th><th>Minimum</th><th>Sweet Spot</th><th>Maximum</th></tr>
+      <tr><td>Total size</td><td>1 KB</td><td class="val">5-15 KB</td><td class="max">30 KB (~7,500 tokens)</td></tr>
+      <tr><td>Sections</td><td>3</td><td class="val">5-8</td><td class="max">15</td></tr>
+    </table>
+    <div class="warning"><strong>Don't always inject this.</strong> Briefing docs are for complex tasks that need full project context. For simple tasks, the soul + memories are enough. Loading a 20KB briefing for a "fix this typo" task is wasteful.</div>
+  </div>
+</div>
+
+<!-- ========== CHAPTER 3: HOW TO CREATE ========== -->
+<div class="chapter" id="ch3">
+  <div class="chapter-header">
+    <span class="ch-num">03</span>
+    <h2>How to Create an Agent (Step by Step)</h2>
+  </div>
+
+  <div class="card">
+    <h3>Step 1: Define the Soul JSON</h3>
+    <p>Create a new file in <code>src/souls/personalities/your-agent.json</code>:</p>
+    <div class="code"><span class="comment">// src/souls/personalities/your-agent.json</span>
+{
+  <span class="key">"id"</span>: <span class="str">"your-agent"</span>,
+  <span class="key">"name"</span>: <span class="str">"YourAgent"</span>,
+  <span class="key">"role"</span>: <span class="str">"Your Role Here"</span>,
+  <span class="key">"email"</span>: <span class="str">"your-agent@sodaworld.com"</span>,
+  <span class="key">"personality"</span>: <span class="str">"You are YourAgent, the [Role]... (200-2000 chars)"</span>,
+  <span class="key">"goals"</span>: [
+    <span class="str">"Goal 1 — specific, actionable"</span>,
+    <span class="str">"Goal 2 — measurable outcome"</span>,
+    <span class="str">"Goal 3 — what you'd see them doing"</span>,
+    <span class="str">"Goal 4 — with clear scope"</span>
+  ],
+  <span class="key">"relationships"</span>: {
+    <span class="str">"Mic"</span>: <span class="str">"The boss. Ultimate decision-maker."</span>,
+    <span class="str">"Fisher2050"</span>: <span class="str">"The PM. Coordinates with for task tracking."</span>
+  },
+  <span class="key">"system_prompt"</span>: <span class="str">"When processing a task:\n1. Step one\n2. Step two\n..."</span>,
+  <span class="key">"config"</span>: {
+    <span class="key">"scheduleTime"</span>: <span class="str">"09:00"</span>,
+    <span class="key">"maxItems"</span>: <span class="num">10</span>
+  }
+}</div>
+  </div>
+
+  <div class="card">
+    <h3>Step 2: Register in seed-souls.ts</h3>
+    <p>Add your new soul to the seed list so it loads on startup:</p>
+    <div class="code"><span class="comment">// src/souls/seed-souls.ts — add to the array:</span>
+const soulFiles = [
+  'fisher2050.json',
+  'ziggi.json',
+  'eliyahu.json',
+  <span class="str">'your-agent.json'</span>  <span class="comment">// &lt;-- add this</span>
+];</div>
+  </div>
+
+  <div class="card">
+    <h3>Step 3: Restart PIA</h3>
+    <p>The new soul will be automatically loaded into the database:</p>
+    <div class="code">npm run dev
+<span class="comment">// Console: "Seeded soul: your-agent (YourAgent)"</span></div>
+  </div>
+
+  <div class="card">
+    <h3>Step 4: Verify via API</h3>
+    <div class="code">curl http://localhost:3000/api/souls/your-agent
+
+<span class="comment">// Should return your soul definition with all fields</span></div>
+  </div>
+
+  <div class="card">
+    <h3>Step 5: Test with a Task</h3>
+    <div class="code">curl -X POST http://localhost:3000/api/orchestrator/run \
+  -H "Content-Type: application/json" \
+  -d '{
+    "task": "List all files in the current directory and describe what you see",
+    "soulId": "your-agent",
+    "maxTurns": 5,
+    "maxBudgetUsd": 0.50
+  }'</div>
+  </div>
+
+  <div class="card">
+    <h3>Step 6: Seed Initial Memories (Optional)</h3>
+    <div class="code">curl -X POST http://localhost:3000/api/souls/your-agent/memories \
+  -H "Content-Type: application/json" \
+  -d '{
+    "category": "experience",
+    "content": "Set up the PIA system on Machine #1",
+    "importance": 7
+  }'</div>
+  </div>
+
+  <div class="card">
+    <h3>Alternative: Use the Agent Generator</h3>
+    <p>Open <a href="/agent-generator.html" style="color:#e94560;">/agent-generator.html</a> to fill in a form and download the JSON file. Then place it in <code>src/souls/personalities/</code>.</p>
+  </div>
+</div>
+
+<!-- ========== CHAPTER 4: MEMORY SYSTEM ========== -->
+<div class="chapter" id="ch4">
+  <div class="chapter-header">
+    <span class="ch-num">04</span>
+    <h2>Memory System Guide</h2>
+  </div>
+
+  <div class="card">
+    <h3>Memory Categories — When to Use Each</h3>
+    <table class="limits-table">
+      <tr><th>Category</th><th>When to Use</th><th>Example</th><th>Typical Importance</th></tr>
+      <tr><td><strong>experience</strong></td><td>Something the agent DID</td><td>"Fixed 5 failing tests by updating mock library"</td><td>5-8</td></tr>
+      <tr><td><strong>decision</strong></td><td>A choice was MADE</td><td>"Chose TypeScript over Python for backend"</td><td>7-9</td></tr>
+      <tr><td><strong>learning</strong></td><td>Something DISCOVERED</td><td>"Snapshot tests break if regenerated without review"</td><td>6-8</td></tr>
+      <tr><td><strong>interaction</strong></td><td>Communication HAPPENED</td><td>"Fisher2050 requested code review for DAO changes"</td><td>4-6</td></tr>
+      <tr><td><strong>observation</strong></td><td>Something NOTICED</td><td>"CI pipeline slow on Fridays — batch jobs overlap"</td><td>3-6</td></tr>
+      <tr><td><strong>goal_progress</strong></td><td>Progress on OBJECTIVES</td><td>"Completed 3/5 routing refactor milestones"</td><td>5-7</td></tr>
+      <tr><td><strong>summary</strong></td><td>AUTO-GENERATED only</td><td>"Feb 5-7: Fixed auth/session bugs, 5 improvements"</td><td>5</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Importance Scoring Guide</h3>
+    <table class="limits-table">
+      <tr><th>Score</th><th>Meaning</th><th>Lifetime</th><th>Examples</th></tr>
+      <tr><td class="val">9-10</td><td>Critical / Breakthrough</td><td>FOREVER</td><td>Major architecture decision, critical bug found, production incident</td></tr>
+      <tr><td class="val">7-8</td><td>Important / Significant</td><td>FOREVER (in "important" slot)</td><td>Key technical choice, successful deployment, learned workaround</td></tr>
+      <tr><td>5-6</td><td>Normal / Standard</td><td>Summarized after 7 days</td><td>Routine task completion, standard interaction, minor finding</td></tr>
+      <tr><td>3-4</td><td>Low / Minor</td><td>Summarized then pruned</td><td>File renamed, config tweaked, small observation</td></tr>
+      <tr><td class="max">1-2</td><td>Trivia / Noise</td><td>Pruned after 30 days</td><td>Temp file created, test output checked, minor log entry</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Memory Lifecycle</h3>
+    <div class="flow">
+      <span class="step">Memory Created</span>
+      <span class="arrow">&rarr;</span>
+      <span class="step">Active (loaded in prompts)</span>
+      <span class="arrow">&rarr;</span>
+      <span class="step">7+ days: Summarized</span>
+      <span class="arrow">&rarr;</span>
+      <span class="step">30+ days + low importance: Pruned</span>
+    </div>
+    <div class="tip"><strong>High-importance memories (7+) are NEVER pruned.</strong> They stay in the "important memories" slot forever, giving the agent permanent knowledge of critical decisions and learnings.</div>
+  </div>
+</div>
+
+<!-- ========== CHAPTER 5: DOS AND DONTS ========== -->
+<div class="chapter" id="ch5">
+  <div class="chapter-header">
+    <span class="ch-num">05</span>
+    <h2>Do's and Don'ts — Best Practices</h2>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3 style="color:#50c878;">Agent Design — DO</h3>
+      <ul class="checklist">
+        <li>Be specific with personality — use real quirks, phrases, patterns</li>
+        <li>Keep goals actionable — "Run daily reviews" not "Be helpful"</li>
+        <li>Define relationships with dynamics, not just names</li>
+        <li>Separate personality (who) from instructions (how)</li>
+        <li>Include 3-5 signature phrases that anchor behavior</li>
+        <li>Add good/bad output examples for calibration</li>
+        <li>Name real influences (books, frameworks, people)</li>
+        <li>Test with a small task before giving complex work</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 style="color:#e94560;">Agent Design — DON'T</h3>
+      <ul class="checklist">
+        <li>Don't use vague traits ("helpful", "smart", "efficient")</li>
+        <li>Don't write novel-length personality descriptions</li>
+        <li>Don't give more than 8 goals — focus beats breadth</li>
+        <li>Don't repeat personality in the system prompt</li>
+        <li>Don't always inject briefing docs for simple tasks</li>
+        <li>Don't set all memory importance to 10</li>
+        <li>Don't skip the Zero Questions Policy for autonomous agents</li>
+        <li>Don't forget to define escalation — when should the agent STOP?</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3 style="color:#50c878;">Memory — DO</h3>
+      <ul class="checklist">
+        <li>Score importance honestly — 7+ means it matters in 2 weeks</li>
+        <li>Use the right category — decision vs experience vs learning</li>
+        <li>Keep memory content concise — 100-300 chars is ideal</li>
+        <li>Seed critical memories when creating a new agent</li>
+        <li>Run summarization weekly for active agents</li>
+        <li>Prune monthly to prevent database bloat</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 style="color:#e94560;">Memory — DON'T</h3>
+      <ul class="checklist">
+        <li>Don't store entire file contents as memories</li>
+        <li>Don't mark routine tasks as importance 9-10</li>
+        <li>Don't skip the "decision" category — decisions are gold</li>
+        <li>Don't let memories accumulate without summarization</li>
+        <li>Don't delete high-importance memories manually</li>
+        <li>Don't load 50+ memories into every prompt</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3 style="color:#50c878;">Autonomy — DO</h3>
+      <ul class="checklist">
+        <li>Set Zero Questions Policy for build agents</li>
+        <li>Set maxBudget and maxTurns on every task</li>
+        <li>Block dangerous commands (rm -rf, mkfs, etc.)</li>
+        <li>Require reading files before editing</li>
+        <li>Require tests after code changes</li>
+        <li>Log all actions for auditability</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 style="color:#e94560;">Autonomy — DON'T</h3>
+      <ul class="checklist">
+        <li>Don't give unlimited budget — always cap spend</li>
+        <li>Don't skip guardrails "just this once"</li>
+        <li>Don't let agents run without timeout limits</li>
+        <li>Don't give file-write access without path restrictions</li>
+        <li>Don't forget same-error-3x escalation</li>
+        <li>Don't trust agent output without verification for critical ops</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ========== CHAPTER 6: FILE STRUCTURE ========== -->
+<div class="chapter" id="ch6">
+  <div class="chapter-header">
+    <span class="ch-num">06</span>
+    <h2>File Structure & Where Data Lives</h2>
+  </div>
+
+  <div class="card">
+    <h3>Repository Structure</h3>
+    <div class="code">pia-system/
+<span class="comment">## GIT-TRACKED (code + templates)</span>
+├── src/souls/personalities/     <span class="comment"># Soul JSON definitions</span>
+│   ├── fisher2050.json          <span class="key"># Project Manager soul</span>
+│   ├── ziggi.json               <span class="key"># Architect soul</span>
+│   └── eliyahu.json             <span class="key"># Knowledge Manager soul</span>
+├── src/souls/
+│   ├── soul-engine.ts           <span class="comment"># CRUD + prompt generation</span>
+│   ├── memory-manager.ts        <span class="comment"># Memory operations</span>
+│   └── seed-souls.ts            <span class="comment"># Loads JSONs at startup</span>
+├── src/db/database.ts           <span class="comment"># Schema + 4 migrations</span>
+├── src/orchestrator/            <span class="comment"># Task execution engine</span>
+├── src/api/routes/              <span class="comment"># 20+ API route files</span>
+├── src/config.ts                <span class="comment"># Reads .env into config</span>
+├── public/                      <span class="comment"># UI dashboards</span>
+│   ├── handbook.html            <span class="key"># THIS FILE</span>
+│   ├── terminology.html         <span class="key"># 52 terms</span>
+│   ├── agent-generator.html     <span class="key"># Agent builder form</span>
+│   └── knowledge.html           <span class="key"># Knowledge index</span>
+├── fisher2050/                  <span class="comment"># Standalone PM app</span>
+│
+<span class="comment">## RUNTIME ONLY (git-ignored)</span>
+├── data/
+│   ├── pia.db                   <span class="key"># Main database (all tables)</span>
+│   └── checkpoints/*.json       <span class="comment"># Session recovery</span>
+├── .env                         <span class="comment"># API keys, ports, secrets</span>
+└── .claude/settings.local.json  <span class="comment"># Claude Code permissions</span></div>
+  </div>
+
+  <div class="card">
+    <h3>Database Tables (15 total in pia.db)</h3>
+    <table class="limits-table">
+      <tr><th>Table</th><th>Purpose</th><th>Migration</th></tr>
+      <tr><td>machines</td><td>Registered machines with IP, status, capabilities</td><td>001</td></tr>
+      <tr><td>agents</td><td>Agent instances running on machines</td><td>001</td></tr>
+      <tr><td>sessions</td><td>CLI/PTY sessions</td><td>001</td></tr>
+      <tr><td>tasks</td><td>Work queue with priority + dependencies</td><td>001</td></tr>
+      <tr><td>alerts</td><td>System notifications</td><td>001</td></tr>
+      <tr><td>ai_providers</td><td>Model configs (Ollama, Claude tiers)</td><td>002</td></tr>
+      <tr><td>ai_usage</td><td>Per-request token + cost tracking</td><td>002</td></tr>
+      <tr><td>ai_cost_daily</td><td>Daily cost aggregates</td><td>002</td></tr>
+      <tr><td>ai_budgets</td><td>Spending limits</td><td>002</td></tr>
+      <tr><td><strong>souls</strong></td><td><strong>Agent personality definitions</strong></td><td>003</td></tr>
+      <tr><td><strong>soul_memories</strong></td><td><strong>Agent memories (categorized, scored)</strong></td><td>003</td></tr>
+      <tr><td><strong>soul_interactions</strong></td><td><strong>Inter-agent communication log</strong></td><td>003</td></tr>
+      <tr><td>work_sessions</td><td>Project work session tracking</td><td>004</td></tr>
+      <tr><td>known_projects</td><td>Remembered project paths/repos</td><td>004</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ========== CHAPTER 7: API REFERENCE ========== -->
+<div class="chapter" id="ch7">
+  <div class="chapter-header">
+    <span class="ch-num">07</span>
+    <h2>API Reference (Quick)</h2>
+  </div>
+
+  <div class="card">
+    <h3>Soul Management</h3>
+    <div class="code">GET    /api/souls                    <span class="comment"># List all souls</span>
+GET    /api/souls/:id                <span class="comment"># Get specific soul</span>
+POST   /api/souls                    <span class="comment"># Create new soul</span>
+PUT    /api/souls/:id                <span class="comment"># Update soul</span>
+DELETE /api/souls/:id                <span class="comment"># Delete soul</span>
+PATCH  /api/souls/:id/status         <span class="comment"># Set active/inactive/archived</span>
+GET    /api/souls/:id/prompt         <span class="comment"># Generate full system prompt</span></div>
+  </div>
+
+  <div class="card">
+    <h3>Memory Management</h3>
+    <div class="code">GET    /api/souls/:id/memories       <span class="comment"># Get memories (?category= &search= &limit=)</span>
+GET    /api/souls/:id/memories/stats <span class="comment"># Memory statistics</span>
+POST   /api/souls/:id/memories       <span class="comment"># Add new memory</span>
+DELETE /api/souls/:id/memories/:mid  <span class="comment"># Delete specific memory</span>
+POST   /api/souls/:id/memories/summarize  <span class="comment"># Compress old memories</span>
+POST   /api/souls/:id/memories/prune      <span class="comment"># Remove old low-importance</span></div>
+  </div>
+
+  <div class="card">
+    <h3>Task Execution</h3>
+    <div class="code">POST   /api/orchestrator/run         <span class="comment"># Start async task (returns taskId)</span>
+POST   /api/orchestrator/run-sync    <span class="comment"># Start sync task (blocks until done)</span>
+GET    /api/orchestrator/task/:id    <span class="comment"># Check task status/result</span>
+
+<span class="comment"># Body for /run:</span>
+{
+  <span class="key">"task"</span>: <span class="str">"What to do"</span>,
+  <span class="key">"soulId"</span>: <span class="str">"fisher2050"</span>,       <span class="comment"># optional</span>
+  <span class="key">"model"</span>: <span class="str">"claude-sonnet-4-5"</span>, <span class="comment"># optional</span>
+  <span class="key">"maxBudgetUsd"</span>: <span class="num">1.0</span>,            <span class="comment"># optional, default $1</span>
+  <span class="key">"maxTurns"</span>: <span class="num">30</span>,                 <span class="comment"># optional, default 30</span>
+  <span class="key">"projectDir"</span>: <span class="str">"/path/to/code"</span>   <span class="comment"># optional</span>
+}</div>
+  </div>
+
+  <div class="card">
+    <h3>Soul Interactions</h3>
+    <div class="code">GET    /api/souls/:id/interactions   <span class="comment"># Get interaction log</span>
+POST   /api/souls/interact           <span class="comment"># Log interaction between two souls</span>
+
+<span class="comment"># Body:</span>
+{
+  <span class="key">"from_soul_id"</span>: <span class="str">"fisher2050"</span>,
+  <span class="key">"to_soul_id"</span>: <span class="str">"ziggi"</span>,
+  <span class="key">"interaction_type"</span>: <span class="str">"review_request"</span>,
+  <span class="key">"content"</span>: <span class="str">"Post-session review needed for DAO changes"</span>
+}</div>
+  </div>
+</div>
+
+<!-- ========== CHAPTER 8: TWO-PACK ARCHITECTURE ========== -->
+<div class="chapter" id="ch8">
+  <div class="chapter-header">
+    <span class="ch-num">08</span>
+    <h2>The Two-Pack Architecture</h2>
+  </div>
+
+  <div class="card">
+    <h3>The Core Insight (Feb 2026)</h3>
+    <p>The industry is converging on separating agent configuration into <strong>two independent packs</strong>. This is the single most important design pattern for agent systems in 2026.</p>
+    <div class="tip"><strong>Breaking news (this week):</strong> SOUL.md was created <strong>Feb 2, 2026</strong> — just 11 days ago. AGENTS.md was donated to the <strong>Linux Foundation's Agentic AI Foundation (AAIF)</strong> in Dec 2025, co-founded by OpenAI, Anthropic, and Block. <strong>60,000+ repos</strong> now have AGENTS.md. Apple <strong>Xcode 26.3</strong> (Feb 3, 2026) added agentic coding support with AGENTS.md and CLAUDE.md. The two-pack separation is happening RIGHT NOW.</div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card" style="border-left: 4px solid #6495ed;">
+      <h3 style="color: #6495ed;">Pack 1: Agent Pack (SOUL.md)</h3>
+      <p><strong>"Who am I?"</strong></p>
+      <p>Identity, personality, goals, relationships, memories, skills, guardrails, voice/style.</p>
+      <p style="margin-top:8px;"><strong>Portable:</strong> Same agent can work on different projects. Fisher2050 stays "Fisher2050" whether working on PIA, Videohoho, or a new project.</p>
+      <p style="margin-top:8px;font-size:0.85em;color:#888;">Industry names: SOUL.md, Agent Config, Persona, Agent Definition</p>
+    </div>
+    <div class="card" style="border-left: 4px solid #ffa500;">
+      <h3 style="color: #ffa500;">Pack 2: Project Pack (CLAUDE.md / AGENTS.md)</h3>
+      <p><strong>"What am I working on?"</strong></p>
+      <p>Tech stack, file structure, coding conventions, build commands, architecture, testing rules, project status.</p>
+      <p style="margin-top:8px;"><strong>Portable:</strong> Different agents can join the same project. A new agent can onboard by reading the Project Pack.</p>
+      <p style="margin-top:8px;font-size:0.85em;color:#888;">Industry names: CLAUDE.md, AGENTS.md, Project Config, Repo Instructions</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Runtime Assembly</h3>
+    <div class="flow">
+      <span class="step">Agent Pack (stable prefix)</span>
+      <span class="arrow">&rarr;</span>
+      <span class="step">Project Pack (per-project)</span>
+      <span class="arrow">&rarr;</span>
+      <span class="step">Task (per-task)</span>
+      <span class="arrow">=</span>
+      <span class="step" style="background:#e94560;color:#fff;">Full Context</span>
+    </div>
+    <p style="font-size:0.85em;color:#888;margin-top:8px;">Google calls this "stable prefix + variable suffix." The Agent Pack rarely changes; the Project Pack changes per project; the Task changes per task.</p>
+  </div>
+
+  <div class="card">
+    <h3>How the Industry Implements This (Feb 2026)</h3>
+    <table class="limits-table">
+      <tr><th>Platform</th><th>Agent Pack (Identity)</th><th>Project Pack (Context)</th><th>Size Limit</th></tr>
+      <tr><td><strong>Claude Code</strong></td><td>Soul JSON + system_prompt</td><td>CLAUDE.md (root + nested)</td><td>No hard limit (concise recommended)</td></tr>
+      <tr><td><strong>OpenAI Codex</strong></td><td>Agent instructions in SDK</td><td>AGENTS.md (hierarchical override)</td><td class="val">32 KiB default</td></tr>
+      <tr><td><strong>Google ADK</strong></td><td><code>instruction</code> param + name + description</td><td>Domain context via tools/data</td><td>Model-dependent</td></tr>
+      <tr><td><strong>Cursor</strong></td><td>.cursorrules (global)</td><td>.cursorrules (per-project)</td><td>~150-200 instructions</td></tr>
+      <tr><td><strong>PIA System</strong></td><td>Soul JSON → generateSystemPrompt()</td><td>Briefing doc (DAO_AGENT_BRIEFING)</td><td>~10K recommended, ~47K max</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Key Spec: AGENTS.md (OpenAI Codex, Feb 2026)</h3>
+    <table class="limits-table">
+      <tr><th>Feature</th><th>Detail</th></tr>
+      <tr><td>Format</td><td>Markdown file, Git-tracked</td></tr>
+      <tr><td>Default size limit</td><td class="val">32 KiB (<code>project_doc_max_bytes</code>)</td></tr>
+      <tr><td>Discovery order</td><td>~/.codex/AGENTS.md &rarr; repo root &rarr; nested dirs (closer overrides farther)</td></tr>
+      <tr><td>Override</td><td>AGENTS.override.md takes priority at same level</td></tr>
+      <tr><td>Content</td><td>Build commands, test rules, dependency preferences, security guidelines</td></tr>
+      <tr><td>Instruction budget</td><td class="warn">~150-200 instructions max for reliable following</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Key Spec: CLAUDE.md (Anthropic Claude Code, Feb 2026)</h3>
+    <table class="limits-table">
+      <tr><th>Feature</th><th>Detail</th></tr>
+      <tr><td>Format</td><td>Markdown file, Git-tracked at project root</td></tr>
+      <tr><td>Auto-generated</td><td><code>claude</code> then <code>/init</code> creates starter file</td></tr>
+      <tr><td>7 sections</td><td>Project Overview, Tech Stack, Commands, Workflows, Code Style, Architecture, Terminology</td></tr>
+      <tr><td>Loading</td><td>Automatic — every agent loads on start</td></tr>
+      <tr><td>Best practice</td><td>Keep concise. Every token loads every request. Minimum: 1 sentence + package manager.</td></tr>
+      <tr><td>MCP instructions</td><td>Can include when/how to use configured MCP servers</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Key Spec: Google ADK Agent Config (Feb 2026)</h3>
+    <table class="limits-table">
+      <tr><th>Parameter</th><th>Purpose</th><th>Required?</th></tr>
+      <tr><td><code>name</code></td><td>Unique agent identifier</td><td class="max">Required</td></tr>
+      <tr><td><code>model</code></td><td>Which LLM powers the agent (e.g., Gemini)</td><td class="max">Required</td></tr>
+      <tr><td><code>description</code></td><td>Summary of capabilities (for multi-agent routing)</td><td class="warn">Recommended</td></tr>
+      <tr><td><code>instruction</code></td><td>Core task, personality, constraints, tool usage</td><td class="warn">Critical</td></tr>
+      <tr><td><code>tools</code></td><td>List of tools: Python functions, BaseTool classes, or other agents</td><td>Optional</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Full Industry Comparison (Feb 13, 2026)</h3>
+    <table class="limits-table">
+      <tr><th>Tool / Platform</th><th>Project Context File</th><th>Agent Identity File</th><th>Size Limit</th></tr>
+      <tr><td><strong>AGENTS.md</strong> (standard)</td><td>AGENTS.md</td><td>None (out of scope)</td><td>Tool-dependent</td></tr>
+      <tr><td><strong>Claude Code</strong></td><td>CLAUDE.md</td><td>None (use SOUL.md externally)</td><td class="warn">~8K tokens / ~500 lines</td></tr>
+      <tr><td><strong>OpenAI Codex</strong></td><td>AGENTS.md (hierarchical)</td><td>None (in SDK)</td><td class="val">32 KiB default</td></tr>
+      <tr><td><strong>Cursor</strong></td><td>.cursor/rules/*.mdc + AGENTS.md</td><td>None</td><td>Not published</td></tr>
+      <tr><td><strong>Windsurf</strong></td><td>.windsurf/rules/ + global_rules.md</td><td>Memories (auto-generated!)</td><td>Keep concise</td></tr>
+      <tr><td><strong>Google ADK</strong></td><td>Tools + session state</td><td><code>instruction</code> field</td><td>Model-dependent</td></tr>
+      <tr><td><strong>Apple Xcode 26.3</strong></td><td>AGENTS.md + CLAUDE.md</td><td>None</td><td>Not published</td></tr>
+      <tr><td><strong>OpenClaw</strong></td><td>Workspace config</td><td>SOUL.md + IDENTITY.md</td><td>Not published</td></tr>
+      <tr><td><strong>SOUL.md</strong> (framework)</td><td>N/A (pairs with AGENTS.md)</td><td>SOUL.md + STYLE.md + SKILL.md</td><td>Not published</td></tr>
+      <tr><td><strong>PIA System</strong></td><td>Briefing doc (DAO_AGENT_BRIEFING)</td><td>Soul JSON → generateSystemPrompt()</td><td class="val">~10K rec / ~47K max</td></tr>
+    </table>
+    <p style="font-size:0.85em;color:#888;margin-top:8px;"><strong>Key:</strong> Project context is well-standardized (AGENTS.md/CLAUDE.md). Agent identity is just NOW being formalized (SOUL.md created Feb 2, 2026). PIA is ahead of the curve — we already have persistent soul identities.</p>
+  </div>
+
+  <div class="card">
+    <h3>SOUL.md: The Soul Stack (Created Feb 2, 2026)</h3>
+    <p>Brand new framework — only 11 days old. Defines WHO an agent is.</p>
+    <div class="code"><span class="comment">// The Soul Stack file structure</span>
+your-soul/
+  BUILD.md          <span class="comment">// Agent uses this to build your soul</span>
+  SOUL.md           <span class="comment">// Identity: values, boundaries, principles</span>
+  STYLE.md          <span class="comment">// Voice: tone, patterns, how you write</span>
+  SKILL.md          <span class="comment">// Operating instructions: what you can do</span>
+  data/
+    writing/        <span class="comment">// Articles, posts, essays (source material)</span>
+    influences.md   <span class="comment">// Who shaped your thinking</span>
+  examples/
+    good-outputs.md <span class="comment">// Calibration: this is right</span>
+    bad-outputs.md  <span class="comment">// Calibration: this is wrong</span></div>
+    <p style="margin-top:10px;">Three core sections: <strong>Core Truths</strong> (values, principles), <strong>Boundaries</strong> (guardrails), <strong>The Vibe</strong> (tone, communication style).</p>
+    <div class="warning"><strong>SOUL.md vs PIA Souls:</strong> Very similar concepts! SOUL.md uses markdown files; PIA uses JSON stored in SQLite. SOUL.md separates identity/voice/skills into 3 files; PIA combines them in one JSON. Both share the same philosophy: specificity beats vagueness, include contradictions, test and iterate.</div>
+  </div>
+
+  <div class="card">
+    <h3>New: <a href="https://souls.directory" style="color:#e94560;">souls.directory</a> — Community Soul Templates</h3>
+    <p>Launched Feb 2026. Open-source directory of SOUL.md templates. Browse, use, and publish agent personalities. Think of it as a "soul store" — you can find pre-built personality templates for different agent types.</p>
+  </div>
+
+  <div class="tip">
+    <strong>What this means for PIA:</strong> Our Soul JSON = Agent Pack. Our Briefing Document = Project Pack. We're already using the two-pack pattern — we just need to formalize the Project Pack side (create a CLAUDE.md for the main repo, standardize briefing doc structure). We should also consider adding STYLE and SKILL separation like SOUL.md does. <strong>We are ahead of the curve</strong> — most tools don't have persistent agent identity yet. PIA has had it since Phase 1.
+  </div>
+</div>
+
+<!-- ========== CHAPTER 9: SOURCES ========== -->
+<div class="chapter" id="ch9">
+  <div class="chapter-header">
+    <span class="ch-num">09</span>
+    <h2>Expert Sources & Research (Updated Feb 2026)</h2>
+  </div>
+
+  <div class="card">
+    <h3>Official Platform Documentation (Current Feb 2026)</h3>
+    <table class="limits-table">
+      <tr><th>Source</th><th>Key Findings</th><th>Link</th></tr>
+      <tr><td><strong>Anthropic: CLAUDE.md Guide</strong></td><td>7-section project config. Auto-generated with /init. Living document. Keep concise — every token loads every request.</td><td><a href="https://dometrain.com/blog/creating-the-perfect-claudemd-for-claude-code/" style="color:#6495ed;">Dometrain Guide</a></td></tr>
+      <tr><td><strong>Anthropic: Custom Subagents</strong></td><td>AGENTS.md for Claude Code subagent configuration. Separate agent instructions from project context.</td><td><a href="https://code.claude.com/docs/en/sub-agents" style="color:#6495ed;">Docs</a></td></tr>
+      <tr><td><strong>OpenAI: AGENTS.md for Codex</strong></td><td>Hierarchical discovery, 32KiB limit, override system, instruction budget ~150-200. Files concatenate root-down.</td><td><a href="https://developers.openai.com/codex/guides/agents-md/" style="color:#6495ed;">Docs</a></td></tr>
+      <tr><td><strong>OpenAI: Codex Agent Loop</strong></td><td>Tool loop architecture, sandboxed execution, skill system, rules configuration.</td><td><a href="https://openai.com/index/unrolling-the-codex-agent-loop/" style="color:#6495ed;">Blog</a></td></tr>
+      <tr><td><strong>Google: ADK Overview</strong></td><td>Agent config: name + model + instruction + tools. Multi-agent orchestration with parent-child relationships.</td><td><a href="https://google.github.io/adk-docs/agents/" style="color:#6495ed;">Docs</a></td></tr>
+      <tr><td><strong>Google ADK: Tools Make an Agent</strong></td><td>Tools are what make agents useful. Proper tool config (name, description, params) is as important as prompt engineering.</td><td><a href="https://cloud.google.com/blog/topics/developers-practitioners/tools-make-an-agent-from-zero-to-assistant-with-adk" style="color:#6495ed;">Blog</a></td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Expert Articles & Guides (Jan-Feb 2026)</h3>
+    <table class="limits-table">
+      <tr><th>Source</th><th>Key Findings</th><th>Link</th></tr>
+      <tr><td><strong>AI Hero: Complete Guide to AGENTS.md</strong></td><td>Instruction budget concept. Progressive disclosure. Stale docs actively poison context. Don't auto-generate.</td><td><a href="https://www.aihero.dev/a-complete-guide-to-agents-md" style="color:#6495ed;">Guide</a></td></tr>
+      <tr><td><strong>HumanLayer: Writing Good CLAUDE.md</strong></td><td>~150-200 instruction limit. Every token loads every request. Start minimal, add based on agent behavior.</td><td><a href="https://www.humanlayer.dev/blog/writing-a-good-claude-md" style="color:#6495ed;">Blog</a></td></tr>
+      <tr><td><strong>Layer5: AGENTS.md — One File to Guide Them All</strong></td><td>Cross-tool compatibility. Symlink between CLAUDE.md and AGENTS.md. Monorepo strategies.</td><td><a href="https://layer5.io/blog/ai/agentsmd-one-file-to-guide-them-all/" style="color:#6495ed;">Article</a></td></tr>
+      <tr><td><strong>The Agent Architect: System Prompt Tips</strong></td><td>Specific identity > generic. Choose a professional role. Avoid contradictions. Define formality, jargon, brevity.</td><td><a href="https://theagentarchitect.substack.com/p/4-tips-writing-system-prompts-ai-agents-work" style="color:#6495ed;">Substack</a></td></tr>
+      <tr><td><strong>DigitalOcean: Agent Instructions Best Practices</strong></td><td>Define identity, objectives, expertise, restrictions. Tone, data handling, escalation protocols.</td><td><a href="https://docs.digitalocean.com/products/gradient-ai-platform/concepts/agent-instructions/" style="color:#6495ed;">Docs</a></td></tr>
+      <tr><td><strong>PromptHub: Prompt Engineering for Agents</strong></td><td>Prompt = constitution. Persona as behavioral anchor. Structured prompt templates.</td><td><a href="https://www.prompthub.us/blog/prompt-engineering-for-ai-agents" style="color:#6495ed;">Blog</a></td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Breaking Developments (Last 2 Weeks)</h3>
+    <table class="limits-table">
+      <tr><th>Date</th><th>Event</th><th>Impact</th></tr>
+      <tr><td class="max">Feb 2, 2026</td><td><strong>SOUL.md framework created</strong> — agent identity in markdown</td><td>First standard for defining WHO an agent is (separate from project context)</td></tr>
+      <tr><td class="max">Feb 3, 2026</td><td><strong>Apple Xcode 26.3</strong> — agentic coding with Claude + Codex</td><td>First-party IDE support. Uses MCP, AGENTS.md, CLAUDE.md</td></tr>
+      <tr><td class="max">Feb 5, 2026</td><td><strong>Claude Opus 4.6 Agent Teams</strong> (experimental)</td><td>Multiple agents collaborate on different parts of tasks simultaneously</td></tr>
+      <tr><td>Feb 11, 2026</td><td><strong>GitGuardian raises $50M</strong> for AI agent identity security</td><td>Enterprise agent identity management becoming critical</td></tr>
+      <tr><td>Feb 12, 2026</td><td><strong>Okta launches AI agent discovery</strong></td><td>Each agent needs a dedicated identity tied to a verified owner</td></tr>
+      <tr><td>Feb 12, 2026</td><td><strong>Agent Skills Standard</strong> published for GitHub Copilot</td><td>Quality contracts behind reliable AI agents</td></tr>
+      <tr><td>Jan 9, 2026</td><td><strong>Claude Code Skills 2.1.3</strong> — slash commands merged into skills</td><td>Skills are now the primary extensibility mechanism</td></tr>
+      <tr><td>Dec 2025</td><td><strong>AGENTS.md donated to Linux Foundation AAIF</strong></td><td>Now an open standard governed by OpenAI + Anthropic + Block + Google + Microsoft + AWS</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Foundational References (Still Relevant)</h3>
+    <table class="limits-table">
+      <tr><th>Source</th><th>What We Used</th><th>Link</th></tr>
+      <tr><td><strong>SOUL.md Framework</strong></td><td>Personality structure: SOUL + STYLE + SKILL templates. Specificity over vagueness.</td><td><a href="https://github.com/aaronjmars/soul.md" style="color:#6495ed;">GitHub</a></td></tr>
+      <tr><td><strong>OpenAI Practical Agent Guide</strong></td><td>Guardrails, tool definitions, input/output validation, testing.</td><td><a href="https://cdn.openai.com/business-guides-and-resources/a-practical-guide-to-building-agents.pdf" style="color:#6495ed;">PDF</a></td></tr>
+      <tr><td><strong>Martin's Orchestration Template</strong></td><td>Hook enforcement, delegation-first, cost waterfall, multi-model review.</td><td>Local: Martin/claude-orchestration-template-main/</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Free Learning Resources (Feb 2026)</h3>
+    <table class="limits-table">
+      <tr><th>Course</th><th>Provider</th><th>Why Relevant</th><th>Link</th></tr>
+      <tr><td><strong>Build Intelligent Agents with ADK</strong></td><td>Google Skills</td><td>Hands-on agent config: identity, tools, multi-agent</td><td><a href="https://www.skills.google/course_templates/1382" style="color:#6495ed;">Enroll</a></td></tr>
+      <tr><td><strong>Deploy Multi-Agent Systems</strong></td><td>Google Skills</td><td>Parent-child agent orchestration</td><td><a href="https://www.skills.google/course_templates/1275" style="color:#6495ed;">Enroll</a></td></tr>
+      <tr><td><strong>5-Day AI Agents Intensive</strong></td><td>Kaggle / Google</td><td>Complete crash course on agent design</td><td><a href="https://www.kaggle.com/learn-guide/5-day-agents" style="color:#6495ed;">Enroll</a></td></tr>
+      <tr><td><strong>ADK Foundation Codelab</strong></td><td>Google Codelabs</td><td>Setup, core logic, Gemini config</td><td><a href="https://codelabs.developers.google.com/devsite/codelabs/build-agents-with-adk-foundation" style="color:#6495ed;">Start</a></td></tr>
+      <tr><td><strong>Building Live Voice Agents</strong></td><td>DeepLearning.AI</td><td>Voice agent design with Google ADK</td><td><a href="https://www.deeplearning.ai/short-courses/building-live-voice-agents-with-googles-adk/" style="color:#6495ed;">Enroll</a></td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ========== CHAPTER 10: TERMINOLOGY ========== -->
+<div class="chapter" id="ch10">
+  <div class="chapter-header">
+    <span class="ch-num">10</span>
+    <h2>Complete Terminology (Quick Reference)</h2>
+  </div>
+  <p style="margin-bottom:14px;color:#888;">Full interactive version with search: <a href="/terminology.html" style="color:#e94560;">/terminology.html</a></p>
+
+  <div class="card">
+    <h3>Agent Core (9 terms)</h3>
+    <table class="limits-table">
+      <tr><th>Term</th><th>Definition</th></tr>
+      <tr><td><strong>Soul</strong></td><td>Persistent AI personality — identity, personality, goals, relationships, config. JSON file loaded into SQLite.</td></tr>
+      <tr><td><strong>Personality</strong></td><td>Multi-paragraph description of traits, communication style, and quirks. What makes the agent unique.</td></tr>
+      <tr><td><strong>Goals</strong></td><td>4-6 actionable objectives the agent actively pursues during every task.</td></tr>
+      <tr><td><strong>Relationships</strong></td><td>Map of how the soul relates to other souls/humans. Affects tone and collaboration.</td></tr>
+      <tr><td><strong>System Prompt</strong></td><td>Operational instructions — tools available, procedures to follow, boundaries.</td></tr>
+      <tr><td><strong>Config</strong></td><td>JSON of timing, thresholds, and behavior switches.</td></tr>
+      <tr><td><strong>Prompt Generation</strong></td><td>Dynamic function combining identity + personality + goals + memories + context.</td></tr>
+      <tr><td><strong>Seed Souls</strong></td><td>Startup function loading personality JSONs into the database.</td></tr>
+      <tr><td><strong>Briefing Document</strong></td><td>Long markdown with full project context. Optional, for complex tasks.</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Memory System (9 terms)</h3>
+    <table class="limits-table">
+      <tr><th>Term</th><th>Definition</th></tr>
+      <tr><td><strong>Memory</strong></td><td>Stored record of experience/decision/learning with category, importance 1-10, and timestamp.</td></tr>
+      <tr><td><strong>Memory Category</strong></td><td>One of 7: experience, decision, learning, interaction, observation, goal_progress, summary.</td></tr>
+      <tr><td><strong>Importance Score</strong></td><td>1-10 rating. 7+ stays forever. &le;3 gets pruned after 30 days.</td></tr>
+      <tr><td><strong>Summarization</strong></td><td>Auto-compressing old memories (7+ days) into category summaries.</td></tr>
+      <tr><td><strong>Pruning</strong></td><td>Deleting old, low-importance, already-summarized memories (30+ days, importance &le;3).</td></tr>
+      <tr><td><strong>Soul Engine</strong></td><td>Core class managing soul CRUD, memory access, and prompt generation.</td></tr>
+      <tr><td><strong>Memory Manager</strong></td><td>Class for add/get/search/summarize/prune memory operations.</td></tr>
+      <tr><td><strong>Soul Interaction</strong></td><td>Logged communication between two souls (task_request, review_request, etc.).</td></tr>
+      <tr><td><strong>Decision Log</strong></td><td>Eliyahu's practice of tracking every decision: what, why, outcome.</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Orchestration (12 terms)</h3>
+    <table class="limits-table">
+      <tr><th>Term</th><th>Definition</th></tr>
+      <tr><td><strong>Orchestrator</strong></td><td>System distributing work: task queue + execution engine + AI router.</td></tr>
+      <tr><td><strong>Autonomous Worker</strong></td><td>Claude API tool loop executing tasks with run_command, read/write_file, etc.</td></tr>
+      <tr><td><strong>Tool Loop</strong></td><td>Cycle: Claude calls tool &rarr; gets result &rarr; calls next tool &rarr; repeats until done.</td></tr>
+      <tr><td><strong>Task Queue</strong></td><td>Priority-based (1-5) work list with dependency tracking.</td></tr>
+      <tr><td><strong>AI Router</strong></td><td>Cost-optimized model selector: Ollama (free) &rarr; Haiku &rarr; Sonnet.</td></tr>
+      <tr><td><strong>MaxTurns</strong></td><td>Max tool-call rounds per task. Default: 30.</td></tr>
+      <tr><td><strong>MaxBudget</strong></td><td>Max USD per task. Default: $1.00.</td></tr>
+      <tr><td><strong>Work Session</strong></td><td>Tracked work period. Ending with changes auto-triggers Ziggi review.</td></tr>
+      <tr><td><strong>Cost Waterfall</strong></td><td>Routing: FREE (Ollama) &rarr; CHEAP (Haiku) &rarr; SMART (Sonnet).</td></tr>
+      <tr><td><strong>Night Shift</strong></td><td>Agents working on cron schedules while humans sleep.</td></tr>
+      <tr><td><strong>Context Injection</strong></td><td>Loading soul + memories into Claude's system prompt before a task.</td></tr>
+      <tr><td><strong>Zero Questions Policy</strong></td><td>Agent must never ask — decide autonomously and report after completion.</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Infrastructure + Patterns (12 terms)</h3>
+    <table class="limits-table">
+      <tr><th>Term</th><th>Definition</th></tr>
+      <tr><td><strong>Hub</strong></td><td>Central PIA server coordinating all machines (izzit7, port 3000).</td></tr>
+      <tr><td><strong>Alive Repo</strong></td><td>Git repo with .pia/ directory — identity, knowledge, task queue, job history.</td></tr>
+      <tr><td><strong>Context Window</strong></td><td>Total token budget: 200K standard, 1M extended.</td></tr>
+      <tr><td><strong>Auto-Compaction</strong></td><td>Claude Code auto-summarizing old turns at ~83% capacity.</td></tr>
+      <tr><td><strong>Heartbeat</strong></td><td>Machine health check every 30 seconds.</td></tr>
+      <tr><td><strong>Ghost Code</strong></td><td>Changes Claude thinks it made but never committed to disk.</td></tr>
+      <tr><td><strong>Context Rot</strong></td><td>Stale conversation history polluting current understanding.</td></tr>
+      <tr><td><strong>Living Document</strong></td><td>Files updated across sessions (SESSION_JOURNAL, CLAUDE.md).</td></tr>
+      <tr><td><strong>Hook</strong></td><td>Shell script running before/after tool calls for enforcement.</td></tr>
+      <tr><td><strong>Skill</strong></td><td>SKILL.md file defining a capability, invoked via /skill-name.</td></tr>
+      <tr><td><strong>Ziggi's Verdict</strong></td><td>Code quality score (1-10) + recommendation in every review.</td></tr>
+      <tr><td><strong>Architecture Smell</strong></td><td>Ziggi's term for structural issues that feel wrong even if tests pass.</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ========== CHAPTER 11: JOURNAL ========== -->
+<div class="chapter" id="ch11">
+  <div class="chapter-header">
+    <span class="ch-num">11</span>
+    <h2>Research Journal — Phase 1 Complete</h2>
+  </div>
+
+  <div class="card">
+    <h3>Session: 2026-02-13 — Understanding PIA Agent Architecture</h3>
+    <table class="limits-table">
+      <tr><th>#</th><th>Topic Covered</th><th>Output</th></tr>
+      <tr><td>1</td><td>Soul system explained — what a soul is, JSON structure, database schema</td><td>Terminology entries</td></tr>
+      <tr><td>2</td><td>3 existing souls deep-dived — Fisher2050, Ziggi, Eliyahu — full JSON reviewed</td><td>Soul profiles in terminology.html</td></tr>
+      <tr><td>3</td><td>Memory system — 7 categories, importance scoring, summarization, pruning</td><td>Memory guide (Ch 4)</td></tr>
+      <tr><td>4</td><td>Context window budgeting — 200K window, overhead, what's available</td><td>Limits tables (Ch 1)</td></tr>
+      <tr><td>5</td><td>System prompt generation — how generateSystemPrompt() assembles 7 layers</td><td>7 Layers (Ch 2)</td></tr>
+      <tr><td>6</td><td>Autonomous worker — tool loop, maxTurns, maxBudget, soul injection</td><td>API reference (Ch 7)</td></tr>
+      <tr><td>7</td><td>Briefing documents — DAO_AGENT_BRIEFING, VIDEOHOHO — zero questions policy</td><td>Docs referenced</td></tr>
+      <tr><td>8</td><td>Martin's orchestration template — hooks, skills, agents, multi-model review</td><td>Comparison tables</td></tr>
+      <tr><td>9</td><td>PIA vs Template comparison — persistent memory vs hook enforcement</td><td>Best-of-both analysis</td></tr>
+      <tr><td>10</td><td>Best practices compiled — 18 rules across design, memory, autonomy, context</td><td>Do's/Don'ts (Ch 5)</td></tr>
+      <tr><td>11</td><td>Terminology created — 52 terms, 6 categories, full definitions + examples</td><td>terminology.html</td></tr>
+      <tr><td>12</td><td>7 Layers identified — personality, goals, relationships, system prompt, memories, config, briefing</td><td>Layer cards (Ch 2)</td></tr>
+      <tr><td>13</td><td>Token limits measured — each layer's size, recommended max, hard limits</td><td>Limits tables (Ch 1-2)</td></tr>
+      <tr><td>14</td><td>Expert research — SOUL.md framework, OpenAI guide, agent best practices</td><td>Sources (Ch 8)</td></tr>
+      <tr><td>15</td><td>Agent Generator mockup — 12-section form with live preview and JSON export</td><td>agent-generator.html</td></tr>
+      <tr><td>16</td><td>File structure mapped — where each data type lives, git vs runtime, all 15 DB tables</td><td>Structure (Ch 6)</td></tr>
+      <tr><td>17</td><td>Handbook created — this document, the capstone of Phase 1 research</td><td>handbook.html</td></tr>
+      <tr><td>18</td><td>Two-Pack Architecture — Agent Pack vs Project Pack. Industry research (CLAUDE.md, AGENTS.md, Google ADK)</td><td>New Ch 8</td></tr>
+      <tr><td>19</td><td>Context7 MCP evaluated — library docs fetcher, not agent config tool. Useful alongside, not replacement</td><td>Research notes</td></tr>
+      <tr><td>20</td><td>Google courses evaluated — BigQuery ML courses (low relevance) vs ADK/Agent courses (high relevance)</td><td>Learning resources in Ch 9</td></tr>
+      <tr><td>21</td><td>Fresh 2026 sources — CLAUDE.md guide, AGENTS.md spec (32KiB), Google ADK config, expert articles updated</td><td>Sources (Ch 9)</td></tr>
+      <tr><td>22</td><td>Non-technical simple guide — plain English, analogies, glossary, no code, 9 sections</td><td>simple-guide.html</td></tr>
+      <tr><td>23</td><td>Google BigQuery ML + Gemini courses assessed — overkill for PIA now (SQLite + Claude = sufficient). Useful concepts: vector embeddings for memory search (Phase 3), analytics dashboard (Phase 4). Revisit when 1000+ memories or 10+ machines</td><td>Research notes</td></tr>
+      <tr><td>24</td><td>Google ADK agent courses confirmed as highest-priority learning — directly maps to PIA soul/agent config patterns</td><td>Learning resources</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Files Created in This Research Phase</h3>
+    <table class="limits-table">
+      <tr><th>File</th><th>Purpose</th><th>Size</th></tr>
+      <tr><td><code>public/terminology.html</code></td><td>52 terms, 6 categories, searchable, soul profiles, session journal</td><td>~35 KB</td></tr>
+      <tr><td><code>public/agent-generator.html</code></td><td>12-section agent builder form with live preview + JSON export</td><td>~30 KB</td></tr>
+      <tr><td><code>public/handbook.html</code></td><td>This file — complete guide with limits, how-to, best practices, API ref</td><td>~50 KB</td></tr>
+      <tr><td><code>public/simple-guide.html</code></td><td>Non-technical guide — plain English, analogies, glossary, for founders/managers</td><td>~20 KB</td></tr>
+      <tr><td><code>public/knowledge.html</code></td><td>Updated — all files linked, simple guide added at top of research section</td><td>Updated</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Open Questions for Phase 2</h3>
+    <table class="limits-table">
+      <tr><th>#</th><th>Question</th><th>Priority</th></tr>
+      <tr><td>1</td><td>Should we merge PIA's soul system with Martin's skill/hook system?</td><td class="warn">HIGH</td></tr>
+      <tr><td>2</td><td>Should each soul get an explicit skills manifest?</td><td class="warn">HIGH</td></tr>
+      <tr><td>3</td><td>Should we add Do's/Don'ts to the soul JSON schema?</td><td class="val">MEDIUM</td></tr>
+      <tr><td>4</td><td>Should briefing docs be auto-injected or loaded on-demand?</td><td class="val">MEDIUM</td></tr>
+      <tr><td>5</td><td>How to export/import agent memories between machines?</td><td class="val">MEDIUM</td></tr>
+      <tr><td>6</td><td>Should we create a CLAUDE.md for the main repo?</td><td class="val">MEDIUM</td></tr>
+      <tr><td>7</td><td>Formalize the Two-Pack system — standardize Project Pack format, create template</td><td class="warn">HIGH</td></tr>
+      <tr><td>8</td><td>Add Project Pack section to Agent Generator form (separate from Agent Pack inputs)</td><td class="val">MEDIUM</td></tr>
+      <tr><td>9</td><td>How to test agent personality consistency over time?</td><td>LOW</td></tr>
+      <tr><td>10</td><td>Should agents have a "learning rate" that adjusts importance scoring?</td><td>LOW</td></tr>
+      <tr><td>11</td><td>Take Google ADK courses and compare config patterns with PIA soul system</td><td class="val">MEDIUM</td></tr>
+    </table>
+  </div>
+
+  <div class="danger" style="margin-top:20px;">
+    <strong>Phase 1 Research: COMPLETE</strong><br>
+    All findings documented. Terminology defined. Limits mapped. Best practices compiled. Tools built (generator + handbook). Ready for Phase 2: Implementation decisions and building.
+  </div>
+</div>
+
+</div>
+
+<div class="footer">
+  PIA Agent Handbook v1.1 — Phase 1 Research Complete + Two-Pack Update — 2026-02-13 — Built with Claude Opus 4.6
+</div>
+
+</body>
+</html>

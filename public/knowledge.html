@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PIA — Knowledge Index</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #0a0e17;
+      color: #c8d6e5;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    header h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #00d2ff, #3a7bd5);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.3rem;
+    }
+    header p {
+      color: #5a6a7a;
+      font-size: 0.95rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+      gap: 2rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    section {
+      background: #111827;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+    section h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    section h2 .badge {
+      display: inline-block;
+      font-size: 0.65rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .badge-live { background: #065f46; color: #6ee7b7; }
+    .badge-design { background: #4c1d95; color: #c4b5fd; }
+    .badge-docs { background: #1e3a5f; color: #7dd3fc; }
+    .badge-journal { background: #713f12; color: #fde68a; }
+    .badge-dao { background: #7f1d1d; color: #fca5a5; }
+    .badge-martin { background: #3f3f46; color: #d4d4d8; }
+
+    .file-list { list-style: none; }
+    .file-list li {
+      border-bottom: 1px solid #1e293b;
+      padding: 0.6rem 0;
+    }
+    .file-list li:last-child { border-bottom: none; }
+    .file-list a {
+      text-decoration: none;
+      color: #38bdf8;
+      font-weight: 600;
+      font-size: 0.92rem;
+      transition: color 0.15s;
+    }
+    .file-list a:hover { color: #7dd3fc; }
+    .file-list .desc {
+      display: block;
+      color: #6b7a8a;
+      font-size: 0.8rem;
+      margin-top: 2px;
+      line-height: 1.4;
+    }
+    .file-list .path {
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      font-size: 0.7rem;
+      color: #3a4a5a;
+      margin-top: 2px;
+    }
+    .tag {
+      display: inline-block;
+      font-size: 0.6rem;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+    .tag-html { background: #1e3a5f; color: #7dd3fc; }
+    .tag-md { background: #3f3f46; color: #d4d4d8; }
+
+    nav {
+      max-width: 1400px;
+      margin: 0 auto 2rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    nav a {
+      padding: 6px 14px;
+      border-radius: 8px;
+      background: #1e293b;
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 0.82rem;
+      font-weight: 600;
+      transition: all 0.15s;
+    }
+    nav a:hover { background: #334155; color: #e2e8f0; }
+
+    footer {
+      text-align: center;
+      margin-top: 3rem;
+      color: #3a4a5a;
+      font-size: 0.75rem;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>PIA Knowledge Index</h1>
+  <p>Every document, UI, mockup, and journal in this project</p>
+</header>
+
+<nav>
+  <a href="#live">Live Apps</a>
+  <a href="#mockups">Design Mockups</a>
+  <a href="#specs">Specs & Plans</a>
+  <a href="#guides">Guides</a>
+  <a href="#terminology">Terminology & Research</a>
+  <a href="#journals">Session Journals</a>
+  <a href="#dao">DAO / Videohoho</a>
+  <a href="#martin">Orchestration Template</a>
+</nav>
+
+<div class="grid">
+
+  <!-- LIVE APPS -->
+  <section id="live">
+    <h2><span class="badge badge-live">Live</span> Running Applications</h2>
+    <ul class="file-list">
+      <li>
+        <a href="/visor.html">Visor — Main Dashboard</a>
+        <span class="desc">The primary PIA control panel. Machine fleet, agents, alerts, real-time status.</span>
+        <div class="path">public/visor.html</div>
+      </li>
+      <li>
+        <a href="/index.html">Index — Landing Page</a>
+        <span class="desc">Default landing page served at root.</span>
+        <div class="path">public/index.html</div>
+      </li>
+      <li>
+        <a href="/work.html">Work Sessions</a>
+        <span class="desc">Start/stop work sessions, track time per project. New feature being built.</span>
+        <div class="path">public/work.html</div>
+      </li>
+      <li>
+        <a href="/guide.html">Interactive Guide</a>
+        <span class="desc">Step-by-step guide to using PIA for new users.</span>
+        <div class="path">public/guide.html</div>
+      </li>
+      <li>
+        <a href="/showcase.html">Showcase</a>
+        <span class="desc">Feature showcase and demo page for PIA capabilities.</span>
+        <div class="path">public/showcase.html</div>
+      </li>
+      <li>
+        <a href="/wireframes.html">Wireframes</a>
+        <span class="desc">UI wireframe reference for the system's visual design.</span>
+        <div class="path">public/wireframes.html</div>
+      </li>
+      <li>
+        <a href="/pia-plan-infographic.html">Plan Infographic</a>
+        <span class="desc">Visual infographic of the PIA system plan and architecture.</span>
+        <div class="path">public/pia-plan-infographic.html</div>
+      </li>
+      <li>
+        <a href="/system-plan.html">System Plan</a>
+        <span class="desc">Interactive system architecture plan and component map.</span>
+        <div class="path">public/system-plan.html</div>
+      </li>
+      <li>
+        <a href="/offline.html">Offline Page</a>
+        <span class="desc">Fallback page shown when the server is unreachable.</span>
+        <div class="path">public/offline.html</div>
+      </li>
+    </ul>
+  </section>
+
+  <!-- DESIGN MOCKUPS -->
+  <section id="mockups">
+    <h2><span class="badge badge-design">Design</span> Dashboard Mockups</h2>
+    <ul class="file-list">
+      <li>
+        <a href="/MASTER_DASHBOARD.html" target="_blank">Master Dashboard</a> <span class="tag tag-html">HTML</span>
+        <span class="desc">Full-featured master dashboard mockup with all panels and widgets.</span>
+        <div class="path">MASTER_DASHBOARD.html</div>
+      </li>
+      <li>
+        <a href="/PIA_DASHBOARD_MOCKUP.html" target="_blank">PIA Dashboard Mockup</a> <span class="tag tag-html">HTML</span>
+        <span class="desc">Early design exploration for the main PIA dashboard.</span>
+        <div class="path">PIA_DASHBOARD_MOCKUP.html</div>
+      </li>
+      <li>
+        <a href="/FLEET_DASHBOARD_MOCKUP.html" target="_blank">Fleet Dashboard</a> <span class="tag tag-html">HTML</span>
+        <span class="desc">Multi-machine fleet overview — all agents, all machines, one view.</span>
+        <div class="path">FLEET_DASHBOARD_MOCKUP.html</div>
+      </li>
+      <li>
+        <a href="/SIMPLE_DASHBOARD_MOCKUP.html" target="_blank">Simple Dashboard</a> <span class="tag tag-html">HTML</span>
+        <span class="desc">Minimal dashboard variant focused on clarity and speed.</span>
+        <div class="path">SIMPLE_DASHBOARD_MOCKUP.html</div>
+      </li>
+      <li>
+        <a href="/CLI_TUNNEL_MOCKUP.html" target="_blank">CLI Tunnel Mockup</a> <span class="tag tag-html">HTML</span>
+        <span class="desc">Remote CLI tunnel UI — run commands on remote machines from the browser.</span>
+        <div class="path">CLI_TUNNEL_MOCKUP.html</div>
+      </li>
+      <li>
+        <a href="/STORYBOARD.html" target="_blank">Storyboard</a> <span class="tag tag-html">HTML</span>
+        <span class="desc">Visual storyboard of the PIA user journey and interaction flow.</span>
+        <div class="path">STORYBOARD.html</div>
+      </li>
+      <li>
+        <a href="/DEVELOPMENT_ROADMAP.html" target="_blank">Development Roadmap</a> <span class="tag tag-html">HTML</span>
+        <span class="desc">Visual timeline of the development plan with milestones and phases.</span>
+        <div class="path">DEVELOPMENT_ROADMAP.html</div>
+      </li>
+    </ul>
+  </section>
+
+  <!-- SPECS & PLANS -->
+  <section id="specs">
+    <h2><span class="badge badge-docs">Docs</span> Specifications & Plans</h2>
+    <ul class="file-list">
+      <li>
+        <a href="https://github.com/nicely" onclick="alert('Markdown file — open locally:\n\nSTART_HERE.md'); return false;">START_HERE.md</a> <span class="tag tag-md">MD</span>
+        <span class="desc">Onboarding doc for new agents. Quick context, architecture, and first steps.</span>
+        <div class="path">START_HERE.md</div>
+      </li>
+      <li>
+        <a href="#" onclick="alert('Markdown file — open locally:\n\nFULL_FEATURE_SPEC.md'); return false;">FULL_FEATURE_SPEC.md</a> <span class="tag tag-md">MD</span>
+        <span class="desc">Complete feature specification — every component and feature PIA needs.</span>
+        <div class="path">FULL_FEATURE_SPEC.md</div>
+      </li>
+      <li>
+        <a href="#" onclick="alert('Markdown file — open locally:\n\nimplementation_plan.md'); return false;">implementation_plan.md</a> <span class="tag tag-md">MD</span>
+        <span class="desc">Master implementation checklist with mermaid architecture diagram.</span>
+        <div class="path">implementation_plan.md</div>
+      </li>
+      <li>
+        <a href="#" onclick="alert('Markdown file — open locally:\n\nSPRINT_PLAN.md'); return false;">SPRINT_PLAN.md</a> <span class="tag tag-md">MD</span>
+        <span class="desc">5-week sprint plan (parallelizable to 3 weeks). Full implementation guide.</span>
+        <div class="path">SPRINT_PLAN.md</div>
+      </li>
+      <li>
+        <a href="#" onclick="alert('Markdown file — open locally:\n\nKNOWLEDGE_BASE.md'); return false;">KNOWLEDGE_BASE.md</a> <span class="tag tag-md">MD</span>
+        <span class="desc">Multi-agent orchestration research — existing solutions, CLI tools, architecture patterns.</span>
+        <div class="path">KNOWLEDGE_BASE.md</div>
+      </li>
+      <li>
+        <a href="#" onclick="alert('Markdown file — open locally:\n\nANALYSIS_AND_RECOMMENDATIONS.md'); return false;">ANALYSIS_AND_RECOMMENDATIONS.md</a> <span class="tag tag-md">MD</span>
+        <span class="desc">Build vs Buy analysis. Recommends Claude-Flow as foundation.</span>
+        <div class="path">ANALYSIS_AND_RECOMMENDATIONS.md</div>
+      </li>
+      <li>
+        <a href="#" onclick="alert('Markdown file — open locally:\n\ntask.md'); return false;">task.md</a> <span class="tag tag-md">MD</span>
+        <span class="desc">Active task tracking — current implementation status and TODOs.</span>
+        <div class="path">task.md</div>
+      </li>
+    </ul>
+  </section>
+
+  <!-- GUIDES -->
+  <section id="guides">
+    <h2><span class="badge badge-docs">Docs</span> Guides & References</h2>
+    <ul class="file-list">
+      <li>
+        <a href="#" onclick="alert('Markdown file — open locally:\n\nUSER_GUIDE.md'); return false;">USER_GUIDE.md</a> <span class="tag tag-md">MD</span>
+        <span class="desc">Day 1 user guide — how to use PIA with Antigravity/Claude, GitHub, Firebase.</span>
+        <div class="path">USER_GUIDE.md</div>
+      </li>
+      <li>
+        <a href="#" onclick="alert('Markdown file — open locally:\n\nDAO_AGENT_BRIEFING.md'); return false;">DAO_AGENT_BRIEFING.md</a> <span class="tag tag-md">MD</span>
+        <span class="desc">Autonomous execution plan for DAO build agents. Zero-questions policy.</span>
+        <div class="path">DAO_AGENT_BRIEFING.md</div>
+      </li>
+    </ul>
+  </section>
+
+  <!-- TERMINOLOGY & RESEARCH -->
+  <section id="terminology">
+    <h2><span class="badge badge-docs">Docs</span> Terminology & Agent Research</h2>
+    <ul class="file-list">
+      <li>
+        <a href="/simple-guide.html">AI Agents — The Simple Guide for Everyone</a> <span class="tag tag-html">HTML</span>
+        <span class="desc">Non-technical guide explaining AI agents, souls, the two-pack system, memory, tools, limits, and how to build an agent — all in plain English with real-world analogies. Includes quick glossary and free learning resources. Start here if you're new.</span>
+        <div class="path">public/simple-guide.html</div>
+      </li>
+      <li>
+        <a href="/terminology.html">PIA System Terminology — Complete Reference</a> <span class="tag tag-html">HTML</span>
+        <span class="desc">52 terms across 6 categories. Soul system, memory management, orchestration, infrastructure, patterns, and template system. Includes the 7 Layers of Agent Programming, soul profiles, token budgets, and session journal.</span>
+        <div class="path">public/terminology.html</div>
+      </li>
+      <li>
+        <a href="/agent-generator.html">Agent Generator — Design & Build AI Souls</a> <span class="tag tag-html">HTML</span>
+        <span class="desc">Interactive form for creating new agent souls. 12 input sections covering identity, personality, goals, relationships, do's & don'ts, skills, knowledge, system prompt, schedule, guardrails, memory, and calibration examples. Live token budget preview and JSON export.</span>
+        <div class="path">public/agent-generator.html</div>
+      </li>
+      <li>
+        <a href="/handbook.html">PIA Agent Handbook — Complete Guide</a> <span class="tag tag-html">HTML</span>
+        <span class="desc">The capstone document. 10 chapters: token limits, 7 layers with size limits, step-by-step agent creation, memory guide, do's & don'ts, file structure, API reference, expert sources, terminology, and full research journal. Phase 1 research complete.</span>
+        <div class="path">public/handbook.html</div>
+      </li>
+    </ul>
+  </section>
+
+  <!-- SESSION JOURNALS -->
+  <section id="journals">
+    <h2><span class="badge badge-journal">Logs</span> Session Journals</h2>
+    <ul class="file-list">
+      <li>
+        <a href="#" onclick="alert('Markdown file — open locally:\n\nSESSION_JOURNAL_2026-02-13.md'); return false;">SESSION_JOURNAL_2026-02-13.md</a> <span class="tag tag-md">MD</span>
+        <span class="desc">Phase 1 build: Agent Souls + Fisher2050 Project Manager app.</span>
+        <div class="path">SESSION_JOURNAL_2026-02-13.md</div>
+      </li>
+      <li>
+        <a href="#" onclick="alert('Markdown file — open locally:\n\nJOURNAL_2026-02-13.md'); return false;">JOURNAL_2026-02-13.md</a> <span class="tag tag-md">MD</span>
+        <span class="desc">DAO testing on Machine #3, screenshot infrastructure, frontend discovery.</span>
+        <div class="path">JOURNAL_2026-02-13.md</div>
+      </li>
+    </ul>
+  </section>
+
+  <!-- DAO / VIDEOHOHO -->
+  <section id="dao">
+    <h2><span class="badge badge-dao">DAO</span> DAO & Videohoho</h2>
+    <ul class="file-list">
+      <li>
+        <a href="#" onclick="alert('Markdown file — open locally:\n\ndao-foundation-files/VIDEOHOHO_AGENT_BRIEFING.md'); return false;">VIDEOHOHO_AGENT_BRIEFING.md</a> <span class="tag tag-md">MD</span>
+        <span class="desc">Enterprise build agent briefing for Videohoho on soda-yeti machine.</span>
+        <div class="path">dao-foundation-files/VIDEOHOHO_AGENT_BRIEFING.md</div>
+      </li>
+      <li>
+        <a href="#" onclick="alert('Markdown file — open locally:\n\ndao-foundation-files/VIDEOHOHO_CLAUDE.md'); return false;">VIDEOHOHO_CLAUDE.md</a> <span class="tag tag-md">MD</span>
+        <span class="desc">Claude Code instructions for Videohoho — Electron + React 18 + FFmpeg video editor.</span>
+        <div class="path">dao-foundation-files/VIDEOHOHO_CLAUDE.md</div>
+      </li>
+    </ul>
+  </section>
+
+  <!-- MARTIN'S ORCHESTRATION -->
+  <section id="martin">
+    <h2><span class="badge badge-martin">Template</span> Martin's Orchestration System</h2>
+    <ul class="file-list">
+      <li>
+        <a href="#" onclick="alert('Markdown file — open locally:\n\nMartin/claude-orchestration-template-main/README.md'); return false;">README.md</a> <span class="tag tag-md">MD</span>
+        <span class="desc">Martin's Claude Code orchestration template — overview and setup.</span>
+        <div class="path">Martin/claude-orchestration-template-main/README.md</div>
+      </li>
+      <li>
+        <a href="#" onclick="alert('Markdown file — open locally:\n\nMartin/claude-orchestration-template-main/SYSTEM_ANALYSIS.md'); return false;">SYSTEM_ANALYSIS.md</a> <span class="tag tag-md">MD</span>
+        <span class="desc">Deep analysis: how the PIA system works, what's broken, how to fix it.</span>
+        <div class="path">Martin/claude-orchestration-template-main/SYSTEM_ANALYSIS.md</div>
+      </li>
+      <li>
+        <a href="#" onclick="alert('Markdown file — open locally:\n\nMartin/claude-orchestration-template-main/VIDEOHOHO-MCP-RECOMMENDATIONS.md'); return false;">VIDEOHOHO-MCP-RECOMMENDATIONS.md</a> <span class="tag tag-md">MD</span>
+        <span class="desc">MCP server recommendations for enterprise video editing platform.</span>
+        <div class="path">Martin/claude-orchestration-template-main/VIDEOHOHO-MCP-RECOMMENDATIONS.md</div>
+      </li>
+      <li>
+        <a href="#" onclick="alert('Markdown file — open locally:\n\nMartin/claude-orchestration-template-main/SESSION_JOURNAL.md'); return false;">SESSION_JOURNAL.md</a> <span class="tag tag-md">MD</span>
+        <span class="desc">Martin's orchestration template setup sessions — Feb 10-13, 2026.</span>
+        <div class="path">Martin/claude-orchestration-template-main/SESSION_JOURNAL.md</div>
+      </li>
+      <li>
+        <a href="#" onclick="alert('Markdown file — open locally:\n\nMartin/claude-orchestration-template-main/DAOV1_CLAUDE.md'); return false;">DAOV1_CLAUDE.md</a> <span class="tag tag-md">MD</span>
+        <span class="desc">DAO V1 Claude Code configuration and instructions.</span>
+        <div class="path">Martin/claude-orchestration-template-main/DAOV1_CLAUDE.md</div>
+      </li>
+      <li>
+        <a href="Martin/claude-orchestration-template-main/screenshots-review/system-review.html" target="_blank">System Review</a> <span class="tag tag-html">HTML</span>
+        <span class="desc">Screenshot-based review of the system with annotations.</span>
+        <div class="path">Martin/.../screenshots-review/system-review.html</div>
+      </li>
+      <li>
+        <a href="#" onclick="alert('See docs/ folder:\n\nCATALOGUE.md — Agent catalogue\nMAINTENANCE.md — Maintenance guide\nWORKFLOW.md — Workflow documentation'); return false;">docs/ (3 files)</a> <span class="tag tag-md">MD</span>
+        <span class="desc">CATALOGUE.md, MAINTENANCE.md, WORKFLOW.md — agent catalogue, maintenance, workflows.</span>
+        <div class="path">Martin/.../docs/</div>
+      </li>
+    </ul>
+  </section>
+
+</div>
+
+<footer>
+  PIA System &mdash; Knowledge Index &mdash; Generated 2026-02-13
+</footer>
+
+</body>
+</html>

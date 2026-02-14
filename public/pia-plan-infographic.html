@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIA Orchestrator Plan — Visual Guide</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0a0a1a; color: #e0e0e0; padding: 40px 20px;
+    max-width: 1100px; margin: 0 auto;
+  }
+  h1 { text-align: center; font-size: 2.2em; margin-bottom: 10px; color: #fff; }
+  .subtitle { text-align: center; color: #888; font-size: 1.1em; margin-bottom: 50px; }
+
+  /* Section headers */
+  .section { margin-bottom: 60px; }
+  .section-label {
+    display: inline-block; padding: 6px 16px; border-radius: 20px;
+    font-size: 0.8em; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 16px;
+  }
+  .label-red { background: #3a1520; color: #ff6b6b; }
+  .label-green { background: #153a20; color: #6bffb8; }
+  .label-blue { background: #152035; color: #6bb5ff; }
+  .label-purple { background: #251540; color: #b06bff; }
+  .label-orange { background: #352515; color: #ffb06b; }
+
+  .section h2 { font-size: 1.6em; margin-bottom: 24px; }
+
+  /* Flow diagrams */
+  .flow-box {
+    background: #12122a; border-radius: 16px; padding: 30px;
+    border: 1px solid #2a2a4a; margin-bottom: 20px;
+  }
+
+  /* TODAY vs AFTER comparison */
+  .compare-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+  }
+  @media (max-width: 768px) { .compare-grid { grid-template-columns: 1fr; } }
+
+  .compare-card {
+    border-radius: 16px; padding: 28px; position: relative; overflow: hidden;
+  }
+  .compare-card.bad {
+    background: linear-gradient(135deg, #1a0a0a, #2a1515);
+    border: 2px solid #ff4444;
+  }
+  .compare-card.good {
+    background: linear-gradient(135deg, #0a1a0a, #152a15);
+    border: 2px solid #44ff88;
+  }
+  .compare-card h3 {
+    font-size: 1.3em; margin-bottom: 20px; display: flex;
+    align-items: center; gap: 10px;
+  }
+  .compare-card.bad h3 { color: #ff6b6b; }
+  .compare-card.good h3 { color: #6bffb8; }
+
+  /* Step flows */
+  .step {
+    display: flex; align-items: flex-start; gap: 14px;
+    margin-bottom: 14px; padding: 10px 14px; border-radius: 10px;
+  }
+  .step-num {
+    min-width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 0.85em; flex-shrink: 0;
+  }
+  .bad .step { background: #1a0f0f; }
+  .bad .step-num { background: #ff4444; color: #000; }
+  .good .step { background: #0f1a0f; }
+  .good .step-num { background: #44ff88; color: #000; }
+
+  .step-text { font-size: 0.95em; line-height: 1.5; }
+  .step-text strong { color: #fff; }
+
+  .approval-badge {
+    display: inline-block; background: #ff4444; color: #fff;
+    padding: 2px 8px; border-radius: 4px; font-size: 0.75em;
+    font-weight: 700; margin-left: 4px; animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+  .auto-badge {
+    display: inline-block; background: #44ff88; color: #000;
+    padding: 2px 8px; border-radius: 4px; font-size: 0.75em;
+    font-weight: 700; margin-left: 4px;
+  }
+
+  .result-box {
+    margin-top: 18px; padding: 14px; border-radius: 10px;
+    font-weight: 700; text-align: center; font-size: 1.1em;
+  }
+  .bad .result-box { background: #2a0a0a; color: #ff6b6b; border: 1px solid #ff4444; }
+  .good .result-box { background: #0a2a0a; color: #6bffb8; border: 1px solid #44ff88; }
+
+  /* Big architecture diagram */
+  .arch-diagram {
+    background: #12122a; border-radius: 16px; padding: 30px;
+    border: 1px solid #2a2a4a;
+  }
+  .arch-row {
+    display: flex; align-items: center; justify-content: center;
+    gap: 20px; margin-bottom: 16px; flex-wrap: wrap;
+  }
+  .arch-node {
+    padding: 16px 24px; border-radius: 12px; text-align: center;
+    font-weight: 600; min-width: 160px; position: relative;
+  }
+  .node-you {
+    background: linear-gradient(135deg, #4a2080, #6b30b0);
+    border: 2px solid #9b60e0; font-size: 1.1em;
+  }
+  .node-dashboard {
+    background: linear-gradient(135deg, #204080, #3060b0);
+    border: 2px solid #6090e0;
+  }
+  .node-orchestrator {
+    background: linear-gradient(135deg, #20804a, #30b06b);
+    border: 2px solid #60e09b;
+  }
+  .node-brain {
+    background: linear-gradient(135deg, #806020, #b08030);
+    border: 2px solid #e0b060;
+  }
+  .node-machine {
+    background: linear-gradient(135deg, #1a2a3a, #2a3a4a);
+    border: 2px solid #4a6a8a;
+  }
+  .node-label {
+    font-size: 0.7em; color: rgba(255,255,255,0.6);
+    margin-top: 4px; font-weight: 400;
+  }
+  .arrow {
+    font-size: 1.8em; color: #4a6a8a; flex-shrink: 0;
+  }
+  .arrow-down {
+    text-align: center; font-size: 1.8em; color: #4a6a8a;
+    margin: 4px 0;
+  }
+
+  /* Example scenario */
+  .scenario {
+    background: #12122a; border-radius: 16px; border: 1px solid #2a2a4a;
+    overflow: hidden;
+  }
+  .scenario-header {
+    background: #1a1a3a; padding: 20px 28px;
+    border-bottom: 1px solid #2a2a4a;
+  }
+  .scenario-header h3 { color: #b06bff; margin-bottom: 6px; }
+  .scenario-header p { color: #888; font-size: 0.9em; }
+  .scenario-body { padding: 24px 28px; }
+
+  .timeline-item {
+    display: flex; gap: 16px; margin-bottom: 8px;
+    padding: 12px 16px; border-radius: 10px;
+    border-left: 3px solid transparent;
+  }
+  .timeline-item.you-do {
+    background: #1a1530; border-left-color: #9b60e0;
+  }
+  .timeline-item.machine-do {
+    background: #0f1a15; border-left-color: #44ff88;
+  }
+  .timeline-item.brain-do {
+    background: #1a1810; border-left-color: #e0b060;
+  }
+  .timeline-item.result-do {
+    background: #0f1a1a; border-left-color: #60e0e0;
+  }
+  .tl-who {
+    min-width: 90px; font-weight: 700; font-size: 0.8em;
+    text-transform: uppercase; letter-spacing: 0.5px; padding-top: 2px;
+  }
+  .you-do .tl-who { color: #b08ae0; }
+  .machine-do .tl-who { color: #6bffb8; }
+  .brain-do .tl-who { color: #e0c080; }
+  .result-do .tl-who { color: #80e0e0; }
+  .tl-what { font-size: 0.95em; line-height: 1.4; }
+
+  /* Safety rules */
+  .rules-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  }
+  @media (max-width: 768px) { .rules-grid { grid-template-columns: 1fr; } }
+  .rule-card {
+    background: #12122a; border-radius: 12px; padding: 20px;
+    border: 1px solid #2a2a4a;
+  }
+  .rule-card h4 { margin-bottom: 8px; font-size: 1em; }
+  .rule-card p { color: #888; font-size: 0.9em; line-height: 1.5; }
+  .rule-icon { font-size: 1.8em; margin-bottom: 10px; }
+  .allowed { border-left: 3px solid #44ff88; }
+  .blocked { border-left: 3px solid #ff4444; }
+
+  /* What we build */
+  .build-list { list-style: none; }
+  .build-item {
+    display: flex; gap: 16px; align-items: flex-start;
+    padding: 18px; background: #12122a; border-radius: 12px;
+    border: 1px solid #2a2a4a; margin-bottom: 12px;
+  }
+  .build-status {
+    min-width: 70px; padding: 4px 0; text-align: center;
+    border-radius: 6px; font-size: 0.75em; font-weight: 700;
+    text-transform: uppercase;
+  }
+  .status-exists { background: #153a20; color: #6bffb8; }
+  .status-build { background: #352515; color: #ffb06b; }
+  .build-info h4 { margin-bottom: 4px; }
+  .build-info p { color: #888; font-size: 0.85em; }
+
+  /* Summary banner */
+  .summary-banner {
+    background: linear-gradient(135deg, #152035, #1a2a4a);
+    border: 2px solid #4080c0;
+    border-radius: 16px; padding: 30px; text-align: center;
+    margin-top: 40px;
+  }
+  .summary-banner h2 { color: #6bb5ff; margin-bottom: 12px; }
+  .summary-banner p { color: #a0b0c0; font-size: 1.05em; line-height: 1.7; max-width: 700px; margin: 0 auto; }
+
+  .big-number { font-size: 2.5em; font-weight: 800; }
+  .stat-row { display: flex; justify-content: center; gap: 40px; margin: 24px 0; flex-wrap: wrap; }
+  .stat-item { text-align: center; }
+  .stat-item .big-number.red { color: #ff6b6b; }
+  .stat-item .big-number.green { color: #6bffb8; }
+  .stat-label { color: #888; font-size: 0.85em; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<h1>PIA Orchestrator Plan</h1>
+<p class="subtitle">How your system will work — no technical jargon</p>
+
+<!-- ==================== SECTION 1: THE PROBLEM ==================== -->
+<div class="section">
+  <span class="section-label label-red">The Problem</span>
+  <h2>Today vs After We Build This</h2>
+
+  <div class="compare-grid">
+    <!-- TODAY -->
+    <div class="compare-card bad">
+      <h3>Today — Annoying</h3>
+      <p style="color:#999; margin-bottom:16px; font-size:0.9em;">You ask: "Fix the tests on Machine #3"</p>
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text">Claude wants to <strong>read the test file</strong> <span class="approval-badge">APPROVE?</span></div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text">Claude wants to <strong>read the route file</strong> <span class="approval-badge">APPROVE?</span></div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text">Claude wants to <strong>write the fix</strong> <span class="approval-badge">APPROVE?</span></div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-text">Claude wants to <strong>send file to Machine #3</strong> <span class="approval-badge">APPROVE?</span></div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-text">Claude wants to <strong>run the tests</strong> <span class="approval-badge">APPROVE?</span></div>
+      </div>
+      <div class="step">
+        <div class="step-num">6</div>
+        <div class="step-text">Claude wants to <strong>check results</strong> <span class="approval-badge">APPROVE?</span></div>
+      </div>
+
+      <div class="result-box">
+        6 approval clicks for 1 simple task<br>
+        <span style="font-size:0.8em; font-weight:400;">You must be sitting at the keyboard the whole time</span>
+      </div>
+    </div>
+
+    <!-- AFTER -->
+    <div class="compare-card good">
+      <h3>After — Automatic</h3>
+      <p style="color:#999; margin-bottom:16px; font-size:0.9em;">You ask: "Fix the tests on Machine #3"</p>
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text">You click <strong>"Fix Tests"</strong> on the PIA Dashboard</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text">Worker reads test file <span class="auto-badge">AUTO</span></div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text">Worker reads route file <span class="auto-badge">AUTO</span></div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-text">Worker writes the fix <span class="auto-badge">AUTO</span></div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-text">Worker runs the tests <span class="auto-badge">AUTO</span></div>
+      </div>
+      <div class="step">
+        <div class="step-num">6</div>
+        <div class="step-text">Dashboard shows: <strong>"All tests passing"</strong></div>
+      </div>
+
+      <div class="result-box">
+        1 click. Go make coffee.<br>
+        <span style="font-size:0.8em; font-weight:400;">Works from your phone, laptop, anywhere</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="stat-row" style="margin-top:30px;">
+    <div class="stat-item">
+      <div class="big-number red">30</div>
+      <div class="stat-label">Approval clicks today<br>(per build cycle)</div>
+    </div>
+    <div class="stat-item" style="display:flex; align-items:center;">
+      <span style="font-size:2em; color:#4a6a8a;">&#10142;</span>
+    </div>
+    <div class="stat-item">
+      <div class="big-number green">1</div>
+      <div class="stat-label">Click after<br>(just start the task)</div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SECTION 2: HOW IT WORKS ==================== -->
+<div class="section">
+  <span class="section-label label-blue">The Solution</span>
+  <h2>How the New System Works</h2>
+
+  <div class="arch-diagram">
+    <!-- Row 1: You -->
+    <div class="arch-row">
+      <div class="arch-node node-you">
+        You
+        <div class="node-label">Phone, laptop, anywhere</div>
+      </div>
+    </div>
+    <div class="arrow-down">&#9660;</div>
+
+    <!-- Row 2: Dashboard -->
+    <div class="arch-row">
+      <div class="arch-node node-dashboard">
+        PIA Dashboard
+        <div class="node-label">Already built — your control panel</div>
+      </div>
+    </div>
+    <div class="arrow-down">&#9660; "Fix the tests"</div>
+
+    <!-- Row 3: Orchestrators -->
+    <div class="arch-row">
+      <div class="arch-node node-orchestrator">
+        Worker on Machine #1
+        <div class="node-label">Runs tasks automatically</div>
+      </div>
+      <div class="arch-node node-orchestrator">
+        Worker on Machine #3
+        <div class="node-label">Runs tasks automatically</div>
+      </div>
+    </div>
+    <div class="arrow-down">&#9660; "What should I do?"</div>
+
+    <!-- Row 4: Claude Brain -->
+    <div class="arch-row">
+      <div class="arch-node node-brain">
+        Claude's Brain (API)
+        <div class="node-label">Thinks + plans — no permissions needed</div>
+      </div>
+    </div>
+    <div class="arrow-down">&#9660; "Run this command, write this file"</div>
+
+    <!-- Row 5: Machines doing work -->
+    <div class="arch-row">
+      <div class="arch-node node-machine">
+        Machine #1 does the work
+        <div class="node-label">Files, commands, builds</div>
+      </div>
+      <div class="arch-node node-machine">
+        Machine #3 does the work
+        <div class="node-label">Files, commands, builds</div>
+      </div>
+    </div>
+    <div class="arrow-down" style="color:#6bffb8;">&#9650; Reports back to dashboard</div>
+  </div>
+</div>
+
+<!-- ==================== SECTION 3: REAL EXAMPLE ==================== -->
+<div class="section">
+  <span class="section-label label-purple">Real Example</span>
+  <h2>You Say: "Build and deploy the DAO project"</h2>
+
+  <div class="scenario">
+    <div class="scenario-header">
+      <h3>What happens behind the scenes</h3>
+      <p>You click one button. Everything below happens automatically in ~2 minutes.</p>
+    </div>
+    <div class="scenario-body">
+      <div class="timeline-item you-do">
+        <div class="tl-who">You</div>
+        <div class="tl-what">Open PIA Dashboard on your phone. Click Machine #3. Type <strong>"Build and deploy the DAO project"</strong>. Hit send.</div>
+      </div>
+
+      <div class="timeline-item machine-do">
+        <div class="tl-who">Worker</div>
+        <div class="tl-what">Machine #3's worker receives the task. Sends it to Claude's brain.</div>
+      </div>
+
+      <div class="timeline-item brain-do">
+        <div class="tl-who">Brain</div>
+        <div class="tl-what">Claude thinks: "I should check the code first." Tells the worker: <strong>"Read the source files."</strong></div>
+      </div>
+
+      <div class="timeline-item machine-do">
+        <div class="tl-who">Worker</div>
+        <div class="tl-what">Reads the files automatically. No permission popup. Sends contents back to the brain.</div>
+      </div>
+
+      <div class="timeline-item brain-do">
+        <div class="tl-who">Brain</div>
+        <div class="tl-what">Claude thinks: "OK, I need to run the build command." Tells the worker: <strong>"Run: npm run build"</strong></div>
+      </div>
+
+      <div class="timeline-item machine-do">
+        <div class="tl-who">Worker</div>
+        <div class="tl-what">Runs the build. Takes 30 seconds. Sends output back to the brain.</div>
+      </div>
+
+      <div class="timeline-item brain-do">
+        <div class="tl-who">Brain</div>
+        <div class="tl-what">Claude sees: "Build successful!" Tells the worker: <strong>"Now run the tests."</strong></div>
+      </div>
+
+      <div class="timeline-item machine-do">
+        <div class="tl-who">Worker</div>
+        <div class="tl-what">Runs tests automatically. 5 out of 5 pass. Reports back.</div>
+      </div>
+
+      <div class="timeline-item brain-do">
+        <div class="tl-who">Brain</div>
+        <div class="tl-what">Claude sees all tests pass. Tells the worker: <strong>"Deploy it. Restart the server."</strong></div>
+      </div>
+
+      <div class="timeline-item machine-do">
+        <div class="tl-who">Worker</div>
+        <div class="tl-what">Restarts the server. Checks it's responding. All good.</div>
+      </div>
+
+      <div class="timeline-item result-do">
+        <div class="tl-who">Dashboard</div>
+        <div class="tl-what"><strong style="color:#6bffb8; font-size:1.1em;">&#10003; "DAO project built, tested, and deployed. 5/5 tests passing. Server running on port 5003."</strong><br><span style="color:#888;">Total time: 2 minutes. Cost: $0.15. You didn't click approve once.</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SECTION 4: SAFETY ==================== -->
+<div class="section">
+  <span class="section-label label-orange">Safety</span>
+  <h2>Your Rules, Not Claude's Popups</h2>
+  <p style="color:#888; margin-bottom:20px;">You decide what the worker is allowed to do. These rules are baked into your system — not Claude's permission prompts.</p>
+
+  <div class="rules-grid">
+    <div class="rule-card allowed">
+      <div class="rule-icon">&#9989;</div>
+      <h4 style="color:#6bffb8;">Allowed</h4>
+      <p>Read and write files inside your project folders</p>
+    </div>
+    <div class="rule-card allowed">
+      <div class="rule-icon">&#9989;</div>
+      <h4 style="color:#6bffb8;">Allowed</h4>
+      <p>Run build commands (npm build, npm test, npm start)</p>
+    </div>
+    <div class="rule-card allowed">
+      <div class="rule-icon">&#9989;</div>
+      <h4 style="color:#6bffb8;">Allowed</h4>
+      <p>Deploy code and restart services</p>
+    </div>
+    <div class="rule-card allowed">
+      <div class="rule-icon">&#9989;</div>
+      <h4 style="color:#6bffb8;">Allowed</h4>
+      <p>Git operations (commit, push, pull)</p>
+    </div>
+    <div class="rule-card blocked">
+      <div class="rule-icon">&#128683;</div>
+      <h4 style="color:#ff6b6b;">Blocked</h4>
+      <p>Delete system files or anything outside the project</p>
+    </div>
+    <div class="rule-card blocked">
+      <div class="rule-icon">&#128683;</div>
+      <h4 style="color:#ff6b6b;">Blocked</h4>
+      <p>Spend more than your budget limit per task (e.g. $1)</p>
+    </div>
+    <div class="rule-card blocked">
+      <div class="rule-icon">&#128683;</div>
+      <h4 style="color:#ff6b6b;">Blocked</h4>
+      <p>Run dangerous commands (format drives, delete databases)</p>
+    </div>
+    <div class="rule-card blocked">
+      <div class="rule-icon">&#128683;</div>
+      <h4 style="color:#ff6b6b;">Blocked</h4>
+      <p>Access other machines without your setup</p>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SECTION 5: WHAT WE BUILD ==================== -->
+<div class="section">
+  <span class="section-label label-green">What We Build</span>
+  <h2>What Exists vs What's New</h2>
+
+  <ul class="build-list">
+    <li class="build-item">
+      <div class="build-status status-exists">EXISTS</div>
+      <div class="build-info">
+        <h4>PIA Dashboard</h4>
+        <p>Your control panel that shows all machines, agents, and status. Already working.</p>
+      </div>
+    </li>
+    <li class="build-item">
+      <div class="build-status status-exists">EXISTS</div>
+      <div class="build-info">
+        <h4>Machine Network (Tailscale)</h4>
+        <p>All your machines connected and talking to each other. Already working.</p>
+      </div>
+    </li>
+    <li class="build-item">
+      <div class="build-status status-exists">EXISTS</div>
+      <div class="build-info">
+        <h4>Terminal Sessions (PTY)</h4>
+        <p>Remote terminal access to each machine from the dashboard. Already working.</p>
+      </div>
+    </li>
+    <li class="build-item">
+      <div class="build-status status-exists">EXISTS</div>
+      <div class="build-info">
+        <h4>Cross-Machine Messaging</h4>
+        <p>Machines can send messages to each other via relay. Already working.</p>
+      </div>
+    </li>
+    <li class="build-item">
+      <div class="build-status status-exists">EXISTS</div>
+      <div class="build-info">
+        <h4>AI Model Integration</h4>
+        <p>Claude, GPT, Gemini, Grok, Ollama all connected. Already working.</p>
+      </div>
+    </li>
+    <li class="build-item" style="border-color:#ffb06b;">
+      <div class="build-status status-build">BUILD</div>
+      <div class="build-info">
+        <h4 style="color:#ffb06b;">The Worker (Orchestrator)</h4>
+        <p>The missing brain on each machine that receives tasks and does them automatically. This is the key piece.</p>
+      </div>
+    </li>
+    <li class="build-item" style="border-color:#ffb06b;">
+      <div class="build-status status-build">BUILD</div>
+      <div class="build-info">
+        <h4 style="color:#ffb06b;">File Transfer API</h4>
+        <p>Simple way to read/write files on any machine. Replaces the hacky base64 method.</p>
+      </div>
+    </li>
+    <li class="build-item" style="border-color:#ffb06b;">
+      <div class="build-status status-build">BUILD</div>
+      <div class="build-info">
+        <h4 style="color:#ffb06b;">Clean Command API</h4>
+        <p>Run commands on any machine and get clean results back. No garbled terminal output.</p>
+      </div>
+    </li>
+    <li class="build-item" style="border-color:#ffb06b;">
+      <div class="build-status status-build">BUILD</div>
+      <div class="build-info">
+        <h4 style="color:#ffb06b;">"Run Task" Button on Dashboard</h4>
+        <p>The button you click to tell any machine to do something. Connects dashboard to the worker.</p>
+      </div>
+    </li>
+  </ul>
+</div>
+
+<!-- ==================== SUMMARY ==================== -->
+<div class="summary-banner">
+  <h2>The Bottom Line</h2>
+  <p>
+    PIA already has the eyes (dashboard), the network (Tailscale), and the hands (terminal sessions).
+    What's missing is the <strong>brain on each machine</strong> that can take a job and just do it without asking you 30 times.
+    <br><br>
+    We build one new piece — the Worker — and plug it into what you already have.
+    Then PIA becomes the command center you wanted:
+    <strong>one click, walk away, come back to results.</strong>
+  </p>
+</div>
+
+</body>
+</html>

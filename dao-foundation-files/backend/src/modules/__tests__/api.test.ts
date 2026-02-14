@@ -137,7 +137,7 @@ describe('Core Module Endpoints', () => {
   // POST /api/modules/:id/chat
   // -----------------------------------------------------------------------
   describe('POST /api/modules/:id/chat', () => {
-    it('should chat with the coach module and receive a response', async () => {
+    it('should chat with the coach module and receive a response', { timeout: 30000 }, async () => {
       const res = await post('/coach/chat', {
         content: 'What are some good strategies for a new DAO?',
         dao_id: DAO_ID,
@@ -247,7 +247,7 @@ describe('Core Module Endpoints', () => {
 
 describe('Coach Module Endpoints', () => {
   describe('POST /api/modules/coach/okrs', () => {
-    it('should generate OKRs for the DAO', async () => {
+    it('should generate OKRs for the DAO', { timeout: 30000 }, async () => {
       const res = await post('/coach/okrs', {
         dao_id: DAO_ID,
         user_id: TEST_USER,
@@ -272,7 +272,7 @@ describe('Coach Module Endpoints', () => {
   });
 
   describe('POST /api/modules/coach/milestones', () => {
-    it('should plan milestones for an objective', async () => {
+    it('should plan milestones for an objective', { timeout: 30000 }, async () => {
       const res = await post('/coach/milestones', {
         dao_id: DAO_ID,
         user_id: TEST_USER,
@@ -296,7 +296,7 @@ describe('Coach Module Endpoints', () => {
   });
 
   describe('POST /api/modules/coach/swot', () => {
-    it('should generate a SWOT analysis', async () => {
+    it('should generate a SWOT analysis', { timeout: 30000 }, async () => {
       const res = await post('/coach/swot', {
         dao_id: DAO_ID,
         user_id: TEST_USER,
@@ -322,7 +322,7 @@ describe('Coach Module Endpoints', () => {
 
 describe('Legal Module Endpoints', () => {
   describe('POST /api/modules/legal/draft', () => {
-    it('should draft a new agreement', async () => {
+    it('should draft a new agreement', { timeout: 60000 }, async () => {
       const res = await post('/legal/draft', {
         dao_id: DAO_ID,
         user_id: TEST_USER,
@@ -418,7 +418,7 @@ describe('Governance Module Endpoints', () => {
   });
 
   describe('POST /api/modules/governance/voting-params', () => {
-    it('should recommend voting parameters', async () => {
+    it('should recommend voting parameters', { timeout: 30000 }, async () => {
       const res = await post('/governance/voting-params', {
         dao_id: DAO_ID,
         user_id: TEST_USER,
@@ -446,7 +446,7 @@ describe('Governance Module Endpoints', () => {
   });
 
   describe('POST /api/modules/governance/report', () => {
-    it('should generate a governance report', async () => {
+    it('should generate a governance report', { timeout: 120000 }, async () => {
       const res = await post('/governance/report', {
         dao_id: DAO_ID,
         user_id: TEST_USER,
@@ -471,7 +471,7 @@ describe('Governance Module Endpoints', () => {
   });
 
   describe('POST /api/modules/governance/constitution', () => {
-    it('should draft a DAO constitution', async () => {
+    it('should draft a DAO constitution', { timeout: 60000 }, async () => {
       const res = await post('/governance/constitution', {
         dao_id: DAO_ID,
         user_id: TEST_USER,

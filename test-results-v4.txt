@@ -1,0 +1,378 @@
+﻿node.exe : [1m[43m DEPRECATED [49m[22m [33m"environmentMatchGlobs" is deprecated. Use `test.projects` to define 
+different configurations instead.[39m
+At C:\Program Files\nodejs\npx.ps1:29 char:3
++   & $NODE_EXE $NPX_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([1m[43m DEPRE...s instead.[39m:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+[1m[46m RUN [49m[22m [36mv3.2.4 [39m[90mC:/Users/User/Documents/GitHub/DAOV1[39m
+
+ [32mÔ£ô[39m backend/src/simple.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 2[2mms[22m[39m
+ [32mÔ£ô[39m backend/src/routes/proposals.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 39[2mms[22m[39m
+ [32mÔ£ô[39m templates/DAOCommandCenter.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 95[2mms[22m[39m
+ [32mÔ£ô[39m components/Panel.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[32m 33[2mms[22m[39m
+ [32mÔ£ô[39m src/templates/AgreementNegotiation.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[32m 75[2mms[22m[39m
+[90mstdout[2m | templates/MultiSigTreasury.test.tsx[2m > [22m[2mMultiSigTreasury[2m > [22m[2mshould allow a user to create a new transaction
+[22m[39mTransaction submitted for approval!
+
+ [32mÔ£ô[39m backend/src/routes/token_distribution.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 45[2mms[22m[39m
+ [32mÔ£ô[39m templates/MultiSigTreasury.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[32m 185[2mms[22m[39m
+ [32mÔ£ô[39m templates/IdeaBubbles.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[32m 213[2mms[22m[39m
+[90mstderr[2m | templates/GovernanceVoting.test.tsx[2m > [22m[2mGovernanceVoting[2m > [22m[2mshould render 
+loading state and then the list of proposals
+[22m[39mAn empty string ("") was passed to the src attribute. This may cause the browser to download the whole page 
+again over the network. To fix this, either do not render the element at all or pass null to src instead of an empty 
+string.
+An empty string ("") was passed to the src attribute. This may cause the browser to download the whole page again over 
+the network. To fix this, either do not render the element at all or pass null to src instead of an empty string.
+
+[90mstderr[2m | templates/GovernanceVoting.test.tsx[2m > [22m[2mGovernanceVoting[2m > [22m[2mshould filter 
+proposals when a status tab is clicked
+[22m[39mAn empty string ("") was passed to the src attribute. This may cause the browser to download the whole page 
+again over the network. To fix this, either do not render the element at all or pass null to src instead of an empty 
+string.
+An empty string ("") was passed to the src attribute. This may cause the browser to download the whole page again over 
+the network. To fix this, either do not render the element at all or pass null to src instead of an empty string.
+
+[90mstderr[2m | templates/GovernanceVoting.test.tsx[2m > [22m[2mGovernanceVoting[2m > [22m[2mshould call the 
+vote service when a vote button is clicked
+[22m[39mAn empty string ("") was passed to the src attribute. This may cause the browser to download the whole page 
+again over the network. To fix this, either do not render the element at all or pass null to src instead of an empty 
+string.
+An empty string ("") was passed to the src attribute. This may cause the browser to download the whole page again over 
+the network. To fix this, either do not render the element at all or pass null to src instead of an empty string.
+
+ [32mÔ£ô[39m templates/TokenDistribution.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[32m 150[2mms[22m[39m
+ [32mÔ£ô[39m templates/GovernanceVoting.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[32m 184[2mms[22m[39m
+[90mstdout[2m | backend/src/routes/bubbles.test.ts
+[22m[39mÔ£ô Query monitoring enabled (threshold: 100ms)
+
+[90mstdout[2m | backend/src/routes/gemini.test.ts
+[22m[39mÔ£ô Query monitoring enabled (threshold: 100ms)
+
+[90mstdout[2m | backend/src/routes/firstborn-agreements.test.ts
+[22m[39mÔ£ô Query monitoring enabled (threshold: 100ms)
+
+[90mstdout[2m | backend/src/routes/agreements.test.ts
+[22m[39mÔ£ô Query monitoring enabled (threshold: 100ms)
+
+[90mstdout[2m | templates/DAOCreationWizard.test.tsx[2m > [22m[2mDAOCreationWizard[2m > [22m[2mallows navigation through all steps
+[22m[39mÔ£à Contract generated successfully, length: [33m18[39m
+
+[90mstdout[2m | backend/src/routes/agreements.test.ts
+[22m[39mÔ£ô Environment variables validated successfully
+
+[90mstdout[2m | backend/src/routes/firstborn-agreements.test.ts
+[22m[39mÔ£ô Environment variables validated successfully
+
+[90mstdout[2m | backend/src/routes/gemini.test.ts
+[22m[39mÔ£ô Environment variables validated successfully
+
+[90mstdout[2m | backend/src/routes/bubbles.test.ts
+[22m[39mÔ£ô Environment variables validated successfully
+
+[90mstdout[2m | backend/src/routes/agreements.test.ts[2m > [22m[2mAgreements API[2m > [22m[2mGET /api/agreements/:id should return a single agreement
+[22m[39m2026-02-13 08:40:27 [[32mhttp[39m]: Request processed {"method":"GET","url":"/api/agreements/AGMT_001","statusCode":200,"duration":7,"ip":"::ffff:127.0.0.1"}
+
+[90mstdout[2m | backend/src/routes/bubbles.test.ts[2m > [22m[2mBubbles API[2m > [22m[2mGET /api/bubbles should return a list of bubbles
+[22m[39m2026-02-13 08:40:27 [[32mhttp[39m]: Request processed {"method":"GET","url":"/api/bubbles","statusCode":200,"duration":7,"ip":"::ffff:127.0.0.1"}
+
+[90mstdout[2m | backend/src/routes/firstborn-agreements.test.ts[2m > [22m[2mFirst Born Agreements API[2m > [22m[2mGET /api/agreements/firstborn[2m > [22m[2mshould return all firstborn agreements
+[22m[39m2026-02-13 08:40:27 [[32mhttp[39m]: Request processed {"method":"GET","url":"/api/agreements/firstborn","statusCode":200,"duration":8,"ip":"::ffff:127.0.0.1"}
+
+[90mstdout[2m | backend/src/routes/agreements.test.ts[2m > [22m[2mAgreements API[2m > [22m[2mPOST /api/agreements/:agreementId/sections/:sectionKey/decide should update a section
+[22m[39m2026-02-13 08:40:27 [[32mhttp[39m]: Request processed {"method":"POST","url":"/api/agreements/AGMT_001/sections/role_term/decide","statusCode":200,"duration":1,"ip":"::ffff:127.0.0.1","body":{"decision":"accept"}}
+
+[90mstdout[2m | backend/src/routes/firstborn-agreements.test.ts[2m > [22m[2mFirst Born Agreements API[2m > [22m[2mGET /api/agreements/firstborn[2m > [22m[2mshould filter by dao_id when provided
+[22m[39m2026-02-13 08:40:27 [[32mhttp[39m]: Request processed {"method":"GET","url":"/api/agreements/firstborn?dao_id=dao_001","statusCode":200,"duration":1,"ip":"::ffff:127.0.0.1","query":{"dao_id":"dao_001"}}
+
+[90mstdout[2m | backend/src/routes/bubbles.test.ts[2m > [22m[2mBubbles API[2m > [22m[2mPOST /api/bubbles should create a new bubble
+[22m[39m2026-02-13 08:40:27 [[32mhttp[39m]: Request processed {"method":"POST","url":"/api/bubbles","statusCode":201,"duration":1,"ip":"::ffff:127.0.0.1","body":{"name":"New Test Bubble","type":"Event"}}
+
+ [32mÔ£ô[39m backend/src/routes/agreements.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 35[2mms[22m[39m
+ [32mÔ£ô[39m backend/src/routes/bubbles.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 36[2mms[22m[39m
+[90mstdout[2m | backend/src/routes/firstborn-agreements.test.ts[2m > [22m[2mFirst Born Agreements API[2m > [22m[2mGET /api/agreements/firstborn/:id[2m > [22m[2mshould return a specific firstborn agreement with vesting schedule
+[22m[39m2026-02-13 08:40:27 [[32mhttp[39m]: Request processed {"method":"GET","url":"/api/agreements/firstborn/1","statusCode":200,"duration":1,"ip":"::ffff:127.0.0.1"}
+
+[90mstdout[2m | backend/src/routes/firstborn-agreements.test.ts[2m > [22m[2mFirst Born Agreements API[2m > [22m[2mGET /api/agreements/firstborn/:id[2m > [22m[2mshould return 404 for non-existent agreement
+[22m[39m2026-02-13 08:40:27 [[32mhttp[39m]: Request processed {"method":"GET","url":"/api/agreements/firstborn/999","statusCode":404,"duration":0,"ip":"::ffff:127.0.0.1"}
+2026-02-13 08:40:27 [[33mwarn[39m]: Request error {"method":"GET","url":"/api/agreements/firstborn/999","statusCode":404,"duration":0,"ip":"::ffff:127.0.0.1"}
+
+[90mstdout[2m | backend/src/routes/firstborn-agreements.test.ts[2m > [22m[2mFirst Born Agreements API[2m > [22m[2mPOST /api/agreements/firstborn[2m > [22m[2mshould return 400 for missing required fields
+[22m[39m2026-02-13 08:40:27 [[32mhttp[39m]: Request processed {"method":"POST","url":"/api/agreements/firstborn","statusCode":400,"duration":1,"ip":"::ffff:127.0.0.1"}
+2026-02-13 08:40:27 [[33mwarn[39m]: Request error {"method":"POST","url":"/api/agreements/firstborn","statusCode":400,"duration":1,"ip":"::ffff:127.0.0.1"}
+
+[90mstdout[2m | backend/src/routes/gemini.test.ts[2m > [22m[2m/api/mentor/chat[2m > [22m[2mshould save user and AI messages to the database
+[22m[39m2026-02-13 08:40:27 [[32mhttp[39m]: Request processed {"method":"POST","url":"/api/mentor/chat","statusCode":200,"duration":25,"ip":"::ffff:127.0.0.1","body":{"sessionId":"test-session-123","prompt":"Hello, AI!"}}
+
+[90mstdout[2m | backend/src/routes/firstborn-agreements.test.ts[2m > [22m[2mFirst Born Agreements API[2m > [22m[2mPOST /api/agreements/firstborn[2m > [22m[2mshould return 400 for invalid currency
+[22m[39m2026-02-13 08:40:27 [[32mhttp[39m]: Request processed {"method":"POST","url":"/api/agreements/firstborn","statusCode":400,"duration":0,"ip":"::ffff:127.0.0.1","body":{"dao_id":"dao_001","personal_details":{"name":"Jane","surname":"NewInvestor","email":"jane@newinvestor.com","wallet_address":"0xabcdef1234567890abcdef1234567890abcdef12"},"capital_contribution":{"amount":5000,"currency":"INVALID_CURRENCY"},"token_reward":"[REDACTED]","cultural_benefits":["voting_rights"],"legal_framework":"Swiss Foundation"}}
+2026-02-13 08:40:27 [[33mwarn[39m]: Request error {"method":"POST","url":"/api/agreements/firstborn","statusCode":400,"duration":0,"ip":"::ffff:127.0.0.1"}
+
+[90mstdout[2m | backend/src/routes/firstborn-agreements.test.ts[2m > [22m[2mFirst Born Agreements API[2m > [22m[2mPOST /api/agreements/firstborn[2m > [22m[2mshould return 400 for invalid wallet address
+[22m[39m2026-02-13 08:40:27 [[32mhttp[39m]: Request processed {"method":"POST","url":"/api/agreements/firstborn","statusCode":400,"duration":0,"ip":"::ffff:127.0.0.1","body":{"dao_id":"dao_001","personal_details":{"name":"Jane","surname":"NewInvestor","email":"jane@newinvestor.com","wallet_address":"short"},"capital_contribution":{"amount":5000,"currency":"USD"},"token_reward":"[REDACTED]","cultural_benefits":["voting_rights"],"legal_framework":"Swiss Foundation"}}
+2026-02-13 08:40:27 [[33mwarn[39m]: Request error {"method":"POST","url":"/api/agreements/firstborn","statusCode":400,"duration":0,"ip":"::ffff:127.0.0.1"}
+
+[90mstdout[2m | backend/src/routes/firstborn-agreements.test.ts[2m > [22m[2mFirst Born Agreements API[2m > [22m[2mPOST /api/agreements/firstborn[2m > [22m[2mshould return 400 for zero contribution amount
+[22m[39m2026-02-13 08:40:27 [[32mhttp[39m]: Request processed {"method":"POST","url":"/api/agreements/firstborn","statusCode":400,"duration":0,"ip":"::ffff:127.0.0.1","body":{"dao_id":"dao_001","personal_details":{"name":"Jane","surname":"NewInvestor","email":"jane@newinvestor.com","wallet_address":"0xabcdef1234567890abcdef1234567890abcdef12"},"capital_contribution":{"amount":0,"currency":"USD"},"token_reward":"[REDACTED]","cultural_benefits":["voting_rights"],"legal_framework":"Swiss Foundation"}}
+2026-02-13 08:40:27 [[33mwarn[39m]: Request error {"method":"POST","url":"/api/agreements/firstborn","statusCode":400,"duration":0,"ip":"::ffff:127.0.0.1"}
+
+[90mstdout[2m | backend/src/routes/firstborn-agreements.test.ts[2m > [22m[2mFirst Born Agreements API[2m > [22m[2mPUT /api/agreements/firstborn/:id/status[2m > [22m[2mshould return 400 for missing required fields
+[22m[39m2026-02-13 08:40:27 [[32mhttp[39m]: Request processed {"method":"PUT","url":"/api/agreements/firstborn/1/status","statusCode":400,"duration":0,"ip":"::ffff:127.0.0.1"}
+2026-02-13 08:40:27 [[33mwarn[39m]: Request error {"method":"PUT","url":"/api/agreements/firstborn/1/status","statusCode":400,"duration":0,"ip":"::ffff:127.0.0.1"}
+
+[90mstdout[2m | backend/src/routes/firstborn-agreements.test.ts[2m > [22m[2mFirst Born Agreements API[2m > [22m[2mPUT /api/agreements/firstborn/:id/status[2m > [22m[2mshould return 400 for invalid status
+[22m[39m2026-02-13 08:40:27 [[32mhttp[39m]: Request processed {"method":"PUT","url":"/api/agreements/firstborn/1/status","statusCode":400,"duration":1,"ip":"::ffff:127.0.0.1","body":{"status":"invalid_status","changed_by":"admin"}}
+2026-02-13 08:40:27 [[33mwarn[39m]: Request error {"method":"PUT","url":"/api/agreements/firstborn/1/status","statusCode":400,"duration":1,"ip":"::ffff:127.0.0.1"}
+
+[90mstdout[2m | backend/src/routes/firstborn-agreements.test.ts[2m > [22m[2mFirst Born Agreements API[2m > [22m[2mGET /api/agreements/firstborn/:id/vesting[2m > [22m[2mshould return vesting schedule for a member
+[22m[39m2026-02-13 08:40:27 [[32mhttp[39m]: Request processed {"method":"GET","url":"/api/agreements/firstborn/1/vesting","statusCode":200,"duration":1,"ip":"::ffff:127.0.0.1"}
+
+[90mstdout[2m | backend/src/routes/firstborn-agreements.test.ts[2m > [22m[2mFirst Born Agreements API[2m > [22m[2mGET /api/agreements/firstborn/:id/vesting[2m > [22m[2mshould return 404 for non-existent member
+[22m[39m2026-02-13 08:40:27 [[32mhttp[39m]: Request processed {"method":"GET","url":"/api/agreements/firstborn/999/vesting","statusCode":404,"duration":0,"ip":"::ffff:127.0.0.1"}
+2026-02-13 08:40:27 [[33mwarn[39m]: Request error {"method":"GET","url":"/api/agreements/firstborn/999/vesting","statusCode":404,"duration":0,"ip":"::ffff:127.0.0.1"}
+
+[90mstdout[2m | backend/src/routes/firstborn-agreements.test.ts[2m > [22m[2mFirst Born Agreements API[2m > [22m[2mPUT /api/agreements/firstborn/:id/vesting/:releaseId/release[2m > [22m[2mshould return 400 for missing released_by
+[22m[39m2026-02-13 08:40:27 [[32mhttp[39m]: Request processed {"method":"PUT","url":"/api/agreements/firstborn/1/vesting/1/release","statusCode":400,"duration":0,"ip":"::ffff:127.0.0.1"}
+2026-02-13 08:40:27 [[33mwarn[39m]: Request error {"method":"PUT","url":"/api/agreements/firstborn/1/vesting/1/release","statusCode":400,"duration":0,"ip":"::ffff:127.0.0.1"}
+
+ [32mÔ£ô[39m backend/src/routes/firstborn-agreements.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 97[2mms[22m[39m
+[90mstdout[2m | backend/src/routes/gemini.test.ts[2m > [22m[2m/api/mentor/chat[2m > [22m[2mshould load history for an existing session
+[22m[39m2026-02-13 08:40:27 [[32mhttp[39m]: Request processed {"method":"POST","url":"/api/mentor/chat","statusCode":200,"duration":14,"ip":"::ffff:127.0.0.1","body":{"sessionId":"test-session-456","prompt":"This is the first message."}}
+
+[90mstdout[2m | backend/src/routes/gemini.test.ts[2m > [22m[2m/api/mentor/chat[2m > [22m[2mshould load history for an existing session
+[22m[39m2026-02-13 08:40:27 [[32mhttp[39m]: Request processed {"method":"POST","url":"/api/mentor/chat","statusCode":200,"duration":12,"ip":"::ffff:127.0.0.1","body":{"sessionId":"test-session-456","prompt":"This is the second message."}}
+
+ [32mÔ£ô[39m backend/src/routes/gemini.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 123[2mms[22m[39m
+ [31mÔØ»[39m templates/AdviserAgreements.test.tsx [2m([22m[2m3 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 1218[2mms[22m[39m
+   [32mÔ£ô[39m AdviserAgreements[2m > [22mshould render loading state and then display agreements[32m 84[2mms[22m[39m
+   [32mÔ£ô[39m AdviserAgreements[2m > [22mshould filter agreements by status[32m 97[2mms[22m[39m
+[31m   [31m├ù[31m AdviserAgreements[2m > [22mshould allow a user to view and sign an agreement[39m[33m 1035[2mms[22m[39m
+[31m     ÔåÆ expected "signAgreement" to be called with arguments: [ 'AGMT_001' ][90m
+
+Received: 
+
+[1m  1st signAgreement call:
+
+[22m[2m  [[22m
+[2m    "AGMT_001",[22m
+[31m+   "0xMockWalletAddress",[90m
+[31m+   [[90m
+[31m+     "0xMockWalletAddress",[90m
+[31m+   ],[90m
+[2m  ][22m
+[31m[90m
+
+Number of calls: [1m1[22m
+[31m
+
+Ignored nodes: comments, script, style
+[36m<html>[31m
+  [36m<head />[31m
+  [36m<body>[31m
+    [36m<div>[31m
+      [36m<main[31m
+        [33mclass[31m=[32m"w-full p-4 md:p-8 animate-fade-in"[31m
+      [36m>[31m
+        [36m<div[31m
+          [33mclass[31m=[32m"w-full max-w-6xl mx-auto space-y-8"[31m
+        [36m>[31m
+          [36m<div[31m
+            [33maria-label[31m=[32m"Adviser Agreements Dashboard"[31m
+            [33mclass[31m=[32m"bg-gradient-to-br from-pink-500/10 to-transparent backdrop-blur-xl border-2 border-pink-400/30 shadow-2xl shadow-pink-500/10 rounded-2xl overflow-hidden "[31m
+            [33mrole[31m=[32m"region"[31m
+          [36m>[31m
+            [36m<div[31m
+              [33mclass[31m=[32m"p-6 bg-black/20"[31m
+            [36m>[31m
+              [36m<div[31m
+                [33mclass[31m=[32m"flex justify-between items-center mb-6"[31m
+              [36m>[31m
+                [36m<h2[31m
+                  [33mclass[31m=[32m"text-xl font-bold text-white tracking-wider flex-1 text-center"[31m
+                [36m>[31m
+                  [0mAdviser Agreements Dashboard[0m
+                [36m</h2>[31m
+              [36m</div>[31m
+              [36m<div[31m
+                [33mclass[31m=[32m"text-center py-12 px-4 animate-fade-in "[31m
+              [36m>[31m
+                [36m<div[31m
+                  [33mclass[31m=[32m"flex justify-center mb-6"[31m
+                [36m>[31m
+                  [36m<div[31m
+                    [33mclass[31m=[32m"w-24 h-24 rounded-full bg-gradient-to-br from-red-500/20 to-orange-500/20 border-2 border-red-500/30 flex items-center justify-center"[31m
+                  [36m>[31m
+                    [36m<svg[31m
+                      [33mclass[31m=[32m"w-12 h-12 text-red-300"[31m
+                      [33mfill[31m=[32m"none"[31m
+                      [33mstroke[31m=[32m"currentColor"[31m
+                      [33mviewBox[31m=[32m"0 0 24 24"[31m
+                    [36m>[31m
+                      [36m<path[31m
+                        [33md[31m=[32m"M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"[31m
+                        [33mstroke-linecap[31m=[32m"round"[31m
+                        [33mstroke-linejoin[31m=[32m"round"[31m
+                        [33mstroke-width[31m=[32m"2"[31m
+                      [36m/>[31m
+                    [36m</svg>[31m
+                  [36m</div>[31m
+                [36m</div>[31m
+                [36m<h3[31m
+                  [33mclass[31m=[32m"text-2xl font-bold text-white mb-3"[31m
+                [36m>[31m
+                  [0mSomething Went Wrong[0m
+                [36m</h3>[31m
+                [36m<p[31m
+                  [33mclass[31m=[32m"text-red-200/90 text-lg max-w-md mx-auto mb-6"[31m
+                [36m>[31m
+                  [0mFailed to sign agreement[0m
+                [36m</p>[31m
+                [36m<button[31m
+                  [33mclass[31m=[32m"w-full p-3 rounded-lg font-bold text-center uppercase tracking-wider transition-all duration-200 transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-opacity-75 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none bg-yellow-500 hover:bg-yellow-600 text-black focus:ring-yellow-400 !w-auto !px-8"[31m
+                [36m>[31m
+                  [0mTry Again[0m
+                [36m</button>[31m
+              [36m</div>[31m
+            [36m</div>[31m
+          [36m</div>[31m
+        [36m</div>[31m
+      [36m</main>[31m
+    [36m</div>[31m
+  [36m</body>[31m
+[36m</html>[31m[39m
+[90mstderr[2m | templates/DAOCreationWizard.test.tsx[2m > [22m[2mDAOCreationWizard[2m > [22m[2mshows an error 
+message if AI contract generation fails
+[22m[39mError: Failed to generate contract. Please try again.
+    at handleGenerateContract 
+[90m(C:\Users\User\Documents\GitHub\DAOV1\[39mtemplates\DAOCreationWizard.tsx:169:23[90m)[39m
+
+ [32mÔ£ô[39m templates/DAOCreationWizard.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 855[2mms[22m[39m
+   [33m[2mÔ£ô[22m[39m DAOCreationWizard[2m > [22mallows navigation through all steps [33m 352[2mms[22m[39m
+
+[31mÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[39m[1m[41m Failed Tests 1 [49m[22m[31mÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[39m
+
+[41m[1m FAIL [22m[49m templates/AdviserAgreements.test.tsx[2m > [22mAdviserAgreements[2m > [22mshould allow a 
+user to view and sign an agreement
+[31m[1mAssertionError[22m: expected "signAgreement" to be called with arguments: [ 'AGMT_001' ][90m
+
+Received: 
+
+[1m  1st signAgreement call:
+
+[22m[2m  [[22m
+[2m    "AGMT_001",[22m
+[31m+   "0xMockWalletAddress",[90m
+[31m+   [[90m
+[31m+     "0xMockWalletAddress",[90m
+[31m+   ],[90m
+[2m  ][22m
+[31m[90m
+
+Number of calls: [1m1[22m
+[31m
+
+Ignored nodes: comments, script, style
+[36m<html>[31m
+  [36m<head />[31m
+  [36m<body>[31m
+    [36m<div>[31m
+      [36m<main[31m
+        [33mclass[31m=[32m"w-full p-4 md:p-8 animate-fade-in"[31m
+      [36m>[31m
+        [36m<div[31m
+          [33mclass[31m=[32m"w-full max-w-6xl mx-auto space-y-8"[31m
+        [36m>[31m
+          [36m<div[31m
+            [33maria-label[31m=[32m"Adviser Agreements Dashboard"[31m
+            [33mclass[31m=[32m"bg-gradient-to-br from-pink-500/10 to-transparent backdrop-blur-xl border-2 
+border-pink-400/30 shadow-2xl shadow-pink-500/10 rounded-2xl overflow-hidden "[31m
+            [33mrole[31m=[32m"region"[31m
+          [36m>[31m
+            [36m<div[31m
+              [33mclass[31m=[32m"p-6 bg-black/20"[31m
+            [36m>[31m
+              [36m<div[31m
+                [33mclass[31m=[32m"flex justify-between items-center mb-6"[31m
+              [36m>[31m
+                [36m<h2[31m
+                  [33mclass[31m=[32m"text-xl font-bold text-white tracking-wider flex-1 text-center"[31m
+                [36m>[31m
+                  [0mAdviser Agreements Dashboard[0m
+                [36m</h2>[31m
+              [36m</div>[31m
+              [36m<div[31m
+                [33mclass[31m=[32m"text-center py-12 px-4 animate-fade-in "[31m
+              [36m>[31m
+                [36m<div[31m
+                  [33mclass[31m=[32m"flex justify-center mb-6"[31m
+                [36m>[31m
+                  [36m<div[31m
+                    [33mclass[31m=[32m"w-24 h-24 rounded-full bg-gradient-to-br from-red-500/20 to-orange-500/20 
+border-2 border-red-500/30 flex items-center justify-center"[31m
+                  [36m>[31m
+                    [36m<svg[31m
+                      [33mclass[31m=[32m"w-12 h-12 text-red-300"[31m
+                      [33mfill[31m=[32m"none"[31m
+                      [33mstroke[31m=[32m"currentColor"[31m
+                      [33mviewBox[31m=[32m"0 0 24 24"[31m
+                    [36m>[31m
+                      [36m<path[31m
+                        [33md[31m=[32m"M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 
+4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"[31m
+                        [33mstroke-linecap[31m=[32m"round"[31m
+                        [33mstroke-linejoin[31m=[32m"round"[31m
+                        [33mstroke-width[31m=[32m"2"[31m
+                      [36m/>[31m
+                    [36m</svg>[31m
+                  [36m</div>[31m
+                [36m</div>[31m
+                [36m<h3[31m
+                  [33mclass[31m=[32m"text-2xl font-bold text-white mb-3"[31m
+                [36m>[31m
+                  [0mSomething Went Wrong[0m
+                [36m</h3>[31m
+                [36m<p[31m
+                  [33mclass[31m=[32m"text-red-200/90 text-lg max-w-md mx-auto mb-6"[31m
+                [36m>[31m
+                  [0mFailed to sign agreement[0m
+                [36m</p>[31m
+                [36m<button[31m
+                  [33mclass[31m=[32m"w-full p-3 rounded-lg font-bold text-center uppercase tracking-wider 
+transition-all duration-200 transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-opacity-75 
+disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none bg-yellow-500 hover:bg-yellow-600 text-black 
+focus:ring-yellow-400 !w-auto !px-8"[31m
+                [36m>[31m
+                  [0mTry Again[0m
+                [36m</button>[31m
+              [36m</div>[31m
+            [36m</div>[31m
+          [36m</div>[31m
+        [36m</div>[31m
+      [36m</main>[31m
+    [36m</div>[31m
+  [36m</body>[31m
+[36m</html>[31m[39m
+[36m [2mÔØ»[22m templates/AdviserAgreements.test.tsx:[2m111:52[22m[39m
+    [90m109| [39m        [90m// Verify that the signAgreement service function was called[39m
+    [90m110| [39m        [35mawait[39m [34mwaitFor[39m(() [33m=>[39m {
+    [90m111| [39m            expect(AgreementService.signAgreement).toHaveBeenCalledWitÔÇª
+    [90m   | [39m                                                   [31m^[39m
+    [90m112| [39m        })[33m;[39m
+    [90m113| [39m    })[33m;[39m
+[90m [2mÔØ»[22m runWithExpensiveErrorDiagnosticsDisabled 
+node_modules/@testing-library/dom/dist/config.js:[2m47:12[22m[39m
+[90m [2mÔØ»[22m checkCallback node_modules/@testing-library/dom/dist/wait-for.js:[2m124:77[22m[39m
+[90m [2mÔØ»[22m Timeout.checkRealTimersCallback 
+node_modules/@testing-library/dom/dist/wait-for.js:[2m118:16[22m[39m
+
+[31m[2mÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[1/1]ÔÄ»[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m15 passed[39m[22m[90m (16)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m48 passed[39m[22m[90m (49)[39m
+[2m   Start at [22m 08:40:24
+[2m   Duration [22m 2.74s[2m (transform 1.47s, setup 1.79s, collect 8.92s, tests 3.38s, environment 6.39s, prepare 1.71s)[22m
+

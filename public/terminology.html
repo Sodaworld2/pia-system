@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIA System — Complete Terminology</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #0a0a0f; color: #e0e0e0; line-height: 1.6; }
+
+  .header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); padding: 40px 20px; text-align: center; border-bottom: 2px solid #e94560; }
+  .header h1 { font-size: 2.4em; color: #fff; margin-bottom: 8px; letter-spacing: 1px; }
+  .header p { color: #a0a0b0; font-size: 1.1em; }
+  .header .stats { margin-top: 16px; display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; }
+  .header .stat { background: rgba(233,69,96,0.15); border: 1px solid rgba(233,69,96,0.3); border-radius: 8px; padding: 8px 20px; }
+  .header .stat strong { color: #e94560; font-size: 1.3em; }
+  .header .stat span { color: #a0a0b0; font-size: 0.85em; display: block; }
+
+  .container { max-width: 1200px; margin: 0 auto; padding: 30px 20px; }
+
+  .search-bar { position: sticky; top: 0; z-index: 100; background: #0a0a0f; padding: 15px 0; margin-bottom: 20px; }
+  .search-bar input { width: 100%; padding: 14px 20px; font-size: 1.1em; background: #1a1a2e; border: 1px solid #333; border-radius: 10px; color: #fff; outline: none; transition: border-color 0.3s; }
+  .search-bar input:focus { border-color: #e94560; }
+  .search-bar input::placeholder { color: #666; }
+  .search-count { text-align: right; color: #666; font-size: 0.85em; margin-top: 6px; }
+
+  .nav { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 30px; }
+  .nav a { background: #1a1a2e; border: 1px solid #333; border-radius: 20px; padding: 6px 16px; color: #a0a0b0; text-decoration: none; font-size: 0.9em; transition: all 0.3s; }
+  .nav a:hover, .nav a.active { background: #e94560; color: #fff; border-color: #e94560; }
+
+  .category { margin-bottom: 40px; }
+  .category-title { font-size: 1.5em; color: #e94560; margin-bottom: 6px; padding-bottom: 10px; border-bottom: 1px solid #222; display: flex; align-items: center; gap: 12px; }
+  .category-title .icon { font-size: 1.3em; }
+  .category-desc { color: #888; font-size: 0.95em; margin-bottom: 20px; }
+
+  .term-card { background: #12121a; border: 1px solid #1e1e2e; border-radius: 12px; padding: 20px; margin-bottom: 14px; transition: all 0.3s; }
+  .term-card:hover { border-color: #e94560; transform: translateX(4px); }
+  .term-card .term-name { font-size: 1.15em; font-weight: 700; color: #fff; margin-bottom: 6px; }
+  .term-card .term-name .badge { display: inline-block; font-size: 0.65em; padding: 2px 8px; border-radius: 4px; margin-left: 8px; vertical-align: middle; font-weight: 500; }
+  .badge-core { background: rgba(233,69,96,0.2); color: #e94560; }
+  .badge-memory { background: rgba(80,200,120,0.2); color: #50c878; }
+  .badge-infra { background: rgba(100,149,237,0.2); color: #6495ed; }
+  .badge-orchestration { background: rgba(255,165,0,0.2); color: #ffa500; }
+  .badge-pattern { background: rgba(186,85,211,0.2); color: #ba55d3; }
+  .badge-template { background: rgba(0,206,209,0.2); color: #00ced1; }
+  .badge-standard { background: rgba(255,215,0,0.2); color: #ffd700; }
+  .term-card .term-def { color: #b0b0b0; font-size: 0.95em; margin-bottom: 10px; }
+  .term-card .term-example { background: #0a0a12; border-left: 3px solid #e94560; padding: 10px 14px; border-radius: 0 6px 6px 0; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 0.85em; color: #c0c0c0; white-space: pre-wrap; margin-top: 10px; }
+  .term-card .term-files { margin-top: 10px; font-size: 0.8em; color: #666; }
+  .term-card .term-files code { background: #1a1a2e; padding: 2px 6px; border-radius: 3px; color: #888; }
+
+  .layers-section { margin: 40px 0; }
+  .layers-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .layer-card { background: linear-gradient(135deg, #12121a, #1a1a2e); border: 1px solid #1e1e2e; border-radius: 12px; padding: 20px; position: relative; overflow: hidden; }
+  .layer-card::before { content: attr(data-num); position: absolute; top: -10px; right: 10px; font-size: 4em; font-weight: 900; color: rgba(233,69,96,0.08); }
+  .layer-card h3 { color: #e94560; font-size: 1.1em; margin-bottom: 8px; }
+  .layer-card p { color: #888; font-size: 0.9em; }
+  .layer-card .tokens { margin-top: 10px; color: #50c878; font-size: 0.85em; font-weight: 600; }
+
+  .comparison-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+  .comparison-table th { background: #1a1a2e; color: #e94560; padding: 12px; text-align: left; border-bottom: 2px solid #e94560; }
+  .comparison-table td { padding: 10px 12px; border-bottom: 1px solid #1e1e2e; color: #b0b0b0; font-size: 0.9em; }
+  .comparison-table tr:hover td { background: rgba(233,69,96,0.05); }
+
+  .soul-profile { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; margin: 20px 0; }
+  .soul-card { background: linear-gradient(135deg, #12121a, #1a1a2e); border-radius: 14px; padding: 24px; border: 1px solid #1e1e2e; }
+  .soul-card h3 { color: #fff; font-size: 1.3em; margin-bottom: 4px; }
+  .soul-card .role { color: #e94560; font-size: 0.95em; margin-bottom: 12px; }
+  .soul-card .trait { display: inline-block; background: rgba(233,69,96,0.1); border: 1px solid rgba(233,69,96,0.2); border-radius: 6px; padding: 3px 10px; margin: 3px 4px 3px 0; font-size: 0.8em; color: #e0a0a0; }
+  .soul-card .quirk { color: #888; font-size: 0.85em; margin: 4px 0; padding-left: 14px; position: relative; }
+  .soul-card .quirk::before { content: ''; position: absolute; left: 0; top: 8px; width: 6px; height: 6px; border-radius: 50%; background: #e94560; }
+  .soul-card .goals-list { margin-top: 12px; }
+  .soul-card .goals-list li { color: #a0a0b0; font-size: 0.85em; margin: 4px 0; list-style: none; padding-left: 14px; position: relative; }
+  .soul-card .goals-list li::before { content: ''; position: absolute; left: 0; top: 8px; width: 8px; height: 2px; background: #50c878; }
+
+  .journal { background: #12121a; border: 1px solid #1e1e2e; border-radius: 12px; padding: 24px; margin: 30px 0; }
+  .journal h3 { color: #e94560; margin-bottom: 14px; }
+  .journal-entry { border-left: 2px solid #333; padding-left: 16px; margin-bottom: 14px; }
+  .journal-entry .time { color: #666; font-size: 0.8em; }
+  .journal-entry .content { color: #b0b0b0; font-size: 0.9em; }
+
+  .footer { text-align: center; padding: 40px; color: #444; font-size: 0.85em; border-top: 1px solid #1a1a1a; margin-top: 40px; }
+
+  @media (max-width: 768px) {
+    .header h1 { font-size: 1.6em; }
+    .layers-grid { grid-template-columns: 1fr; }
+    .soul-profile { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>PIA SYSTEM TERMINOLOGY</h1>
+  <p>Complete reference for agent programming, knowledge systems, and orchestration</p>
+  <div class="stats">
+    <div class="stat"><strong>69</strong><span>Terms Defined</span></div>
+    <div class="stat"><strong>7</strong><span>Categories</span></div>
+    <div class="stat"><strong>3</strong><span>Agent Souls</span></div>
+    <div class="stat"><strong>7</strong><span>Programming Layers</span></div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Search -->
+  <div class="search-bar">
+    <input type="text" id="searchInput" placeholder="Search terms, definitions, examples..." oninput="filterTerms()">
+    <div class="search-count" id="searchCount"></div>
+  </div>
+
+  <!-- Quick Nav -->
+  <div class="nav" id="navBar">
+    <a href="#agent-core" class="active" onclick="scrollTo(event,'agent-core')">Agent Core</a>
+    <a href="#memory" onclick="scrollTo(event,'memory')">Memory System</a>
+    <a href="#orchestration" onclick="scrollTo(event,'orchestration')">Orchestration</a>
+    <a href="#infrastructure" onclick="scrollTo(event,'infrastructure')">Infrastructure</a>
+    <a href="#patterns" onclick="scrollTo(event,'patterns')">Patterns & Rules</a>
+    <a href="#template" onclick="scrollTo(event,'template')">Template System</a>
+    <a href="#standards" onclick="scrollTo(event,'standards')">Industry Standards</a>
+    <a href="#layers" onclick="scrollTo(event,'layers')">7 Layers</a>
+    <a href="#souls" onclick="scrollTo(event,'souls')">Soul Profiles</a>
+    <a href="#journal" onclick="scrollTo(event,'journal')">Session Journal</a>
+  </div>
+
+  <!-- ===== CATEGORY: AGENT CORE ===== -->
+  <div class="category" id="agent-core">
+    <div class="category-title"><span class="icon">&#129504;</span> Agent Core</div>
+    <div class="category-desc">The fundamental building blocks of an AI agent in PIA</div>
+
+    <div class="term-card" data-search="soul persistent personality identity">
+      <div class="term-name">Soul <span class="badge badge-core">CORE</span></div>
+      <div class="term-def">A persistent AI personality definition. Contains identity, personality description, goals, relationships, config, and system prompt. Stored as JSON file, loaded into SQLite database at startup. Survives across sessions and machines.</div>
+      <div class="term-example">// Defined in: src/souls/personalities/fisher2050.json
+{
+  "id": "fisher2050",
+  "name": "Fisher2050",
+  "role": "Project Manager",
+  "personality": "You are Fisher2050, organized, proactive...",
+  "goals": ["Keep all projects on track..."],
+  "relationships": {"Mic": "The boss..."},
+  "system_prompt": "When processing a task: 1. Assess...",
+  "config": {"dailyReviewTime": "09:00"}
+}</div>
+      <div class="term-files">Files: <code>src/souls/personalities/*.json</code> <code>src/souls/soul-engine.ts</code></div>
+    </div>
+
+    <div class="term-card" data-search="personality description style traits quirks communication">
+      <div class="term-name">Personality <span class="badge badge-core">CORE</span></div>
+      <div class="term-def">The detailed multi-paragraph description of how an agent thinks, communicates, and behaves. Includes communication style (e.g., "Direct and action-oriented"), personality traits (e.g., "Methodical, Persistent, Pragmatic"), and quirks (e.g., "Ends updates with confidence %"). This is what makes each agent unique and consistent.</div>
+      <div class="term-example">// Fisher2050's personality (~900 chars):
+"Your communication style:
+- Direct and action-oriented
+- You use bullet points and clear structure
+- You follow up on outstanding items without being asked
+
+Your quirks:
+- You end status updates with a confidence % ('Project health: 78%')
+- You refer to the team as 'the crew'"</div>
+    </div>
+
+    <div class="term-card" data-search="goals objectives pursues actively">
+      <div class="term-name">Goals <span class="badge badge-core">CORE</span></div>
+      <div class="term-def">Array of specific objectives the agent actively pursues during every task. These are injected into the system prompt and guide the agent's priorities. Typically 4-6 goals per soul.</div>
+      <div class="term-example">// Eliyahu's goals:
+[
+  "Process all session journals, logs, and work output daily",
+  "Send morning knowledge briefings with yesterday's insights",
+  "Track decisions and their outcomes across all projects",
+  "Ask probing questions that surface hidden problems",
+  "Maintain a cross-project knowledge base of patterns",
+  "Send weekly 'State of the System' reports"
+]</div>
+    </div>
+
+    <div class="term-card" data-search="relationships who knows treats tone behavior">
+      <div class="term-name">Relationships <span class="badge badge-core">CORE</span></div>
+      <div class="term-def">A map defining how a soul relates to other souls and humans. Affects tone, deference, and collaboration patterns. Each relationship entry describes the dynamic in plain language.</div>
+      <div class="term-example">// Ziggi's relationships:
+{
+  "Mic": "The boss. Respects Mic's vision, translates into solid architecture. Pushes back gently on tech debt.",
+  "Fisher2050": "The PM. Triggers Ziggi for post-session reviews. Reports findings back for task tracking.",
+  "Eliyahu": "The Knowledge Manager. Shares architectural insights for cross-referencing.",
+  "Machine Agents": "The build environments. Knows what each is good at."
+}</div>
+    </div>
+
+    <div class="term-card" data-search="system prompt operational instructions boundaries access steps">
+      <div class="term-name">System Prompt <span class="badge badge-core">CORE</span></div>
+      <div class="term-def">Operational instructions for the agent. Defines what it CAN access (database, email, orchestrator, other agents), what steps to follow for each task type, and behavioral boundaries. This is the "instruction manual" layer.</div>
+      <div class="term-example">// Ziggi's system_prompt:
+"When triggered for a post-session review:
+1. Check git log for recent changes
+2. Read the changed files
+3. Evaluate: code quality, naming, patterns, potential issues
+4. Update: functional spec, technical spec, architecture docs
+5. Report findings to Fisher2050 and Mic
+
+For deep reviews (2am):
+1. Review entire codebase structure
+2. Check for technical debt accumulation
+3. Browse web for dependency updates"</div>
+    </div>
+
+    <div class="term-card" data-search="config configuration timing thresholds schedule settings">
+      <div class="term-name">Config <span class="badge badge-core">CORE</span></div>
+      <div class="term-def">JSON object of timing, thresholds, and behavior switches. Controls when scheduled tasks run, quality minimums, feature flags, and operational limits.</div>
+      <div class="term-example">// Fisher2050:                    // Ziggi:
+{ "dailyReviewTime": "09:00",    { "deepReviewTime": "02:00",
+  "eveningSummaryTime": "18:00",    "codeQualityMinimum": 7,
+  "followUpIntervalHours": 4,       "maxFilesPerReview": 50,
+  "maxTasksPerAgent": 5,            "trackTechnicalDebt": true,
+  "confidenceThreshold": 0.7 }      "useContext7": true }</div>
+    </div>
+
+    <div class="term-card" data-search="system prompt generation dynamic combine inject context">
+      <div class="term-name">System Prompt Generation <span class="badge badge-core">CORE</span></div>
+      <div class="term-def">The dynamic function <code>generateSystemPrompt(soulId, extraContext)</code> that assembles the full prompt Claude receives. Combines: identity + personality + goals + relationships + 20 recent memories + 10 important memories + task context. Regenerated fresh for every task.</div>
+      <div class="term-files">Files: <code>src/souls/soul-engine.ts</code> line ~190</div>
+    </div>
+
+    <div class="term-card" data-search="seed souls startup initialize load database">
+      <div class="term-name">Seed Souls <span class="badge badge-core">CORE</span></div>
+      <div class="term-def">Startup function that loads personality JSON files from <code>src/souls/personalities/</code> and upserts them into the SQLite database. Creates souls if new, skips if already exist. Runs automatically when PIA starts.</div>
+      <div class="term-files">Files: <code>src/souls/seed-souls.ts</code></div>
+    </div>
+
+    <div class="term-card" data-search="briefing document project context tech stack schema rules">
+      <div class="term-name">Briefing Document <span class="badge badge-core">CORE</span></div>
+      <div class="term-def">A long markdown file (10-20KB) giving an agent complete project context. Contains: tech stack, database schemas, API routes, build plan with phases, critical rules, current status, and the Zero Questions Policy. Optional — loaded for complex tasks.</div>
+      <div class="term-example">// DAO_AGENT_BRIEFING.md includes:
+- 22 database tables with full schemas
+- 21 API routes with descriptions
+- 6-phase build plan
+- Critical rules ("DO NOT stop the running DAO server")
+- Zero Questions Policy
+
+// Size: ~18KB = ~4,500 tokens</div>
+      <div class="term-files">Files: <code>DAO_AGENT_BRIEFING.md</code> <code>dao-foundation-files/VIDEOHOHO_AGENT_BRIEFING.md</code></div>
+    </div>
+  </div>
+
+  <!-- ===== CATEGORY: MEMORY SYSTEM ===== -->
+  <div class="category" id="memory">
+    <div class="category-title"><span class="icon">&#129696;</span> Memory System</div>
+    <div class="category-desc">How agents learn, remember, and forget</div>
+
+    <div class="term-card" data-search="memory stored record experience learned">
+      <div class="term-name">Memory <span class="badge badge-memory">MEMORY</span></div>
+      <div class="term-def">A stored record of something an agent experienced, decided, learned, or observed. Has: soul_id, category, content (text), importance (1-10), context (optional), is_summarized flag, and timestamp. Memories are the "training data" that accumulates from real work.</div>
+      <div class="term-example">// Example memories:
+[experience] "Fixed 5 failing tests by updating mock library" (importance: 7)
+[decision]   "Chose TypeScript over Python for DAO backend" (importance: 8)
+[learning]   "Snapshot tests break if regenerated without review" (importance: 6)
+[observation] "CI pipeline slow on Fridays — batch jobs overlap" (importance: 4)</div>
+    </div>
+
+    <div class="term-card" data-search="memory category experience decision learning interaction observation goal summary">
+      <div class="term-name">Memory Category <span class="badge badge-memory">MEMORY</span></div>
+      <div class="term-def">One of 7 types that classify what kind of knowledge a memory represents. Affects how memories are grouped, surfaced, and summarized.</div>
+      <div class="term-example">experience     — Things done, outcomes, what worked/failed
+decision       — Choices made, reasoning, alternatives considered
+learning       — New knowledge, patterns discovered
+interaction    — Communication with other agents, feedback received
+observation    — Environmental changes, metrics, status updates
+goal_progress  — Milestones reached, progress on long-term goals
+summary        — Auto-generated compressed versions of old memories</div>
+    </div>
+
+    <div class="term-card" data-search="importance score rating priority weight">
+      <div class="term-name">Importance Score <span class="badge badge-memory">MEMORY</span></div>
+      <div class="term-def">1-10 integer rating on a memory. Determines how long it persists and whether it's included in the "important memories" section of system prompts. Default: 5.</div>
+      <div class="term-example">1-3:  Low    — Trivia, minor observations. Pruned after 30 days.
+4-6:  Medium — Normal decisions, regular interactions. Summarized after 7 days.
+7-10: High   — Breakthroughs, critical failures, key achievements. Stays FOREVER.
+
+// Important memories (>= 7) are ALWAYS loaded into system prompt
+// Up to 10 important memories included per task</div>
+    </div>
+
+    <div class="term-card" data-search="summarization compress group old memories">
+      <div class="term-name">Memory Summarization <span class="badge badge-memory">MEMORY</span></div>
+      <div class="term-def">Automatic process that groups old memories (>7 days) by category and creates compressed summary memories. Original memories are marked <code>is_summarized=1</code> (kept but excluded from active prompts). Prevents infinite context growth while preserving knowledge.</div>
+      <div class="term-example">// Before summarization (5 separate memories):
+[experience/Feb 5] "Fixed auth bug in login route"
+[experience/Feb 5] "Updated user validation middleware"
+[experience/Feb 6] "Refactored session handling"
+[experience/Feb 6] "Added rate limiting to API"
+[experience/Feb 7] "Fixed CORS headers for frontend"
+
+// After summarization (1 summary memory):
+[summary/Feb 13] "Feb 5-7: Fixed auth/session bugs, updated middleware,
+                   added rate limiting, fixed CORS. 5 backend improvements."</div>
+      <div class="term-files">Files: <code>src/souls/memory-manager.ts</code> <code>summarizeOldMemories()</code></div>
+    </div>
+
+    <div class="term-card" data-search="pruning deletion cleanup old low importance">
+      <div class="term-name">Memory Pruning <span class="badge badge-memory">MEMORY</span></div>
+      <div class="term-def">Deletion of old, low-importance, already-summarized memories. Only targets memories that are: older than 30 days AND importance &le; 3 AND already summarized. High-importance memories are never pruned.</div>
+      <div class="term-files">Files: <code>src/souls/memory-manager.ts</code> <code>pruneMemories(soulId, 30, 3)</code></div>
+    </div>
+
+    <div class="term-card" data-search="soul engine class manager crud prompt">
+      <div class="term-name">Soul Engine <span class="badge badge-memory">MEMORY</span></div>
+      <div class="term-def">The core TypeScript class that manages all soul operations: CRUD, memory access, system prompt generation. Singleton pattern — one instance shared across the application.</div>
+      <div class="term-files">Files: <code>src/souls/soul-engine.ts</code></div>
+    </div>
+
+    <div class="term-card" data-search="memory manager class add get search summarize prune">
+      <div class="term-name">Memory Manager <span class="badge badge-memory">MEMORY</span></div>
+      <div class="term-def">The class handling all memory operations: add, get recent, get important, get by category, search (full-text), get stats, summarize old, prune old, delete specific.</div>
+      <div class="term-files">Files: <code>src/souls/memory-manager.ts</code></div>
+    </div>
+
+    <div class="term-card" data-search="soul interaction communication between agents logging">
+      <div class="term-name">Soul Interaction <span class="badge badge-memory">MEMORY</span></div>
+      <div class="term-def">Logged communication between two souls. Types: task_request, review_request, status_update, question, response, notification. Stored in <code>soul_interactions</code> table with from/to soul IDs, content, and metadata.</div>
+      <div class="term-example">// Example interaction:
+{
+  from_soul_id: "fisher2050",
+  to_soul_id: "ziggi",
+  interaction_type: "review_request",
+  content: "Post-session review needed for DAO backend changes",
+  metadata: { "project": "DAOV1", "files_changed": 12 }
+}</div>
+    </div>
+
+    <div class="term-card" data-search="decision log tracking choices outcomes">
+      <div class="term-name">Decision Log <span class="badge badge-memory">MEMORY</span></div>
+      <div class="term-def">Eliyahu's practice of tracking every decision made across projects: what was decided, why, what alternatives were considered, and what the outcome was. Stored as memories with category "decision".</div>
+    </div>
+  </div>
+
+  <!-- ===== CATEGORY: ORCHESTRATION ===== -->
+  <div class="category" id="orchestration">
+    <div class="category-title"><span class="icon">&#9881;</span> Orchestration</div>
+    <div class="category-desc">How work gets distributed, executed, and tracked</div>
+
+    <div class="term-card" data-search="orchestrator distribute work brain">
+      <div class="term-name">Orchestrator <span class="badge badge-orchestration">ORCH</span></div>
+      <div class="term-def">The system that distributes work across agents and machines. Three components: Task Queue (priority-based work list), Execution Engine (polling loop), and AI Router (model selector).</div>
+      <div class="term-files">Files: <code>src/orchestrator/</code> <code>src/api/routes/orchestrator.ts</code></div>
+    </div>
+
+    <div class="term-card" data-search="autonomous worker tool loop claude api execute">
+      <div class="term-name">Autonomous Worker <span class="badge badge-orchestration">ORCH</span></div>
+      <div class="term-def">The tool loop that sends tasks to Claude API with tool definitions and executes tool calls until the job is done. Tools available: run_command, read_file, write_file, list_directory, report_progress. Supports soul injection via soulId parameter.</div>
+      <div class="term-example">// Flow:
+POST /api/orchestrator/run { task: "Fix tests", soulId: "ziggi" }
+  -> Worker loads Ziggi's soul (personality + memories)
+  -> Sends to Claude API with tool definitions
+  -> Claude: "use tool: run_command('npm test')"
+  -> Worker executes, returns result
+  -> Claude: "use tool: write_file('test.ts', ...)"
+  -> Worker writes file
+  -> Loop until Claude says "done"
+  -> Save completion memory to Ziggi's soul</div>
+      <div class="term-files">Files: <code>src/orchestrator/autonomous-worker.ts</code></div>
+    </div>
+
+    <div class="term-card" data-search="tool loop cycle calls result repeat">
+      <div class="term-name">Tool Loop <span class="badge badge-orchestration">ORCH</span></div>
+      <div class="term-def">The cycle where Claude receives a task, calls a tool, gets the result, calls the next tool, and repeats until complete. Each iteration is one "turn". Bounded by maxTurns and maxBudget.</div>
+    </div>
+
+    <div class="term-card" data-search="task queue priority based list pending blocked">
+      <div class="term-name">Task Queue <span class="badge badge-orchestration">ORCH</span></div>
+      <div class="term-def">Priority-based (1-5, default 3) list of pending work with dependency tracking. Tasks flow: pending -> in_progress -> completed/failed. Supports blocking (task A must finish before task B starts).</div>
+      <div class="term-files">Files: <code>src/orchestrator/task-queue.ts</code></div>
+    </div>
+
+    <div class="term-card" data-search="execution engine polling loop picks routes">
+      <div class="term-name">Execution Engine <span class="badge badge-orchestration">ORCH</span></div>
+      <div class="term-def">Polling loop (every 5 seconds) that picks the highest-priority unblocked task, classifies its complexity, routes it to the appropriate AI model, executes it, records cost, and updates status.</div>
+      <div class="term-files">Files: <code>src/orchestrator/execution-engine.ts</code></div>
+    </div>
+
+    <div class="term-card" data-search="ai router cost optimized model selector ollama haiku sonnet">
+      <div class="term-name">AI Router <span class="badge badge-orchestration">ORCH</span></div>
+      <div class="term-def">Cost-optimized model selector. Routes tasks to the cheapest model that can handle them. Tier 0: Ollama (free, local GPU). Tier 1: Claude Haiku (cheap). Tier 2: Claude Sonnet (smart). Falls back up the chain if primary fails.</div>
+      <div class="term-example">Security tasks    -> Always Sonnet (best reasoning)
+Simple tasks      -> Ollama if available, else Haiku
+Medium/Complex    -> Sonnet
+Fallback chain    -> Ollama failed? Try Haiku. Haiku failed? Try Sonnet.</div>
+    </div>
+
+    <div class="term-card" data-search="maxturns maximum rounds iterations limit">
+      <div class="term-name">MaxTurns <span class="badge badge-orchestration">ORCH</span></div>
+      <div class="term-def">Maximum number of tool-call rounds before the autonomous worker stops. Prevents infinite loops. Default: 30 turns.</div>
+    </div>
+
+    <div class="term-card" data-search="maxbudget maximum cost usd spend limit">
+      <div class="term-name">MaxBudget <span class="badge badge-orchestration">ORCH</span></div>
+      <div class="term-def">Maximum USD spend allowed for a single autonomous task. Prevents runaway API costs. Default: $1.00.</div>
+    </div>
+
+    <div class="term-card" data-search="work session tracked period human agent project">
+      <div class="term-name">Work Session <span class="badge badge-orchestration">ORCH</span></div>
+      <div class="term-def">A tracked period of human or agent work on a project. Records: start/end time, machine, project path, git branch, commits before/after, files changed, notes. Ending a session with changes auto-triggers Ziggi review.</div>
+      <div class="term-files">Files: <code>src/api/routes/work-sessions.ts</code></div>
+    </div>
+
+    <div class="term-card" data-search="auto review trigger ziggi code changes">
+      <div class="term-name">Auto-Review Trigger <span class="badge badge-orchestration">ORCH</span></div>
+      <div class="term-def">When a work session ends and files_changed > 0, the system automatically spawns an autonomous task with soulId "ziggi" to perform a code review. No human action required.</div>
+    </div>
+
+    <div class="term-card" data-search="cost waterfall routing strategy free cheap smart">
+      <div class="term-name">Cost Waterfall <span class="badge badge-orchestration">ORCH</span></div>
+      <div class="term-def">Routing strategy: try FREE (Ollama local) first, then CHEAP (Haiku), then SMART (Sonnet) only when needed. Minimizes API spend while maintaining quality.</div>
+    </div>
+
+    <div class="term-card" data-search="night shift autonomous scheduled agents sleep">
+      <div class="term-name">Night Shift <span class="badge badge-orchestration">ORCH</span></div>
+      <div class="term-def">The concept of agents working autonomously on scheduled tasks while humans sleep. Ziggi does deep code reviews at 2am. Eliyahu prepares morning briefings at 6am. Fisher2050 runs daily standup at 9am and evening summary at 6pm.</div>
+    </div>
+
+    <div class="term-card" data-search="context injection loading soul personality memories prompt">
+      <div class="term-name">Context Injection <span class="badge badge-orchestration">ORCH</span></div>
+      <div class="term-def">The act of loading a soul's personality + memories + goals + relationships + task context into Claude's system prompt before executing a task. This is what makes the agent "be" its soul.</div>
+    </div>
+  </div>
+
+  <!-- ===== CATEGORY: INFRASTRUCTURE ===== -->
+  <div class="category" id="infrastructure">
+    <div class="category-title"><span class="icon">&#127959;</span> Infrastructure</div>
+    <div class="category-desc">Machines, networks, context windows, and storage</div>
+
+    <div class="term-card" data-search="hub central pia server machine coordinator">
+      <div class="term-name">Hub <span class="badge badge-infra">INFRA</span></div>
+      <div class="term-def">The central PIA server (Machine #1, izzit7, 100.73.133.3) that coordinates all machines and agents. Runs on port 3000. All other machines connect to it via Tailscale.</div>
+    </div>
+
+    <div class="term-card" data-search="alive repo git directory identity knowledge queue jobs">
+      <div class="term-name">Alive Repo <span class="badge badge-infra">INFRA</span></div>
+      <div class="term-def">A git repository with a <code>.pia/</code> directory containing: identity.json (who), state.json (current status), knowledge/ (brain), jobs/history.jsonl (memory), queue/pending.json (inbox), hooks/ (how), log/ (diary). Makes any repo a living agent.</div>
+      <div class="term-example">.pia/
+  identity.json       # WHO: name, capabilities, tech stack
+  state.json          # CURRENT: status, current task
+  knowledge/          # BRAIN: everything repo knows about itself
+  jobs/history.jsonl  # MEMORY: every job ever executed
+  queue/pending.json  # INBOX: tasks waiting
+  hooks/              # HOW: instructions for handling tasks
+  log/                # DIARY: daily activity logs</div>
+    </div>
+
+    <div class="term-card" data-search="context window token budget total capacity">
+      <div class="term-name">Context Window <span class="badge badge-infra">INFRA</span></div>
+      <div class="term-def">The total token budget Claude has for a conversation. Standard: 200,000 tokens (~150K words). Extended (beta): 1,000,000 tokens. 1 token = ~4 characters. The soul system uses ~4-8K tokens (2-4%), leaving 96%+ for work.</div>
+    </div>
+
+    <div class="term-card" data-search="auto compaction automatic summarization old turns">
+      <div class="term-name">Auto-Compaction <span class="badge badge-infra">INFRA</span></div>
+      <div class="term-def">Claude Code's automatic summarization of old conversation turns when context reaches ~83% capacity (~167K tokens). Older messages get compressed. Soul/personality data in the system prompt is NOT affected.</div>
+    </div>
+
+    <div class="term-card" data-search="heartbeat service registration liveness machine">
+      <div class="term-name">Heartbeat <span class="badge badge-infra">INFRA</span></div>
+      <div class="term-def">Service that maintains machine registration and liveness. Reports every 30 seconds: CPU/memory/disk stats, agent count, system resources. If heartbeat stops, machine is marked offline.</div>
+      <div class="term-files">Files: <code>src/orchestrator/heartbeat.ts</code></div>
+    </div>
+
+    <div class="term-card" data-search="pty session pseudo terminal remote command">
+      <div class="term-name">PTY Session <span class="badge badge-infra">INFRA</span></div>
+      <div class="term-def">Pseudo-terminal sessions that allow remote command execution on machines. Claude instances on different machines can control each other via PTY. Used for running builds, tests, and server management on Machine #3.</div>
+    </div>
+  </div>
+
+  <!-- ===== CATEGORY: PATTERNS & RULES ===== -->
+  <div class="category" id="patterns">
+    <div class="category-title"><span class="icon">&#128218;</span> Patterns &amp; Rules</div>
+    <div class="category-desc">Best practices, policies, and anti-patterns</div>
+
+    <div class="term-card" data-search="zero questions policy never ask decide autonomously">
+      <div class="term-name">Zero Questions Policy <span class="badge badge-pattern">PATTERN</span></div>
+      <div class="term-def">Rule that agents must NEVER ask questions. They must decide autonomously, execute immediately, and report only after completion. Asking a question = task failure. Applied across all briefing documents.</div>
+      <div class="term-example">NEVER:
+- "Should I...?"  "Can I...?"  "May I...?"
+- "I will..."  "I'm going to..."
+- Preview actions or pause for approval
+
+ALWAYS:
+- Make the decision yourself
+- Execute immediately
+- Report results AFTER completion</div>
+    </div>
+
+    <div class="term-card" data-search="living document continuously updated source truth">
+      <div class="term-name">Living Document <span class="badge badge-pattern">PATTERN</span></div>
+      <div class="term-def">A file that gets continuously updated across sessions. The source of truth for ongoing work. Examples: SESSION_JOURNAL.md, CLAUDE.md, tasks/master.md. Must be read at session start and updated at session end.</div>
+    </div>
+
+    <div class="term-card" data-search="ziggi verdict final summary code quality score recommendation">
+      <div class="term-name">Ziggi's Verdict <span class="badge badge-pattern">PATTERN</span></div>
+      <div class="term-def">The final summary section of every Ziggi code review. Contains a code quality score (1-10) and recommendation. Ziggi's signature format that makes reviews consistent.</div>
+    </div>
+
+    <div class="term-card" data-search="architecture smell structural issue feels wrong">
+      <div class="term-name">Architecture Smell <span class="badge badge-pattern">PATTERN</span></div>
+      <div class="term-def">Ziggi's term for structural issues that feel wrong even if tests pass. Similar to "code smell" but at the system/architecture level. Flagged in reviews as items to track or refactor.</div>
+    </div>
+
+    <div class="term-card" data-search="ghost code hallucinated changes never committed">
+      <div class="term-name">Ghost Code <span class="badge badge-pattern">PATTERN</span></div>
+      <div class="term-def">Hallucinated changes that exist in Claude's context but were never actually committed to disk. Caused by long sessions where Claude "remembers" writing code that was never saved. Detected with <code>git status</code> and <code>git diff</code>.</div>
+    </div>
+
+    <div class="term-card" data-search="context rot accumulated history pollutes understanding">
+      <div class="term-name">Context Rot <span class="badge badge-pattern">PATTERN</span></div>
+      <div class="term-def">Accumulated conversation history that pollutes Claude's understanding of current state. Happens in long sessions with many file edits. Solution: one task per session, commit and start fresh.</div>
+    </div>
+
+    <div class="term-card" data-search="continuous memory collection always capture decisions">
+      <div class="term-name">Continuous Memory Collection <span class="badge badge-pattern">PATTERN</span></div>
+      <div class="term-def">The rule that agents must capture ALL decisions, ideas, research, bugs, file changes, questions, and preference changes as memories. "If you discussed it, write it down. If you built it, log it. If you decided it, record it. No exceptions."</div>
+    </div>
+
+    <div class="term-card" data-search="session journal chronological record sessions">
+      <div class="term-name">Session Journal <span class="badge badge-pattern">PATTERN</span></div>
+      <div class="term-def">Chronological markdown document recording everything accomplished in each work session: tasks completed, decisions made, issues found, files modified, next steps. Must be updated at end of every session.</div>
+      <div class="term-files">Files: <code>JOURNAL_2026-02-13.md</code> <code>SESSION_JOURNAL_*.md</code></div>
+    </div>
+  </div>
+
+  <!-- ===== CATEGORY: TEMPLATE SYSTEM ===== -->
+  <div class="category" id="template">
+    <div class="category-title"><span class="icon">&#128736;</span> Template System (Martin's)</div>
+    <div class="category-desc">Alternative agent architecture from the orchestration template</div>
+
+    <div class="term-card" data-search="hook shell script before after tool calls enforce">
+      <div class="term-name">Hook <span class="badge badge-template">TEMPLATE</span></div>
+      <div class="term-def">A shell script that runs before/after tool calls. Used to enforce rules: block dangerous commands (rm -rf), enforce delegation (prevent direct code edits), track costs, log changes. Types: PreToolUse, PostToolUse, SessionStart, SubagentStart/Stop.</div>
+    </div>
+
+    <div class="term-card" data-search="skill defined capability instructions folder">
+      <div class="term-name">Skill <span class="badge badge-template">TEMPLATE</span></div>
+      <div class="term-def">A defined capability stored as a SKILL.md file in <code>.claude/skills/</code>. Invoked via <code>/skill-name</code>. Contains instructions and workflow for a specific task type. Examples: /onboard, /debug, /create-hook, /consider:pareto.</div>
+    </div>
+
+    <div class="term-card" data-search="agent markdown file specialized sub-agent tools model">
+      <div class="term-name">Agent (Template) <span class="badge badge-template">TEMPLATE</span></div>
+      <div class="term-def">In Martin's template: a .md file in <code>.claude/agents/</code> defining a specialized sub-agent. Has: name, description, tools available, model override, and full instructions. Examples: @local-coder, @debug, @code-sentinel, @overseer, @janitor.</div>
+    </div>
+
+    <div class="term-card" data-search="teaming stub coordination between agents shared files">
+      <div class="term-name">Teaming Stub <span class="badge badge-template">TEMPLATE</span></div>
+      <div class="term-def">Minimal coordination between agents via shared /tmp/ report files. Agents don't call each other directly — they check for reports from other agents and note findings. Prevents circular dependencies.</div>
+    </div>
+
+    <div class="term-card" data-search="overseer multi model panel review gemini openai grok">
+      <div class="term-name">Overseer Panel <span class="badge badge-template">TEMPLATE</span></div>
+      <div class="term-def">Multi-model architecture review that runs Gemini + OpenAI + Grok + Opus in parallel. Each model brings a different perspective. Consensus scoring: UNANIMOUS (all agree) > MAJORITY (2/3) > SINGLE. Grok plays devil's advocate.</div>
+    </div>
+
+    <div class="term-card" data-search="delegation enforcement cant edit code directly must use task">
+      <div class="term-name">Delegation Enforcement <span class="badge badge-template">TEMPLATE</span></div>
+      <div class="term-def">Hook-based rule that prevents the orchestrator from editing code directly. All code changes must go through specialized agents (e.g., @local-coder, @debug). Enforced by PreToolUse hooks that block Edit/Write on code files.</div>
+    </div>
+
+    <div class="term-card" data-search="guard enforcement maxiterations cost timeout verification">
+      <div class="term-name">Guard Enforcement <span class="badge badge-template">TEMPLATE</span></div>
+      <div class="term-def">Safety limits checked after every iteration: maxIterations (stop loops), maxCostUSD (budget cap), wallClockMinutes (timeout), sameError3x (force escalation), verificationFailed (rollback). All guards enforced simultaneously.</div>
+    </div>
+
+    <div class="term-card" data-search="one task per session prevent context rot ghost code">
+      <div class="term-name">One Task Per Session <span class="badge badge-template">TEMPLATE</span></div>
+      <div class="term-def">Rule that each Claude session should handle exactly one task. After completion: commit, start fresh. Prevents context rot and ghost code. "Session Hygiene" principle.</div>
+    </div>
+  </div>
+
+  <!-- ===== INDUSTRY STANDARDS & ECOSYSTEM ===== -->
+  <div class="category" id="standards">
+    <div class="category-title"><span class="icon">&#127760;</span> Industry Standards & Ecosystem (Feb 2026)</div>
+    <div class="category-desc">The emerging standards, frameworks, and tools shaping how AI agents are configured industry-wide</div>
+
+    <div class="term-card" data-search="two pack architecture separation agent identity project context">
+      <div class="term-name">Two-Pack Architecture <span class="badge badge-standard">STANDARD</span></div>
+      <div class="term-def">The emerging design pattern (Feb 2026) of separating agent configuration into two independent packs: <strong>Agent Pack</strong> (who the agent IS — identity, portable across projects) and <strong>Project Pack</strong> (what the project IS — context, portable across agents). Combined at runtime: Agent Pack (stable prefix) + Project Pack (variable per project) + Task (per-task).</div>
+      <div class="term-example">Runtime assembly: Agent Pack → Project Pack → Task = Full Context
+Google calls this: "stable prefix + variable suffix"</div>
+      <div class="term-files">Researched: Feb 13, 2026 | See: <a href="/handbook.html" style="color:#e94560;">Handbook Ch 8</a></div>
+    </div>
+
+    <div class="term-card" data-search="agent pack identity soul portable personality goals memories">
+      <div class="term-name">Agent Pack <span class="badge badge-standard">STANDARD</span></div>
+      <div class="term-def">The agent's identity package — personality, goals, relationships, memories, skills, guardrails, voice/style. Portable: the same agent can work on different projects while staying "themselves." In PIA: Soul JSON. In industry: SOUL.md.</div>
+      <div class="term-files">PIA equivalent: <code>src/souls/personalities/*.json</code> | Industry: <code>SOUL.md</code></div>
+    </div>
+
+    <div class="term-card" data-search="project pack context tech stack coding rules build commands">
+      <div class="term-name">Project Pack <span class="badge badge-standard">STANDARD</span></div>
+      <div class="term-def">Project-specific instructions — tech stack, file structure, coding conventions, build commands, architecture, testing rules, project status. Portable: different agents can join the same project by reading the Project Pack.</div>
+      <div class="term-files">PIA equivalent: <code>DAO_AGENT_BRIEFING.md</code> | Industry: <code>CLAUDE.md</code> or <code>AGENTS.md</code></div>
+    </div>
+
+    <div class="term-card" data-search="agents md open standard linux foundation aaif codex project context markdown">
+      <div class="term-name">AGENTS.md <span class="badge badge-standard">STANDARD</span></div>
+      <div class="term-def">Open Markdown standard for guiding AI coding agents. A "README for agents" — project context, build commands, code style, architecture, security. First released Aug 2025 by OpenAI. Now governed by the <strong>Linux Foundation's Agentic AI Foundation (AAIF)</strong>. 60,000+ repos use it. Default size limit: 32 KiB (OpenAI Codex). Supported by: Cursor, Codex, GitHub Copilot, Apple Xcode 26.3, Google Jules, Windsurf, and 20+ tools.</div>
+      <div class="term-example">// ~/.codex/AGENTS.md (global defaults)
+// repo-root/AGENTS.md (project-level)
+// services/payments/AGENTS.override.md (directory override)
+// Discovery: closer files override farther ones</div>
+      <div class="term-files">Spec: <a href="https://agents.md" style="color:#e94560;">agents.md</a> | Note: Claude Code uses CLAUDE.md instead (can symlink)</div>
+    </div>
+
+    <div class="term-card" data-search="claude md anthropic project context auto init sessions">
+      <div class="term-name">CLAUDE.md <span class="badge badge-standard">STANDARD</span></div>
+      <div class="term-def">Anthropic's project configuration file for Claude Code. Persistent memory injected at session start. 7 recommended sections: Project Overview, Tech Stack, Commands, Workflows, Code Style, Architecture, Terminology. Auto-generated with <code>/init</code>. Every token loads every request — keep concise (~500 lines, ~8K tokens recommended). Hierarchy: ~/.claude/CLAUDE.md (global) → repo root (project) → subdirectories (scoped).</div>
+      <div class="term-example">// Minimum viable CLAUDE.md:
+// 1. One-sentence project description
+// 2. Package manager (if not npm)
+// 3. Non-standard build/test commands</div>
+      <div class="term-files">See: <a href="https://dometrain.com/blog/creating-the-perfect-claudemd-for-claude-code/" style="color:#e94560;">Dometrain Guide</a></div>
+    </div>
+
+    <div class="term-card" data-search="soul md framework identity personality voice style skill feb 2026 new">
+      <div class="term-name">SOUL.md Framework <span class="badge badge-standard">STANDARD</span></div>
+      <div class="term-def"><strong>Created Feb 2, 2026</strong> — brand new (11 days old). Defines WHO an agent is in Markdown. Three core files: SOUL.md (identity: values, boundaries, principles), STYLE.md (voice: tone, patterns, communication), SKILL.md (capabilities: operating instructions). Plus data/ folder for source material and examples/ for calibration (good vs bad outputs). Philosophy: specificity beats vagueness, include contradictions, test and iterate.</div>
+      <div class="term-example">your-soul/
+  SOUL.md      → Core Truths + Boundaries + The Vibe
+  STYLE.md     → Voice patterns + tone + how you write
+  SKILL.md     → Operating instructions + capabilities
+  data/        → Writing, influences, source material
+  examples/    → good-outputs.md + bad-outputs.md</div>
+      <div class="term-files">GitHub: <a href="https://github.com/aaronjmars/soul.md" style="color:#e94560;">aaronjmars/soul.md</a> | Community: <a href="https://souls.directory" style="color:#e94560;">souls.directory</a></div>
+    </div>
+
+    <div class="term-card" data-search="soul stack file structure build style skill data examples">
+      <div class="term-name">Soul Stack <span class="badge badge-standard">STANDARD</span></div>
+      <div class="term-def">The complete SOUL.md file structure. Includes: BUILD.md (agent uses to construct the soul), SOUL.md (identity), STYLE.md (voice), SKILL.md (capabilities), data/ folder (raw source: writing, tweets, influences), examples/ folder (good-outputs.md, bad-outputs.md for calibration). Three options to build: /soul-builder (AI interview), from your data, or manual template fill.</div>
+    </div>
+
+    <div class="term-card" data-search="instruction budget 150 200 rules limit reliable following">
+      <div class="term-name">Instruction Budget <span class="badge badge-standard">STANDARD</span></div>
+      <div class="term-def">The practical limit on how many instructions an agent can reliably follow. Frontier LLMs can handle ~150-200 instructions with reasonable consistency. Smaller models handle fewer. Every instruction loads on every request — this is a hard budget constraint regardless of task relevance. Coined by Kyle at HumanLayer.</div>
+      <div class="term-files">Source: <a href="https://www.humanlayer.dev/blog/writing-a-good-claude-md" style="color:#e94560;">HumanLayer Blog</a></div>
+    </div>
+
+    <div class="term-card" data-search="context engineering managing information prompt system context window">
+      <div class="term-name">Context Engineering <span class="badge badge-standard">STANDARD</span></div>
+      <div class="term-def">The discipline of managing what goes into an agent's context window. Encompasses: choosing what information to include/exclude, ordering it for maximum impact, keeping it fresh, and measuring its effect on agent performance. Martin Fowler's hierarchy: user-level config → project-level config → directory-level overrides → task-specific instructions.</div>
+      <div class="term-files">Source: <a href="https://martinfowler.com/articles/exploring-gen-ai/context-engineering-coding-agents.html" style="color:#e94560;">Martin Fowler</a></div>
+    </div>
+
+    <div class="term-card" data-search="progressive disclosure hierarchy root essentials nested specifics monorepo">
+      <div class="term-name">Progressive Disclosure <span class="badge badge-standard">STANDARD</span></div>
+      <div class="term-def">Best practice for organizing agent instructions hierarchically. Root AGENTS.md/CLAUDE.md contains essentials only (project description, package manager, build commands). Domain-specific rules live in nested files (docs/TYPESCRIPT.md, services/payments/AGENTS.md). Agent gets progressively more detail as it enters specific directories. Prevents bloated root configs.</div>
+    </div>
+
+    <div class="term-card" data-search="discovery order hierarchy override merge concatenate root current directory">
+      <div class="term-name">Discovery Order <span class="badge badge-standard">STANDARD</span></div>
+      <div class="term-def">How AI coding tools find and merge configuration files. Typical pattern: starts at global config (~/.codex/ or ~/.claude/) → walks from Git root to current directory → at each level checks for override file first, then standard file. Files concatenate root-down; closer files override earlier guidance. Codex: AGENTS.override.md > AGENTS.md at same level.</div>
+    </div>
+
+    <div class="term-card" data-search="agentic ai foundation aaif linux foundation openai anthropic block google microsoft">
+      <div class="term-name">Agentic AI Foundation (AAIF) <span class="badge badge-standard">STANDARD</span></div>
+      <div class="term-def">Linux Foundation organization governing the AGENTS.md standard (as of Dec 2025). Co-founded by OpenAI, Anthropic, and Block. Supported by Google, Microsoft, AWS, Bloomberg, Cloudflare. Also oversees MCP (Anthropic's Model Context Protocol) and goose (Block's open-source agent). First major cross-company AI agent standards body.</div>
+    </div>
+
+    <div class="term-card" data-search="model context protocol mcp tools external services connect standard anthropic">
+      <div class="term-name">Model Context Protocol (MCP) <span class="badge badge-standard">STANDARD</span></div>
+      <div class="term-def">Anthropic's standard for connecting AI agents to external tools and services. Like USB for AI — any tool that speaks MCP can plug into any agent that supports MCP. Enables: file systems, databases, APIs, web browsers, and custom tools. Now part of AAIF under the Linux Foundation. Supported by Claude Code, OpenAI Codex, Google ADK, Apple Xcode 26.3, and many more.</div>
+    </div>
+
+    <div class="term-card" data-search="context7 mcp library documentation fetcher up-to-date docs">
+      <div class="term-name">Context7 <span class="badge badge-standard">STANDARD</span></div>
+      <div class="term-def">An MCP server that injects up-to-date library documentation into an agent's context window. Solves the "stale training data" problem — when you're using Next.js 15 or React 19, Context7 pulls current docs. Tools: resolve-library-id + get-library-docs. NOT for agent configuration — purely for library/framework documentation retrieval. Useful alongside our soul system, not a replacement.</div>
+      <div class="term-files">GitHub: <a href="https://github.com/upstash/context7" style="color:#e94560;">upstash/context7</a></div>
+    </div>
+
+    <div class="term-card" data-search="google adk agent development kit configuration name model instruction tools">
+      <div class="term-name">Google ADK <span class="badge badge-standard">STANDARD</span></div>
+      <div class="term-def">Google's Agent Development Kit — open-source framework for building AI agents. Agent config: name (required), model (required), description (recommended for multi-agent), instruction (critical — personality + constraints + tool usage), tools (list of capabilities). Supports YAML config, dynamic instructions via session state, parent-child agent relationships, and multi-agent orchestration.</div>
+      <div class="term-example">// agent.yaml
+name: assistant_agent
+model: gemini-2.5-flash
+instruction: |
+  You are a helpful assistant that...</div>
+      <div class="term-files">Docs: <a href="https://google.github.io/adk-docs/agents/" style="color:#e94560;">google.github.io/adk-docs</a></div>
+    </div>
+
+    <div class="term-card" data-search="agent teams multi-agent collaboration opus 4.6 experimental">
+      <div class="term-name">Agent Teams <span class="badge badge-standard">STANDARD</span></div>
+      <div class="term-def">Claude Opus 4.6 experimental feature (Feb 5, 2026). Multiple agents collaborate on different parts of tasks simultaneously. Each agent can have its own identity (via subagent AGENTS.md files) while sharing project context. Represents the next evolution of multi-agent orchestration — similar to PIA's Fisher2050/Ziggi/Eliyahu team but built into the runtime.</div>
+    </div>
+
+    <div class="term-card" data-search="souls directory community templates browse personality marketplace">
+      <div class="term-name">souls.directory <span class="badge badge-standard">STANDARD</span></div>
+      <div class="term-def">Community directory of SOUL.md personality templates. Launched Feb 2026. Open-source — browse, use, and publish agent personalities. A "soul store" for pre-built personality templates. Can be used as starting points for creating new agents.</div>
+      <div class="term-files">Website: <a href="https://souls.directory" style="color:#e94560;">souls.directory</a> | GitHub: <a href="https://github.com/thedaviddias/souls-directory" style="color:#e94560;">thedaviddias/souls-directory</a></div>
+    </div>
+  </div>
+
+  <!-- ===== 7 LAYERS ===== -->
+  <div class="category" id="layers">
+    <div class="category-title"><span class="icon">&#127758;</span> The 7 Layers of Agent Programming</div>
+    <div class="category-desc">Everything an agent receives before it starts working</div>
+
+    <div class="layers-grid">
+      <div class="layer-card" data-num="1">
+        <h3>Layer 1: Personality</h3>
+        <p>Who the agent IS — communication style, traits, quirks. Makes each agent unique and consistent across sessions.</p>
+        <div class="tokens">~875 tokens per soul</div>
+      </div>
+      <div class="layer-card" data-num="2">
+        <h3>Layer 2: Goals</h3>
+        <p>What the agent CARES about — 4-6 specific objectives that guide priorities and decision-making.</p>
+        <div class="tokens">~200 tokens per soul</div>
+      </div>
+      <div class="layer-card" data-num="3">
+        <h3>Layer 3: Relationships</h3>
+        <p>Who the agent KNOWS — dynamics with other souls and humans. Affects tone and collaboration.</p>
+        <div class="tokens">~300 tokens per soul</div>
+      </div>
+      <div class="layer-card" data-num="4">
+        <h3>Layer 4: System Prompt</h3>
+        <p>What the agent CAN DO — operational instructions, available tools, step-by-step procedures, boundaries.</p>
+        <div class="tokens">~250-300 tokens per soul</div>
+      </div>
+      <div class="layer-card" data-num="5">
+        <h3>Layer 5: Memories</h3>
+        <p>What the agent HAS LEARNED — 20 recent + 10 high-importance memories from past work. Dynamic, grows over time.</p>
+        <div class="tokens">~2,100 tokens (variable)</div>
+      </div>
+      <div class="layer-card" data-num="6">
+        <h3>Layer 6: Config</h3>
+        <p>HOW the agent operates — timing, thresholds, feature flags, quality minimums, scheduling.</p>
+        <div class="tokens">~50 tokens per soul</div>
+      </div>
+      <div class="layer-card" data-num="7">
+        <h3>Layer 7: Briefing Document</h3>
+        <p>THE BIG PICTURE — full project context, tech stack, schemas, build plan, rules. Optional, for complex tasks.</p>
+        <div class="tokens">~4,500 tokens (optional)</div>
+      </div>
+    </div>
+
+    <table class="comparison-table" style="margin-top: 20px;">
+      <tr><th>Scenario</th><th>Layers Used</th><th>Tokens</th><th>% of 200K</th></tr>
+      <tr><td>Quick task (no soul)</td><td>None</td><td>~2,300</td><td>1.2%</td></tr>
+      <tr><td>Standard task + soul</td><td>1-6</td><td>~3,800</td><td>1.9%</td></tr>
+      <tr><td>Complex task + briefing</td><td>1-7</td><td>~8,300</td><td>4.2%</td></tr>
+      <tr><td>Full load (all memories + briefing)</td><td>1-7 maxed</td><td>~9,500</td><td>4.7%</td></tr>
+      <tr><td style="color: #50c878; font-weight: 600;">Remaining for actual work</td><td></td><td style="color: #50c878; font-weight: 600;">~190,000+</td><td style="color: #50c878; font-weight: 600;">95%+</td></tr>
+    </table>
+  </div>
+
+  <!-- ===== SOUL PROFILES ===== -->
+  <div class="category" id="souls">
+    <div class="category-title"><span class="icon">&#128100;</span> Soul Profiles</div>
+    <div class="category-desc">The 3 existing agent personalities</div>
+
+    <div class="soul-profile">
+      <div class="soul-card">
+        <h3>Fisher2050</h3>
+        <div class="role">Project Manager</div>
+        <div>
+          <span class="trait">Organized</span>
+          <span class="trait">Proactive</span>
+          <span class="trait">Relentless</span>
+          <span class="trait">Pragmatic</span>
+          <span class="trait">Time-aware</span>
+        </div>
+        <div style="margin-top: 12px;">
+          <div class="quirk">Starts each day with a standup, even if nobody asked</div>
+          <div class="quirk">Ends updates with confidence % ("Project health: 78%")</div>
+          <div class="quirk">Calls the team "the crew"</div>
+          <div class="quirk">Uses PM metaphors ("sprint, not marathon")</div>
+        </div>
+        <ul class="goals-list">
+          <li>Keep all projects on track with clear status visibility</li>
+          <li>Ensure every task has owner, deadline, priority</li>
+          <li>Run daily reviews, flag overdue items</li>
+          <li>Coordinate Ziggi (reviews) + Eliyahu (knowledge)</li>
+          <li>Morning briefings + end-of-day summaries</li>
+        </ul>
+        <div style="margin-top: 12px; font-size: 0.8em; color: #666;">Schedule: 09:00 standup, 18:00 summary, follow-up every 4hrs</div>
+      </div>
+
+      <div class="soul-card">
+        <h3>Ziggi</h3>
+        <div class="role">Architect / Code Reviewer</div>
+        <div>
+          <span class="trait">Meticulous</span>
+          <span class="trait">Opinionated</span>
+          <span class="trait">Systematic</span>
+          <span class="trait">Educational</span>
+          <span class="trait">Forward-thinking</span>
+        </div>
+        <div style="margin-top: 12px;">
+          <div class="quirk">Rates code quality 1-10 in every review</div>
+          <div class="quirk">Uses "architecture smell" for structural issues</div>
+          <div class="quirk">Keeps running list of technical debt</div>
+          <div class="quirk">Ends reviews with "Ziggi's Verdict"</div>
+        </div>
+        <ul class="goals-list">
+          <li>Review all code changes after every work session</li>
+          <li>Maintain up-to-date technical specs</li>
+          <li>Identify and track technical debt</li>
+          <li>Run deep reviews at 2am</li>
+          <li>Stay current with best practices (Context7 + web)</li>
+        </ul>
+        <div style="margin-top: 12px; font-size: 0.8em; color: #666;">Schedule: 02:00 deep review, quality min: 7/10, max 50 files/review</div>
+      </div>
+
+      <div class="soul-card">
+        <h3>Eliyahu</h3>
+        <div class="role">Knowledge Manager / Analyst</div>
+        <div>
+          <span class="trait">Curious</span>
+          <span class="trait">Analytical</span>
+          <span class="trait">Synthesizing</span>
+          <span class="trait">Proactive</span>
+          <span class="trait">Diplomatic</span>
+        </div>
+        <div style="margin-top: 12px;">
+          <div class="quirk">Starts insights with "I noticed something..."</div>
+          <div class="quirk">Keeps a Decision Log (what, why, outcome)</div>
+          <div class="quirk">Rates confidence: high/medium/low</div>
+          <div class="quirk">Ends with "Key Takeaway" + "Open Questions"</div>
+        </div>
+        <ul class="goals-list">
+          <li>Process all session journals and logs daily</li>
+          <li>Send morning knowledge briefings</li>
+          <li>Track decisions and their outcomes</li>
+          <li>Ask probing questions that surface hidden problems</li>
+          <li>Weekly "State of the System" reports</li>
+        </ul>
+        <div style="margin-top: 12px; font-size: 0.8em; color: #666;">Schedule: 06:00 briefing, Sunday weekly report, confidence min: medium</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SESSION JOURNAL ===== -->
+  <div class="category" id="journal">
+    <div class="category-title"><span class="icon">&#128221;</span> Session Journal — 2026-02-13</div>
+    <div class="category-desc">Everything discussed in this research session</div>
+
+    <div class="journal">
+      <h3>Research Session: Understanding PIA Agent Architecture</h3>
+
+      <div class="journal-entry">
+        <div class="time">Topic 1</div>
+        <div class="content"><strong>Soul System Explained</strong> — What a soul is, data structure (JSON -> SQLite), how personality + goals + relationships + config define an agent's identity.</div>
+      </div>
+      <div class="journal-entry">
+        <div class="time">Topic 2</div>
+        <div class="content"><strong>The 3 Existing Souls</strong> — Fisher2050 (PM), Ziggi (Architect), Eliyahu (Knowledge Manager). Full personality, goals, relationships, configs reviewed from actual JSON files.</div>
+      </div>
+      <div class="journal-entry">
+        <div class="time">Topic 3</div>
+        <div class="content"><strong>Memory System Deep Dive</strong> — 7 categories (experience, decision, learning, interaction, observation, goal_progress, summary). Importance scoring 1-10. Summarization after 7 days. Pruning after 30 days for low-importance.</div>
+      </div>
+      <div class="journal-entry">
+        <div class="time">Topic 4</div>
+        <div class="content"><strong>Context Window Budgeting</strong> — 200K token window. Soul system uses ~4-8K tokens (2-4%). 96%+ free for actual work. Even fully loaded = only 4.7% used. Massive room to grow.</div>
+      </div>
+      <div class="journal-entry">
+        <div class="time">Topic 5</div>
+        <div class="content"><strong>System Prompt Generation</strong> — How generateSystemPrompt() assembles: identity + personality + goals + relationships + 20 recent memories + 10 important memories + task context into one prompt.</div>
+      </div>
+      <div class="journal-entry">
+        <div class="time">Topic 6</div>
+        <div class="content"><strong>Autonomous Worker</strong> — The tool loop (run_command, read_file, write_file, list_directory, report_progress). MaxTurns, MaxBudget. Soul injection via soulId parameter.</div>
+      </div>
+      <div class="journal-entry">
+        <div class="time">Topic 7</div>
+        <div class="content"><strong>Briefing Documents</strong> — DAO_AGENT_BRIEFING.md (18KB, 22 tables, 21 routes, 6 phases). VIDEOHOHO_AGENT_BRIEFING.md (Electron app, Phase 2 plan). Zero Questions Policy.</div>
+      </div>
+      <div class="journal-entry">
+        <div class="time">Topic 8</div>
+        <div class="content"><strong>Martin's Orchestration Template</strong> — Alternative approach: .claude/agents/*.md, .claude/skills/, hook enforcement, delegation-first, multi-model review (@overseer), cost waterfall (FREE -> PAID).</div>
+      </div>
+      <div class="journal-entry">
+        <div class="time">Topic 9</div>
+        <div class="content"><strong>PIA vs Template Comparison</strong> — PIA has persistent memory + scheduling + soul interactions. Template has explicit skills + hook enforcement + multi-model review + guard enforcement. Best of both = ideal.</div>
+      </div>
+      <div class="journal-entry">
+        <div class="time">Topic 10</div>
+        <div class="content"><strong>Best Practices Compiled</strong> — 18 rules across agent design, memory management, autonomy rules, and context management.</div>
+      </div>
+      <div class="journal-entry">
+        <div class="time">Topic 11</div>
+        <div class="content"><strong>Terminology List Created</strong> — 52 terms defined across 6 categories: Agent Core, Memory System, Orchestration, Infrastructure, Patterns & Rules, Template System.</div>
+      </div>
+      <div class="journal-entry">
+        <div class="time">Topic 12</div>
+        <div class="content"><strong>The 7 Layers Identified</strong> — Personality -> Goals -> Relationships -> System Prompt -> Memories -> Config -> Briefing Document. Each layer's token cost measured.</div>
+      </div>
+
+      <div class="journal-entry">
+        <div class="time">Topic 13</div>
+        <div class="content"><strong>Two-Pack Architecture Researched</strong> — Agent Pack (SOUL.md, identity) vs Project Pack (CLAUDE.md/AGENTS.md, context). Industry converging on this separation. PIA already does it (Soul JSON + Briefing Doc).</div>
+      </div>
+      <div class="journal-entry">
+        <div class="time">Topic 14</div>
+        <div class="content"><strong>Context7 MCP Evaluated</strong> — Library docs fetcher, NOT agent config tool. Useful alongside our system (feed agents latest React/Next.js docs) but doesn't replace soul system.</div>
+      </div>
+      <div class="journal-entry">
+        <div class="time">Topic 15</div>
+        <div class="content"><strong>Google Courses Assessed</strong> — BigQuery ML courses = low relevance (data analytics). Google ADK courses = HIGH relevance (agent building, multi-agent, identity config). 5-Day Kaggle intensive recommended.</div>
+      </div>
+      <div class="journal-entry">
+        <div class="time">Topic 16</div>
+        <div class="content"><strong>SOUL.md Discovery</strong> — Created Feb 2, 2026 (11 days old!). Markdown-based agent identity framework with SOUL.md + STYLE.md + SKILL.md. Includes data/ folder for source material and examples/ for calibration. Very similar to PIA's soul JSON.</div>
+      </div>
+      <div class="journal-entry">
+        <div class="time">Topic 17</div>
+        <div class="content"><strong>AGENTS.md Now Linux Foundation Standard</strong> — Donated to AAIF Dec 2025. Co-governed by OpenAI + Anthropic + Block + Google + Microsoft + AWS. 60,000+ repos. Apple Xcode 26.3 support (Feb 3, 2026).</div>
+      </div>
+      <div class="journal-entry">
+        <div class="time">Topic 18</div>
+        <div class="content"><strong>Fresh 2026 Sources Compiled</strong> — 6 official platform docs, 6 expert articles, 5 free courses. All from Jan-Feb 2026. Instruction budget concept (~150-200 rules max), progressive disclosure, context engineering.</div>
+      </div>
+      <div class="journal-entry">
+        <div class="time">Topic 19</div>
+        <div class="content"><strong>Non-Technical Guide Created</strong> — simple-guide.html: plain English, analogies (employee with CV, desk with papers), 9 sections, glossary. For founders, managers, and non-coders.</div>
+      </div>
+      <div class="journal-entry">
+        <div class="time">Topic 20</div>
+        <div class="content"><strong>17 New Terms Added</strong> — Industry Standards category: Two-Pack Architecture, Agent Pack, Project Pack, AGENTS.md, CLAUDE.md, SOUL.md Framework, Soul Stack, Instruction Budget, Context Engineering, Progressive Disclosure, Discovery Order, AAIF, MCP, Context7, Google ADK, Agent Teams, souls.directory.</div>
+      </div>
+      <div class="journal-entry">
+        <div class="time">Topic 21</div>
+        <div class="content"><strong>Google BigQuery ML + Gemini Assessed</strong> — "Introducing Gemini for Data Professionals" course evaluated. Verdict: OVERKILL for PIA now. BigQuery = terabytes, PIA = kilobytes (SQLite). Vertex AI = another cloud LLM cost, PIA already has Claude + Ollama. Vector embeddings = useful concept but not needed until 1000+ agent memories (Phase 3). Analytics dashboard = useful at 10+ machines (Phase 4). Bottom line: skip BigQuery courses, prioritize Google ADK agent courses instead.</div>
+      </div>
+
+      <h3 style="margin-top: 24px;">Open Questions for Next Session</h3>
+      <div class="journal-entry">
+        <div class="content">1. Should we merge PIA's soul system with Martin's skill/hook system?</div>
+      </div>
+      <div class="journal-entry">
+        <div class="content">2. Should each soul get an explicit skills manifest (what it can/can't do)?</div>
+      </div>
+      <div class="journal-entry">
+        <div class="content">3. Should briefing docs be auto-injected or loaded on-demand per task type?</div>
+      </div>
+      <div class="journal-entry">
+        <div class="content">4. Formalize the Two-Pack system — standardize Project Pack format, create CLAUDE.md for main repo.</div>
+      </div>
+      <div class="journal-entry">
+        <div class="content">5. How to best combine persistent memory (PIA) with hook enforcement (template)?</div>
+      </div>
+      <div class="journal-entry">
+        <div class="content">6. Add STYLE.md and SKILL.md separation to PIA souls (like SOUL.md framework)?</div>
+      </div>
+      <div class="journal-entry">
+        <div class="content">7. Take Google ADK courses and compare config patterns with PIA soul system.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  PIA System Terminology v1.1 — 69 terms, 7 categories — Updated 2026-02-13 — Research Session with Claude Opus 4.6
+</div>
+
+<script>
+function filterTerms() {
+  const query = document.getElementById('searchInput').value.toLowerCase();
+  const cards = document.querySelectorAll('.term-card');
+  let visible = 0;
+  cards.forEach(card => {
+    const text = card.textContent.toLowerCase() + (card.dataset.search || '');
+    const match = !query || text.includes(query);
+    card.style.display = match ? 'block' : 'none';
+    if (match) visible++;
+  });
+  const count = document.getElementById('searchCount');
+  if (query) {
+    count.textContent = visible + ' terms match';
+  } else {
+    count.textContent = '';
+  }
+}
+
+function scrollTo(e, id) {
+  e.preventDefault();
+  document.getElementById(id).scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.querySelectorAll('.nav a').forEach(a => a.classList.remove('active'));
+  e.target.classList.add('active');
+}
+</script>
+
+</body>
+</html>

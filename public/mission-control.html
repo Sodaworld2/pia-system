@@ -803,6 +803,126 @@
     .cost-item { display: flex; gap: 4px; align-items: center; }
     .cost-value { color: #3fb950; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
 
+    /* ── Terminal Input Bar ── */
+    .terminal-input-bar {
+      display: flex;
+      gap: 8px;
+      padding: 8px 12px;
+      background: #0d0d18;
+      border-top: 1px solid #1e1e30;
+      flex-shrink: 0;
+    }
+
+    .terminal-input-bar input {
+      flex: 1;
+      background: #080810;
+      border: 1px solid #2a2a3e;
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: #c9d1d9;
+      font-family: 'JetBrains Mono', 'Cascadia Code', monospace;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .terminal-input-bar input:focus { border-color: #9b4dca; }
+
+    .terminal-input-bar input::placeholder { color: #484f58; }
+
+    .terminal-input-bar button {
+      background: #238636;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .terminal-input-bar button:hover { background: #2ea043; }
+    .terminal-input-bar button:disabled { background: #333; color: #666; cursor: not-allowed; }
+
+    /* ── Agent Status Banner ── */
+    .agent-status-banner {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      flex-shrink: 0;
+      border-bottom: 1px solid #1a1a2a;
+      font-family: 'JetBrains Mono', 'Cascadia Code', monospace;
+    }
+
+    .agent-status-banner .status-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .agent-status-banner.working {
+      background: linear-gradient(90deg, #0a1a0a, #0d0d18);
+      color: #3fb950;
+      border-bottom-color: #1a3a1a;
+    }
+    .agent-status-banner.working .status-dot {
+      background: #3fb950;
+      animation: pulse 1.5s infinite;
+      box-shadow: 0 0 8px #3fb95066;
+    }
+
+    .agent-status-banner.waiting {
+      background: linear-gradient(90deg, #1a1500, #0d0d18);
+      color: #d29922;
+      border-bottom-color: #3a2a0a;
+    }
+    .agent-status-banner.waiting .status-dot {
+      background: #d29922;
+      animation: pulse 0.8s infinite;
+      box-shadow: 0 0 8px #d2992266;
+    }
+
+    .agent-status-banner.done {
+      background: linear-gradient(90deg, #0a0a1a, #0d0d18);
+      color: #58a6ff;
+      border-bottom-color: #1a1a3a;
+    }
+    .agent-status-banner.done .status-dot {
+      background: #58a6ff;
+      box-shadow: 0 0 8px #58a6ff66;
+    }
+
+    .agent-status-banner.error {
+      background: linear-gradient(90deg, #1a0a0a, #0d0d18);
+      color: #f85149;
+      border-bottom-color: #3a1a1a;
+    }
+    .agent-status-banner.error .status-dot {
+      background: #f85149;
+      box-shadow: 0 0 8px #f8514966;
+    }
+
+    .agent-status-banner.idle {
+      background: linear-gradient(90deg, #0a1a0a, #0d0d18);
+      color: #3fb950;
+      border-bottom-color: #1a3a1a;
+    }
+    .agent-status-banner.idle .status-dot {
+      background: #3fb950;
+      box-shadow: 0 0 8px #3fb95066;
+    }
+
+    .agent-status-banner .status-text { flex: 1; }
+    .agent-status-banner .status-detail {
+      font-size: 11px;
+      font-weight: 400;
+      color: #64748b;
+    }
+
     /* ── Responsive ── */
     @media (max-width: 1200px) {
       .machine-panel { width: 260px; }
@@ -886,7 +1006,14 @@
         <div class="agent-tab" data-tab="cost" onclick="switchAgentTab('cost')">Cost</div>
       </div>
 
-      <!-- Terminal Output (mock) -->
+      <!-- Agent Status Banner -->
+      <div class="agent-status-banner" id="agentStatusBanner">
+        <div class="status-dot"></div>
+        <span class="status-text" id="statusText">CLAUDE RUNNING</span>
+        <span class="status-detail" id="statusDetail"></span>
+      </div>
+
+      <!-- Terminal Output -->
       <div class="terminal-view" id="terminalView">
         <div class="terminal-output" id="terminalOutput">
           <div class="term-line system">Welcome to PIA Mission Control.</div>
@@ -894,6 +1021,13 @@
           <div class="term-line system">Use "+ Spawn Agent" to start a new Claude Code agent on any machine.</div>
           <div class="term-line system">Prompts requiring your input appear in the right panel.</div>
         </div>
+      </div>
+
+      <!-- Terminal Input Bar -->
+      <div class="terminal-input-bar" id="terminalInputBar" style="display:none;">
+        <input type="text" id="terminalInput" placeholder="Type a message to the agent..."
+               onkeydown="if(event.key==='Enter')sendTerminalInput()">
+        <button onclick="sendTerminalInput()" id="terminalSendBtn">Send</button>
       </div>
 
       <!-- Grid View (all agents tiled) -->
@@ -959,178 +1093,353 @@
   <div class="toast-container" id="toastContainer"></div>
 
 <script>
-// ── MOCK DATA ──
-const MACHINES = [
-  {
-    id: 'machine-1', name: 'DESKTOP-PIA', ip: '100.64.1.1 (local)',
-    status: 'online', mode: 'manual',
-    agents: [
-      { id: 'a1', name: 'Agent #1', status: 'working', task: 'Fixing test suite', mode: 'manual', cost: 0.82, tokensIn: 45200, tokensOut: 12300, tools: 23, duration: '12m' },
-      { id: 'a2', name: 'Agent #2', status: 'waiting', task: 'Refactoring database module', mode: 'manual', cost: 0.34, tokensIn: 18900, tokensOut: 5600, tools: 8, duration: '4m' },
-    ]
-  },
-  {
-    id: 'machine-2', name: 'TOWER-DEV', ip: '100.64.1.2',
-    status: 'online', mode: 'auto',
-    agents: [
-      { id: 'a3', name: 'Agent #3', status: 'working', task: 'Building new API endpoints', mode: 'auto', cost: 1.12, tokensIn: 62000, tokensOut: 18400, tools: 41, duration: '22m' },
-    ]
-  },
-  {
-    id: 'machine-3', name: 'MACBOOK-PRO', ip: '100.64.1.3',
-    status: 'online', mode: 'manual',
-    agents: [
-      { id: 'a4', name: 'Agent #4', status: 'waiting', task: 'Implementing auth flow', mode: 'manual', cost: 0.19, tokensIn: 10500, tokensOut: 3200, tools: 5, duration: '2m' },
-    ]
-  },
-  {
-    id: 'machine-4', name: 'CLOUD-GPU', ip: '100.64.1.4',
-    status: 'online', mode: 'auto',
-    agents: []
-  },
-  {
-    id: 'machine-5', name: 'MINI-BUILD', ip: '100.64.1.5',
-    status: 'offline', mode: 'manual',
-    agents: []
-  },
-  {
-    id: 'machine-6', name: 'NUC-TEST', ip: '100.64.1.6',
-    status: 'online', mode: 'auto',
-    agents: []
-  },
-];
+// ═══════════════════════════════════════════════════════════════════
+// PIA Mission Control — LIVE (wired to real API + WebSocket)
+// ═══════════════════════════════════════════════════════════════════
 
-const PROMPTS = [
-  {
-    id: 'p1', agentId: 'a2', agentName: 'Agent #2', machine: 'DESKTOP-PIA',
-    timestamp: Date.now() - 45000,
-    question: 'I need to run `npm install better-sqlite3` to add the database driver. This will modify package.json and package-lock.json. Should I proceed?',
-    options: ['Yes, install it', 'No, skip this', 'Use a different package'],
-    type: 'tool_approval',
-    urgent: true,
-  },
-  {
-    id: 'p2', agentId: 'a4', agentName: 'Agent #4', machine: 'MACBOOK-PRO',
-    timestamp: Date.now() - 120000,
-    question: 'The auth module needs a JWT secret. How should I configure it?\n\n1. Environment variable (JWT_SECRET)\n2. Config file (config/auth.json)\n3. Hardcoded for development',
-    options: ['Environment variable (JWT_SECRET)', 'Config file (config/auth.json)', 'Ask me for the value'],
-    type: 'user_question',
-    urgent: true,
-  },
-];
-
-const MOCK_TERMINAL = {
-  a1: [
-    { type: 'system', text: 'Agent #1 started on DESKTOP-PIA (API mode, manual)' },
-    { type: 'system', text: 'Task: Fix the failing unit tests in src/api/routes/' },
-    { type: 'system', text: '────────────────────────────────────────' },
-    { type: 'output', text: 'Reading test files to understand failures...' },
-    { type: 'tool', text: 'Read  src/api/routes/__tests__/orchestrator.test.ts' },
-    { type: 'output', text: 'Found 3 failing tests in orchestrator.test.ts:' },
-    { type: 'error', text: '  FAIL  should return 404 for unknown agent' },
-    { type: 'error', text: '  FAIL  should validate request body schema' },
-    { type: 'error', text: '  FAIL  should handle concurrent requests' },
-    { type: 'output', text: 'Analyzing the test expectations vs implementation...' },
-    { type: 'tool', text: 'Read  src/api/routes/orchestrator.ts' },
-    { type: 'output', text: 'Found root cause: route handler missing validation middleware.' },
-    { type: 'output', text: 'Fixing orchestrator.ts...' },
-    { type: 'tool', text: 'Edit  src/api/routes/orchestrator.ts  (lines 42-58)' },
-    { type: 'success', text: 'Applied fix: Added request body validation.' },
-    { type: 'tool', text: 'Bash  npm test -- --grep "orchestrator"' },
-    { type: 'output', text: 'Running tests...' },
-    { type: 'success', text: '  PASS  should return 404 for unknown agent' },
-    { type: 'success', text: '  PASS  should validate request body schema' },
-    { type: 'output', text: 'Still working on concurrent request test...' },
-  ],
-  a2: [
-    { type: 'system', text: 'Agent #2 started on DESKTOP-PIA (API mode, manual)' },
-    { type: 'system', text: 'Task: Refactoring database module' },
-    { type: 'system', text: '────────────────────────────────────────' },
-    { type: 'output', text: 'Analyzing current database.ts structure...' },
-    { type: 'tool', text: 'Read  src/db/database.ts' },
-    { type: 'output', text: 'Database module uses better-sqlite3 but it is not in package.json.' },
-    { type: 'prompt', text: 'WAITING FOR INPUT: Need to install better-sqlite3 package.' },
-  ],
-  a3: [
-    { type: 'system', text: 'Agent #3 started on TOWER-DEV (PTY mode, auto)' },
-    { type: 'system', text: 'Task: Building new API endpoints' },
-    { type: 'system', text: '────────────────────────────────────────' },
-    { type: 'output', text: 'Creating new route files...' },
-    { type: 'tool', text: 'Write  src/api/routes/mission-control.ts' },
-    { type: 'success', text: 'Created mission-control.ts with 7 endpoints.' },
-    { type: 'tool', text: 'Read  src/api/server.ts  (checking existing route registration)' },
-    { type: 'tool', text: 'Edit  src/api/server.ts  (added mission-control route import)' },
-    { type: 'success', text: 'Route registered in server.ts.' },
-    { type: 'output', text: 'Auto-approved: Read file operation (safe)' },
-    { type: 'output', text: 'Auto-approved: Write new file (safe)' },
-    { type: 'output', text: 'Auto-approved: Edit existing file (safe - no destructive changes)' },
-    { type: 'tool', text: 'Bash  npx tsc --noEmit  (type checking)' },
-    { type: 'success', text: 'TypeScript compilation: 0 errors.' },
-  ],
-  a4: [
-    { type: 'system', text: 'Agent #4 started on MACBOOK-PRO (API mode, manual)' },
-    { type: 'system', text: 'Task: Implementing auth flow' },
-    { type: 'system', text: '────────────────────────────────────────' },
-    { type: 'output', text: 'Analyzing existing auth patterns...' },
-    { type: 'tool', text: 'Glob  src/**/*auth*' },
-    { type: 'output', text: 'No existing auth module found. Starting from scratch.' },
-    { type: 'prompt', text: 'WAITING FOR INPUT: How should JWT secret be configured?' },
-  ],
-};
-
-const MOCK_JOURNAL = {
-  a1: [
-    { time: '14:23:01', type: 'tool_call', content: 'Read src/api/routes/__tests__/orchestrator.test.ts' },
-    { time: '14:23:03', type: 'output', content: 'Found 3 failing tests. Analyzing root cause.' },
-    { time: '14:23:08', type: 'tool_call', content: 'Read src/api/routes/orchestrator.ts' },
-    { time: '14:23:12', type: 'output', content: 'Root cause: missing validation middleware on POST /api/orchestrator/task' },
-    { time: '14:23:15', type: 'tool_call', content: 'Edit src/api/routes/orchestrator.ts (lines 42-58): Added Zod validation schema' },
-    { time: '14:23:18', type: 'prompt', content: 'Want me to run the tests? [approved by user]' },
-    { time: '14:23:18', type: 'response', content: 'User selected: Yes, run tests' },
-    { time: '14:23:20', type: 'tool_call', content: 'Bash: npm test -- --grep "orchestrator"' },
-    { time: '14:23:28', type: 'output', content: '2/3 tests passing. Working on concurrent request fix.' },
-    { time: '14:23:30', type: 'cost', content: 'Running total: $0.82 | 45.2K in, 12.3K out | 23 tool calls' },
-  ],
-  a3: [
-    { time: '14:10:01', type: 'tool_call', content: 'Write src/api/routes/mission-control.ts (new file)' },
-    { time: '14:10:01', type: 'auto_approved', content: 'Auto: Write new file (matches safety policy)' },
-    { time: '14:10:05', type: 'output', content: 'Created 7 REST endpoints for mission control.' },
-    { time: '14:10:08', type: 'tool_call', content: 'Read src/api/server.ts' },
-    { time: '14:10:08', type: 'auto_approved', content: 'Auto: Read file (always safe)' },
-    { time: '14:10:12', type: 'tool_call', content: 'Edit src/api/server.ts (import + registration)' },
-    { time: '14:10:12', type: 'auto_approved', content: 'Auto: Edit file (no destructive changes detected)' },
-    { time: '14:10:15', type: 'tool_call', content: 'Bash: npx tsc --noEmit' },
-    { time: '14:10:15', type: 'auto_approved', content: 'Auto: Type check (read-only command)' },
-    { time: '14:10:22', type: 'output', content: 'All checks pass. No errors.' },
-    { time: '14:10:22', type: 'cost', content: 'Running total: $1.12 | 62K in, 18.4K out | 41 tool calls' },
-  ],
-};
+const API_BASE = '';  // same origin
+const API_TOKEN = 'pia-local-dev-token-2024';
+const WS_URL = `ws://${location.hostname}:3001`;
 
 // ── STATE ──
+let machines = [];        // from /api/machines
+let agents = [];          // from /api/mc/agents
+let prompts = [];         // from /api/mc/prompts + WebSocket
+let outputBuffers = {};   // agentId -> [{type, text}]
 let selectedMachine = null;
 let selectedAgent = null;
 let activeAgentTab = 'terminal';
+let currentView = 'single';
+let ws = null;
+let wsConnected = false;
 
-// ── RENDER MACHINES ──
+// ── API HELPERS ──
+async function api(path, opts = {}) {
+  const res = await fetch(API_BASE + path, {
+    ...opts,
+    headers: {
+      'x-api-token': API_TOKEN,
+      'Content-Type': 'application/json',
+      ...(opts.headers || {}),
+    },
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`API ${res.status}: ${err}`);
+  }
+  return res.json();
+}
+
+// ── FETCH DATA ──
+async function fetchMachines() {
+  try {
+    const data = await api('/api/machines');
+    machines = (data.machines || data || []).map(m => ({
+      id: m.id || m.name,
+      name: (m.name || m.hostname || 'Unknown').toUpperCase(),
+      ip: m.ip_address || m.ipAddress || 'local',
+      status: m.status || 'online',
+      mode: 'manual',
+    }));
+  } catch (e) {
+    // If no machines registered, show local machine
+    machines = [];
+  }
+  // Always include local machine
+  if (!machines.find(m => m.ip === 'local' || m.name === location.hostname.toUpperCase())) {
+    machines.unshift({ id: 'local', name: 'LOCAL', ip: location.hostname, status: 'online', mode: 'manual' });
+  }
+}
+
+async function fetchAgents() {
+  try {
+    const data = await api('/api/mc/agents');
+    agents = (data.agents || []).map(a => ({
+      id: a.id,
+      name: a.id.substring(0, 8),
+      status: mapStatus(a.status),
+      task: a.task || '',
+      mode: a.approvalMode || 'manual',
+      machineId: a.machineId || 'local',
+      cost: a.cost || 0,
+      tokensIn: a.tokensIn || 0,
+      tokensOut: a.tokensOut || 0,
+      toolCalls: a.toolCalls || 0,
+      createdAt: a.createdAt || Date.now(),
+      errorMessage: a.errorMessage,
+    }));
+  } catch (e) {
+    console.error('Failed to fetch agents:', e);
+  }
+}
+
+async function fetchPrompts() {
+  try {
+    const data = await api('/api/mc/prompts');
+    prompts = (data.prompts || []).map(p => ({
+      id: p.id,
+      agentId: p.agentId,
+      agentName: p.agentId?.substring(0, 8) || 'Agent',
+      machine: 'LOCAL',
+      timestamp: (p.timestamp || 0) * 1000 || Date.now(),
+      question: p.question || '',
+      options: p.options || ['Allow', 'Deny', 'Skip'],
+      type: p.type || 'tool_approval',
+      status: p.status || 'pending',
+      resolved: p.status !== 'pending',
+      resolvedWith: p.response,
+    }));
+  } catch (e) {
+    console.error('Failed to fetch prompts:', e);
+  }
+}
+
+async function fetchAgentDetail(agentId) {
+  try {
+    const data = await api(`/api/mc/agents/${agentId}`);
+    if (data.buffer) {
+      // Parse output buffer into lines
+      const lines = data.buffer.split('\n').filter(l => l.trim());
+      outputBuffers[agentId] = lines.map(l => classifyLine(l));
+    }
+    // Update agent in list
+    if (data.agent) {
+      const idx = agents.findIndex(a => a.id === agentId);
+      if (idx >= 0) {
+        agents[idx].cost = data.agent.cost || 0;
+        agents[idx].tokensIn = data.agent.tokensIn || 0;
+        agents[idx].tokensOut = data.agent.tokensOut || 0;
+        agents[idx].toolCalls = data.agent.toolCalls || 0;
+        agents[idx].status = mapStatus(data.agent.status);
+      }
+    }
+  } catch (e) {
+    console.error('Failed to fetch agent detail:', e);
+  }
+}
+
+async function fetchJournal(agentId) {
+  try {
+    const data = await api(`/api/mc/agents/${agentId}/journal`);
+    return data.journal || [];
+  } catch (e) {
+    console.error('Failed to fetch journal:', e);
+    return [];
+  }
+}
+
+function mapStatus(s) {
+  if (s === 'working' || s === 'starting') return 'working';
+  if (s === 'waiting_for_input') return 'waiting';
+  if (s === 'done') return 'done';
+  if (s === 'error') return 'error';
+  if (s === 'idle') return 'idle';
+  return s || 'idle';
+}
+
+function stripAnsi(str) {
+  // Strip ANSI escape codes (colors, cursor movement, terminal control sequences)
+  return str.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
+            .replace(/\x1b\][^\x07]*\x07/g, '')     // OSC sequences
+            .replace(/\x1b\[\?[0-9;]*[a-zA-Z]/g, '') // Private sequences like ?25l
+            .replace(/\x1b[()][A-Z0-9]/g, '')        // Character set selection
+            .replace(/[\x00-\x08\x0e-\x1f]/g, '');   // Other control chars (keep \t \n \r)
+}
+
+function classifyLine(text) {
+  const t = stripAnsi(text).trim();
+  if (t.startsWith('Read ') || t.startsWith('Glob ') || t.startsWith('Grep ') ||
+      t.startsWith('Edit ') || t.startsWith('Write ') || t.startsWith('Bash ')) {
+    return { type: 'tool', text: t };
+  }
+  if (t.startsWith('FAIL') || t.startsWith('Error') || t.startsWith('error')) return { type: 'error', text: t };
+  if (t.startsWith('PASS') || t.startsWith('Success') || t.startsWith('Applied') || t.startsWith('Created')) return { type: 'success', text: t };
+  if (t.startsWith('WAITING') || t.startsWith('Agent needs')) return { type: 'prompt', text: t };
+  if (t.startsWith('Agent ') || t.startsWith('Task:') || t === '────────────────────────────────────────') return { type: 'system', text: t };
+  return { type: 'output', text: t };
+}
+
+// ── WEBSOCKET ──
+function connectWebSocket() {
+  ws = new WebSocket(WS_URL);
+
+  ws.onopen = () => {
+    // Authenticate
+    ws.send(JSON.stringify({ type: 'auth', payload: { token: API_TOKEN } }));
+    // Subscribe to mission control events
+    setTimeout(() => {
+      ws.send(JSON.stringify({ type: 'mc:subscribe' }));
+    }, 500);
+    wsConnected = true;
+    updateWsStatus(true);
+  };
+
+  ws.onmessage = (event) => {
+    try {
+      const msg = JSON.parse(event.data);
+      handleWsMessage(msg);
+    } catch (e) { /* ignore non-JSON */ }
+  };
+
+  ws.onclose = () => {
+    wsConnected = false;
+    updateWsStatus(false);
+    // Reconnect after 3s
+    setTimeout(connectWebSocket, 3000);
+  };
+
+  ws.onerror = () => {
+    wsConnected = false;
+    updateWsStatus(false);
+  };
+}
+
+function handleWsMessage(msg) {
+  switch (msg.type) {
+    case 'mc:output': {
+      const { sessionId, data } = msg.payload || {};
+      if (!sessionId || !data) return;
+      if (!outputBuffers[sessionId]) outputBuffers[sessionId] = [];
+      // Split into lines, classify each
+      data.split('\n').filter(l => l.trim()).forEach(line => {
+        outputBuffers[sessionId].push(classifyLine(line));
+      });
+      // If this agent is selected, update the terminal live
+      if (selectedAgent === sessionId && activeAgentTab === 'terminal') {
+        renderTerminal(sessionId);
+      }
+      // Update grid view if active
+      if (currentView === 'grid') renderGridView();
+      break;
+    }
+    case 'mc:prompt': {
+      const p = msg.payload;
+      if (!p) return;
+      // Add to prompt list if not already there
+      if (!prompts.find(pp => pp.id === p.id)) {
+        prompts.push({
+          id: p.id,
+          agentId: p.agentId,
+          agentName: (p.agentId || '').substring(0, 8),
+          machine: 'LOCAL',
+          timestamp: Date.now(),
+          question: p.question || '',
+          options: p.options || ['Allow', 'Deny', 'Skip'],
+          type: p.type || 'tool_approval',
+          resolved: false,
+        });
+        renderPrompts();
+        // Update agent status to waiting
+        const agent = agents.find(a => a.id === p.agentId);
+        if (agent) {
+          agent.status = 'waiting';
+          renderAll();
+          if (selectedAgent === p.agentId) {
+            updateAgentStatusUI(agent);
+          }
+        }
+        showToast(`New prompt from ${(p.agentId || '').substring(0, 8)}`);
+      }
+      break;
+    }
+    case 'mc:status': {
+      const { sessionId, status, error } = msg.payload || {};
+      if (!sessionId) return;
+      const agent = agents.find(a => a.id === sessionId);
+      if (agent) {
+        agent.status = mapStatus(status);
+        if (error) agent.errorMessage = error;
+        renderAll();
+        // Update status banner + input bar for the selected agent
+        if (selectedAgent === sessionId) {
+          updateAgentStatusUI(agent);
+        }
+        if (status === 'done') {
+          showToast(`Agent ${sessionId.substring(0, 8)} completed`);
+          // Fetch full output buffer from API now that agent is done
+          fetchAgentDetail(sessionId).then(() => {
+            if (selectedAgent === sessionId && activeAgentTab === 'terminal') {
+              renderTerminal(sessionId);
+            }
+          });
+        }
+        if (status === 'error') showToast(`Agent ${sessionId.substring(0, 8)} error: ${error || 'unknown'}`);
+      } else {
+        // New agent we haven't seen yet — refresh
+        fetchAgents().then(renderAll);
+      }
+      break;
+    }
+    case 'authenticated':
+      // Good, now subscribe
+      break;
+  }
+}
+
+function updateWsStatus(connected) {
+  const dot = document.querySelector('.ws-dot');
+  const text = document.querySelector('.ws-status span');
+  if (dot) dot.style.background = connected ? '#3fb950' : '#f85149';
+  if (text) text.textContent = connected ? 'Connected' : 'Disconnected';
+}
+
+// ── RENDER FUNCTIONS ──
+
+function getAgentsForMachine(machineId) {
+  return agents.filter(a => a.machineId === machineId || (machineId === 'local' && (!a.machineId || a.machineId === 'local')));
+}
+
+function renderAll() {
+  renderMachines();
+  renderPrompts();
+  renderStats();
+  if (currentView === 'grid') renderGridView();
+}
+
+function renderStats() {
+  const working = agents.filter(a => a.status === 'working').length;
+  const waiting = agents.filter(a => a.status === 'waiting').length;
+  const done = agents.filter(a => a.status === 'done').length;
+  const errors = agents.filter(a => a.status === 'error').length;
+  const idle = agents.filter(a => a.status === 'idle').length;
+  const totalCost = agents.reduce((s, a) => s + (a.cost || 0), 0);
+  const totalTokens = agents.reduce((s, a) => s + (a.tokensIn || 0) + (a.tokensOut || 0), 0);
+
+  const statsBar = document.querySelector('.stats-bar');
+  statsBar.innerHTML = `
+    <div class="stat"><span class="stat-value blue">${machines.length}</span><span class="stat-label">Machines</span></div>
+    <div class="stat"><span class="stat-value purple">${agents.length}</span><span class="stat-label">Agents</span></div>
+    <div class="stat"><span class="stat-value green">${working}</span><span class="stat-label">Working</span></div>
+    <div class="stat"><span class="stat-value orange" id="statWaiting">${waiting}</span><span class="stat-label">Waiting</span></div>
+    <div class="stat"><span class="stat-value" style="color:#c9d1d9;">${idle}</span><span class="stat-label">Idle</span></div>
+    <div class="stat"><span class="stat-value green">${done}</span><span class="stat-label">Done</span></div>
+    <div class="stat"><span class="stat-value red">${errors}</span><span class="stat-label">Errors</span></div>
+    <div class="stat" style="margin-left:auto;"><span class="stat-label">Cost</span><span class="stat-value green" style="font-size:14px;">$${totalCost.toFixed(2)}</span></div>
+    <div class="stat"><span class="stat-label">Tokens</span><span class="stat-value" style="font-size:14px;color:#bc8cff;">${totalTokens > 1000 ? (totalTokens/1000).toFixed(0) + 'K' : totalTokens}</span></div>
+  `;
+}
+
 function renderMachines() {
   const list = document.getElementById('machineList');
-  list.innerHTML = MACHINES.map(m => {
-    const hasPrompt = m.agents.some(a => a.status === 'waiting');
+  list.innerHTML = machines.map(m => {
+    const mAgents = getAgentsForMachine(m.id);
+    const hasPrompt = mAgents.some(a => a.status === 'waiting');
     const isSelected = selectedMachine === m.id;
     return `
       <div class="machine-tile ${isSelected ? 'selected' : ''} ${hasPrompt ? 'has-prompt' : ''}"
-           onclick="selectMachine('${m.id}')">
+           onclick="selectMachine('${esc(m.id)}')">
         <div class="machine-name">
-          <div class="machine-status-dot ${m.status === 'online' ? (m.agents.some(a => a.status === 'working') ? 'busy' : 'online') : m.status}"></div>
+          <div class="machine-status-dot ${m.status === 'online' ? (mAgents.some(a => a.status === 'working') ? 'busy' : 'online') : m.status}"></div>
           ${esc(m.name)}
         </div>
         <div class="machine-meta">
           <span class="machine-ip">${esc(m.ip)}</span>
-          <span>${m.agents.length} agent${m.agents.length !== 1 ? 's' : ''}</span>
+          <span>${mAgents.length} agent${mAgents.length !== 1 ? 's' : ''}</span>
         </div>
-        ${m.agents.length > 0 ? `
+        ${mAgents.length > 0 ? `
           <div class="machine-agents">
-            ${m.agents.map(a => `<span class="agent-chip ${a.status}">${esc(a.name)}: ${a.status}</span>`).join('')}
+            ${mAgents.map(a => `<span class="agent-chip ${a.status}">${esc(a.name)}: ${a.status}</span>`).join('')}
           </div>
         ` : ''}
         <div class="machine-mode">
@@ -1139,17 +1448,22 @@ function renderMachines() {
       </div>
     `;
   }).join('');
+
+  // Update machine dropdown in spawn modal
+  const sel = document.getElementById('spawnMachine');
+  sel.innerHTML = machines.map(m =>
+    `<option value="${esc(m.id)}">${esc(m.name)} (${esc(m.ip)})</option>`
+  ).join('');
 }
 
-// ── SELECT MACHINE ──
 function selectMachine(machineId) {
   selectedMachine = machineId;
-  const machine = MACHINES.find(m => m.id === machineId);
+  const machine = machines.find(m => m.id === machineId);
   if (!machine) return;
 
-  // If machine has agents, select the first one
-  if (machine.agents.length > 0) {
-    selectAgent(machine.agents[0].id, machine);
+  const mAgents = getAgentsForMachine(machineId);
+  if (mAgents.length > 0) {
+    selectAgent(mAgents[0].id);
   } else {
     selectedAgent = null;
     document.getElementById('centerTitle').textContent = machine.name + ' — No agents running';
@@ -1157,30 +1471,68 @@ function selectMachine(machineId) {
     document.getElementById('centerActions').style.display = 'flex';
     document.getElementById('agentTabs').style.display = 'none';
     document.getElementById('costTracker').style.display = 'none';
-
-    const output = document.getElementById('terminalOutput');
-    output.innerHTML = `
+    document.getElementById('terminalOutput').innerHTML = `
       <div class="term-line system">Machine: ${esc(machine.name)} (${esc(machine.ip)})</div>
       <div class="term-line system">Status: ${machine.status}</div>
-      <div class="term-line system">No agents running on this machine.</div>
-      <div class="term-line system">Click "+ Spawn Agent" to start one.</div>
+      <div class="term-line system">No agents running. Click "+ Spawn Agent" to start one.</div>
     `;
   }
-
   renderMachines();
 }
 
-// ── SELECT AGENT ──
-function selectAgent(agentId, machine) {
-  if (!machine) {
-    machine = MACHINES.find(m => m.agents.some(a => a.id === agentId));
+// ── UPDATE AGENT STATUS BANNER + INPUT BAR ──
+function updateAgentStatusUI(agent) {
+  if (!agent) {
+    document.getElementById('agentStatusBanner').style.display = 'none';
+    document.getElementById('terminalInputBar').style.display = 'none';
+    return;
   }
-  const agent = machine?.agents.find(a => a.id === agentId);
+
+  const banner = document.getElementById('agentStatusBanner');
+  const inputBar = document.getElementById('terminalInputBar');
+  const statusText = document.getElementById('statusText');
+  const statusDetail = document.getElementById('statusDetail');
+  const isAlive = (agent.status === 'working' || agent.status === 'waiting' || agent.status === 'idle' || agent.status === 'starting');
+
+  // Status banner — always visible when agent selected
+  banner.style.display = 'flex';
+  banner.className = 'agent-status-banner ' + (agent.status || 'working');
+
+  if (agent.status === 'working' || agent.status === 'starting') {
+    statusText.textContent = 'CLAUDE IS RUNNING';
+    statusDetail.textContent = agent.mode === 'auto' ? 'Auto-approve mode — agent runs autonomously' : 'Manual mode — approve each tool call';
+  } else if (agent.status === 'waiting') {
+    statusText.textContent = 'WAITING FOR YOUR INPUT';
+    statusDetail.textContent = 'Type your response below and press Enter or click Send';
+  } else if (agent.status === 'done') {
+    statusText.textContent = 'COMPLETED — Session finished';
+    statusDetail.textContent = `Cost: $${(agent.cost || 0).toFixed(2)} | Tools: ${agent.toolCalls || 0} — Click "+ Spawn" for a new task`;
+  } else if (agent.status === 'error') {
+    statusText.textContent = 'ERROR';
+    statusDetail.textContent = agent.errorMessage || 'Agent encountered an error';
+  } else if (agent.status === 'idle') {
+    statusText.textContent = 'READY — Type a follow-up message';
+    statusDetail.textContent = 'Claude finished the task. Send a message to continue the conversation.';
+  }
+
+  // Input bar — show when agent is alive
+  if (isAlive) {
+    inputBar.style.display = 'flex';
+    document.getElementById('terminalInput').placeholder = `Type a message to agent ${agent.name || 'unknown'}...`;
+  } else {
+    inputBar.style.display = 'none';
+  }
+}
+
+async function selectAgent(agentId) {
+  const agent = agents.find(a => a.id === agentId);
   if (!agent) return;
 
   selectedAgent = agentId;
+  selectedMachine = agent.machineId || 'local';
+  const machine = machines.find(m => m.id === selectedMachine) || { name: 'LOCAL' };
 
-  document.getElementById('centerTitle').textContent = `${machine.name} / ${agent.name} — ${agent.task}`;
+  document.getElementById('centerTitle').textContent = `${machine.name} / ${agent.name} — ${agent.task.substring(0, 80)}`;
   document.getElementById('centerMode').style.display = '';
   document.getElementById('centerMode').textContent = agent.mode;
   document.getElementById('centerMode').className = 'mode-indicator ' + agent.mode;
@@ -1188,23 +1540,39 @@ function selectAgent(agentId, machine) {
   document.getElementById('agentTabs').style.display = 'flex';
   document.getElementById('costTracker').style.display = 'flex';
 
-  // Update cost
-  document.getElementById('costSession').textContent = '$' + agent.cost.toFixed(2);
-  document.getElementById('costIn').textContent = (agent.tokensIn / 1000).toFixed(1) + 'K';
-  document.getElementById('costOut').textContent = (agent.tokensOut / 1000).toFixed(1) + 'K';
-  document.getElementById('costTools').textContent = agent.tools;
-  document.getElementById('costDuration').textContent = agent.duration;
+  // Update status banner + input bar
+  updateAgentStatusUI(agent);
 
-  // Show terminal
+  // Fetch agent detail if we don't have real output yet (startup lines don't count)
+  const buf = outputBuffers[agentId] || [];
+  const hasRealOutput = buf.some(l => l.type !== 'system');
+  if (buf.length === 0 || (!hasRealOutput && agent.status === 'done')) {
+    await fetchAgentDetail(agentId);
+  }
+
+  updateCostFooter(agent);
   switchAgentTab('terminal');
   renderTerminal(agentId);
-  renderJournal(agentId);
+  renderMachines();
 }
 
-// ── RENDER TERMINAL ──
+function updateCostFooter(agent) {
+  document.getElementById('costSession').textContent = '$' + (agent.cost || 0).toFixed(2);
+  document.getElementById('costIn').textContent = (agent.tokensIn || 0) > 1000 ? ((agent.tokensIn/1000).toFixed(1) + 'K') : (agent.tokensIn || 0);
+  document.getElementById('costOut').textContent = (agent.tokensOut || 0) > 1000 ? ((agent.tokensOut/1000).toFixed(1) + 'K') : (agent.tokensOut || 0);
+  document.getElementById('costTools').textContent = agent.toolCalls || 0;
+  const elapsed = agent.createdAt ? Math.floor((Date.now() - agent.createdAt) / 60000) : 0;
+  document.getElementById('costDuration').textContent = elapsed + 'm';
+}
+
 function renderTerminal(agentId) {
   const output = document.getElementById('terminalOutput');
-  const lines = MOCK_TERMINAL[agentId] || [];
+  const lines = outputBuffers[agentId] || [];
+
+  if (lines.length === 0) {
+    output.innerHTML = '<div class="term-line system">Waiting for agent output...</div>';
+    return;
+  }
 
   output.innerHTML = lines.map(l => {
     if (l.type === 'tool') {
@@ -1216,35 +1584,42 @@ function renderTerminal(agentId) {
   output.scrollTop = output.scrollHeight;
 }
 
-// ── RENDER JOURNAL ──
-function renderJournal(agentId) {
+async function renderJournal(agentId) {
   const view = document.getElementById('journalView');
-  const entries = MOCK_JOURNAL[agentId] || [];
+  const entries = await fetchJournal(agentId);
 
   if (entries.length === 0) {
     view.innerHTML = '<div style="color:#64748b;text-align:center;padding:40px;">No journal entries yet.</div>';
     return;
   }
 
-  view.innerHTML = entries.map(e => `
-    <div class="journal-entry">
-      <div class="journal-entry-header">
-        <span class="journal-type ${e.type}">${e.type.replace('_', ' ')}</span>
-        <span class="journal-time">${e.time}</span>
+  view.innerHTML = entries.map(e => {
+    const time = e.createdAt ? new Date(e.createdAt * 1000).toLocaleTimeString() : '';
+    return `
+      <div class="journal-entry">
+        <div class="journal-entry-header">
+          <span class="journal-type ${esc(e.type)}">${esc((e.type || '').replace('_', ' '))}</span>
+          <span class="journal-time">${esc(time)}</span>
+        </div>
+        <div class="journal-content">${esc(e.content || '')}</div>
       </div>
-      <div class="journal-content">${esc(e.content)}</div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
-// ── RENDER PROMPTS ──
 function renderPrompts() {
   const list = document.getElementById('promptList');
   const count = document.getElementById('promptCount');
-  count.textContent = PROMPTS.filter(p => !p.resolved).length + ' pending';
+  const pending = prompts.filter(p => !p.resolved);
+  count.textContent = pending.length + ' pending';
 
-  list.innerHTML = PROMPTS.map(p => `
-    <div class="prompt-card ${p.urgent ? 'urgent' : ''} ${p.resolved ? 'resolved' : ''}" id="prompt-${p.id}">
+  if (prompts.length === 0) {
+    list.innerHTML = '<div style="color:#64748b;text-align:center;padding:40px;font-size:13px;">No prompts. Agents running in auto mode or idle.</div>';
+    return;
+  }
+
+  list.innerHTML = prompts.map(p => `
+    <div class="prompt-card ${!p.resolved ? 'urgent' : 'resolved'}" id="prompt-${esc(p.id)}">
       <div class="prompt-card-header">
         <div>
           <div class="prompt-agent-name">${esc(p.agentName)}</div>
@@ -1253,77 +1628,207 @@ function renderPrompts() {
         <div class="prompt-time">${formatAgo(p.timestamp)}</div>
       </div>
       <div class="prompt-question">${esc(p.question)}</div>
-      ${p.resolved ? '<div style="color:#3fb950;font-size:12px;font-weight:600;">Responded: ' + esc(p.resolvedWith || '') + '</div>' : `
+      ${p.resolved ? '<div style="color:#3fb950;font-size:12px;font-weight:600;">Responded: ' + esc(p.resolvedWith || p.status) + '</div>' : `
         <div class="prompt-options">
           ${p.options.map((opt, i) => `
-            <div class="prompt-option-btn" onclick="respondToPrompt('${p.id}', ${i + 1}, this)">
+            <div class="prompt-option-btn" onclick="respondToPrompt('${esc(p.id)}', ${i + 1}, '${esc(p.agentId)}', this)">
               <span class="prompt-option-num">${i + 1}</span>
               <span>${esc(opt)}</span>
             </div>
           `).join('')}
         </div>
         <div class="prompt-text-input">
-          <input type="text" placeholder="Or type a custom response..." id="promptInput-${p.id}">
-          <button onclick="respondCustom('${p.id}')">Send</button>
+          <input type="text" placeholder="Or type a custom response..." id="promptInput-${esc(p.id)}"
+                 onkeydown="if(event.key==='Enter')respondCustom('${esc(p.id)}','${esc(p.agentId)}')">
+          <button onclick="respondCustom('${esc(p.id)}','${esc(p.agentId)}')">Send</button>
         </div>
       `}
     </div>
   `).join('');
 }
 
-// ── RESPOND TO PROMPT ──
-function respondToPrompt(promptId, choice, el) {
-  const prompt = PROMPTS.find(p => p.id === promptId);
-  if (!prompt) return;
+// ── RESPOND TO PROMPT (REAL API) ──
+async function respondToPrompt(promptId, choice, agentId, el) {
+  if (el) el.classList.add('selected');
 
-  // Visual feedback
-  el.classList.add('selected');
+  try {
+    // Send via REST API
+    await api(`/api/mc/agents/${agentId}/respond`, {
+      method: 'POST',
+      body: { promptId, choice },
+    });
 
-  // Mark resolved
-  prompt.resolved = true;
-  prompt.resolvedWith = prompt.options[choice - 1];
+    // Also send via WebSocket for faster delivery
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: 'mc:respond', payload: { promptId, choice } }));
+    }
 
-  showToast(`Responded to ${prompt.agentName}: Option ${choice}`);
+    // Update local state
+    const prompt = prompts.find(p => p.id === promptId);
+    if (prompt) {
+      prompt.resolved = true;
+      prompt.resolvedWith = prompt.options[choice - 1] || `Option ${choice}`;
+    }
 
-  // Update the waiting agent
-  const machine = MACHINES.find(m => m.agents.some(a => a.id === prompt.agentId));
-  const agent = machine?.agents.find(a => a.id === prompt.agentId);
-  if (agent) {
-    agent.status = 'working';
-    renderMachines();
+    showToast(`Responded: Option ${choice}`);
+    renderPrompts();
+
+    // Refresh agent status
+    await fetchAgents();
+    renderAll();
+  } catch (e) {
+    showToast(`Failed to respond: ${e.message}`);
   }
-
-  // Update waiting count
-  const waitCount = MACHINES.flatMap(m => m.agents).filter(a => a.status === 'waiting').length;
-  document.getElementById('statWaiting').textContent = waitCount;
-
-  setTimeout(() => renderPrompts(), 500);
 }
 
-function respondCustom(promptId) {
+async function respondCustom(promptId, agentId) {
   const input = document.getElementById('promptInput-' + promptId);
+  const text = input?.value?.trim();
+  if (!text) return;
+
+  try {
+    await api(`/api/mc/agents/${agentId}/respond`, {
+      method: 'POST',
+      body: { promptId, choice: text },
+    });
+
+    const prompt = prompts.find(p => p.id === promptId);
+    if (prompt) {
+      prompt.resolved = true;
+      prompt.resolvedWith = text;
+    }
+
+    showToast(`Responded: "${text}"`);
+    renderPrompts();
+    await fetchAgents();
+    renderAll();
+  } catch (e) {
+    showToast(`Failed to respond: ${e.message}`);
+  }
+}
+
+// ── SPAWN AGENT (REAL API) ──
+async function spawnAgent() {
+  const machineId = document.getElementById('spawnMachine').value;
+  const mode = document.getElementById('spawnMode').value;
+  const task = document.getElementById('spawnTask').value.trim();
+  const approvalMode = document.getElementById('spawnInitMode').value;
+  const cwd = document.getElementById('spawnCwd').value.trim();
+
+  if (!task) { showToast('Please enter a task'); return; }
+  if (!cwd) { showToast('Please enter a working directory'); return; }
+
+  closeSpawnModal();
+  showToast('Spawning agent...');
+
+  try {
+    const data = await api('/api/mc/agents', {
+      method: 'POST',
+      body: { machineId, mode, task, cwd, approvalMode },
+    });
+
+    showToast(`Agent spawned: ${data.id?.substring(0, 8)}`);
+
+    // Refresh agents and select the new one
+    await fetchAgents();
+    renderAll();
+    if (data.id) {
+      outputBuffers[data.id] = [
+        { type: 'system', text: `Agent ${data.id.substring(0, 8)} started (${mode} mode, ${approvalMode})` },
+        { type: 'system', text: `Task: ${task}` },
+        { type: 'system', text: '────────────────────────────────────────' },
+      ];
+      selectAgent(data.id);
+    }
+  } catch (e) {
+    showToast(`Failed to spawn: ${e.message}`);
+  }
+}
+
+// ── SEND INPUT TO PTY AGENT ──
+async function sendTerminalInput() {
+  if (!selectedAgent) return;
+  const input = document.getElementById('terminalInput');
   const text = input.value.trim();
   if (!text) return;
 
-  const prompt = PROMPTS.find(p => p.id === promptId);
-  if (!prompt) return;
+  input.value = '';
 
-  prompt.resolved = true;
-  prompt.resolvedWith = text;
+  // Show what we sent in the terminal
+  if (!outputBuffers[selectedAgent]) outputBuffers[selectedAgent] = [];
+  outputBuffers[selectedAgent].push({ type: 'prompt', text: '> ' + text });
+  renderTerminal(selectedAgent);
 
-  showToast(`Responded to ${prompt.agentName}: "${text}"`);
-
-  const machine = MACHINES.find(m => m.agents.some(a => a.id === prompt.agentId));
-  const agent = machine?.agents.find(a => a.id === prompt.agentId);
-  if (agent) {
-    agent.status = 'working';
-    renderMachines();
+  try {
+    await api(`/api/mc/agents/${selectedAgent}/respond`, {
+      method: 'POST',
+      body: { choice: text },
+    });
+  } catch (e) {
+    outputBuffers[selectedAgent].push({ type: 'error', text: 'Failed to send: ' + e.message });
+    renderTerminal(selectedAgent);
   }
+}
 
-  const waitCount = MACHINES.flatMap(m => m.agents).filter(a => a.status === 'waiting').length;
-  document.getElementById('statWaiting').textContent = waitCount;
+// ── TOGGLE MODE (REAL API) ──
+async function toggleMode() {
+  if (!selectedAgent) return;
+  const agent = agents.find(a => a.id === selectedAgent);
+  if (!agent) return;
 
-  setTimeout(() => renderPrompts(), 500);
+  const newMode = agent.mode === 'manual' ? 'auto' : 'manual';
+
+  try {
+    await api(`/api/mc/agents/${selectedAgent}/mode`, {
+      method: 'POST',
+      body: { mode: newMode },
+    });
+
+    agent.mode = newMode;
+    document.getElementById('centerMode').textContent = newMode;
+    document.getElementById('centerMode').className = 'mode-indicator ' + newMode;
+    showToast(`Switched to ${newMode} mode`);
+    renderMachines();
+  } catch (e) {
+    showToast(`Failed to toggle mode: ${e.message}`);
+  }
+}
+
+// ── KILL AGENT (REAL API) ──
+async function killAgent() {
+  if (!selectedAgent) return;
+  if (!confirm('Kill this agent session?')) return;
+
+  try {
+    await api(`/api/mc/agents/${selectedAgent}`, { method: 'DELETE' });
+    showToast('Agent killed');
+
+    await fetchAgents();
+    selectedAgent = null;
+    renderAll();
+
+    document.getElementById('centerTitle').textContent = 'Agent killed';
+    document.getElementById('centerActions').style.display = 'none';
+    document.getElementById('agentTabs').style.display = 'none';
+    document.getElementById('costTracker').style.display = 'none';
+    document.getElementById('terminalOutput').innerHTML = '<div class="term-line system">Agent session terminated.</div>';
+  } catch (e) {
+    showToast(`Failed to kill: ${e.message}`);
+  }
+}
+
+// ── GLOBAL MODE ──
+function setGlobalMode(mode) {
+  document.querySelectorAll('.mode-btn.manual').forEach(b => b.classList.toggle('active', mode === 'manual'));
+  document.querySelectorAll('.mode-btn.auto').forEach(b => b.classList.toggle('active', mode === 'auto'));
+  // Toggle all agents
+  agents.forEach(a => {
+    api(`/api/mc/agents/${a.id}/mode`, { method: 'POST', body: { mode } }).catch(() => {});
+    a.mode = mode;
+  });
+  machines.forEach(m => m.mode = mode);
+  showToast(`Global mode: ${mode}`);
+  renderAll();
 }
 
 // ── SWITCH AGENT TAB ──
@@ -1331,27 +1836,28 @@ function switchAgentTab(tab) {
   activeAgentTab = tab;
   document.querySelectorAll('.agent-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
 
-  document.getElementById('terminalView').style.display = tab === 'terminal' ? 'flex' : 'none';
+  document.getElementById('terminalView').style.display = tab === 'terminal' || tab === 'cost' ? 'flex' : 'none';
   document.getElementById('journalView').style.display = tab === 'journal' ? 'block' : 'none';
   document.getElementById('journalView').classList.toggle('active', tab === 'journal');
 
+  if (tab === 'journal' && selectedAgent) {
+    renderJournal(selectedAgent);
+  }
+
   if (tab === 'cost' && selectedAgent) {
-    // Show cost breakdown in terminal area
-    const machine = MACHINES.find(m => m.agents.some(a => a.id === selectedAgent));
-    const agent = machine?.agents.find(a => a.id === selectedAgent);
+    const agent = agents.find(a => a.id === selectedAgent);
     if (agent) {
-      document.getElementById('terminalView').style.display = 'flex';
+      const elapsed = agent.createdAt ? Math.floor((Date.now() - agent.createdAt) / 60000) : 0;
       document.getElementById('terminalOutput').innerHTML = `
         <div class="term-line system">Cost Breakdown for ${esc(agent.name)}</div>
         <div class="term-line system">────────────────────────────────────────</div>
-        <div class="term-line output">  Total Cost:     $${agent.cost.toFixed(2)}</div>
-        <div class="term-line output">  Tokens In:      ${(agent.tokensIn).toLocaleString()}</div>
-        <div class="term-line output">  Tokens Out:     ${(agent.tokensOut).toLocaleString()}</div>
-        <div class="term-line output">  Tool Calls:     ${agent.tools}</div>
-        <div class="term-line output">  Duration:       ${agent.duration}</div>
+        <div class="term-line output">  Total Cost:     $${(agent.cost || 0).toFixed(4)}</div>
+        <div class="term-line output">  Tokens In:      ${(agent.tokensIn || 0).toLocaleString()}</div>
+        <div class="term-line output">  Tokens Out:     ${(agent.tokensOut || 0).toLocaleString()}</div>
+        <div class="term-line output">  Tool Calls:     ${agent.toolCalls || 0}</div>
+        <div class="term-line output">  Duration:       ${elapsed}m</div>
         <div class="term-line system">────────────────────────────────────────</div>
-        <div class="term-line output">  Avg cost/tool:  $${(agent.cost / Math.max(agent.tools, 1)).toFixed(4)}</div>
-        <div class="term-line output">  Tokens/min:     ${Math.round((agent.tokensIn + agent.tokensOut) / parseInt(agent.duration)).toLocaleString()}</div>
+        <div class="term-line output">  Avg cost/tool:  $${((agent.cost || 0) / Math.max(agent.toolCalls || 1, 1)).toFixed(4)}</div>
       `;
     }
   }
@@ -1369,89 +1875,98 @@ function closeSpawnModal() {
   document.getElementById('spawnModal').classList.remove('visible');
 }
 
-function spawnAgent() {
-  const machineId = document.getElementById('spawnMachine').value;
-  const mode = document.getElementById('spawnMode').value;
-  const task = document.getElementById('spawnTask').value.trim();
-  const initMode = document.getElementById('spawnInitMode').value;
+// ── VIEW TOGGLE ──
+function setView(view) {
+  currentView = view;
+  document.getElementById('viewSingle').classList.toggle('active', view === 'single');
+  document.getElementById('viewGrid').classList.toggle('active', view === 'grid');
 
-  const machine = MACHINES.find(m => m.id === machineId);
-  if (!machine) return;
-
-  const newId = 'a' + (Date.now() % 10000);
-  const newAgent = {
-    id: newId,
-    name: 'Agent #' + (MACHINES.flatMap(m => m.agents).length + 1),
-    status: 'working',
-    task: task || 'New task',
-    mode: initMode,
-    cost: 0,
-    tokensIn: 0,
-    tokensOut: 0,
-    tools: 0,
-    duration: '0m',
-  };
-
-  machine.agents.push(newAgent);
-
-  MOCK_TERMINAL[newId] = [
-    { type: 'system', text: `${newAgent.name} started on ${machine.name} (${mode} mode, ${initMode})` },
-    { type: 'system', text: `Task: ${task || 'New task'}` },
-    { type: 'system', text: '────────────────────────────────────────' },
-    { type: 'output', text: 'Initializing agent session...' },
-  ];
-
-  closeSpawnModal();
-  showToast(`Spawned ${newAgent.name} on ${machine.name}`);
-  renderMachines();
-  selectMachine(machineId);
+  if (view === 'grid') {
+    document.getElementById('terminalView').style.display = 'none';
+    document.getElementById('journalView').style.display = 'none';
+    document.getElementById('costTracker').style.display = 'none';
+    document.getElementById('agentTabs').style.display = 'none';
+    document.getElementById('gridView').classList.add('active');
+    document.getElementById('centerTitle').textContent = 'All Active Agents';
+    document.getElementById('centerMode').style.display = 'none';
+    document.getElementById('centerActions').style.display = 'none';
+    renderGridView();
+  } else {
+    document.getElementById('gridView').classList.remove('active');
+    if (selectedAgent) {
+      selectAgent(selectedAgent);
+    } else if (selectedMachine) {
+      selectMachine(selectedMachine);
+    } else {
+      document.getElementById('terminalView').style.display = 'flex';
+      document.getElementById('terminalOutput').innerHTML = '<div class="term-line system">Select a machine or spawn an agent.</div>';
+    }
+  }
 }
 
-// ── ACTIONS ──
-function toggleMode() {
-  if (!selectedAgent) return;
-  const machine = MACHINES.find(m => m.agents.some(a => a.id === selectedAgent));
-  const agent = machine?.agents.find(a => a.id === selectedAgent);
-  if (!agent) return;
+function renderGridView() {
+  const grid = document.getElementById('gridView');
 
-  agent.mode = agent.mode === 'manual' ? 'auto' : 'manual';
-  document.getElementById('centerMode').textContent = agent.mode;
-  document.getElementById('centerMode').className = 'mode-indicator ' + agent.mode;
-  showToast(`${agent.name} switched to ${agent.mode} mode`);
-  renderMachines();
-}
-
-function killAgent() {
-  if (!selectedAgent) return;
-  if (!confirm('Kill this agent session?')) return;
-
-  const machine = MACHINES.find(m => m.agents.some(a => a.id === selectedAgent));
-  if (machine) {
-    machine.agents = machine.agents.filter(a => a.id !== selectedAgent);
+  if (agents.length === 0) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#64748b;padding:60px;font-size:14px;">No active agents. Click "+ Spawn Agent" to start one.</div>';
+    return;
   }
 
-  showToast('Agent killed');
-  selectedAgent = null;
-  selectMachine(selectedMachine);
+  grid.innerHTML = agents.map(a => {
+    const machine = machines.find(m => m.id === a.machineId) || { name: 'LOCAL' };
+    const lines = (outputBuffers[a.id] || []).slice(-8);
+    const elapsed = a.createdAt ? Math.floor((Date.now() - a.createdAt) / 60000) : 0;
+    return `
+      <div class="grid-tile ${a.status === 'waiting' ? 'waiting' : ''} ${selectedAgent === a.id ? 'selected' : ''}"
+           onclick="gridTileClick('${esc(a.id)}')">
+        <div class="grid-tile-header">
+          <div class="grid-tile-title">
+            <div class="dot ${a.status}"></div>
+            <span>${esc(a.name)}</span>
+          </div>
+          <div class="grid-tile-badges">
+            <span class="badge machine">${esc(machine.name)}</span>
+            <span class="badge ${a.mode === 'auto' ? 'mode-a' : 'mode-m'}">${a.mode}</span>
+            <span class="badge cost">$${(a.cost || 0).toFixed(2)}</span>
+          </div>
+        </div>
+        <div class="grid-tile-body">
+          <div class="gl system" style="color:#64748b;margin-bottom:4px;">${esc(a.task.substring(0, 100))}</div>
+          ${lines.map(l => `<div class="gl ${l.type}">${l.type === 'tool' ? '<span style="color:#bc8cff;">' + esc(l.text) + '</span>' : esc(l.text)}</div>`).join('')}
+        </div>
+        <div class="grid-tile-footer">
+          <span>${a.status.toUpperCase()}</span>
+          <span>${(a.tokensIn/1000).toFixed(0)}K in</span>
+          <span>${elapsed}m</span>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
-function setGlobalMode(mode) {
-  document.querySelectorAll('.mode-btn.manual').forEach(b => b.classList.toggle('active', mode === 'manual'));
-  document.querySelectorAll('.mode-btn.auto').forEach(b => b.classList.toggle('active', mode === 'auto'));
-  MACHINES.forEach(m => m.mode = mode);
-  showToast(`Global mode set to ${mode}`);
+function gridTileClick(agentId) {
+  if (selectedAgent === agentId && currentView === 'grid') {
+    setView('single');
+    return;
+  }
+  selectedAgent = agentId;
+  const agent = agents.find(a => a.id === agentId);
+  if (agent) selectedMachine = agent.machineId || 'local';
+  renderGridView();
   renderMachines();
 }
 
 // ── UTILITIES ──
 function esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 function formatAgo(ts) {
   const seconds = Math.floor((Date.now() - ts) / 1000);
+  if (seconds < 0) return 'just now';
   if (seconds < 60) return seconds + 's ago';
-  return Math.floor(seconds / 60) + 'm ago';
+  if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
+  return Math.floor(seconds / 3600) + 'h ago';
 }
 
 function showToast(text) {
@@ -1465,114 +1980,54 @@ function showToast(text) {
 
 // ── KEYBOARD SHORTCUTS ──
 document.addEventListener('keydown', (e) => {
-  // 1/2/3 quick response for first pending prompt
-  if (['1','2','3'].includes(e.key) && !e.ctrlKey && !e.altKey && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
-    const pending = PROMPTS.find(p => !p.resolved);
+  if (['1','2','3'].includes(e.key) && !e.ctrlKey && !e.altKey &&
+      document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+    const pending = prompts.find(p => !p.resolved);
     if (pending && pending.options[parseInt(e.key) - 1]) {
       const btn = document.querySelector(`#prompt-${pending.id} .prompt-option-btn:nth-child(${e.key})`);
-      if (btn) respondToPrompt(pending.id, parseInt(e.key), btn);
+      respondToPrompt(pending.id, parseInt(e.key), pending.agentId, btn);
     }
   }
+  // Escape to close modal
+  if (e.key === 'Escape') closeSpawnModal();
 });
 
-// ── VIEW TOGGLE (Single / Grid) ──
-let currentView = 'single';
-
-function setView(view) {
-  currentView = view;
-  document.getElementById('viewSingle').classList.toggle('active', view === 'single');
-  document.getElementById('viewGrid').classList.toggle('active', view === 'grid');
-
-  // Toggle visibility
-  const singleEls = ['terminalView', 'journalView', 'costTracker'];
-  const headerEls = ['agentTabs'];
-
-  if (view === 'grid') {
-    // Hide single-agent view elements
-    document.getElementById('terminalView').style.display = 'none';
-    document.getElementById('journalView').style.display = 'none';
-    document.getElementById('costTracker').style.display = 'none';
-    document.getElementById('agentTabs').style.display = 'none';
-    document.getElementById('gridView').classList.add('active');
-    document.getElementById('centerTitle').textContent = 'All Active Agents';
-    document.getElementById('centerMode').style.display = 'none';
-    document.getElementById('centerActions').style.display = 'none';
-    renderGridView();
-  } else {
-    document.getElementById('gridView').classList.remove('active');
-    // Restore single view
-    if (selectedAgent) {
-      const machine = MACHINES.find(m => m.agents.some(a => a.id === selectedAgent));
-      if (machine) selectAgent(selectedAgent, machine);
-    } else if (selectedMachine) {
-      selectMachine(selectedMachine);
-    } else {
-      document.getElementById('terminalView').style.display = 'flex';
-      document.getElementById('terminalOutput').innerHTML = `
-        <div class="term-line system">Single view — click a machine tile on the left.</div>
-      `;
-    }
-  }
-}
-
-function renderGridView() {
-  const grid = document.getElementById('gridView');
-  const allAgents = MACHINES.flatMap(m => m.agents.map(a => ({ ...a, machineName: m.name, machineId: m.id })));
-
-  if (allAgents.length === 0) {
-    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#64748b;padding:60px;font-size:14px;">No active agents. Click "+ Spawn Agent" to start one.</div>';
-    return;
-  }
-
-  grid.innerHTML = allAgents.map(a => {
-    const lines = MOCK_TERMINAL[a.id] || [];
-    const lastLines = lines.slice(-8); // show last 8 lines
-    return `
-      <div class="grid-tile ${a.status === 'waiting' ? 'waiting' : ''} ${selectedAgent === a.id ? 'selected' : ''}"
-           onclick="gridTileClick('${a.id}', '${a.machineId}')">
-        <div class="grid-tile-header">
-          <div class="grid-tile-title">
-            <div class="dot ${a.status}"></div>
-            <span>${esc(a.name)}</span>
-          </div>
-          <div class="grid-tile-badges">
-            <span class="badge machine">${esc(a.machineName)}</span>
-            <span class="badge ${a.mode === 'auto' ? 'mode-a' : 'mode-m'}">${a.mode}</span>
-            <span class="badge cost">$${a.cost.toFixed(2)}</span>
-          </div>
-        </div>
-        <div class="grid-tile-body">
-          <div class="gl system" style="color:#64748b;margin-bottom:4px;">${esc(a.task)}</div>
-          ${lastLines.map(l => `<div class="gl ${l.type}">${l.type === 'tool' ? '<span style="color:#bc8cff;">' + esc(l.text) + '</span>' : esc(l.text)}</div>`).join('')}
-        </div>
-        <div class="grid-tile-footer">
-          <span>${a.status.toUpperCase()}</span>
-          <span>${(a.tokensIn/1000).toFixed(0)}K in / ${(a.tokensOut/1000).toFixed(0)}K out</span>
-          <span>${a.duration}</span>
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-function gridTileClick(agentId, machineId) {
-  // Double-click to expand to single view
-  if (selectedAgent === agentId && currentView === 'grid') {
-    setView('single');
-    return;
-  }
-  selectedMachine = machineId;
-  selectedAgent = agentId;
-  renderGridView();
-  renderMachines();
-}
-
 // ── INIT ──
-renderMachines();
-renderPrompts();
+async function init() {
+  // Show loading
+  document.getElementById('terminalOutput').innerHTML = '<div class="term-line system">Connecting to PIA...</div>';
 
-// Update timestamps every 10s
-setInterval(() => renderPrompts(), 10000);
+  // Connect WebSocket
+  connectWebSocket();
+
+  // Fetch initial data
+  await Promise.all([fetchMachines(), fetchAgents(), fetchPrompts()]);
+  renderAll();
+
+  document.getElementById('terminalOutput').innerHTML = `
+    <div class="term-line system">PIA Mission Control connected.</div>
+    <div class="term-line system">${machines.length} machine(s), ${agents.length} agent(s) active.</div>
+    <div class="term-line system">────────────────────────────────────────</div>
+    <div class="term-line system">Click a machine or "+ Spawn Agent" to begin.</div>
+  `;
+
+  // Refresh agents every 5s
+  setInterval(async () => {
+    await fetchAgents();
+    await fetchPrompts();
+    renderStats();
+    // Refresh selected agent detail
+    if (selectedAgent) {
+      const agent = agents.find(a => a.id === selectedAgent);
+      if (agent) updateCostFooter(agent);
+    }
+  }, 5000);
+
+  // Refresh timestamps
+  setInterval(() => renderPrompts(), 10000);
+}
+
+init();
 </script>
 
 </body>

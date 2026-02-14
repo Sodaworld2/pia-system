@@ -1,0 +1,3793 @@
+=== templates/AdviserAgreements.test.tsx ===
+import React from 'react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { vi } from 'vitest';
+import { AdviserAgreements } from './AdviserAgreements';
+import * as AgreementService from '../src/agreements/service';
+import { AdviserAgreement } from '../types';
+
+// Mock the service module
+vi.mock('../src/agreements/service');
+
+const mockAgreements: AdviserAgreement[] = [
+    {
+        id: 'AGMT_001',
+        type: 'adviser',
+        title: 'Advisor Agreement: Sarah',
+        party: { name: 'Sarah', avatarUrl: 'https://i.pravatar.cc/150?u=sarah', walletAddress: '0xSarahWallet' },
+        termOfEngagement: 2,
+        startDate: '2023-01-01',
+        status: 'Active',
+        details: { starterAllocation: 1000, coreTermAllocation: 5000, performanceMilestones: [], guidingPrinciples: '', vestedTokens: 1500, vestingSchedule: [] },
+    },
+    {
+        id: 'AGMT_002',
+        type: 'adviser',
+        title: 'Advisor Agreement: Mike',
+        party: { name: 'Mike', avatarUrl: 'https://i.pravatar.cc/150?u=mike', walletAddress: '0xMikeWallet' },
+        termOfEngagement: 1,
+        startDate: '2022-06-01',
+        status: 'Completed',
+        details: { starterAllocation: 500, coreTermAllocation: 2500, performanceMilestones: [], guidingPrinciples: '', vestedTokens: 3000, vestingSchedule: [] },
+    },
+];
+
+describe('AdviserAgreements', () => {
+    beforeEach(() => {
+        vi.mocked(AgreementService.getAgreements).mockResolvedValue([...mockAgreements]);
+        vi.mocked(AgreementService.signAgreement).mockImplementation(async (id) => {
+            const agreement = mockAgreements.find(a => a.id === id);
+            return { ...agreement!, status: 'Completed' };
+        });
+    });
+
+    afterEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it('should render loading state and then display agreements', async () => {
+        render(<AdviserAgreements onNavigateToNegotiation={() => {}} />);
+        expect(screen.getByText('Loading agreements...')).toBeInTheDocument();
+        await waitFor(() => {
+            expect(screen.getByText('Advisor Agreement: Sarah')).toBeInTheDocument();
+            expect(screen.getByText('Advisor Agreement: Mike')).toBeInTheDocument();
+        });
+    });
+
+    it('should filter agreements by status', async () => {
+        render(<AdviserAgreements onNavigateToNegotiation={() => {}} />);
+        await waitFor(() => expect(screen.getByText('Advisor Agreement: Sarah')).toBeInTheDocument());
+
+        // Both agreements should be visible initially
+        expect(screen.getByText('Advisor Agreement: Sarah')).toBeInTheDocument();
+        expect(screen.getByText('Advisor Agreement: Mike')).toBeInTheDocument();
+
+        // Click on the 'Active' filter
+        fireEvent.click(screen.getByRole('button', { name: /active/i }));
+
+        // Only the active agreement should be visible
+        expect(screen.getByText('Advisor Agreement: Sarah')).toBeInTheDocument();
+        expect(screen.queryByText('Advisor Agreement: Mike')).not.toBeInTheDocument();
+
+        // Click on the 'Completed' filter
+        fireEvent.click(screen.getByRole('button', { name: /completed/i }));
+
+        // Only the completed agreement should be visible
+        expect(screen.queryByText('Advisor Agreement: Sarah')).not.toBeInTheDocument();
+        expect(screen.getByText('Advisor Agreement: Mike')).toBeInTheDocument();
+    });
+
+    it('should allow a user to view and sign an agreement', async () => {
+        render(<AdviserAgreements onNavigateToNegotiation={() => {}} />);
+        await waitFor(() => expect(screen.getByText('Advisor Agreement: Sarah')).toBeInTheDocument());
+
+        // Find and click the "View Details" button for the active agreement
+        const viewButtons = screen.getAllByText('View Details');
+        fireEvent.click(viewButtons[0]);
+
+        // Now in detail view, find and click the "Sign Agreement" button
+        await waitFor(() => expect(screen.getByText('Sign Agreement')).toBeInTheDocument());
+        fireEvent.click(screen.getByText('Sign Agreement'));
+
+        // Verify that the signAgreement service function was called
+        await waitFor(() => {
+            expect(AgreementService.signAgreement).toHaveBeenCalledWith('AGMT_001');
+        });
+
+        // Verify that the status in the UI has been updated
+        expect(await screen.findByText('Completed')).toBeInTheDocument();
+    });
+});
+
+--- END ---
+
+=== templates/AdviserAgreements.tsx ===
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { Panel } from '../components/Panel';
+import { Button } from '../components/Button';
+import { AdviserAgreement, PerformanceMilestone, PerformanceMilestoneStatus, AgreementStatus, VestingScheduleItem } from '../types';
+import { agreementsService, getAgreements, signAgreement, getAgreementSignatures } from '../src/agreements/service';
+import { notify } from '../src/utils/notifications';
+import { CardSkeletonList, TableSkeleton } from '../src/components/LoadingSkeletons';
+import { NoAgreementsEmpty, ErrorState } from '../src/components/EmptyStates';
+import { LoadingButton } from '../src/components/LoadingButton';
+import { useAutoSave } from '../src/hooks/useAutoSave';
+
+// Extend Window interface for ethereum and solana wallets
+declare global {
+    interface Window {
+        ethereum?: any;
+        solana?: any;
+        phantom?: any;
+    }
+}
+
+const GUIDING_PRINCIPLES_TEMPLATE = `1–3 monthly check-ins
+6 “Heads Up” drops per year
+– Key trends, people, or signals from your network and insights
+3–5 high-value intros per year
+– Brands, agencies, events, curators, collaborators
+Review decks, partnerships & positioning
+– When you have time, help sharpen or sense-check key moves
+Talent & Org Introductions
+– Spot creators, strategists, or orgs we should talk to
+Advisor Network Growth
+– Recommend 1–2 quality minds to join the DAO or council`;
+
+const getInitialNewAgreementState = (): Partial<AdviserAgreement> => ({
+    title: '',
+    type: 'adviser',
+    party: { name: '', avatarUrl: `https://picsum.photos/seed/${Date.now()}/100/100`, walletAddress: '' },
+    termOfEngagement: 3,
+    details: {
+        starterAllocation: 5000,
+        coreTermAllocation: 10000,
+        performanceMilestones: [],
+        guidingPrinciples: GUIDING_PRINCIPLES_TEMPLATE,
+        vestingSchedule: [],
+    }
+});
+
+const getInitialMilestoneState = (): Omit<PerformanceMilestone, 'id' | 'status'> => ({
+    name: 'Successful Funding Intro',
+    description: 'Triggered if...',
+    tokenReward: 50000
+});
+
+
+// Reusable Components
+const FormInput = ({ label, id, helperText, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label: string, helperText?: string }) => (
+    <div>
+        <label htmlFor={id} className="font-bold text-pink-200 block mb-1 uppercase tracking-wider">{label}</label>
+        <input id={id} {...props} className="w-full bg-pink-900/50 border-2 border-pink-400/50 rounded-lg p-3 text-white placeholder-pink-300/50 focus:outline-none focus:border-sky-300 focus:ring-2 focus:ring-sky-300/50 transition" />
+        {helperText && <p className="text-sm text-pink-200/80 mt-1">{helperText}</p>}
+    </div>
+);
+
+const FormTextArea = ({ label, id, helperText, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string, helperText?: string }) => (
+    <div>
+        <label htmlFor={id} className="font-bold text-pink-200 block mb-1 uppercase tracking-wider">{label}</label>
+        <textarea id={id} {...props} className="w-full bg-pink-900/50 border-2 border-pink-400/50 rounded-lg p-3 text-white placeholder-pink-300/50 focus:outline-none focus:border-sky-300 focus:ring-2 focus:ring-sky-300/50 transition min-h-[200px]" />
+        {helperText && <p className="text-sm text-pink-200/80 mt-1">{helperText}</p>}
+    </div>
+);
+
+const StatCard = ({ label, value, className = '' }: {label: string, value: string | number, className?: string}) => (
+    <div className={`bg-black/20 p-4 rounded-xl text-center border-2 border-pink-500/20 ${className}`}>
+        <p className="text-sm font-bold text-pink-200 uppercase tracking-wider">{label}</p>
+        <p className="text-3xl font-extrabold text-white" style={{ textShadow: '1px 1px 3px rgba(31,218,255,0.5)' }}>{typeof value === 'number' ? value.toLocaleString() : value}</p>
+    </div>
+);
+
+const CheckIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>;
+const ClockIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+const SparklesIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M4 17v4M2 19h4M10 3v4M8 5h4M9 17v4M7 19h4m1.93-8.94a.5.5 0 00-.464 0l-3 1.732a.5.5 0 00-.232.434v3.536a.5.5 0 00.232.434l3 1.732a.5.5 0 00.464 0l3-1.732a.5.5 0 00.232-.434v-3.536a.5.5 0 00-.232-.434l-3-1.732z" /></svg>;
+
+const statusStyles: Record<PerformanceMilestoneStatus, {
+    label: string,
+    classes: string,
+    icon: React.ReactNode,
+}> = {
+    [ 'Pending' ]: { label: 'Pending', classes: 'text-yellow-400 font-bold', icon: <ClockIcon/> },
+    [ 'Verified' ]: { label: 'Verified', classes: 'text-sky-400 font-bold', icon: <SparklesIcon/> },
+    [ 'Completed' ]: { label: 'Completed', classes: 'text-green-400 font-bold', icon: <CheckIcon/> },
+};
+
+const MilestoneStatusIndicator: React.FC<{ status: PerformanceMilestoneStatus }> = ({ status }) => (
+    <div className={`flex items-center gap-2 ${statusStyles[status].classes}`}>
+        {statusStyles[status].icon}
+        <span>{statusStyles[status].label}</span>
+    </div>
+);
+
+
+const AgreementCreationWizard: React.FC<{ onAgreementCreated: (agreement: AdviserAgreement) => void, onCancel: () => void }> = ({ onAgreementCreated, onCancel }) => {
+    const STORAGE_KEY = 'draft-agreement';
+
+    // Try to load saved draft on mount
+    const [newAgreement, setNewAgreement] = useState<Partial<AdviserAgreement>>(() => {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            try {
+                const parsedData = JSON.parse(saved);
+                const shouldRestore = window.confirm(
+                    'Found a saved draft from a previous session. Would you like to continue where you left off?'
+                );
+                if (shouldRestore) {
+                    return parsedData;
+                } else {
+                    localStorage.removeItem(STORAGE_KEY);
+                }
+            } catch (error) {
+                console.error('Failed to parse saved draft:', error);
+                localStorage.removeItem(STORAGE_KEY);
+            }
+        }
+        return getInitialNewAgreementState();
+    });
+
+    // Auto-save the form data
+    const { clearSaved } = useAutoSave({
+        data: newAgreement,
+        key: STORAGE_KEY,
+        delay: 2000, // Save 2 seconds after user stops typing
+        enabled: true,
+    });
+
+    // Show auto-save indicator
+    const [showSaved, setShowSaved] = useState(false);
+    useEffect(() => {
+        setShowSaved(true);
+        const timer = setTimeout(() => setShowSaved(false), 2000);
+        return () => clearTimeout(timer);
+    }, [newAgreement]);
+
+    // Memoize onChange handlers to prevent component recreation
+    const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        setNewAgreement(p => ({...p, title: e.target.value}));
+    }, []);
+
+    const handleWalletChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        setNewAgreement(p => ({...p, party: {...p.party!, walletAddress: e.target.value}}));
+    }, []);
+
+    const handleTermChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        setNewAgreement(p => ({ ...p, termOfEngagement: parseInt(e.target.value) }));
+    }, []);
+
+    const handleStarterAllocationChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        setNewAgreement(p => ({...p, details: {...p.details, starterAllocation: parseInt(e.target.value) || 0}}));
+    }, []);
+
+    const handleCoreAllocationChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        setNewAgreement(p => ({...p, details: {...p.details, coreTermAllocation: parseInt(e.target.value) || 0}}));
+    }, []);
+
+    const handlePrinciplesChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        setNewAgreement(p => ({...p, details: { ...p.details, guidingPrinciples: e.target.value }}));
+    }, []);
+    const [currentMilestone, setCurrentMilestone] = useState<Omit<PerformanceMilestone, 'id' | 'status'>>(getInitialMilestoneState());
+
+    const handleAddMilestone = () => {
+        if (!currentMilestone.name || !currentMilestone.description) return;
+        setNewAgreement(prev => ({
+            ...prev,
+            details: {
+                ...prev.details,
+                performanceMilestones: [...(prev.details?.performanceMilestones || []), { ...currentMilestone, id: `pm-${Date.now()}`, status: 'Pending' }]
+            }
+        }));
+        setCurrentMilestone({ name: '', description: '', tokenReward: 50000 });
+    };
+
+    const handleRemoveMilestone = (id: string) => {
+        setNewAgreement(prev => ({
+            ...prev,
+            details: {
+                ...prev.details,
+                performanceMilestones: prev.details?.performanceMilestones?.filter(m => m.id !== id)
+            }
+        }));
+    };
+    
+    const handleFinalize = () => {
+        // This function would be much more generic in a real scalable solution
+        const finalAgreement: AdviserAgreement = {
+            id: `aa-${Date.now()}`,
+            type: 'adviser',
+            title: newAgreement.title || `Advisor Agreement: ${newAgreement.party?.name}`,
+            party: newAgreement.party!,
+            termOfEngagement: newAgreement.termOfEngagement!,
+            startDate: new Date().toISOString().split('T')[0],
+            status: 'Active',
+            details: {
+                starterAllocation: newAgreement.details?.starterAllocation || 0,
+                coreTermAllocation: newAgreement.details?.coreTermAllocation || 0,
+                performanceMilestones: newAgreement.details?.performanceMilestones || [],
+                guidingPrinciples: newAgreement.details?.guidingPrinciples || '',
+                vestingSchedule: newAgreement.details?.vestingSchedule || [],
+            }
+        };
+
+        // Clear the saved draft after successful submission
+        clearSaved();
+
+        onAgreementCreated(finalAgreement);
+    };
+
+    const handleCancel = () => {
+        const shouldClear = window.confirm(
+            'Are you sure you want to cancel? Your draft will be saved for later.'
+        );
+        if (shouldClear) {
+            onCancel();
+        }
+    };
+
+     const Step1_Foundation = useMemo(() => {
+        const endDate = (() => {
+            const date = new Date();
+            date.setFullYear(date.getFullYear() + (newAgreement.termOfEngagement || 0));
+            return date.toLocaleDateString();
+        })();
+
+        return (
+            <div className="space-y-6 w-full max-w-md mx-auto">
+                <FormInput label="Agreement Title" id="agreementTitle" type="text" placeholder="e.g., Advisor Agreement: Martin's Name" value={newAgreement.title || ''} onChange={handleTitleChange} />
+                <FormInput label="Advisor's Wallet Address" id="walletAddress" type="text" placeholder="0x..." value={newAgreement.party?.walletAddress || ''} onChange={handleWalletChange} />
+                <div>
+                    <label htmlFor="term" className="font-bold text-pink-200 block mb-2 uppercase tracking-wider">Term of Engagement: <span className="text-white">{newAgreement.termOfEngagement} Years</span></label>
+                    <input type="range" id="term" min="1" max="5" step="1" value={newAgreement.termOfEngagement} onChange={handleTermChange} className="w-full h-2 bg-pink-900/50 rounded-lg appearance-none cursor-pointer accent-sky-400"/>
+                    <div className="flex justify-between text-sm text-pink-200 mt-2">
+                        <span>Start Date: {new Date().toLocaleDateString()}</span>
+                        <span>End Date: {endDate}</span>
+                    </div>
+                </div>
+            </div>
+        );
+    }, [newAgreement.title, newAgreement.party?.walletAddress, newAgreement.termOfEngagement, handleTitleChange, handleWalletChange, handleTermChange]);
+
+    const Step2_Compensation = useMemo(() => (
+        <div className="space-y-6 w-full max-w-md mx-auto">
+            <div className="bg-pink-900/30 p-4 rounded-xl border border-pink-500/50">
+                <FormInput label="Immediate Grant" id="starterAllocation" type="number" value={newAgreement.details?.starterAllocation || 0} onChange={handleStarterAllocationChange} helperText="To acknowledge belief and support up to this point. Transferred upon signing." />
+            </div>
+            <div className="bg-pink-900/30 p-4 rounded-xl border border-pink-500/50">
+                <FormInput label="Core Term Allocation" id="coreTermAllocation" type="number" value={newAgreement.details?.coreTermAllocation || 0} onChange={handleCoreAllocationChange} helperText={`For time, input, and good-vibe. Vests linearly over ${newAgreement.termOfEngagement} years.`} />
+            </div>
+        </div>
+    ), [newAgreement.details?.starterAllocation, newAgreement.details?.coreTermAllocation, newAgreement.termOfEngagement, handleStarterAllocationChange, handleCoreAllocationChange]);
+
+    const Step3_Performance = () => (
+        <div className="space-y-6 w-full max-w-lg mx-auto">
+            <p className="text-pink-100/90 text-center">Define breakout moments that unlock additional rewards. These are proposed by the core team and executed on-chain after verification.</p>
+            <div className="space-y-3 bg-pink-900/30 p-4 rounded-xl border border-pink-500/50">
+                <h4 className="font-bold text-pink-100 text-xl tracking-wide">Add a Milestone</h4>
+                <div className="grid grid-cols-1 gap-4">
+                    <FormInput label="Milestone Name" id="milestoneName" type="text" placeholder="e.g., Successful Funding Intro" value={currentMilestone.name} onChange={e => setCurrentMilestone(m => ({...m, name: e.target.value}))} />
+                    <FormInput label="Description" id="milestoneDesc" type="text" placeholder="Triggered if..." value={currentMilestone.description} onChange={e => setCurrentMilestone(m => ({...m, description: e.target.value}))} />
+                    <FormInput label="Token Reward" id="milestoneTokens" type="number" value={currentMilestone.tokenReward} onChange={e => setCurrentMilestone(m => ({...m, tokenReward: parseInt(e.target.value, 10)}))} />
+                    <Button color="green" onClick={handleAddMilestone} disabled={!currentMilestone.name}>+ Add Milestone</Button>
+                </div>
+            </div>
+            
+            {newAgreement.details?.performanceMilestones && newAgreement.details.performanceMilestones.length > 0 && (
+                <div>
+                    <h4 className="font-bold text-pink-100 text-lg tracking-wide mb-2">Added Milestones</h4>
+                    <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
+                       {newAgreement.details.performanceMilestones.map((m) => (
+                           <div key={m.id} className="bg-black/20 p-3 rounded-lg flex justify-between items-center text-sm">
+                               <div>
+                                   <p className="font-bold">{m.name}</p>
+                                   <p className="text-white/80">{m.tokenReward.toLocaleString()} Tokens</p>
+                               </div>
+                               <button onClick={() => handleRemoveMilestone(m.id)} className="text-red-400 hover:text-red-300 font-bold text-xl">&times;</button>
+                           </div>
+                       ))}
+                   </div>
+                </div>
+            )}
+        </div>
+    );
+    
+    const Step4_Principles = useMemo(() => (
+        <div className="w-full max-w-lg mx-auto space-y-6">
+            <FormTextArea label="Shared Expectations" id="principles" value={newAgreement.details?.guidingPrinciples || ''} onChange={handlePrinciplesChange} helperText="This part of the agreement is not enforced by the smart contract but serves as a public record of our shared understanding." />
+        </div>
+    ), [newAgreement.details?.guidingPrinciples, handlePrinciplesChange]);
+
+    const Step5_Review = () => {
+        const totalGuaranteed = (newAgreement.details?.starterAllocation || 0) + (newAgreement.details?.coreTermAllocation || 0);
+        return (
+            <div className="w-full max-w-2xl mx-auto space-y-6 text-white">
+                <div className="text-center">
+                    <h3 className="text-2xl font-bold">{newAgreement.title || "Advisor Agreement"}</h3>
+                    <p className="text-pink-200">Term: {newAgreement.termOfEngagement} Years</p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4 bg-pink-900/30 p-4 rounded-xl">
+                        <h4 className="font-bold text-pink-100 text-lg tracking-wide uppercase border-b-2 border-pink-500/30 pb-2">Guaranteed Compensation</h4>
+                        <div className="flex justify-between"><span>Immediate Grant:</span> <span className="font-bold">{newAgreement.details?.starterAllocation?.toLocaleString()}</span></div>
+                        <div className="flex justify-between"><span>Core Term Vesting:</span> <span className="font-bold">{newAgreement.details?.coreTermAllocation?.toLocaleString()}</span></div>
+                        <div className="border-t border-pink-500/30 pt-2 flex justify-between text-sky-300">
+                            <span className="font-extrabold">Total Guaranteed:</span>
+                            <span className="font-extrabold">{totalGuaranteed.toLocaleString()}</span>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4 bg-pink-900/30 p-4 rounded-xl">
+                        <h4 className="font-bold text-pink-100 text-lg tracking-wide uppercase border-b-2 border-pink-500/30 pb-2">Performance Milestones</h4>
+                        <ul className="list-disc list-inside space-y-1 text-sm">
+                            {newAgreement.details?.performanceMilestones?.map(m => <li key={m.id}>{m.name} ({m.tokenReward.toLocaleString()})</li>)}
+                            {newAgreement.details?.performanceMilestones?.length === 0 && <li className="italic text-white/70">No performance milestones defined.</li>}
+                        </ul>
+                    </div>
+                </div>
+                
+                <div className="pt-4 flex flex-col sm:flex-row gap-4">
+                     <Button onClick={handleCancel} color="red">Cancel</Button>
+                    <Button onClick={handleFinalize} color="green" className="!text-lg">Generate & Send for Signature</Button>
+                </div>
+            </div>
+        )
+    };
+
+    return (
+        <div className="space-y-8">
+            {/* Auto-save indicator */}
+            {showSaved && (
+                <div className="fixed top-4 right-4 bg-green-500/20 border-2 border-green-500 rounded-lg px-4 py-2 text-green-200 font-bold animate-fade-in z-50">
+                    ✓ Draft saved
+                </div>
+            )}
+
+            <Panel title="Step 1: The Foundation">{Step1_Foundation}</Panel>
+            <Panel title="Step 2: Guaranteed Compensation">{Step2_Compensation}</Panel>
+            <Panel title="Step 3: Performance-Based Upside"><Step3_Performance /></Panel>
+            <Panel title="Step 4: Guiding Principles">{Step4_Principles}</Panel>
+            <Panel title="Step 5: Review and Propose"><Step5_Review /></Panel>
+        </div>
+    );
+};
+
+export const AgreementDetailView: React.FC<{ agreement: AdviserAgreement, onBack: () => void, onSign: (id: string) => void }> = ({ agreement, onBack, onSign }) => {
+    const { id, title, party, status, startDate, termOfEngagement, details } = agreement;
+    const { starterAllocation, coreTermAllocation, performanceMilestones, guidingPrinciples, vestedTokens, vestingSchedule } = details;
+    const [signatures, setSignatures] = useState<any>(null);
+    const [loadingSignatures, setLoadingSignatures] = useState(false);
+
+    const endDate = useMemo(() => {
+        const date = new Date(startDate);
+        date.setFullYear(date.getFullYear() + termOfEngagement);
+        return date.toLocaleDateString('en-CA');
+    }, [startDate, termOfEngagement]);
+
+    // Fetch signatures when component mounts
+    useEffect(() => {
+        const fetchSignatures = async () => {
+            setLoadingSignatures(true);
+            try {
+                const sigs = await getAgreementSignatures(id);
+                setSignatures(sigs);
+            } catch (err) {
+                console.error('Failed to fetch signatures:', err);
+            } finally {
+                setLoadingSignatures(false);
+            }
+        };
+        fetchSignatures();
+    }, [id, status]); // Re-fetch when status changes
+
+    const vestingProgress = vestedTokens && (starterAllocation + coreTermAllocation) > 0 ? ((vestedTokens - starterAllocation) / coreTermAllocation) * 100 : 0;
+    
+    const chartData = useMemo(() => {
+        let cumulativeAmount = 0;
+        const now = new Date();
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const totalDuration = end.getTime() - start.getTime();
+
+        return vestingSchedule.map(item => {
+            cumulativeAmount += item.amount;
+            const itemDate = new Date(item.date);
+            const position = totalDuration > 0 ? ((itemDate.getTime() - start.getTime()) / totalDuration) * 100 : 0;
+            return { ...item, cumulativeAmount, position, isPast: itemDate < now };
+        });
+    }, [vestingSchedule, startDate, endDate]);
+
+
+    return (
+        <div className="animate-fade-in space-y-6">
+            <header className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div className="text-center sm:text-left">
+                    <h1 className="text-2xl sm:text-4xl font-extrabold text-white">{title}</h1>
+                    <p className={`text-lg font-bold ${status === 'Signed' ? 'text-green-400' : status === 'Active' ? 'text-sky-400' : 'text-yellow-400'}`}>{status}</p>
+                </div>
+                <div className="flex gap-4">
+                    <Button onClick={onBack} color="yellow" className="!w-auto !py-2">{'< Back to Dashboard'}</Button>
+                    {status !== 'Signed' && <Button onClick={() => onSign(id)} color="green" className="!w-auto !py-2">Sign Agreement</Button>}
+                </div>
+            </header>
+
+            {/* Signature Status Panel */}
+            {signatures && (
+                <Panel title="Signature Status">
+                    <div className="space-y-4 text-white">
+                        {loadingSignatures ? (
+                            <p className="text-center text-pink-200">Loading signatures...</p>
+                        ) : (
+                            <>
+                                <div className="bg-pink-900/30 p-4 rounded-xl">
+                                    <h4 className="font-bold text-pink-200 uppercase tracking-wider mb-3">Required Signers</h4>
+                                    <div className="space-y-2">
+                                        {signatures.signatures.map((sig: any, index: number) => (
+                                            <div key={index} className="flex items-center justify-between bg-black/20 p-3 rounded-lg">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-3 h-3 rounded-full ${sig.signed ? 'bg-green-400' : 'bg-yellow-400'}`}></div>
+                                                    <div>
+                                                        <p className="font-mono text-sm">{sig.address}</p>
+                                                        {sig.signedAt && (
+                                                            <p className="text-xs text-pink-200">
+                                                                Signed: {new Date(sig.signedAt).toLocaleString()}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    {sig.signed ? (
+                                                        <>
+                                                            <CheckIcon />
+                                                            <span className="text-green-400 font-bold">Signed</span>
+                                                            {sig.verified && (
+                                                                <span className="text-xs bg-sky-500/50 px-2 py-1 rounded">Verified</span>
+                                                            )}
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <ClockIcon />
+                                                            <span className="text-yellow-400 font-bold">Pending</span>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                {signatures.allSignatures && signatures.allSignatures.length > 0 && (
+                                    <div className="text-xs text-pink-200">
+                                        <p className="font-bold mb-1">Total Signatures: {signatures.allSignatures.length}</p>
+                                        <p>Verified: {signatures.allSignatures.filter((s: any) => s.verified).length}</p>
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </div>
+                </Panel>
+            )}
+
+            <Panel title="Live Agreement Details">
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 text-white">
+                    {/* Left Column */}
+                    <div className="lg:col-span-2 space-y-6">
+                        <div className="flex items-center gap-4 bg-pink-900/30 p-4 rounded-xl">
+                            <img src={party.avatarUrl} alt={party.name} className="w-16 h-16 rounded-full border-2 border-pink-400" />
+                            <div>
+                                <h3 className="text-xl font-bold">{party.name}</h3>
+                                <p className="text-sm text-pink-200 break-all">{party.walletAddress}</p>
+                            </div>
+                        </div>
+                        <div className="bg-pink-900/30 p-4 rounded-xl">
+                            <h4 className="font-bold text-pink-200 uppercase tracking-wider mb-2">Key Terms</h4>
+                            <div className="flex justify-between text-sm"><span>Term:</span><span className="font-semibold">{termOfEngagement} Years</span></div>
+                            <div className="flex justify-between text-sm"><span>Start Date:</span><span className="font-semibold">{new Date(startDate).toLocaleDateString()}</span></div>
+                            <div className="flex justify-between text-sm"><span>End Date:</span><span className="font-semibold">{new Date(endDate).toLocaleDateString()}</span></div>
+                        </div>
+                         <div className="bg-pink-900/30 p-4 rounded-xl">
+                            <h4 className="font-bold text-pink-200 uppercase tracking-wider mb-2">Guiding Principles</h4>
+                            <p className="text-sm whitespace-pre-wrap text-white/80 break-words">{guidingPrinciples}</p>
+                        </div>
+                    </div>
+
+                    {/* Right Column */}
+                    <div className="lg:col-span-3 space-y-6">
+                         <div className="bg-pink-900/30 p-4 rounded-xl">
+                             <h4 className="font-bold text-pink-200 uppercase tracking-wider mb-3">Token Allocation & Vesting</h4>
+                             <div className="space-y-4">
+                                <div className="grid grid-cols-3 gap-4 text-center">
+                                    <StatCard label="Starter Grant" value={starterAllocation}/>
+                                    <StatCard label="Core Vesting" value={coreTermAllocation}/>
+                                    <StatCard label="Vested Total" value={vestedTokens || 0} className="!border-sky-400/50" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-bold text-pink-200 mb-2">Core Vesting Progress ({vestingProgress.toFixed(0)}%)</p>
+                                    <div className="w-full bg-pink-900/50 rounded-full h-4 border-2 border-pink-500/30 overflow-hidden">
+                                        <div className="bg-gradient-to-r from-sky-400 to-cyan-500 h-full rounded-full" style={{ width: `${vestingProgress}%` }}></div>
+                                    </div>
+                                </div>
+                                {/* Vesting Schedule Chart */}
+                                 <div>
+                                    <p className="text-sm font-bold text-pink-200 mb-2">Vesting Schedule</p>
+                                    <div className="w-full bg-black/20 rounded-lg p-4 h-24 relative">
+                                        <div className="w-full h-1 bg-pink-900/50 absolute top-1/2 -translate-y-1/2"></div>
+                                        {chartData.map(item => (
+                                            <div key={item.date} className="absolute h-full top-0 group" style={{ left: `${item.position}%`}}>
+                                                <div className={`w-2 h-2 rounded-full absolute top-1/2 -translate-x-1/2 -translate-y-1/2 ${item.isPast ? 'bg-sky-400' : 'bg-pink-400'}`}></div>
+                                                <div className="hidden group-hover:block absolute bottom-full mb-2 -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap z-10">
+                                                    <p>{new Date(item.date).toLocaleDateString()}</p>
+                                                    <p>{item.amount.toLocaleString()} Tokens</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                 </div>
+                             </div>
+                        </div>
+                        <div className="bg-pink-900/30 p-4 rounded-xl">
+                            <h4 className="font-bold text-pink-200 uppercase tracking-wider mb-3">Performance Milestones</h4>
+                            <div className="space-y-3">
+                                {performanceMilestones.map(m => (
+                                    <div key={m.id} className={`p-4 rounded-lg border-l-4 ${m.status === 'Completed' ? 'bg-green-900/30 border-green-400' : 'bg-black/20 border-yellow-400'}`}>
+                                        <div className="flex justify-between items-start gap-4">
+                                            <div>
+                                                <p className="font-bold">{m.name}</p>
+                                                <p className="text-sm text-white/80 mt-1">{m.description}</p>
+                                            </div>
+                                            <div className="text-right flex-shrink-0">
+                                                <p className="font-bold text-sky-300">{m.tokenReward.toLocaleString()} SODA</p>
+                                                <MilestoneStatusIndicator status={m.status} />
+                                            </div>
+                                        </div>
+                                        {m.status === 'Pending' && (
+                                            <div className="text-right mt-3">
+                                                <Button color="blue" className="!py-1 !px-4 !text-xs !rounded-lg" onClick={() => alert('This would trigger a multi-sig verification flow.')}>Verify Completion</Button>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </Panel>
+        </div>
+    );
+};
+
+
+const AgreementCard: React.FC<{ agreement: AdviserAgreement, onView: () => void }> = ({ agreement, onView }) => {
+    const { title, party, details, status, startDate } = agreement;
+    const { vestedTokens } = details;
+    const statusStyles: Record<AgreementStatus, string> = {
+        Active: 'bg-green-500/80 text-green-100',
+        Completed: 'bg-sky-500/80 text-sky-100',
+        Terminated: 'bg-red-500/80 text-red-100',
+    }
+
+    return (
+        <div className="bg-pink-900/30 p-4 rounded-xl border-2 border-pink-500/50">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                <div className="flex items-center gap-4">
+                     <img src={party.avatarUrl} alt={party.name} className="w-12 h-12 rounded-full border-2 border-pink-400" />
+                     <div>
+                        <h4 className="font-bold text-lg text-white">{title}</h4>
+                        <p className="text-sm text-pink-200">With {party.name}</p>
+                     </div>
+                </div>
+                <div className="flex-shrink-0 text-left sm:text-right">
+                    <span className={`text-xs font-bold uppercase px-3 py-1 rounded-full shadow-inner ${statusStyles[status]}`}>{status}</span>
+                    <p className="text-sm text-pink-200 mt-1">Started: {new Date(startDate).toLocaleDateString()}</p>
+                </div>
+            </div>
+            <div className="mt-4 flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-black/20 p-3 rounded-lg">
+                <div className="text-center sm:text-left">
+                    <p className="text-sm font-bold text-pink-200 uppercase">Vested Tokens</p>
+                    <p className="text-xl font-bold text-sky-300">{vestedTokens?.toLocaleString() || 0} SODA</p>
+                </div>
+                <Button color="blue" className="!py-2 !px-4 !text-sm !w-full sm:!w-auto" onClick={onView}>View Details</Button>
+            </div>
+        </div>
+    );
+};
+
+const AgreementDashboard: React.FC<{
+    agreements: AdviserAgreement[],
+    onLaunchCreator: () => void,
+    onViewAgreement: (id: string) => void,
+    onNavigateToNegotiation: () => void,
+    statusFilter: AgreementStatus | 'All',
+    onStatusFilterChange: (status: AgreementStatus | 'All') => void,
+}> = ({ agreements, onLaunchCreator, onViewAgreement, onNavigateToNegotiation, statusFilter, onStatusFilterChange }) => {
+    const filterTabs: (AgreementStatus | 'All')[] = ['All', 'Active', 'Completed', 'Terminated'];
+    return (
+        <Panel title="Adviser Agreements Dashboard">
+            <div className="space-y-4">
+                <div className="text-center">
+                    <p className="text-pink-100/90 mb-4">Manage all active and past smart agreements with advisers.</p>
+                    <div className="max-w-sm mx-auto grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <Button color="green" onClick={onLaunchCreator}>+ Create New Agreement</Button>
+                        <Button color="blue" onClick={onNavigateToNegotiation}>Review & Negotiate</Button>
+                    </div>
+                </div>
+
+                <div className="border-b-2 border-pink-500/30 flex justify-center">
+                    {filterTabs.map(tab => (
+                        <button
+                            key={tab}
+                            onClick={() => onStatusFilterChange(tab)}
+                            className={`px-4 py-2 font-bold uppercase tracking-wider text-sm transition ${statusFilter === tab ? 'text-sky-300 border-b-2 border-sky-300' : 'text-pink-100/90 hover:text-white'}`}
+                        >
+                            {tab}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="space-y-3 pt-4">
+                    {agreements.length === 0 ? (
+                        <NoAgreementsEmpty onCreate={onLaunchCreator} />
+                    ) : (
+                        agreements.map(agreement => (
+                            <AgreementCard key={agreement.id} agreement={agreement} onView={() => onViewAgreement(agreement.id)} />
+                        ))
+                    )}
+                </div>
+            </div>
+        </Panel>
+    )
+}
+
+export const AdviserAgreements: React.FC<{ onNavigateToNegotiation: () => void }> = ({ onNavigateToNegotiation }) => {
+    const [agreements, setAgreements] = useState<AdviserAgreement[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [view, setView] = useState<'dashboard' | 'create' | 'detail'>('dashboard');
+    const [selectedAgreement, setSelectedAgreement] = useState<AdviserAgreement | null>(null);
+    const [statusFilter, setStatusFilter] = useState<AgreementStatus | 'All'>('All');
+
+    const filteredAgreements = useMemo(() => {
+        if (statusFilter === 'All') return agreements;
+        return agreements.filter(a => a.status === statusFilter);
+    }, [agreements, statusFilter]);
+
+    const fetchAgreements = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const fetchedAgreements = await getAgreements();
+            setAgreements(fetchedAgreements);
+            setError(null);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+            setError(errorMessage);
+            notify.error(`Failed to load agreements: ${errorMessage}`);
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (view === 'dashboard') {
+            fetchAgreements();
+        }
+    }, [view, fetchAgreements]);
+
+    const handleAgreementCreated = async (agreement: AdviserAgreement) => {
+        try {
+            // Transform the agreement data to match backend expectations
+            const agreementData = {
+                title: agreement.title,
+                type: agreement.type,
+                party: agreement.party,
+                termOfEngagement: agreement.termOfEngagement,
+                startDate: agreement.startDate,
+                status: agreement.status,
+                details: agreement.details
+            };
+
+            // POST to backend to create the agreement
+            const newAgreement = await agreementsService.createAgreement(agreementData);
+
+            // Add to local state
+            setAgreements(prev => [newAgreement, ...prev]);
+            notify.success('Agreement created successfully!');
+            setView('dashboard');
+        } catch (err) {
+            console.error('Failed to create agreement:', err);
+            notify.error('Failed to create agreement. Please try again.');
+            // Still add it locally for demo purposes
+            setAgreements(prev => [agreement, ...prev]);
+            setView('dashboard');
+        }
+    };
+
+    const handleSignAgreement = async (id: string) => {
+        try {
+            // Detect which wallet is available
+            const hasPhantomEthereum = window.phantom?.ethereum;
+            const hasMetaMask = window.ethereum && !window.ethereum.isPhantom;
+            const hasAnyEthereumWallet = window.ethereum;
+
+            if (!hasAnyEthereumWallet) {
+                notify.error('No Ethereum wallet detected. Please install MetaMask or Phantom wallet.');
+                setError('No Ethereum wallet detected. Please install MetaMask or Phantom wallet.');
+                return;
+            }
+
+            // Determine which provider to use (prefer Phantom if both are installed)
+            const provider = hasPhantomEthereum || window.ethereum;
+            const walletName = hasPhantomEthereum ? 'Phantom' : 'MetaMask';
+
+            // Request account access
+            const accounts = await provider.request({
+                method: 'eth_requestAccounts'
+            });
+
+            if (!accounts || accounts.length === 0) {
+                notify.error('No wallet accounts found. Please connect your wallet.');
+                setError('No wallet accounts found. Please connect your wallet.');
+                return;
+            }
+
+            const signerAddress = accounts[0];
+
+            // Create the message to sign
+            const message = `Sign agreement ${id}`;
+
+            notify.info(`Please sign the message in ${walletName}...`);
+
+            // Request signature from wallet
+            const signature = await provider.request({
+                method: 'personal_sign',
+                params: [message, signerAddress]
+            });
+
+            // Send signature to backend
+            const result = await signAgreement(id, signerAddress, signature);
+
+            if (result.success) {
+                // Update the agreement in the local state
+                setAgreements(prev => prev.map(a => a.id === id ? result.agreement : a));
+                setSelectedAgreement(result.agreement);
+                notify.success(`Agreement signed successfully with ${walletName}!`);
+                setError(null);
+            } else {
+                notify.error('Failed to sign agreement');
+                setError('Failed to sign agreement');
+            }
+        } catch (err) {
+            console.error('Signing error:', err);
+            const errorMessage = err instanceof Error ? err.message : 'Failed to sign agreement';
+            notify.error(errorMessage);
+            setError(errorMessage);
+        }
+    };
+
+    const handleViewAgreement = (id: string) => {
+        const agreement = agreements.find(a => a.id === id);
+        if (agreement) {
+            setSelectedAgreement(agreement);
+            setView('detail');
+        }
+    };
+
+    const handleBackToDashboard = () => {
+        setView('dashboard');
+        setSelectedAgreement(null);
+    }
+    
+    const renderContent = () => {
+        if (isLoading) {
+            return (
+                <Panel title="Adviser Agreements Dashboard">
+                    <div className="space-y-4">
+                        <p className="text-center text-pink-100/90 mb-4">Loading agreements...</p>
+                        <CardSkeletonList count={2} />
+                    </div>
+                </Panel>
+            );
+        }
+        if (error) {
+            return (
+                <Panel title="Adviser Agreements Dashboard">
+                    <ErrorState message={error} onRetry={fetchAgreements} />
+                </Panel>
+            );
+        }
+
+        switch(view) {
+            case 'create':
+                return (
+                    <>
+                        <Button color="yellow" onClick={handleBackToDashboard} className="!w-auto">{'< Back to Dashboard'}</Button>
+                        <AgreementCreationWizard onAgreementCreated={handleAgreementCreated} onCancel={handleBackToDashboard} />
+                    </>
+                )
+            case 'detail':
+                if (selectedAgreement) {
+                    return <AgreementDetailView agreement={selectedAgreement} onBack={handleBackToDashboard} onSign={handleSignAgreement} />;
+                }
+                return null; // Should not happen if logic is correct
+            case 'dashboard':
+            default:
+                 return (
+                    <AgreementDashboard 
+                        agreements={filteredAgreements}
+                        onLaunchCreator={() => setView('create')} 
+                        onViewAgreement={handleViewAgreement}
+                        onNavigateToNegotiation={onNavigateToNegotiation}
+                        statusFilter={statusFilter}
+                        onStatusFilterChange={setStatusFilter}
+                    />
+                );
+        }
+    }
+
+    return (
+        <main className="w-full p-4 md:p-8 animate-fade-in">
+            <div className="w-full max-w-6xl mx-auto space-y-8">
+                {renderContent()}
+            </div>
+        </main>
+    );
+};
+--- END ---
+
+=== templates/DAOCreationWizard.test.tsx ===
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { DAOCreationWizard } from './DAOCreationWizard';
+import { vi } from 'vitest';
+
+describe('DAOCreationWizard', () => {
+  const mockMentorHook = {
+    currentStep: 1,
+    setCurrentStep: vi.fn(),
+    learningStyle: 'visual',
+    setLearningStyle: vi.fn(),
+    start: vi.fn(),
+    stop: vi.fn(),
+    messages: [],
+    setMessages: vi.fn(),
+    coach: '',
+    setCoach: vi.fn(),
+  };
+
+  const renderWizard = () => render(
+    <DAOCreationWizard
+      onDaoCreated={vi.fn()}
+      isLoading={false}
+      error={null}
+      setError={vi.fn()}
+      mentorHook={mockMentorHook}
+    />
+  );
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('renders the first step correctly', () => {
+    renderWizard();
+    expect(screen.getByText('Register DAO: Step 1 of 6')).toBeInTheDocument();
+    expect(screen.getByLabelText('Name')).toBeInTheDocument();
+    expect(screen.getByLabelText('Surname')).toBeInTheDocument();
+    expect(screen.getByLabelText('Cell Phone')).toBeInTheDocument();
+  });
+
+  it('disables the Next button on step 1 if required fields are empty', () => {
+    renderWizard();
+    expect(screen.getByRole('button', { name: /Next/i })).toBeDisabled();
+  });
+
+  it('allows navigation through all steps', async () => {
+    const user = userEvent.setup();
+    renderWizard();
+
+    // Step 1
+    await user.type(screen.getByLabelText('Name'), 'John');
+    await user.type(screen.getByLabelText('Surname'), 'Doe');
+    await user.click(screen.getByRole('button', { name: /Next/i }));
+    expect(screen.getByText('Register DAO: Step 2 of 6')).toBeInTheDocument();
+
+    // Step 2
+    await user.type(screen.getByLabelText('DAO Name'), 'MyDAO');
+    await user.type(screen.getByLabelText('Wallet Address'), '0x123');
+    await user.click(screen.getByRole('button', { name: /Next/i }));
+    expect(screen.getByText('Register DAO: Step 3 of 6')).toBeInTheDocument();
+
+    // Step 3
+    await user.click(screen.getByRole('button', { name: /Fire starter/i }));
+    await user.click(screen.getByRole('button', { name: /Next/i }));
+    expect(screen.getByText('Register DAO: Step 4 of 6')).toBeInTheDocument();
+
+    // Step 4
+    await user.click(screen.getByRole('button', { name: /Next/i }));
+    expect(screen.getByText('Register DAO: Step 5 of 6')).toBeInTheDocument();
+
+    // Step 5
+    vi.stubGlobal('process', { env: { API_KEY: 'test-key' } });
+    await user.type(screen.getByLabelText('Country for Legal Framework'), 'Utopia');
+    await user.click(screen.getByRole('button', { name: /Generate Legal Framework/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Generated Contract')).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: /Next/i }));
+    expect(screen.getByText('Register DAO: Step 6 of 6')).toBeInTheDocument();
+  });
+
+  it('disables the Next button on step 4 if allocation is not 100%', async () => {
+    const user = userEvent.setup();
+    renderWizard();
+
+    // Navigate to step 4
+    await user.type(screen.getByLabelText('Name'), 'John');
+    await user.type(screen.getByLabelText('Surname'), 'Doe');
+    await user.click(screen.getByRole('button', { name: /Next/i }));
+    await user.type(screen.getByLabelText('DAO Name'), 'MyDAO');
+    await user.type(screen.getByLabelText('Wallet Address'), '0x123');
+    await user.click(screen.getByRole('button', { name: /Next/i }));
+    await user.click(screen.getByRole('button', { name: /Fire starter/i }));
+    await user.click(screen.getByRole('button', { name: /Next/i }));
+
+    // Step 4
+    const foundersSlider = screen.getByLabelText(/founders/i);
+    fireEvent.change(foundersSlider, { target: { value: '50' } });
+    expect(screen.getByRole('button', { name: /Next/i })).toBeDisabled();
+  });
+
+  it('shows an error message if AI contract generation fails', async () => {
+    const user = userEvent.setup();
+    renderWizard();
+
+    // Navigate to step 5
+    await user.type(screen.getByLabelText('Name'), 'John');
+    await user.type(screen.getByLabelText('Surname'), 'Doe');
+    await user.click(screen.getByRole('button', { name: /Next/i }));
+    await user.type(screen.getByLabelText('DAO Name'), 'MyDAO');
+    await user.type(screen.getByLabelText('Wallet Address'), '0x123');
+    await user.click(screen.getByRole('button', { name: /Next/i }));
+    await user.click(screen.getByRole('button', { name: /Fire starter/i }));
+    await user.click(screen.getByRole('button', { name: /Next/i }));
+    await user.click(screen.getByRole('button', { name: /Next/i }));
+
+    // Step 5
+    // The fetch mock is set up to fail if the prompt contains the word "fail"
+    await user.type(screen.getByLabelText('Country for Legal Framework'), 'fail');
+    await user.click(screen.getByRole('button', { name: /Generate Legal Framework/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Failed to generate contract. Please try again.')).toBeInTheDocument();
+    });
+  });
+});
+
+--- END ---
+
+=== templates/DAOCreationWizard.tsx ===
+import React, { useState, useMemo, ChangeEvent, useEffect } from 'react';
+import { Panel } from '../components/Panel';
+import { Button } from '../components/Button';
+import FormInput from '../components/FormInput';
+import type { DAOData } from '../types';
+import type { AIMentorHook } from '../hooks/useAIMentor';
+
+// Centralized API URL configuration
+const API_URL = import.meta.env.VITE_API_URL || 'https://web-production-85519.up.railway.app';
+
+// Extended form data that includes wizard-specific fields
+interface WizardFormData {
+    personalDetails: { name: string; surname: string; cellphone: string };
+    walletAddress: string;
+    economyType: string;
+    daoDetails: {
+        name: string;
+        description: string;
+        logo: string | null;
+    };
+    totalSupply: number;
+    growthDistribution: {
+        founders: number;
+        operational: number;
+        scaleCommunity: number;
+    };
+    tokenomics: {
+        founders: number;
+        advisors: number;
+        foundation: number;
+        firstBorns: number;
+    };
+    legal: {
+        country: string;
+        generatedContract?: string;
+    };
+}
+
+const initialWizardData: WizardFormData = {
+    personalDetails: { name: '', surname: '', cellphone: '' },
+    walletAddress: '',
+    economyType: '',
+    daoDetails: { name: '', description: '', logo: null },
+    totalSupply: 1000000, // Default 1M tokens
+    growthDistribution: { founders: 40, operational: 30, scaleCommunity: 30 },
+    tokenomics: { founders: 25, advisors: 25, foundation: 25, firstBorns: 25 },
+    legal: { country: '', generatedContract: '' },
+};
+
+const ALLOCATION_KEYS: (keyof WizardFormData['tokenomics'])[] = ['founders', 'advisors', 'foundation', 'firstBorns'];
+
+interface DAOCreationWizardProps {
+    onDaoCreated: (data: DAOData) => Promise<void>;
+    isLoading: boolean;
+    error: string | null;
+    setError: (error: string | null) => void;
+    mentorHook: AIMentorHook;
+}
+
+export const DAOCreationWizard: React.FC<DAOCreationWizardProps> = ({ onDaoCreated, isLoading, error: submissionError, setError: setSubmissionError, mentorHook }) => {
+    const [step, setStep] = useState(1);
+    const [formData, setFormData] = useState<WizardFormData>(initialWizardData);
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [generationError, setGenerationError] = useState('');
+    const [availableCountries, setAvailableCountries] = useState<string[]>([]);
+    const [loadingCountries, setLoadingCountries] = useState(false);
+
+    useEffect(() => {
+        mentorHook.setCurrentStep(step);
+    }, [step, mentorHook]);
+
+    // Fetch available countries when component mounts
+    useEffect(() => {
+        const fetchCountries = async () => {
+            setLoadingCountries(true);
+            try {
+                const response = await fetch(`${API_URL}/api/gemini/legal-frameworks`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data && data.frameworks && Array.isArray(data.frameworks)) {
+                        const countries = data.frameworks.map((f: any) => f.country);
+                        setAvailableCountries(countries);
+                    } else {
+                        console.warn('No frameworks returned from API');
+                        setAvailableCountries([]);
+                    }
+                } else {
+                    console.error('Failed to fetch countries, status:', response.status);
+                    setAvailableCountries([]);
+                }
+            } catch (error) {
+                console.error('Failed to fetch available countries:', error);
+                setAvailableCountries([]);
+            } finally {
+                setLoadingCountries(false);
+            }
+        };
+        fetchCountries();
+    }, []);
+
+    const handleNext = () => {
+        // Clear submission error when moving between steps
+        if (submissionError) setSubmissionError(null);
+        setStep(prev => prev + 1);
+    }
+    const handleBack = () => setStep(prev => prev - 1);
+
+    const handlePersonalChange = (e: ChangeEvent<HTMLInputElement>) => {
+        setFormData(prev => ({ ...prev, personalDetails: { ...prev.personalDetails, [e.target.name]: e.target.value } }));
+    };
+
+    const handleDaoDetailsChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        setFormData(prev => ({ ...prev, daoDetails: { ...prev.daoDetails, [e.target.name]: e.target.value } }));
+    };
+
+    const handleLogoUpload = (e: ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                setFormData(prev => ({ ...prev, daoDetails: { ...prev.daoDetails, logo: event.target?.result as string } }));
+            };
+            reader.readAsDataURL(e.target.files[0]);
+        }
+    };
+
+    const totalAllocated = useMemo(() => {
+        return Object.values(formData.tokenomics).reduce((sum, val) => sum + val, 0);
+    }, [formData.tokenomics]);
+
+    const handleAllocationChange = (key: keyof WizardFormData['tokenomics'], value: number) => {
+        setFormData(prev => ({ ...prev, tokenomics: { ...prev.tokenomics, [key]: value } }));
+    };
+
+    // Country validation
+    const validateCountry = (country: string): boolean => {
+        return country.length >= 2;
+    };
+
+    const handleGenerateContract = async () => {
+        if (!formData.legal.country || !validateCountry(formData.legal.country)) {
+            setGenerationError('Please enter a valid country name (at least 2 characters).');
+            return;
+        }
+        setIsGenerating(true);
+        setGenerationError('');
+
+        try {
+            const prompt = `Generate a legal contract template for a Decentralized Autonomous Organization (DAO) named "${formData.daoDetails.name}" with the following details:
+- Founder: ${formData.personalDetails.name} ${formData.personalDetails.surname}
+- Economy Type: ${formData.daoDetails.economyType}
+- Token Allocation: Founders (${formData.tokenomics.founders}%), Advisors (${formData.tokenomics.advisors}%), Foundation (${formData.tokenomics.foundation}%), First Borns (${formData.tokenomics.firstBorns}%)
+- Wallet Address: ${formData.walletAddress}
+
+The contract should include comprehensive clauses for: Membership, Governance, Proposals & Voting, Treasury Management, Liability, and Dissolution.`;
+
+            const response = await fetch(`${API_URL}/api/gemini/generate`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    prompt,
+                    country: formData.legal.country
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to generate contract.');
+            }
+
+            const data = await response.json();
+
+            // Ensure we have valid contract text before updating state
+            if (data.text && data.text.trim()) {
+                const contractText = data.text.trim();
+                setFormData(prev => ({
+                    ...prev,
+                    legal: {
+                        ...prev.legal,
+                        generatedContract: contractText
+                    }
+                }));
+                console.log('✅ Contract generated successfully, length:', contractText.length);
+            } else {
+                throw new Error('Generated contract is empty. Please try again.');
+            }
+
+        } catch (e: any) {
+            console.error(e);
+            setGenerationError(e.message || 'Failed to generate contract. Please try again.');
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
+    const renderStep = () => {
+        switch (step) {
+            case 1: // Personal Details
+                return (
+                    <div className="space-y-4">
+                        <FormInput id="name" label="Name" name="name" value={formData.personalDetails.name} onChange={handlePersonalChange} />
+                        <FormInput id="surname" label="Surname" name="surname" value={formData.personalDetails.surname} onChange={handlePersonalChange} />
+                        <FormInput id="cellphone" label="Cell Phone" name="cellphone" type="tel" value={formData.personalDetails.cellphone} onChange={handlePersonalChange} />
+                        <Button color="green" onClick={handleNext} disabled={!formData.personalDetails.name || !formData.personalDetails.surname || !formData.personalDetails.cellphone}>Next</Button>
+                    </div>
+                );
+            case 2: // DAO Details & Wallet
+                return (
+                    <div className="space-y-4">
+                        <FormInput id="daoName" label="DAO Name" name="name" value={formData.daoDetails.name} onChange={handleDaoDetailsChange} />
+                        <div>
+                            <label htmlFor="description" className="font-bold text-pink-200 block mb-1 uppercase tracking-wider text-sm">DAO Description</label>
+                            <textarea
+                                id="description"
+                                name="description"
+                                value={formData.daoDetails.description}
+                                onChange={handleDaoDetailsChange}
+                                rows={3}
+                                className="w-full bg-pink-900/50 border-2 border-pink-400/50 rounded-lg p-3 text-white placeholder-pink-300/50 focus:outline-none focus:border-sky-300 focus:ring-2 focus:ring-sky-300/50 transition"
+                                placeholder="Describe your DAO's mission and purpose..."
+                            />
+                        </div>
+                        <FormInput id="totalSupply" label="Total Token Supply" name="totalSupply" type="number" value={formData.totalSupply.toString()} onChange={(e) => setFormData(p => ({ ...p, totalSupply: parseInt(e.target.value) || 0 }))} />
+                        <div>
+                            <label className="font-bold text-pink-200 block mb-1 uppercase tracking-wider text-sm">DAO Logo</label>
+                            <input type="file" accept="image/*" onChange={handleLogoUpload} className="w-full text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-500 file:text-white hover:file:bg-pink-600" />
+                            {formData.daoDetails.logo && <img src={formData.daoDetails.logo} alt="logo preview" className="w-24 h-24 rounded-full mt-4 mx-auto" />}
+                        </div>
+                        <Button color="green" onClick={handleNext} disabled={!formData.daoDetails.name || !formData.daoDetails.description || formData.totalSupply <= 0}>Next</Button>
+                    </div>
+                );
+            case 3: // Define Growth Distribution
+                return (
+                    <div className="space-y-6">
+                        <div className="text-center">
+                            <h3 className="font-bold text-2xl text-white">Growth Distribution</h3>
+                            <p className="text-pink-200/90 mt-1">How will growth tokens be distributed? Must total 100%.</p>
+                        </div>
+                        <div className="space-y-4 bg-black/20 p-4 rounded-xl">
+                            <div>
+                                <label htmlFor="founders_growth" className="flex justify-between font-bold text-pink-100">
+                                    <span>Founders</span>
+                                    <span>{formData.growthDistribution.founders}%</span>
+                                </label>
+                                <input
+                                    id="founders_growth"
+                                    type="range"
+                                    min="0"
+                                    max="100"
+                                    value={formData.growthDistribution.founders}
+                                    onChange={e => setFormData(p => ({ ...p, growthDistribution: { ...p.growthDistribution, founders: parseInt(e.target.value) } }))}
+                                    className="w-full h-2 bg-pink-900/50 rounded-lg appearance-none cursor-pointer accent-sky-400"
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="operational" className="flex justify-between font-bold text-pink-100">
+                                    <span>Operational</span>
+                                    <span>{formData.growthDistribution.operational}%</span>
+                                </label>
+                                <input
+                                    id="operational"
+                                    type="range"
+                                    min="0"
+                                    max="100"
+                                    value={formData.growthDistribution.operational}
+                                    onChange={e => setFormData(p => ({ ...p, growthDistribution: { ...p.growthDistribution, operational: parseInt(e.target.value) } }))}
+                                    className="w-full h-2 bg-pink-900/50 rounded-lg appearance-none cursor-pointer accent-sky-400"
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="scaleCommunity" className="flex justify-between font-bold text-pink-100">
+                                    <span>Scale / Community</span>
+                                    <span>{formData.growthDistribution.scaleCommunity}%</span>
+                                </label>
+                                <input
+                                    id="scaleCommunity"
+                                    type="range"
+                                    min="0"
+                                    max="100"
+                                    value={formData.growthDistribution.scaleCommunity}
+                                    onChange={e => setFormData(p => ({ ...p, growthDistribution: { ...p.growthDistribution, scaleCommunity: parseInt(e.target.value) } }))}
+                                    className="w-full h-2 bg-pink-900/50 rounded-lg appearance-none cursor-pointer accent-sky-400"
+                                />
+                            </div>
+                        </div>
+                        <div className={`text-center font-bold text-xl p-2 rounded-lg ${(formData.growthDistribution.founders + formData.growthDistribution.operational + formData.growthDistribution.scaleCommunity) === 100 ? 'bg-green-500/30 text-green-300' : 'bg-red-500/30 text-red-300'}`}>
+                            Total Allocated: {formData.growthDistribution.founders + formData.growthDistribution.operational + formData.growthDistribution.scaleCommunity}%
+                        </div>
+                        <Button color="green" onClick={handleNext} disabled={(formData.growthDistribution.founders + formData.growthDistribution.operational + formData.growthDistribution.scaleCommunity) !== 100}>Next</Button>
+                    </div>
+                );
+            case 4: // Define Council Allocation
+                return (
+                    <div className="space-y-6">
+                        <div className="text-center">
+                            <h3 className="font-bold text-2xl text-white">Define Council Allocation</h3>
+                            <p className="text-pink-200/90 mt-1">Allocate the initial token distribution. Must total 100%.</p>
+                        </div>
+                        <div className="space-y-4 bg-black/20 p-4 rounded-xl">
+                            {ALLOCATION_KEYS.map(key => (
+                                <div key={key}>
+                                    <label htmlFor={key} className="flex justify-between font-bold text-pink-100 capitalize">
+                                        <span>{key}</span>
+                                        <span>{formData.tokenomics[key]}%</span>
+                                    </label>
+                                    <input id={key} type="range" min="0" max="100" value={formData.tokenomics[key]} onChange={e => handleAllocationChange(key, parseInt(e.target.value))} className="w-full h-2 bg-pink-900/50 rounded-lg appearance-none cursor-pointer accent-sky-400" />
+                                </div>
+                            ))}
+                        </div>
+                        <div className={`text-center font-bold text-xl p-2 rounded-lg ${totalAllocated === 100 ? 'bg-green-500/30 text-green-300' : 'bg-red-500/30 text-red-300'}`}>
+                            Total Allocated: {totalAllocated}%
+                        </div>
+                        <Button color="green" onClick={handleNext} disabled={totalAllocated !== 100}>Next</Button>
+                    </div>
+                );
+            case 5: // Define Laws
+                return (
+                    <div className="space-y-4">
+                        {loadingCountries ? (
+                            <p className="text-pink-200">Loading available countries...</p>
+                        ) : availableCountries && availableCountries.length > 0 ? (
+                            <div className="space-y-2">
+                                <label htmlFor="country" className="block text-white font-bold">Country for Legal Framework</label>
+                                <select
+                                    id="country"
+                                    name="country"
+                                    value={formData.legal.country}
+                                    onChange={(e) => setFormData(p => ({ ...p, legal: { ...p.legal, country: e.target.value } }))}
+                                    className="w-full px-4 py-3 bg-pink-900/30 border-2 border-pink-500/50 rounded-lg text-white focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-400/50"
+                                >
+                                    <option value="">Select a country...</option>
+                                    {availableCountries.map(country => (
+                                        <option key={country} value={country}>{country}</option>
+                                    ))}
+                                </select>
+                                <p className="text-xs text-pink-100/85">Supported countries: {availableCountries.join(', ')}</p>
+                            </div>
+                        ) : (
+                            <FormInput
+                                id="country"
+                                label="Country for Legal Framework"
+                                name="country"
+                                value={formData.legal.country}
+                                onChange={(e) => setFormData(p => ({ ...p, legal: { ...p.legal, country: e.target.value } }))}
+                            />
+                        )}
+
+                        {!formData.legal.generatedContract && (
+                            <Button color="blue" onClick={handleGenerateContract} disabled={isGenerating || !formData.legal.country}>
+                                {isGenerating ? 'Generating...' : 'Generate Legal Framework with AI'}
+                            </Button>
+                        )}
+
+                        {generationError && (
+                            <div className="space-y-3">
+                                <p className="text-red-300 bg-red-900/40 p-3 rounded-lg">{generationError}</p>
+                                <p className="text-yellow-300 bg-yellow-900/40 p-3 rounded-lg">💡 You can skip this step and add the legal framework later from the dashboard.</p>
+                                <Button color="yellow" onClick={handleGenerateContract} disabled={isGenerating || !formData.legal.country}>
+                                    {isGenerating ? 'Retrying...' : 'Retry Generation'}
+                                </Button>
+                            </div>
+                        )}
+
+                        {formData.legal.generatedContract && (
+                            <div className="space-y-3">
+                                <div className="bg-black/20 p-4 rounded-lg max-h-80 overflow-y-auto whitespace-pre-wrap text-white/90">
+                                    {formData.legal.generatedContract}
+                                </div>
+                                <Button color="yellow" onClick={() => setFormData(p => ({ ...p, legal: { ...p.legal, generatedContract: '' } }))} disabled={isGenerating}>
+                                    Regenerate Contract
+                                </Button>
+                            </div>
+                        )}
+
+                        <div className="flex gap-3 w-full">
+                            <Button
+                                color={formData.legal.generatedContract ? "green" : "yellow"}
+                                onClick={handleNext}
+                                disabled={isGenerating}
+                                className="flex-1"
+                            >
+                                {formData.legal.generatedContract ? "Next with Contract ✓" : "Skip (Add Legal Framework Later)"}
+                            </Button>
+                        </div>
+                    </div>
+                );
+            case 6: // Review and Confirm
+                const handleSubmit = () => {
+                    // Transform WizardFormData to DAOData format for backend
+                    const daoData: DAOData = {
+                        daoDetails: {
+                            name: formData.daoDetails.name,
+                            description: formData.daoDetails.description,
+                            logo: formData.daoDetails.logo
+                        },
+                        totalSupply: formData.totalSupply,
+                        growthDistribution: {
+                            founders: formData.growthDistribution.founders,
+                            operational: formData.growthDistribution.operational,
+                            scaleCommunity: formData.growthDistribution.scaleCommunity
+                        },
+                        tokenomics: {
+                            founders: formData.tokenomics.founders,
+                            advisors: formData.tokenomics.advisors,
+                            foundation: formData.tokenomics.foundation,
+                            firstBorns: formData.tokenomics.firstBorns
+                        },
+                        legal: {
+                            country: formData.legal.country,
+                            generatedContract: formData.legal.generatedContract
+                        }
+                    };
+                    onDaoCreated(daoData);
+                };
+
+                return (
+                    <div className="space-y-4 text-white">
+                        <h3 className="font-bold text-2xl text-white text-center">Review & Confirm</h3>
+                        <div className="bg-black/20 p-4 rounded-lg space-y-2 text-sm">
+                            <p><strong>DAO Name:</strong> {formData.daoDetails.name}</p>
+                            <p><strong>Description:</strong> {formData.daoDetails.description}</p>
+                            <p><strong>Total Supply:</strong> {formData.totalSupply.toLocaleString()} tokens</p>
+                            <p><strong>Growth Distribution:</strong> Founders ({formData.growthDistribution.founders}%), Operational ({formData.growthDistribution.operational}%), Scale/Community ({formData.growthDistribution.scaleCommunity}%)</p>
+                            <p><strong>Tokenomics:</strong> Founders ({formData.tokenomics.founders}%), Advisors ({formData.tokenomics.advisors}%), Foundation ({formData.tokenomics.foundation}%), First Borns ({formData.tokenomics.firstBorns}%)</p>
+                            <p><strong>Legal Country:</strong> {formData.legal.country}</p>
+                        </div>
+                        {submissionError && <p className="text-red-300 bg-red-900/40 p-3 rounded-lg text-center">{submissionError}</p>}
+                        <Button color="pink" onClick={handleSubmit} disabled={isLoading}>
+                            {isLoading ? 'Creating DAO...' : 'Create DAO'}
+                        </Button>
+                    </div>
+                );
+            default:
+                return null;
+        }
+    };
+
+    return (
+        <main className="min-h-screen w-full flex items-center justify-center p-4 animate-fade-in">
+            <div className="w-full max-w-lg">
+                <Panel title={`Register DAO: Step ${step} of 6`}>
+                    <div className="space-y-4">
+                        {renderStep()}
+                        {step > 1 && <Button color="yellow" onClick={handleBack} className="mt-4">Back</Button>}
+                    </div>
+                </Panel>
+            </div>
+        </main>
+    );
+};
+
+--- END ---
+
+=== templates/GovernanceVoting.test.tsx ===
+import React from 'react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { vi } from 'vitest';
+import { GovernanceVoting } from './GovernanceVoting';
+import * as governanceService from '../src/governance/service';
+import { Proposal } from '../types';
+
+// Mock the service module
+vi.mock('../src/governance/service');
+
+const mockProposals: Proposal[] = [
+    {
+        id: 'p1',
+        title: 'Q3 Budget Allocation for Marketing',
+        description: 'A marketing proposal.',
+        proposer: { name: 'Marketing Guild', avatarUrl: '' },
+        status: 'Active',
+        votesFor: 1250000,
+        votesAgainst: 450000,
+        votesAbstain: 100000,
+        endDate: '3 days remaining',
+    },
+    {
+        id: 'p2',
+        title: 'Integrate New Oracle Service',
+        description: 'An oracle proposal.',
+        proposer: { name: 'Dev Guild', avatarUrl: '' },
+        status: 'Passed',
+        votesFor: 2800000,
+        votesAgainst: 150000,
+        votesAbstain: 50000,
+        endDate: 'Ended 2 days ago',
+    },
+];
+
+describe('GovernanceVoting', () => {
+    beforeEach(() => {
+        vi.mocked(governanceService.getProposals).mockResolvedValue([...mockProposals]);
+        vi.mocked(governanceService.submitVote).mockImplementation(async (id, voteType, power) => {
+            const proposal = mockProposals.find(p => p.id === id);
+            return { ...proposal!, votesFor: proposal!.votesFor + power };
+        });
+    });
+
+    afterEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it('should render loading state and then the list of proposals', async () => {
+        render(<GovernanceVoting />);
+        expect(screen.getByText('Loading proposals...')).toBeInTheDocument();
+
+        await waitFor(() => {
+            expect(screen.getByText('Q3 Budget Allocation for Marketing')).toBeInTheDocument();
+            expect(screen.getByText('Integrate New Oracle Service')).toBeInTheDocument();
+        });
+    });
+
+    it('should filter proposals when a status tab is clicked', async () => {
+        render(<GovernanceVoting />);
+        await waitFor(() => expect(screen.getByText('Q3 Budget Allocation for Marketing')).toBeInTheDocument());
+
+        // Click 'Passed' filter
+        fireEvent.click(screen.getByRole('button', { name: /passed/i }));
+
+        await waitFor(() => {
+            expect(screen.queryByText('Q3 Budget Allocation for Marketing')).not.toBeInTheDocument();
+            expect(screen.getByText('Integrate New Oracle Service')).toBeInTheDocument();
+        });
+    });
+
+    it('should call the vote service when a vote button is clicked', async () => {
+        render(<GovernanceVoting />);
+        await waitFor(() => expect(screen.getByText('Q3 Budget Allocation for Marketing')).toBeInTheDocument());
+
+        const voteForButton = screen.getByRole('button', { name: 'Vote For' });
+        fireEvent.click(voteForButton);
+
+        await waitFor(() => {
+            expect(governanceService.submitVote).toHaveBeenCalledWith('p1', 'for', expect.any(Number));
+        });
+    });
+});
+
+--- END ---
+
+=== templates/GovernanceVoting.tsx ===
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { Panel } from '../components/Panel';
+import { Button } from '../components/Button';
+import { Proposal, type ProposalStatusType } from '../types';
+import { MOCK_WALLET_PROFILE, RARITY_WEIGHTS } from '../constants';
+import { governanceService } from '../src/governance/service';
+import { notify } from '../src/utils/notifications';
+import { ProposalSkeleton, LoadingOverlay } from '../src/components/LoadingSkeletons';
+import { NoProposalsEmpty, ErrorState } from '../src/components/EmptyStates';
+import { LoadingButton } from '../src/components/LoadingButton';
+import { Pagination } from '../src/components/Pagination';
+
+// Mock wallet address for current user
+const CURRENT_USER_WALLET = '0x1234...abcd';
+
+const statusStyles: Record<ProposalStatusType, {
+    label: string,
+    classes: string
+}> = {
+    'Active': {label: 'Active', classes: 'bg-sky-500/80 text-sky-100'},
+    'Passed': {label: 'Passed', classes: 'bg-green-500/80 text-green-100'},
+    'Failed': {label: 'Failed', classes: 'bg-red-500/80 text-red-100'},
+    'Queued': {label: 'Queued', classes: 'bg-yellow-500/80 text-yellow-100'},
+};
+
+interface ProgressBarProps {
+    value: number;
+    color: 'green' | 'red' | 'yellow';
+}
+
+const ProgressBar: React.FC<ProgressBarProps> = ({ value, color }) => {
+    const colorClasses = {
+        green: 'bg-gradient-to-r from-green-400 to-lime-500',
+        red: 'bg-gradient-to-r from-red-500 to-rose-600',
+        yellow: 'bg-gradient-to-r from-yellow-400 to-amber-500',
+    };
+    return (
+        <div className="w-full bg-pink-900/50 rounded-full h-4 border-2 border-pink-500/30 overflow-hidden">
+            <div className={`${colorClasses[color]} h-full rounded-full transition-all duration-500`} style={{ width: `${value}%` }}></div>
+        </div>
+    );
+};
+
+const FormInput = ({ label, id, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label: string }) => (
+    <div>
+        <label htmlFor={id} className="font-bold text-pink-200 block mb-1 uppercase tracking-wider text-sm">{label}</label>
+        <input id={id} {...props} className="w-full bg-pink-900/50 border-2 border-pink-400/50 rounded-lg p-3 text-white placeholder-pink-300/50 focus:outline-none focus:border-sky-300 focus:ring-2 focus:ring-sky-300/50 transition" />
+    </div>
+);
+
+const FormTextArea = ({ label, id, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string }) => (
+    <div>
+        <label htmlFor={id} className="font-bold text-pink-200 block mb-1 uppercase tracking-wider text-sm">{label}</label>
+        <textarea id={id} {...props} rows={4} className="w-full bg-pink-900/50 border-2 border-pink-400/50 rounded-lg p-3 text-white placeholder-pink-300/50 focus:outline-none focus:border-sky-300 focus:ring-2 focus:ring-sky-300/50 transition" />
+    </div>
+);
+
+
+const CreateProposalForm: React.FC<{ onAddProposal: (proposal: Proposal) => void, onCancel: () => void }> = ({ onAddProposal, onCancel }) => {
+    const [title, setTitle] = useState('');
+    const [description, setDescription] = useState('');
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!title.trim() || !description.trim()) return;
+
+        const newProposal: Proposal = {
+            id: `p${Date.now()}`,
+            title,
+            description,
+            proposer: { name: MOCK_WALLET_PROFILE.handle, avatarUrl: MOCK_WALLET_PROFILE.avatarUrl },
+            status: 'Active',
+            votesFor: 0,
+            votesAgainst: 0,
+            votesAbstain: 0,
+            endDate: '14 days remaining',
+        };
+
+        onAddProposal(newProposal);
+    };
+
+    return (
+        <Panel title="Create New Proposal">
+            <form onSubmit={handleSubmit} className="space-y-6">
+                <FormInput label="Title" id="prop-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="A concise summary of the proposal"/>
+                <FormTextArea label="Description" id="prop-desc" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Explain the proposal in detail..." />
+                <div className="flex flex-col sm:flex-row gap-4 pt-2">
+                    <Button color="red" type="button" onClick={onCancel}>Cancel</Button>
+                    <Button color="green" type="submit" disabled={!title.trim() || !description.trim()}>Submit Proposal</Button>
+                </div>
+            </form>
+        </Panel>
+    )
+};
+
+
+export const GovernanceVoting: React.FC = () => {
+    const [proposals, setProposals] = useState<Proposal[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [votedOn, setVotedOn] = useState<Record<string, 'for' | 'against' | 'abstain'>>({});
+    const [isCreating, setIsCreating] = useState(false);
+    const [statusFilter, setStatusFilter] = useState<ProposalStatus | 'All'>('All');
+    const [votingInProgress, setVotingInProgress] = useState<string | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+
+    const fetchProposals = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const fetchedProposals = await governanceService.getAllProposals();
+            setProposals(fetchedProposals);
+            setError(null);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+            setError(errorMessage);
+            notify.error(`Failed to load proposals: ${errorMessage}`);
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchProposals();
+    }, [fetchProposals]);
+
+    const votingPower = useMemo(() => {
+        const rarityMap = new Map(RARITY_WEIGHTS.map(item => [item.rarity, item.weight]));
+        return MOCK_WALLET_PROFILE.nfts.reduce((total, nft) => total + (rarityMap.get(nft.rarity) || 0), 0);
+    }, []);
+
+    const handleVote = async (proposalId: string, voteType: 'for' | 'against' | 'abstain') => {
+        // Set voting in progress
+        setVotingInProgress(proposalId);
+
+        // Optimistic UI update
+        setVotedOn(prev => ({...prev, [proposalId]: voteType}));
+
+        try {
+            // Map frontend vote types to backend format
+            const voteMap: Record<'for' | 'against' | 'abstain', 'yes' | 'no' | 'abstain'> = {
+                'for': 'yes',
+                'against': 'no',
+                'abstain': 'abstain',
+            };
+
+            const updatedProposal = await governanceService.vote(proposalId, {
+                voter: CURRENT_USER_WALLET,
+                vote: voteMap[voteType],
+                weight: votingPower,
+                timestamp: new Date().toISOString(),
+            });
+
+            // Update the proposal in the list
+            setProposals(prevProposals => prevProposals.map(p => p.id === proposalId ? updatedProposal : p));
+
+            // Show success notification
+            notify.info(`Vote recorded: ${voteType.toUpperCase()}`);
+        } catch (err) {
+            console.error("Failed to submit vote", err);
+            const errorMessage = err instanceof Error ? err.message : 'Failed to submit vote';
+            notify.error(errorMessage);
+
+            // Revert optimistic UI update on error
+            setVotedOn(prev => {
+                const newState = {...prev};
+                delete newState[proposalId];
+                return newState;
+            });
+        } finally {
+            setVotingInProgress(null);
+        }
+    };
+    
+    const handleAddProposal = async (proposal: Proposal) => {
+        try {
+            const newProposal = await governanceService.createProposal({
+                title: proposal.title,
+                description: proposal.description,
+                type: 'general',
+                status: 'active',
+                creator: MOCK_WALLET_PROFILE.handle,
+                startDate: new Date().toISOString(),
+                endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
+                yesVotes: 0,
+                noVotes: 0,
+                abstainVotes: 0,
+            });
+
+            // Add to proposals list
+            setProposals(prev => [newProposal, ...prev]);
+            setIsCreating(false);
+
+            // Show success notification
+            notify.info('Proposal created successfully!');
+        } catch (err) {
+            console.error('Failed to create proposal:', err);
+            const errorMessage = err instanceof Error ? err.message : 'Failed to create proposal';
+            notify.error(errorMessage);
+        }
+    };
+
+    const filteredProposals = useMemo(() => {
+        if (statusFilter === 'All') return proposals;
+        return proposals.filter(p => p.status === statusFilter);
+    }, [proposals, statusFilter]);
+
+    // Calculate paginated proposals
+    const paginatedProposals = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        return filteredProposals.slice(startIndex, endIndex);
+    }, [filteredProposals, currentPage, itemsPerPage]);
+
+    // Reset to page 1 when filter changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [statusFilter]);
+
+    const activeProposals = paginatedProposals.filter(p => p.status === 'Active');
+    const pastProposals = paginatedProposals.filter(p => p.status !== 'Active');
+
+    const filterTabs: (ProposalStatusType | 'All')[] = ['All', 'Active', 'Passed', 'Failed'];
+
+    return (
+        <main className="w-full p-4 md:p-8">
+            <div className="w-full max-w-5xl mx-auto space-y-8">
+                
+                {!isCreating && (
+                    <div className="mb-8 flex justify-between items-center">
+                        <Button color="green" onClick={() => setIsCreating(true)}>+ Create New Proposal</Button>
+                        <div className="border-b-2 border-pink-500/30 flex justify-center">
+                            {filterTabs.map(tab => (
+                                <button
+                                    key={tab}
+                                    onClick={() => setStatusFilter(tab)}
+                                    className={`px-4 py-2 font-bold uppercase tracking-wider text-sm transition ${statusFilter === tab ? 'text-sky-300 border-b-2 border-sky-300' : 'text-pink-100/90 hover:text-white'}`}
+                                >
+                                    {tab}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+                
+                {isCreating && <CreateProposalForm onAddProposal={handleAddProposal} onCancel={() => setIsCreating(false)} />}
+
+                {isLoading && !isCreating && (
+                    <div className="space-y-6">
+                        <ProposalSkeleton />
+                        <ProposalSkeleton />
+                    </div>
+                )}
+                {error && !isCreating && <ErrorState message={error} onRetry={fetchProposals} />}
+
+                {!isLoading && !error && !isCreating && activeProposals.length === 0 && statusFilter === 'All' && (
+                    <NoProposalsEmpty onCreate={() => setIsCreating(true)} />
+                )}
+
+                {!isLoading && !error && !isCreating && activeProposals.map(p => {
+                    const totalVotes = p.votesFor + p.votesAgainst + p.votesAbstain;
+                    const forPercent = totalVotes > 0 ? (p.votesFor / totalVotes) * 100 : 0;
+                    const againstPercent = totalVotes > 0 ? (p.votesAgainst / totalVotes) * 100 : 0;
+                    const abstainPercent = totalVotes > 0 ? (p.votesAbstain / totalVotes) * 100 : 0;
+                    const isVotable = p.status === 'Active' && !votedOn[p.id];
+                    const userVote = votedOn[p.id];
+
+                    return (
+                        <Panel key={p.id} title={p.title} className="w-full">
+                            <div className="space-y-6">
+                                <div className="flex justify-between items-start">
+                                    <div className="flex items-center gap-3">
+                                        <img src={p.proposer.avatarUrl} alt={p.proposer.name} className="w-10 h-10 rounded-full border-2 border-pink-400" />
+                                        <div>
+                                            <p className="text-sm text-pink-200/80">Proposed by</p>
+                                            <p className="font-bold">{p.proposer.name}</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className={`text-xs font-bold uppercase px-3 py-1 rounded-full shadow-inner ${statusStyles[p.status].classes}`}>
+                                            {statusStyles[p.status].label}
+                                        </span>
+                                        <p className="text-sm text-pink-200/90 mt-1">{p.endDate}</p>
+                                    </div>
+                                </div>
+
+                                <p className="text-white/90 text-md break-words">{p.description}</p>
+                                
+                                <div className="space-y-4 pt-2">
+                                    <h4 className="font-bold text-pink-200 uppercase tracking-wider mb-2">Current Results</h4>
+
+                                    {/* Vote Summary Card */}
+                                    <div className="vote-results bg-slate-900/50 rounded-lg p-4 mb-4">
+                                        <div className="grid grid-cols-3 gap-4">
+                                            <div className="text-center">
+                                                <div className="text-green-400 text-2xl font-bold">{p.votesFor.toLocaleString()}</div>
+                                                <div className="text-sm text-slate-300">Yes</div>
+                                            </div>
+                                            <div className="text-center">
+                                                <div className="text-red-400 text-2xl font-bold">{p.votesAgainst.toLocaleString()}</div>
+                                                <div className="text-sm text-slate-300">No</div>
+                                            </div>
+                                            <div className="text-center">
+                                                <div className="text-yellow-400 text-2xl font-bold">{p.votesAbstain.toLocaleString()}</div>
+                                                <div className="text-sm text-slate-300">Abstain</div>
+                                            </div>
+                                        </div>
+                                        <div className="mt-4 text-center text-sm text-slate-300">
+                                            Total Votes: <span className="text-purple-300 font-bold">{totalVotes.toLocaleString()}</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Detailed Progress Bars */}
+                                    <div className="space-y-3">
+                                        <div className="grid grid-cols-12 items-center gap-3">
+                                            <div className="col-span-2 font-bold">For</div>
+                                            <div className="col-span-6"><ProgressBar value={forPercent} color="green" /></div>
+                                            <div className="col-span-4 text-right font-semibold">{p.votesFor.toLocaleString()} <span className="text-pink-200/80">({forPercent.toFixed(1)}%)</span></div>
+                                        </div>
+                                         <div className="grid grid-cols-12 items-center gap-3">
+                                            <div className="col-span-2 font-bold">Against</div>
+                                            <div className="col-span-6"><ProgressBar value={againstPercent} color="red" /></div>
+                                            <div className="col-span-4 text-right font-semibold">{p.votesAgainst.toLocaleString()} <span className="text-pink-200/80">({againstPercent.toFixed(1)}%)</span></div>
+                                        </div>
+                                         <div className="grid grid-cols-12 items-center gap-3">
+                                            <div className="col-span-2 font-bold">Abstain</div>
+                                            <div className="col-span-6"><ProgressBar value={abstainPercent} color="yellow" /></div>
+                                            <div className="col-span-4 text-right font-semibold">{p.votesAbstain.toLocaleString()} <span className="text-pink-200/80">({abstainPercent.toFixed(1)}%)</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {isVotable ? (
+                                    <div className="pt-4 space-y-4">
+                                        <div className="text-center font-bold text-sky-300/90 tracking-wider p-2 bg-black/20 rounded-lg">
+                                            Your Voting Power: {votingPower} Votes
+                                        </div>
+                                        <div className="flex flex-col sm:flex-row gap-4">
+                                            <LoadingButton
+                                                color="green"
+                                                onClick={() => handleVote(p.id, 'for')}
+                                                loading={votingInProgress === p.id}
+                                                disabled={votingInProgress !== null}
+                                                loadingText="Voting..."
+                                            >
+                                                Vote For
+                                            </LoadingButton>
+                                            <LoadingButton
+                                                color="red"
+                                                onClick={() => handleVote(p.id, 'against')}
+                                                loading={votingInProgress === p.id}
+                                                disabled={votingInProgress !== null}
+                                                loadingText="Voting..."
+                                            >
+                                                Vote Against
+                                            </LoadingButton>
+                                            <LoadingButton
+                                                color="yellow"
+                                                onClick={() => handleVote(p.id, 'abstain')}
+                                                loading={votingInProgress === p.id}
+                                                disabled={votingInProgress !== null}
+                                                loadingText="Voting..."
+                                            >
+                                                Abstain
+                                            </LoadingButton>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="pt-4 text-center font-bold text-sky-300/80 tracking-wider">
+                                        {userVote ? `You voted ${userVote} on this proposal.` : "Voting has ended for this proposal."}
+                                    </div>
+                                )}
+                            </div>
+                        </Panel>
+                    )
+                })}
+
+                {pastProposals.length > 0 && (
+                     <div className="pt-8">
+                        <h3 className="text-center text-3xl font-extrabold text-white mb-8">Past Proposals</h3>
+                        {pastProposals.map(p => {
+                             const totalVotes = p.votesFor + p.votesAgainst + p.votesAbstain;
+                             const forPercent = totalVotes > 0 ? (p.votesFor / totalVotes) * 100 : 0;
+                            return (
+                                <Panel key={p.id} title={p.title} className="w-full mb-8">
+                                    <div className="space-y-4">
+                                        <div className="flex justify-between items-start">
+                                             <div className="flex items-center gap-3">
+                                                <img src={p.proposer.avatarUrl} alt={p.proposer.name} className="w-10 h-10 rounded-full border-2 border-pink-400" />
+                                                <div>
+                                                    <p className="text-sm text-pink-200/80">Proposed by</p>
+                                                    <p className="font-bold">{p.proposer.name}</p>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <span className={`text-xs font-bold uppercase px-3 py-1 rounded-full shadow-inner ${statusStyles[p.status].classes}`}>{statusStyles[p.status].label}</span>
+                                                <p className="text-sm text-pink-200/90 mt-1">{p.endDate}</p>
+                                            </div>
+                                        </div>
+                                        <p className="text-white/90 text-md break-words">{p.description}</p>
+                                        <div className="text-center pt-2 font-bold text-sky-300/80">Voting has ended.</div>
+                                    </div>
+                                </Panel>
+                            )
+                        })}
+                    </div>
+                )}
+
+                {/* Add pagination */}
+                {!isLoading && !error && !isCreating && filteredProposals.length > 0 && (
+                    <Pagination
+                        currentPage={currentPage}
+                        totalItems={filteredProposals.length}
+                        itemsPerPage={itemsPerPage}
+                        onPageChange={setCurrentPage}
+                    />
+                )}
+            </div>
+        </main>
+    );
+};
+--- END ---
+
+=== templates/IdeaBubbles.test.tsx ===
+import React from 'react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { vi } from 'vitest';
+import { IdeaBubbles } from './IdeaBubbles';
+import * as bubblesService from '../src/bubbles/service';
+
+// Mock the service module
+vi.mock('../src/bubbles/service');
+
+const mockBubbles = [
+    { id: 'BUBBLE_001', name: 'Rise Atlantis Season 2', fundingProgress: 75, status: 'Active & Fundraising', sodaRaised: 75000 },
+    { id: 'BUBBLE_002', name: 'Mycelium Music Collective', fundingProgress: 100, status: 'Funded', sodaRaised: 100000 },
+];
+
+describe('IdeaBubbles', () => {
+    beforeEach(() => {
+        vi.mocked(bubblesService.getBubbles).mockResolvedValue([...mockBubbles]);
+        vi.mocked(bubblesService.createBubble).mockResolvedValue({ id: 'BUBBLE_003', name: 'New Bubble', fundingProgress: 0, status: 'Draft', sodaRaised: 0 });
+    });
+
+    afterEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it('should render loading state and then the list of bubbles', async () => {
+        render(<IdeaBubbles />);
+        expect(screen.getByText('Loading bubbles...')).toBeInTheDocument();
+
+        await waitFor(() => {
+            expect(screen.getByText('Rise Atlantis Season 2')).toBeInTheDocument();
+            expect(screen.getByText('Mycelium Music Collective')).toBeInTheDocument();
+        });
+    });
+
+    it('should open the create bubble wizard when "Launch New Bubble" is clicked', async () => {
+        render(<IdeaBubbles />);
+        const launchButton = await screen.findByRole('button', { name: /launch new bubble/i });
+        expect(launchButton).toBeInTheDocument();
+
+        fireEvent.click(launchButton);
+
+        await waitFor(() => {
+            expect(screen.getByText("Let's build something new.")).toBeInTheDocument();
+        });
+    });
+
+    it('should allow creating a new bubble through the wizard', async () => {
+        render(<IdeaBubbles />);
+        const launchButton = await screen.findByRole('button', { name: /launch new bubble/i });
+        fireEvent.click(launchButton);
+
+        // Step 1: Name and Vision
+        await waitFor(() => expect(screen.getByLabelText('Bubble Name')).toBeInTheDocument());
+        fireEvent.change(screen.getByLabelText('Bubble Name'), { target: { value: 'My New Idea' } });
+        fireEvent.change(screen.getByLabelText('One-Line Vision'), { target: { value: 'A great new idea.' } });
+        fireEvent.click(screen.getByText('Next: Choose Type'));
+
+        // Step 2: Type
+        await waitFor(() => expect(screen.getByText('What kind of Bubble is it?')).toBeInTheDocument());
+        fireEvent.click(screen.getByRole('button', { name: 'Event' }));
+        fireEvent.click(screen.getByText('Next: Set Up Supply'));
+
+        // Step 3: Supply & Finalize
+        await waitFor(() => expect(screen.getByText('Set Total Share Supply')).toBeInTheDocument());
+        fireEvent.click(screen.getByText('Next: Allocate Shares'));
+
+        // Verify that the createBubble service function was called
+        await waitFor(() => {
+            expect(bubblesService.createBubble).toHaveBeenCalledWith({
+                name: 'My New Idea',
+                type: 'Event',
+            });
+        });
+    });
+});
+
+--- END ---
+
+=== templates/IdeaBubbles.tsx ===
+import React, { useState, useEffect, useCallback } from 'react';
+import { Panel } from '../components/Panel';
+import { Button } from '../components/Button';
+import { Bubble, BubbleType, Milestone, MilestoneStatus, TeamMember, Transaction, Update } from '../types';
+import { bubblesService } from '../src/bubbles/service';
+import { notify } from '../src/utils/notifications';
+import { CardSkeletonList, LoadingOverlay } from '../src/components/LoadingSkeletons';
+import { NoBubblesEmpty } from '../src/components/EmptyStates';
+import { LoadingButton } from '../src/components/LoadingButton';
+
+// --- Reusable UI Components ---
+const StatCard = ({ label, value, subvalue, className = '' }: {label: string, value: string | number, subvalue?: string, className?: string}) => (
+    <div className={`bg-black/20 p-3 rounded-xl text-center border-2 border-pink-500/20 ${className}`}>
+        <p className="text-sm font-bold text-pink-200 uppercase tracking-wider">{label}</p>
+        <p className="text-3xl font-extrabold text-white" style={{ textShadow: '1px 1px 3px rgba(31,218,255,0.5)' }}>{typeof value === 'number' ? value.toLocaleString() : value}</p>
+        {subvalue && <p className="text-xs text-sky-300 font-semibold">{subvalue}</p>}
+    </div>
+);
+
+const FormInput = ({ label, id, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label: string }) => (
+    <div>
+        <label htmlFor={id} className="font-bold text-pink-200 block mb-1 uppercase tracking-wider text-sm">{label}</label>
+        <input id={id} {...props} className="w-full bg-pink-900/50 border-2 border-pink-400/50 rounded-lg p-3 text-white placeholder-pink-300/50 focus:outline-none focus:border-sky-300 focus:ring-2 focus:ring-sky-300/50 transition" />
+    </div>
+);
+
+const FormTextArea = ({ label, id, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string }) => (
+    <div>
+        <label htmlFor={id} className="font-bold text-pink-200 block mb-1 uppercase tracking-wider text-sm">{label}</label>
+        <textarea id={id} {...props} rows={4} className="w-full bg-pink-900/50 border-2 border-pink-400/50 rounded-lg p-3 text-white placeholder-pink-300/50 focus:outline-none focus:border-sky-300 focus:ring-2 focus:ring-sky-300/50 transition" />
+    </div>
+);
+
+// --- Create Bubble Wizard ---
+const CreateBubbleWizard = ({ onBack }: { onBack: () => void }) => {
+    const [step, setStep] = useState(1);
+    const [bubbleName, setBubbleName] = useState('');
+    const [bubbleVision, setBubbleVision] = useState('');
+    const [bubbleType, setBubbleType] = useState<BubbleType | ''>('');
+    const [shareSupply, setShareSupply] = useState(100000);
+
+    const BUBBLE_TYPES: BubbleType[] = ['Event', 'Shrine', 'Album', 'Channel', 'Artist', 'Other'];
+
+    const renderStep = () => {
+        switch (step) {
+            case 1:
+                return (
+                    <div className="space-y-6">
+                        <div className="text-center">
+                            <h3 className="font-bold text-2xl text-white">Let's build something new.</h3>
+                            <p className="text-pink-200/90 mt-1">First, what is the name and vision of your project?</p>
+                        </div>
+                        <div className="space-y-4 bg-black/20 p-6 rounded-xl">
+                            <FormInput label="Bubble Name" id="bubble-name" placeholder="e.g., Rise Atlantis Season 2" value={bubbleName} onChange={e => setBubbleName(e.target.value)} />
+                            <FormTextArea label="One-Line Vision" id="bubble-vision" placeholder="What's the core idea in one sentence?" value={bubbleVision} onChange={e => setBubbleVision(e.target.value)} />
+                        </div>
+                        <Button color="green" onClick={() => setStep(2)} disabled={!bubbleName || !bubbleVision}>Next: Choose Type</Button>
+                    </div>
+                );
+            case 2:
+                 return (
+                    <div className="space-y-6">
+                        <div className="text-center">
+                            <h3 className="font-bold text-2xl text-white">What kind of Bubble is it?</h3>
+                            <p className="text-pink-200/90 mt-1">Select the category that best fits your project.</p>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 bg-black/20 p-6 rounded-xl">
+                           {BUBBLE_TYPES.map(type => (
+                                <button key={type} onClick={() => setBubbleType(type)} className={`p-4 rounded-lg font-bold border-2 transition-all ${bubbleType === type ? 'bg-sky-500/30 border-sky-400 text-white' : 'bg-pink-900/50 border-pink-400/50 text-pink-200 hover:border-sky-400'}`}>
+                                    {type}
+                                </button>
+                           ))}
+                        </div>
+                        <Button color="green" onClick={() => setStep(3)} disabled={!bubbleType}>Next: Set Up Supply</Button>
+                    </div>
+                );
+            case 3:
+                const firestarterPool = shareSupply * 0.25;
+                const communityPool = shareSupply * 0.75;
+                return (
+                    <div className="space-y-6">
+                        <div className="text-center">
+                            <h3 className="font-bold text-2xl text-white">Set Total Share Supply</h3>
+                            <p className="text-pink-200/90 mt-1">This determines the total equity units for your project. The split is automated.</p>
+                        </div>
+                        <div className="space-y-4 bg-black/20 p-6 rounded-xl">
+                             <div>
+                                <label htmlFor="share-supply" className="font-bold text-pink-200 block mb-2 uppercase tracking-wider text-center">Total Shares: <span className="text-white text-2xl">{shareSupply.toLocaleString()}</span></label>
+                                <input id="share-supply" type="range" min="100000" max="100000000" step="50000" value={shareSupply} onChange={e => setShareSupply(Number(e.target.value))} className="w-full h-3 bg-pink-900/50 rounded-lg appearance-none cursor-pointer accent-sky-400"/>
+                             </div>
+                             <div className="grid grid-cols-2 gap-4 pt-4">
+                                <div className="text-center bg-pink-900/50 p-3 rounded-lg">
+                                    <p className="text-pink-200 font-bold">Firestarter Pool (25%)</p>
+                                    <p className="text-white font-extrabold text-xl">{firestarterPool.toLocaleString()}</p>
+                                </div>
+                                <div className="text-center bg-pink-900/50 p-3 rounded-lg">
+                                    <p className="text-pink-200 font-bold">Community Pool (75%)</p>
+                                    <p className="text-white font-extrabold text-xl">{communityPool.toLocaleString()}</p>
+                                </div>
+                             </div>
+                        </div>
+                        <Button color="green" onClick={handleCreateBubble}>Next: Allocate Shares</Button>
+                    </div>
+                );
+            default: return null;
+        }
+    }
+
+    const handleCreateBubble = async () => {
+        const newBubbleData = {
+            name: bubbleName,
+            type: bubbleType,
+        };
+
+        try {
+            await bubblesService.createBubble(newBubbleData);
+            notify.success('Bubble created successfully!');
+            onBack(); // Go back to the list view, which will re-fetch
+        } catch (err) {
+            console.error("Failed to create bubble", err);
+            notify.error('Failed to create bubble. Please try again.');
+        }
+    }
+
+    return (
+         <main className="w-full p-4 md:p-8 animate-fade-in">
+            <div className="w-full max-w-2xl mx-auto">
+                 <Panel title={`Step ${step} of 5`} onClose={onBack}>
+                    {renderStep()}
+                     {step > 1 && <Button color="yellow" onClick={() => setStep(step - 1)} className="mt-4">Back</Button>}
+                </Panel>
+            </div>
+        </main>
+    )
+}
+
+
+// --- Admin Cockpit Modules ---
+const VitalsModule: React.FC<{ bubble: Bubble }> = ({ bubble }) => (
+    <Panel title="Vitals">
+        <div className="grid grid-cols-2 gap-4">
+            <StatCard label="Status" value={bubble.status} className="col-span-2" />
+            <StatCard label="SODA Raised" value={bubble.sodaRaised} />
+            <StatCard label="Backers" value={bubble.backers} />
+            <div className="col-span-2 space-y-2">
+                <p className="font-bold text-pink-200 text-center text-sm">Funding Progress ({bubble.fundingProgress}%)</p>
+                <div className="w-full bg-pink-900/50 rounded-full h-4 border-2 border-pink-500/30 overflow-hidden">
+                    <div className="bg-gradient-to-r from-green-400 to-lime-500 h-full rounded-full" style={{ width: `${bubble.fundingProgress}%` }}></div>
+                </div>
+            </div>
+            <StatCard label="Health Score" value={`${bubble.healthScore}/100`} className="col-span-2" />
+        </div>
+    </Panel>
+);
+
+const TeamModule: React.FC<{ team: TeamMember[] }> = ({ team }) => (
+    <Panel title="Team & Equity">
+        <div className="space-y-3">
+            {team.map(member => (
+                <div key={member.id} className="flex items-center justify-between bg-black/20 p-3 rounded-lg">
+                    <div className="flex items-center gap-3">
+                        <img src={member.avatarUrl} alt={member.name} className="w-10 h-10 rounded-full border-2 border-pink-400" />
+                        <div>
+                            <p className="font-bold text-white">{member.name}</p>
+                            <p className="text-sm text-pink-200">{member.role}</p>
+                        </div>
+                    </div>
+                    <div className="text-right">
+                        <p className="font-bold text-sky-300">{member.share}%</p>
+                        <p className="text-xs text-pink-200">Share</p>
+                    </div>
+                </div>
+            ))}
+            <div className="pt-2">
+                <Button color="green">+ Invite Member</Button>
+            </div>
+        </div>
+    </Panel>
+);
+
+const TreasuryModule: React.FC<{ treasury: Bubble['treasury'] }> = ({ treasury }) => (
+    <Panel title="Treasury">
+        <div className="space-y-4">
+            <StatCard label="Current Balance" value={`${treasury.balance.toLocaleString()} SODA`} className="!border-sky-400/50"/>
+            <div>
+                <h4 className="font-bold text-pink-100 text-lg mb-2">Transaction Log</h4>
+                <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
+                    {treasury.transactions.map(tx => (
+                        <div key={tx.id} className="flex justify-between text-sm bg-black/20 p-2 rounded-md">
+                            <span className="text-white/90">{tx.description}</span>
+                            <span className={`font-bold ${tx.amount > 0 ? 'text-green-400' : 'text-red-400'}`}>{tx.amount.toLocaleString()}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    </Panel>
+);
+
+const statusStyles: Record<MilestoneStatus, { icon: string, classes: string }> = {
+    'Todo': { icon: '⚪️', classes: 'border-gray-400 bg-gray-900/30' },
+    'In Progress': { icon: '🟡', classes: 'border-yellow-400 bg-yellow-900/30 animate-pulse' },
+    'Done': { icon: '✅', classes: 'border-green-400 bg-green-900/30' },
+};
+const RoadmapModule: React.FC<{ roadmap: Milestone[] }> = ({ roadmap }) => {
+    const [milestones, setMilestones] = useState(roadmap);
+    const [newMilestone, setNewMilestone] = useState('');
+
+    const handleAddMilestone = (e: React.FormEvent) => {
+        e.preventDefault();
+        if(!newMilestone.trim()) return;
+        const newEntry: Milestone = {
+            id: `ms-${Date.now()}`,
+            title: newMilestone,
+            status: 'Done',
+            contributor: '@Pops',
+            loggedDate: new Date().toISOString().split('T')[0],
+        };
+        setMilestones(prev => [newEntry, ...prev]);
+        setNewMilestone('');
+    }
+
+    return (
+        <Panel title="Roadmap & Contributions">
+            <div className="space-y-4">
+                <form className="space-y-3 bg-black/20 p-4 rounded-xl" onSubmit={handleAddMilestone}>
+                    <FormInput
+                        label="Log a New Contribution or Task"
+                        id="new-milestone"
+                        placeholder="e.g., Completed new song demo"
+                        value={newMilestone}
+                        onChange={(e) => setNewMilestone(e.target.value)}
+                    />
+                    <Button color="blue" type="submit" disabled={!newMilestone.trim()}>Log Contribution</Button>
+                </form>
+                <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
+                    {milestones.map(item => (
+                        <div key={item.id} className={`flex items-start gap-4 p-3 rounded-lg border-l-4 ${statusStyles[item.status].classes}`}>
+                            <span className="text-xl mt-1">{statusStyles[item.status].icon}</span>
+                            <div>
+                                <p className="font-bold text-white">{item.title}</p>
+                                <p className="text-sm text-pink-200">
+                                    {item.status === 'Done' ? `Completed by ${item.contributor} on` : `Created on`} {item.loggedDate}
+                                </p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </Panel>
+    );
+};
+
+const UpdatesModule: React.FC<{ updates: Update[] }> = ({ updates }) => {
+    const [allUpdates, setAllUpdates] = useState(updates);
+    const [newUpdateTitle, setNewUpdateTitle] = useState('');
+    const [newUpdateContent, setNewUpdateContent] = useState('');
+
+    const handlePublish = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newUpdateTitle.trim() || !newUpdateContent.trim()) return;
+        const newEntry: Update = {
+            id: `upd-${Date.now()}`,
+            title: newUpdateTitle,
+            content: newUpdateContent,
+            publishDate: new Date().toLocaleDateString(),
+        };
+        setAllUpdates(prev => [newEntry, ...prev]);
+        setNewUpdateTitle('');
+        setNewUpdateContent('');
+    }
+
+    return (
+        <Panel title="Updates">
+             <div className="space-y-6">
+                 <form className="space-y-3 bg-black/20 p-4 rounded-xl" onSubmit={handlePublish}>
+                    <h3 className="font-bold text-xl text-white tracking-wide">Publish an Update</h3>
+                    <FormInput label="Title" id="update-title" placeholder="e.g., Weekly Update #3" value={newUpdateTitle} onChange={e => setNewUpdateTitle(e.target.value)} />
+                    <FormTextArea label="Content" id="update-content" placeholder="Share your progress with the community..." value={newUpdateContent} onChange={e => setNewUpdateContent(e.target.value)} />
+                    <Button color="pink" type="submit" disabled={!newUpdateTitle.trim() || !newUpdateContent.trim()}>Publish to Backers</Button>
+                 </form>
+                 <div className="space-y-4">
+                     <h3 className="font-bold text-xl text-white tracking-wide">Published Updates</h3>
+                     {allUpdates.map(update => (
+                         <div key={update.id} className="bg-pink-900/30 p-4 rounded-xl">
+                            <div className="flex justify-between items-baseline">
+                                <h4 className="text-lg font-bold text-white">{update.title}</h4>
+                                <p className="text-sm text-pink-200">{update.publishDate}</p>
+                            </div>
+                            <p className="text-white/90 mt-2">{update.content}</p>
+                         </div>
+                     ))}
+                 </div>
+             </div>
+        </Panel>
+    );
+};
+
+// --- Main Views ---
+const BubbleAdminView: React.FC<{ bubble: Bubble; onBack: () => void }> = ({ bubble, onBack }) => {
+    const [currentBubble, setCurrentBubble] = useState(bubble);
+
+    const handleStatusUpdate = async (newStatus: string) => {
+        try {
+            await bubblesService.updateBubbleStatus(currentBubble.id, newStatus);
+            setCurrentBubble(prev => ({ ...prev, status: newStatus as any }));
+            notify.success('Status updated successfully!');
+        } catch (error) {
+            console.error('Failed to update status:', error);
+            notify.error('Failed to update status. Please try again.');
+        }
+    };
+
+    return (
+        <main className="w-full p-4 md:p-8 animate-fade-in">
+            <div className="w-full max-w-7xl mx-auto space-y-8">
+                <header className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <h1 className="text-2xl sm:text-4xl font-extrabold text-white text-center sm:text-left">{currentBubble.name} - Admin Panel</h1>
+                    <Button onClick={onBack} color="yellow" className="!w-auto !py-2">{'< Back to Bubbles'}</Button>
+                </header>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="lg:col-span-2 space-y-8">
+                        <RoadmapModule roadmap={currentBubble.roadmap} />
+                        <UpdatesModule updates={currentBubble.updates} />
+                    </div>
+                    <div className="space-y-8">
+                        <VitalsModule bubble={currentBubble} />
+                        <TeamModule team={currentBubble.team} />
+                        <TreasuryModule treasury={currentBubble.treasury} />
+                    </div>
+                </div>
+            </div>
+        </main>
+    );
+};
+
+const BubbleCard: React.FC<{ bubble: Bubble; onSelect: (bubble: Bubble) => void }> = ({ bubble, onSelect }) => {
+    return (
+        <button
+            onClick={() => onSelect(bubble)}
+            className="w-full text-left bg-pink-900/30 p-5 rounded-2xl border-2 border-pink-500/50 hover:border-sky-400 hover:shadow-lg hover:shadow-sky-500/20 hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-opacity-75 transition-all duration-300 animate-fade-in group"
+            aria-label={`View details for ${bubble.name}`}
+        >
+            <div className="flex flex-col sm:flex-row gap-4 items-start">
+                <div className="flex-grow min-w-0">
+                    <h3 className="text-xl font-bold text-white break-words">{bubble.name}</h3>
+                    <div className="mt-2">
+                        <div className="flex justify-between text-sm font-bold text-pink-200 mb-1">
+                            <span>Funding Progress</span>
+                            <span>{bubble.fundingProgress}%</span>
+                        </div>
+                        <div className="w-full bg-pink-900/50 rounded-full h-3 border border-pink-500/30 overflow-hidden">
+                            <div className="bg-gradient-to-r from-sky-400 to-cyan-500 h-full rounded-full" style={{ width: `${bubble.fundingProgress}%` }}></div>
+                        </div>
+                    </div>
+                </div>
+                <div className="flex-shrink-0 flex sm:flex-col items-start sm:items-end justify-between gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+                    <div className="text-left sm:text-right">
+                        <p className="text-xs text-pink-200 uppercase font-semibold">Status</p>
+                        <p className={`font-bold ${bubble.status === 'Active & Fundraising' ? 'text-yellow-300' : 'text-gray-300'}`}>{bubble.status}</p>
+                    </div>
+                    <div className="text-left sm:text-right">
+                         <p className="text-xs text-pink-200 uppercase font-semibold">SODA Raised</p>
+                        <p className="font-bold text-green-300">{bubble.sodaRaised.toLocaleString()}</p>
+                    </div>
+                </div>
+            </div>
+        </button>
+    );
+};
+
+const BubbleListView: React.FC<{ onSelectBubble: (bubble: Bubble) => void; onLaunch: () => void; }> = ({ onSelectBubble, onLaunch }) => {
+    const [bubbles, setBubbles] = useState<Bubble[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    const fetchBubbles = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const fetchedBubbles = await bubblesService.getAllBubbles();
+            setBubbles(fetchedBubbles);
+            setError(null);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+            setError(errorMessage);
+            notify.error(`Failed to load bubbles: ${errorMessage}`);
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchBubbles();
+    }, [fetchBubbles]);
+
+    if (isLoading) {
+        return (
+            <main className="w-full p-4 md:p-8 animate-fade-in">
+                <div className="w-full max-w-4xl mx-auto space-y-8">
+                    <Panel title="My Bubbles">
+                        <div className="space-y-4">
+                            <p className="text-center text-pink-100/90 mb-4">Loading your bubbles...</p>
+                            <CardSkeletonList count={3} />
+                        </div>
+                    </Panel>
+                </div>
+            </main>
+        );
+    }
+
+    return (
+        <main className="w-full p-4 md:p-8 animate-fade-in">
+            <div className="w-full max-w-4xl mx-auto space-y-8">
+                <Panel title="My Bubbles">
+                     <div className="space-y-4">
+                        <p className="text-center text-pink-100/90 mb-4">Select a bubble to open its admin cockpit, or launch a new one.</p>
+                        {error && (
+                            <div className="bg-red-500/20 border-2 border-red-500 rounded-lg p-4 text-center">
+                                <p className="text-red-200 font-bold">Error: {error}</p>
+                                <Button color="yellow" onClick={fetchBubbles} className="mt-3">Retry</Button>
+                            </div>
+                        )}
+                        {!error && bubbles.length === 0 && (
+                            <NoBubblesEmpty onCreate={onLaunch} />
+                        )}
+                        {!error && bubbles.map(bubble => (
+                            <BubbleCard key={bubble.id} bubble={bubble} onSelect={onSelectBubble} />
+                        ))}
+                         <div className="pt-4">
+                            <Button color="green" onClick={onLaunch}>+ Launch New Bubble</Button>
+                        </div>
+                    </div>
+                </Panel>
+            </div>
+        </main>
+    );
+};
+
+
+export const IdeaBubbles: React.FC = () => {
+    const [view, setView] = useState<'list' | 'admin' | 'create'>('list');
+    const [selectedBubble, setSelectedBubble] = useState<Bubble | null>(null);
+
+    const handleSelectBubble = (bubble: Bubble) => {
+        setSelectedBubble(bubble);
+        setView('admin');
+    }
+    
+    const handleBackToList = () => {
+        setSelectedBubble(null);
+        setView('list');
+    }
+    
+    const handleLaunch = () => {
+        setView('create');
+    }
+
+    if (view === 'create') {
+        return <CreateBubbleWizard onBack={handleBackToList} />;
+    }
+
+    if (view === 'admin' && selectedBubble) {
+        return <BubbleAdminView bubble={selectedBubble} onBack={handleBackToList} />;
+    }
+
+    return <BubbleListView onSelectBubble={handleSelectBubble} onLaunch={handleLaunch} />;
+};
+--- END ---
+
+=== templates/TokenDistribution.test.tsx ===
+import React from 'react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { vi } from 'vitest';
+import { TokenDistribution } from './TokenDistribution';
+import * as tokenDistributionService from '../src/token-distribution/service';
+import { TokenDistributionGroup } from '../types';
+
+// Mock the service module
+vi.mock('../src/token-distribution/service');
+
+const mockGroups: TokenDistributionGroup[] = [
+    { id: '1', groupName: 'Founders & Core Team', percentage: 20, totalTokens: 20000000, vestingPeriod: '4 years, 1 year cliff', claimed: 500000 },
+    { id: '2', groupName: 'Advisors & Early Backers', percentage: 15, totalTokens: 15000000, vestingPeriod: '2 years, 6 month cliff', claimed: 2500000 },
+];
+
+describe('TokenDistribution', () => {
+    beforeEach(() => {
+        vi.mocked(tokenDistributionService.getTokenDistributionGroups).mockResolvedValue([...mockGroups]);
+        vi.mocked(tokenDistributionService.claimTokens).mockImplementation(async (groupId, amount) => {
+            const group = mockGroups.find(g => g.id === groupId);
+            return { ...group!, claimed: group!.claimed + amount };
+        });
+    });
+
+    afterEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it('should render loading state and then the list of groups', async () => {
+        render(<TokenDistribution />);
+        expect(screen.getByText('Loading...')).toBeInTheDocument();
+
+        await waitFor(() => {
+            expect(screen.getByText('Founders & Core Team (20%)')).toBeInTheDocument();
+            expect(screen.getByText('Advisors & Early Backers (15%)')).toBeInTheDocument();
+        });
+    });
+
+    it('should show details and allow claiming when a group is clicked', async () => {
+        render(<TokenDistribution />);
+        await waitFor(() => expect(screen.getByText('Founders & Core Team (20%)')).toBeInTheDocument());
+
+        // Click on the first group
+        fireEvent.click(screen.getByText('Founders & Core Team (20%)'));
+
+        // Check that the detail view is shown
+        await waitFor(() => {
+            expect(screen.getByText('Details: Founders & Core Team')).toBeInTheDocument();
+        });
+
+        // Click the claim button
+        const claimButton = screen.getByRole('button', { name: /claim vested tokens/i });
+        fireEvent.click(claimButton);
+
+        // Verify that the claimTokens service function was called
+        await waitFor(() => {
+            expect(tokenDistributionService.claimTokens).toHaveBeenCalledWith('1', 100000);
+        });
+
+        // Verify that the UI updated with the new claimed amount
+        const detailPanel = await screen.findByRole('heading', { name: /details: founders & core team/i });
+        const detailView = detailPanel.closest('div[class*="bg-gradient-to-br"]');
+        expect(detailView).toHaveTextContent('Claimed: 600,000');
+    });
+});
+
+--- END ---
+
+=== templates/TokenDistribution.tsx ===
+import React, { useState, useEffect, useCallback } from 'react';
+import { Panel } from '../components/Panel';
+import { Button } from '../components/Button';
+import { TokenDistributionGroup, VestingInfo } from '../types';
+import { getTokenDistributionGroups, claimTokens, getVestingInfo } from '../src/token-distribution/service';
+import { notify } from '../src/utils/notifications';
+import { TableSkeleton, Spinner } from '../src/components/LoadingSkeletons';
+import { NoTokenAllocationsEmpty, ErrorState } from '../src/components/EmptyStates';
+import { LoadingButton } from '../src/components/LoadingButton';
+
+const ProgressBar: React.FC<{ value: number }> = ({ value }) => (
+    <div className="w-full bg-pink-900/50 rounded-full h-3 border border-pink-500/30 overflow-hidden">
+        <div className="bg-gradient-to-r from-sky-400 to-cyan-500 h-full rounded-full" style={{ width: `${value}%` }}></div>
+    </div>
+);
+
+export const TokenDistribution: React.FC = () => {
+    const [groups, setGroups] = useState<TokenDistributionGroup[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [selectedGroup, setSelectedGroup] = useState<TokenDistributionGroup | null>(null);
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [summary, setSummary] = useState('');
+    const [vestingInfo, setVestingInfo] = useState<VestingInfo | null>(null);
+    const [isClaiming, setIsClaiming] = useState(false);
+    const [claimSuccess, setClaimSuccess] = useState<string | null>(null);
+    const [currentUserId] = useState('user_founder1'); // Mock user - in production would come from auth context
+
+    const fetchGroups = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const fetchedGroups = await getTokenDistributionGroups();
+            setGroups(fetchedGroups);
+            setError(null);
+        } catch (err) {
+            const errorMsg = err instanceof Error ? err.message : 'An unknown error occurred';
+            setError(errorMsg);
+            notify.error(`Failed to load token groups: ${errorMsg}`);
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchGroups();
+    }, [fetchGroups]);
+
+    const handleSelectGroup = async (group: TokenDistributionGroup) => {
+        setSelectedGroup(group);
+        setSummary('');
+        setError('');
+        setIsGenerating(false);
+        setVestingInfo(null);
+        setClaimSuccess(null);
+
+        // Fetch vesting info for this user and group
+        try {
+            const info = await getVestingInfo(group.id, currentUserId);
+            setVestingInfo(info);
+        } catch (err) {
+            console.error('Error fetching vesting info:', err);
+            const errorMsg = 'Could not fetch vesting information for this group.';
+            setError(errorMsg);
+            notify.error(errorMsg);
+        }
+    }
+
+    const handleGenerateSummary = async (group: TokenDistributionGroup) => {
+        setIsGenerating(true);
+        setSummary('');
+        setError('');
+        try {
+            const prompt = `Provide a high-level overview for a DAO community member about the "${group.groupName}" token allocation. This group holds ${group.percentage}% of the total supply, amounting to ${group.totalTokens.toLocaleString()} tokens. The vesting schedule is "${group.vestingPeriod}". Currently, ${group.claimed.toLocaleString()} tokens have been claimed. Explain what this allocation is for, why it's important for the DAO's health, and what the vesting terms mean in simple language. Keep it concise and easy to understand in 2-3 short paragraphs.`;
+
+            const response = await fetch('/api/gemini/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ prompt }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to generate summary.');
+            }
+
+            const data = await response.json();
+            setSummary(data.text);
+        } catch (e: any) {
+            console.error(e);
+            setError(e.message || 'Failed to generate summary. The AI may be unavailable.');
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
+    const handleClaim = async (groupId: string, amount: number) => {
+        if (!confirm(`Claim ${amount.toLocaleString()} tokens?`)) return;
+
+        setIsClaiming(true);
+        setError(null);
+        setClaimSuccess(null);
+
+        try {
+            const response = await claimTokens(groupId, currentUserId, amount);
+
+            // Show success message
+            const successMsg = `Successfully claimed ${response.claimed.toLocaleString()} tokens! New balance: ${response.newBalance.toLocaleString()}`;
+            setClaimSuccess(successMsg);
+            notify.success(`Claimed ${response.claimed.toLocaleString()} tokens!`);
+
+            // Refresh vesting info
+            if (selectedGroup) {
+                const info = await getVestingInfo(groupId, currentUserId);
+                setVestingInfo(info);
+            }
+
+            // Refresh groups to update claimed amounts
+            await fetchGroups();
+        } catch (err) {
+            console.error("Failed to claim tokens", err);
+            const errorMsg = err instanceof Error ? err.message : 'Failed to claim tokens';
+            setError(errorMsg);
+            notify.error(errorMsg);
+        } finally {
+            setIsClaiming(false);
+        }
+    };
+    
+    const handleCloseDetails = () => {
+        setSelectedGroup(null);
+        setSummary('');
+        setError('');
+        setIsGenerating(false);
+        setVestingInfo(null);
+        setClaimSuccess(null);
+    };
+
+    return (
+        <main className="w-full p-4 md:p-8 animate-fade-in">
+            <div className="w-full max-w-6xl mx-auto space-y-8">
+
+                {/* Token Distribution Panel */}
+                <Panel title="Live Token Allocation">
+                    <div className="space-y-3">
+                        {isLoading && <TableSkeleton rows={4} />}
+                        {error && <ErrorState message={error} onRetry={fetchGroups} />}
+                        {!isLoading && !error && groups.length === 0 && <NoTokenAllocationsEmpty />}
+                        {!isLoading && !error && groups.map((group: TokenDistributionGroup) => {
+                            const claimedPercent = (group.claimed / group.totalTokens) * 100;
+                            return (
+                            <button key={group.groupName} onClick={() => handleSelectGroup(group)} className="w-full text-left bg-pink-900/30 p-4 rounded-xl border border-pink-500/50 transition-all duration-300 hover:bg-pink-900/60 hover:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-opacity-75">
+                                <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+                                    <div className="flex-1 min-w-0">
+                                        <h4 className="font-bold text-lg text-white truncate" title={group.groupName}>{group.groupName} ({group.percentage}%)</h4>
+                                        <p className="text-sm text-pink-200">{group.vestingPeriod}</p>
+                                    </div>
+                                    <div className="w-full md:w-5/12 flex-shrink-0">
+                                        <div className="flex justify-between text-xs font-bold text-pink-200 mb-1">
+                                            <span>Claimed: {group.claimed.toLocaleString()}</span>
+                                            <span>Total: {group.totalTokens.toLocaleString()}</span>
+                                        </div>
+                                         <ProgressBar value={claimedPercent} />
+                                    </div>
+                                </div>
+                            </button>
+                        )})}
+                    </div>
+                </Panel>
+
+                {/* Distribution Details Inline View */}
+                {selectedGroup && (
+                    <div className="mt-8 animate-fade-in">
+                        <Panel title={`Details: ${selectedGroup.groupName}`} onClose={handleCloseDetails} className="w-full max-w-4xl mx-auto">
+                            <div className="space-y-6">
+                                {/* Success Message */}
+                                {claimSuccess && (
+                                    <div className="bg-green-900/30 border border-green-500/50 p-4 rounded-lg text-green-200 font-semibold">
+                                        {claimSuccess}
+                                    </div>
+                                )}
+
+                                {/* Stats & Progress Bar */}
+                                <div className="bg-black/20 p-4 rounded-xl space-y-4">
+                                    <div className="grid grid-cols-2 gap-4 text-center">
+                                        <div>
+                                            <p className="text-sm font-bold text-pink-200 uppercase tracking-wider">Total Tokens</p>
+                                            <p className="text-2xl font-bold text-white">{selectedGroup.totalTokens.toLocaleString()}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-bold text-pink-200 uppercase tracking-wider">% of Supply</p>
+                                            <p className="text-2xl font-bold text-white">{selectedGroup.percentage}%</p>
+                                        </div>
+                                    </div>
+                                    <div>
+                                            <p className="font-bold text-pink-200 text-center text-sm">{selectedGroup.vestingPeriod}</p>
+                                    </div>
+                                    <div>
+                                        <div className="flex justify-between font-bold text-white mb-1 text-sm">
+                                            <span>Claimed: {selectedGroup.claimed.toLocaleString()}</span>
+                                            <span>Remaining: {(selectedGroup.totalTokens - selectedGroup.claimed).toLocaleString()}</span>
+                                        </div>
+                                        <div className="w-full bg-pink-900/50 rounded-full h-6 border-2 border-pink-500/30 overflow-hidden relative flex items-center justify-center">
+                                            <div className="bg-gradient-to-r from-sky-400 to-cyan-500 h-full absolute left-0 top-0" style={{ width: `${(selectedGroup.claimed / selectedGroup.totalTokens) * 100}%` }}></div>
+                                            <span className="relative font-bold text-sm text-white drop-shadow-md">{((selectedGroup.claimed / selectedGroup.totalTokens) * 100).toFixed(1)}% Claimed</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Vesting Information */}
+                                    {vestingInfo && (
+                                        <div className="border-t border-pink-500/30 pt-4 space-y-3">
+                                            <h4 className="font-bold text-lg text-white">Your Vesting Status</h4>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+                                                <div className="bg-black/30 p-3 rounded-lg">
+                                                    <p className="text-xs text-pink-200">Allocated</p>
+                                                    <p className="text-lg font-bold text-white">{vestingInfo.totalAllocated.toLocaleString()}</p>
+                                                </div>
+                                                <div className="bg-black/30 p-3 rounded-lg">
+                                                    <p className="text-xs text-pink-200">Vested</p>
+                                                    <p className="text-lg font-bold text-cyan-400">{vestingInfo.vestedAmount.toLocaleString()}</p>
+                                                </div>
+                                                <div className="bg-black/30 p-3 rounded-lg">
+                                                    <p className="text-xs text-pink-200">Already Claimed</p>
+                                                    <p className="text-lg font-bold text-white">{vestingInfo.claimedAmount.toLocaleString()}</p>
+                                                </div>
+                                                <div className="bg-black/30 p-3 rounded-lg">
+                                                    <p className="text-xs text-pink-200">Available</p>
+                                                    <p className="text-lg font-bold text-green-400">{vestingInfo.availableToClaim.toLocaleString()}</p>
+                                                </div>
+                                            </div>
+
+                                            {vestingInfo.nextUnlock && (
+                                                <div className="bg-sky-900/20 border border-sky-500/30 p-3 rounded-lg">
+                                                    <p className="text-sm text-sky-200">
+                                                        Next Unlock: <span className="font-bold">{new Date(vestingInfo.nextUnlock).toLocaleDateString()}</span> - <span className="font-bold">{vestingInfo.nextUnlockAmount.toLocaleString()} tokens</span>
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    <div className="pt-2 text-center">
+                                        <LoadingButton
+                                            color="blue"
+                                            onClick={() => vestingInfo && handleClaim(selectedGroup.id, vestingInfo.availableToClaim)}
+                                            disabled={!vestingInfo || vestingInfo.availableToClaim <= 0}
+                                            loading={isClaiming}
+                                            loadingText="Claiming..."
+                                        >
+                                            Claim {vestingInfo?.availableToClaim.toLocaleString() || 0} Vested Tokens
+                                        </LoadingButton>
+                                    </div>
+                                </div>
+                                
+                                {/* AI Section */}
+                                <div className="space-y-3">
+                                    <h4 className="font-bold text-xl text-white tracking-wide">AI-Powered Overview</h4>
+                                    
+                                    {isGenerating && (
+                                        <div className="flex items-center justify-center gap-3 text-sky-300 py-4">
+                                            <div className="w-6 h-6 border-4 border-t-transparent border-sky-400 rounded-full animate-spin"></div>
+                                            <span className="font-semibold">Generating insights...</span>
+                                        </div>
+                                    )}
+
+                                    {error && <p className="text-red-300 bg-red-900/30 p-3 rounded-lg font-semibold">{error}</p>}
+                                    
+                                    {summary && (
+                                        <div className="bg-black/25 p-4 rounded-lg text-white/90 whitespace-pre-wrap text-sm leading-relaxed" style={{ animation: 'fade-in 0.5s' }}>
+                                            {summary}
+                                        </div>
+                                    )}
+
+                                    {!isGenerating && !summary && (
+                                        <Button color="blue" onClick={() => handleGenerateSummary(selectedGroup)} disabled={isGenerating}>
+                                            Get AI Overview
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+                        </Panel>
+                    </div>
+                )}
+            </div>
+        </main>
+    );
+};
+--- END ---
+
+=== vitest.setup.ts ===
+import '@testing-library/jest-dom';
+import { vi } from 'vitest';
+
+// Mock the global fetch function
+const fetchMock = vi.fn();
+
+vi.spyOn(global, 'fetch').mockImplementation((url, options) => {
+    if (url === '/api/gemini/generate') {
+        const body = JSON.parse(options.body as string);
+        if (body.prompt.includes('fail')) {
+            return Promise.resolve(new Response(JSON.stringify({ error: 'Failed to generate contract. Please try again.' }), { status: 500 }));
+        }
+        return Promise.resolve(new Response(JSON.stringify({ text: 'Generated Contract' }), { status: 200 }));
+    }
+    // For any other url, call the original fetch
+    return fetchMock(url, options);
+});
+
+--- END ---
+
+=== src/agreements/service.ts ===
+import { AdviserAgreement, Agreement, SectionKey, Decision, ReasonCode, Redline, NegotiationThread } from './types';
+import { retryWithBackoff, withTimeout } from '../utils/retryLogic';
+import { circuitBreakerRegistry } from '../utils/circuitBreaker';
+import { globalRequestCache } from '../utils/requestDeduplication';
+import { toApiError } from '../utils/apiErrors';
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://web-production-85519.up.railway.app';
+const AGREEMENTS_API = `${API_URL}/api/agreements`;
+const REQUEST_TIMEOUT = 30000; // 30 seconds
+const CACHE_TTL = 60000; // 1 minute for GET requests
+
+// Circuit breaker for agreements service
+const agreementsCircuit = circuitBreakerRegistry.getBreaker('agreements', {
+  failureThreshold: 5,
+  timeout: 60000,
+  onStateChange: (state) => {
+    console.log(`Agreements service circuit breaker: ${state}`);
+  },
+});
+
+/**
+ * Enhanced fetch with retry, timeout, and circuit breaker
+ */
+async function resilientFetch<T>(
+  url: string,
+  options: RequestInit = {},
+  config: { skipCache?: boolean; cacheTTL?: number } = {}
+): Promise<T> {
+  const abortController = new AbortController();
+
+  try {
+    return await globalRequestCache.dedupe(
+      async () => {
+        return await agreementsCircuit.execute(async () => {
+          return await retryWithBackoff(
+            async () => {
+              const timeoutPromise = withTimeout(
+                fetch(url, { ...options, signal: abortController.signal }),
+                REQUEST_TIMEOUT,
+                abortController.signal
+              );
+
+              const response = await timeoutPromise;
+
+              if (!response.ok) {
+                const error: any = new Error(`HTTP ${response.status}: ${response.statusText}`);
+                error.status = response.status;
+                error.response = response;
+                throw error;
+              }
+
+              return response.json() as Promise<T>;
+            },
+            {
+              maxRetries: 3,
+              signal: abortController.signal,
+            }
+          );
+        });
+      },
+      url,
+      { ...options, skipCache: config.skipCache, cacheTTL: config.cacheTTL }
+    );
+  } catch (error) {
+    abortController.abort();
+    throw toApiError(error);
+  }
+}
+
+/**
+ * Fetches all agreements with caching and retry logic.
+ */
+export const getAgreements = async (options?: { skipCache?: boolean }): Promise<AdviserAgreement[]> => {
+  return resilientFetch<AdviserAgreement[]>(AGREEMENTS_API, { method: 'GET' }, {
+    skipCache: options?.skipCache,
+    cacheTTL: CACHE_TTL,
+  });
+};
+
+/**
+ * Signs a specific agreement with wallet signature and retry logic.
+ * @param id The ID of the agreement to sign.
+ * @param signerAddress The wallet address of the signer.
+ * @param signature The cryptographic signature.
+ * @param timestamp Optional timestamp of when the signature was created.
+ */
+export const signAgreement = async (
+  id: string,
+  signerAddress: string,
+  signature: string,
+  timestamp?: string
+): Promise<{ success: boolean; agreement: AdviserAgreement; signatures: any[] }> => {
+  const result = await resilientFetch<{ success: boolean; agreement: AdviserAgreement; signatures: any[] }>(
+    `${AGREEMENTS_API}/${id}/sign`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        signerAddress,
+        signature,
+        timestamp: timestamp || new Date().toISOString(),
+      }),
+    },
+    { skipCache: true }
+  );
+
+  // Invalidate related cache entries
+  globalRequestCache.invalidate(/GET:.*\/api\/agreements/);
+
+  return result;
+};
+
+/**
+ * Gets all signatures for a specific agreement with caching and retry logic.
+ * @param id The ID of the agreement.
+ */
+export const getAgreementSignatures = async (id: string): Promise<{
+  agreementId: string;
+  title: string;
+  status: string;
+  requiredSigners: string[];
+  signatures: Array<{
+    address: string;
+    signed: boolean;
+    signedAt: string | null;
+    verified: boolean;
+  }>;
+  allSignatures: Array<{
+    id: string;
+    address: string;
+    signature: string;
+    verified: boolean;
+    signedAt: string;
+  }>;
+}> => {
+  return resilientFetch(`${AGREEMENTS_API}/${id}/signatures`, { method: 'GET' }, { cacheTTL: CACHE_TTL });
+};
+
+/**
+ * Fetches a single agreement with caching and retry logic.
+ * @param id The ID of the agreement to fetch.
+ */
+export const getAgreement = async (id: string): Promise<Agreement | undefined> => {
+  return resilientFetch<Agreement>(`${AGREEMENTS_API}/${id}`, { method: 'GET' }, { cacheTTL: CACHE_TTL });
+};
+
+/**
+ * Fetches a specific negotiation thread with retry logic.
+ * @param threadId The ID of the thread to fetch.
+ */
+export const getNegotiationThread = async (threadId: string): Promise<NegotiationThread | undefined> => {
+  return resilientFetch<NegotiationThread>(`${AGREEMENTS_API}/threads/${threadId}`, { method: 'GET' }, { cacheTTL: CACHE_TTL });
+};
+
+
+/**
+ * Handles a decision on a specific section of an agreement with retry logic.
+ */
+export const decideOnSection = async (
+  agreementId: string,
+  sectionKey: SectionKey,
+  decision: Decision,
+  reasonCode?: ReasonCode[],
+  message?: string,
+  proposedChange?: Redline
+): Promise<Agreement> => {
+  const result = await resilientFetch<Agreement>(
+    `${AGREEMENTS_API}/${agreementId}/sections/${sectionKey}/decide`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ decision, reasonCode, message, proposedChange }),
+    },
+    { skipCache: true }
+  );
+
+  // Invalidate related cache entries
+  globalRequestCache.invalidate(new RegExp(`GET:.*\/api\/agreements\/${agreementId}`));
+
+  return result;
+};
+
+/**
+ * Creates a new agreement with retry logic.
+ * @param agreementData The agreement data to create.
+ */
+export const createAgreement = async (agreementData: any): Promise<any> => {
+  const result = await resilientFetch(
+    AGREEMENTS_API,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(agreementData),
+    },
+    { skipCache: true }
+  );
+
+  // Invalidate list cache
+  globalRequestCache.invalidate(/GET:.*\/api\/agreements/);
+
+  return result;
+};
+
+/**
+ * Verifies a milestone completion with retry logic.
+ * @param agreementId The agreement ID
+ * @param milestoneId The milestone ID to verify
+ */
+export const verifyMilestone = async (
+  agreementId: string,
+  milestoneId: string
+): Promise<void> => {
+  await resilientFetch(
+    `${AGREEMENTS_API}/${agreementId}/milestones/${milestoneId}/verify`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'Verified' }),
+    },
+    { skipCache: true }
+  );
+
+  // Invalidate related cache entries
+  globalRequestCache.invalidate(new RegExp(`GET:.*\/api\/agreements\/${agreementId}`));
+};
+
+/**
+ * Agreements service object with all API methods and monitoring utilities
+ */
+export const agreementsService = {
+    getAllAgreements: getAgreements,
+    getAgreement,
+    createAgreement,
+    signAgreement,
+    getAgreementSignatures,
+    getNegotiationThread,
+    decideOnSection,
+    verifyMilestone,
+
+    /**
+     * Get circuit breaker status for monitoring
+     */
+    getCircuitStatus: () => agreementsCircuit.getStats(),
+
+    /**
+     * Manually reset circuit breaker
+     */
+    resetCircuit: () => agreementsCircuit.reset(),
+};
+
+--- END ---
+
+=== src/governance/service.ts ===
+import type { Proposal, ProposalStatusType } from '../../types';
+import { retryWithBackoff, withTimeout } from '../utils/retryLogic';
+import { circuitBreakerRegistry } from '../utils/circuitBreaker';
+import { globalRequestCache } from '../utils/requestDeduplication';
+import { toApiError } from '../utils/apiErrors';
+
+// Use environment variable or fallback to production API
+const API_URL = import.meta.env.VITE_API_URL || 'https://web-production-85519.up.railway.app';
+const PROPOSALS_ENDPOINT = `${API_URL}/api/proposals`;
+const REQUEST_TIMEOUT = 30000; // 30 seconds
+const CACHE_TTL = 60000; // 1 minute for GET requests
+
+// Circuit breaker for governance service
+const governanceCircuit = circuitBreakerRegistry.getBreaker('governance', {
+  failureThreshold: 5,
+  timeout: 60000,
+  onStateChange: (state) => {
+    console.log(`Governance service circuit breaker: ${state}`);
+  },
+});
+
+/**
+ * Enhanced fetch with retry, timeout, and circuit breaker
+ */
+async function resilientFetch<T>(
+  url: string,
+  options: RequestInit = {},
+  config: { skipCache?: boolean; cacheTTL?: number } = {}
+): Promise<T> {
+  const abortController = new AbortController();
+
+  try {
+    return await globalRequestCache.dedupe(
+      async () => {
+        return await governanceCircuit.execute(async () => {
+          return await retryWithBackoff(
+            async () => {
+              const timeoutPromise = withTimeout(
+                fetch(url, { ...options, signal: abortController.signal }),
+                REQUEST_TIMEOUT,
+                abortController.signal
+              );
+
+              const response = await timeoutPromise;
+
+              if (!response.ok) {
+                const error: any = new Error(`HTTP ${response.status}: ${response.statusText}`);
+                error.status = response.status;
+                error.response = response;
+                throw error;
+              }
+
+              return response.json() as Promise<T>;
+            },
+            {
+              maxRetries: 3,
+              signal: abortController.signal,
+            }
+          );
+        });
+      },
+      url,
+      { ...options, skipCache: config.skipCache, cacheTTL: config.cacheTTL }
+    );
+  } catch (error) {
+    abortController.abort();
+    throw toApiError(error);
+  }
+}
+
+/**
+ * Interface for creating a new proposal
+ */
+export interface CreateProposalRequest {
+  title: string;
+  description: string;
+  type?: string;
+  status?: string;
+  creator: string;
+  startDate: string;
+  endDate: string;
+  yesVotes?: number;
+  noVotes?: number;
+  abstainVotes?: number;
+}
+
+/**
+ * Interface for submitting a vote
+ */
+export interface SubmitVoteRequest {
+  voter: string;
+  vote: 'yes' | 'no' | 'abstain';
+  weight: number;
+  timestamp: string;
+}
+
+/**
+ * Governance service object with all API methods and resilience features
+ */
+export const governanceService = {
+  /**
+   * Fetches all proposals with caching and retry logic
+   */
+  getAllProposals: async (options?: { skipCache?: boolean }): Promise<Proposal[]> => {
+    const data = await resilientFetch<any[]>(PROPOSALS_ENDPOINT, { method: 'GET' }, {
+      skipCache: options?.skipCache,
+      cacheTTL: CACHE_TTL,
+    });
+    return mapBackendProposalsToFrontend(data);
+  },
+
+  /**
+   * Fetches a single proposal by ID with caching and retry logic
+   */
+  getProposal: async (proposalId: string): Promise<Proposal> => {
+    const data = await resilientFetch<any>(`${PROPOSALS_ENDPOINT}/${proposalId}`, { method: 'GET' }, {
+      cacheTTL: CACHE_TTL,
+    });
+    return mapBackendProposalToFrontend(data);
+  },
+
+  /**
+   * Creates a new proposal with retry logic
+   */
+  createProposal: async (proposalData: CreateProposalRequest): Promise<Proposal> => {
+    const data = await resilientFetch<any>(
+      PROPOSALS_ENDPOINT,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(proposalData),
+      },
+      { skipCache: true }
+    );
+
+    // Invalidate proposals list cache
+    globalRequestCache.invalidate(/GET:.*\/api\/proposals/);
+
+    return mapBackendProposalToFrontend(data);
+  },
+
+  /**
+   * Submits a vote on a proposal with retry logic
+   */
+  vote: async (proposalId: string, voteData: SubmitVoteRequest): Promise<Proposal> => {
+    const data = await resilientFetch<any>(
+      `${PROPOSALS_ENDPOINT}/${proposalId}/vote`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(voteData),
+      },
+      { skipCache: true }
+    );
+
+    // Invalidate related cache entries
+    globalRequestCache.invalidate(new RegExp(`GET:.*\/api\/proposals\/${proposalId}`));
+    globalRequestCache.invalidate(/GET:.*\/api\/proposals$/);
+
+    return mapBackendProposalToFrontend(data);
+  },
+
+  /**
+   * Get circuit breaker status for monitoring
+   */
+  getCircuitStatus: () => governanceCircuit.getStats(),
+
+  /**
+   * Manually reset circuit breaker
+   */
+  resetCircuit: () => governanceCircuit.reset(),
+};
+
+/**
+ * Maps backend proposal format to frontend Proposal type
+ */
+function mapBackendProposalToFrontend(backendProposal: any): Proposal {
+  return {
+    id: backendProposal.id || backendProposal._id,
+    title: backendProposal.title,
+    description: backendProposal.description,
+    proposer: {
+      name: backendProposal.creator || 'Anonymous',
+      avatarUrl: backendProposal.creatorAvatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default',
+    },
+    status: mapBackendStatusToFrontend(backendProposal.status),
+    votesFor: backendProposal.yesVotes || 0,
+    votesAgainst: backendProposal.noVotes || 0,
+    votesAbstain: backendProposal.abstainVotes || 0,
+    endDate: formatEndDate(backendProposal.endDate),
+  };
+}
+
+/**
+ * Maps array of backend proposals to frontend format
+ */
+function mapBackendProposalsToFrontend(backendProposals: any[]): Proposal[] {
+  return backendProposals.map(mapBackendProposalToFrontend);
+}
+
+/**
+ * Maps backend status to frontend ProposalStatus enum
+ */
+function mapBackendStatusToFrontend(status: string): ProposalStatusType {
+  const statusMap: Record<string, ProposalStatusType> = {
+    'active': 'Active',
+    'passed': 'Passed',
+    'failed': 'Failed',
+    'queued': 'Queued',
+  };
+  return statusMap[status.toLowerCase()] || 'Active';
+}
+
+/**
+ * Formats end date for display
+ */
+function formatEndDate(endDateString: string): string {
+  const endDate = new Date(endDateString);
+  const now = new Date();
+  const diffMs = endDate.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) {
+    return 'Ended';
+  } else if (diffDays === 0) {
+    return 'Ends today';
+  } else if (diffDays === 1) {
+    return '1 day remaining';
+  } else if (diffDays < 7) {
+    return `${diffDays} days remaining`;
+  } else {
+    const weeks = Math.floor(diffDays / 7);
+    return weeks === 1 ? '1 week remaining' : `${weeks} weeks remaining`;
+  }
+}
+
+// Legacy exports for backward compatibility
+export const getProposals = governanceService.getAllProposals;
+export const submitVote = async (
+  proposalId: string,
+  voteType: 'for' | 'against' | 'abstain',
+  votingPower: number,
+  voterAddress: string
+): Promise<Proposal> => {
+  // Map old vote types to new format
+  const voteMap: Record<string, 'yes' | 'no' | 'abstain'> = {
+    'for': 'yes',
+    'against': 'no',
+    'abstain': 'abstain',
+  };
+
+  return governanceService.vote(proposalId, {
+    voter: voterAddress,
+    vote: voteMap[voteType],
+    weight: votingPower,
+    timestamp: new Date().toISOString(),
+  });
+};
+
+// Note: getUserVote functionality would need to be added to backend API
+export const getUserVote = async (proposalId: string, voterAddress: string): Promise<{
+  proposalId: string;
+  voterAddress: string;
+  hasVoted: boolean;
+  vote: 'for' | 'against' | 'abstain' | null;
+  votingPower?: number;
+  votedAt?: string;
+}> => {
+  // This endpoint may not exist in the current backend
+  // For now, return a placeholder response
+  return {
+    proposalId,
+    voterAddress,
+    hasVoted: false,
+    vote: null,
+  };
+};
+
+--- END ---
+
+=== src/bubbles/service.ts ===
+import { Bubble } from '../types';
+import { retryWithBackoff, withTimeout } from '../utils/retryLogic';
+import { circuitBreakerRegistry } from '../utils/circuitBreaker';
+import { globalRequestCache } from '../utils/requestDeduplication';
+import { toApiError } from '../utils/apiErrors';
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://web-production-85519.up.railway.app';
+const BUBBLES_ENDPOINT = `${API_URL}/api/bubbles`;
+const REQUEST_TIMEOUT = 30000; // 30 seconds
+const CACHE_TTL = 60000; // 1 minute for GET requests
+
+// Circuit breaker for bubbles service
+const bubblesCircuit = circuitBreakerRegistry.getBreaker('bubbles', {
+  failureThreshold: 5,
+  timeout: 60000,
+  onStateChange: (state) => {
+    console.log(`Bubbles service circuit breaker: ${state}`);
+  },
+});
+
+/**
+ * Enhanced fetch with retry, timeout, and circuit breaker
+ */
+async function resilientFetch<T>(
+  url: string,
+  options: RequestInit = {},
+  config: { skipCache?: boolean; cacheTTL?: number } = {}
+): Promise<T> {
+  const abortController = new AbortController();
+
+  try {
+    return await globalRequestCache.dedupe(
+      async () => {
+        return await bubblesCircuit.execute(async () => {
+          return await retryWithBackoff(
+            async () => {
+              const timeoutPromise = withTimeout(
+                fetch(url, { ...options, signal: abortController.signal }),
+                REQUEST_TIMEOUT,
+                abortController.signal
+              );
+
+              const response = await timeoutPromise;
+
+              if (!response.ok) {
+                const error: any = new Error(`HTTP ${response.status}: ${response.statusText}`);
+                error.status = response.status;
+                error.response = response;
+                throw error;
+              }
+
+              return response.json() as Promise<T>;
+            },
+            {
+              maxRetries: 3,
+              signal: abortController.signal,
+            }
+          );
+        });
+      },
+      url,
+      { ...options, skipCache: config.skipCache, cacheTTL: config.cacheTTL }
+    );
+  } catch (error) {
+    abortController.abort();
+    throw toApiError(error);
+  }
+}
+
+/**
+ * Service for managing Idea Bubbles with full CRUD operations and resilience features
+ */
+export const bubblesService = {
+  /**
+   * Fetches all bubbles with caching and retry logic.
+   */
+  getAllBubbles: async (options?: { skipCache?: boolean }): Promise<Bubble[]> => {
+    return resilientFetch<Bubble[]>(BUBBLES_ENDPOINT, { method: 'GET' }, {
+      skipCache: options?.skipCache,
+      cacheTTL: CACHE_TTL,
+    });
+  },
+
+  /**
+   * Creates a new bubble with retry on network errors.
+   * @param bubbleData The data for the new bubble.
+   */
+  createBubble: async (bubbleData: Partial<Bubble>): Promise<Bubble> => {
+    // Invalidate cache after creating
+    const result = await resilientFetch<Bubble>(
+      BUBBLES_ENDPOINT,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bubbleData),
+      },
+      { skipCache: true }
+    );
+
+    // Invalidate list cache
+    globalRequestCache.invalidate(/GET:.*\/api\/bubbles/);
+
+    return result;
+  },
+
+  /**
+   * Updates the status of a bubble with retry logic.
+   * @param id The bubble ID
+   * @param status The new status
+   */
+  updateBubbleStatus: async (id: string, status: string): Promise<Bubble> => {
+    const result = await resilientFetch<Bubble>(
+      `${BUBBLES_ENDPOINT}/${id}`,
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      },
+      { skipCache: true }
+    );
+
+    // Invalidate related cache entries
+    globalRequestCache.invalidate(/GET:.*\/api\/bubbles/);
+
+    return result;
+  },
+
+  /**
+   * Deletes a bubble with retry logic.
+   * @param id The bubble ID
+   */
+  deleteBubble: async (id: string): Promise<void> => {
+    await resilientFetch<void>(
+      `${BUBBLES_ENDPOINT}/${id}`,
+      { method: 'DELETE' },
+      { skipCache: true }
+    );
+
+    // Invalidate related cache entries
+    globalRequestCache.invalidate(/GET:.*\/api\/bubbles/);
+  },
+
+  /**
+   * Get circuit breaker status for monitoring
+   */
+  getCircuitStatus: () => bubblesCircuit.getStats(),
+
+  /**
+   * Manually reset circuit breaker
+   */
+  resetCircuit: () => bubblesCircuit.reset(),
+};
+
+// Legacy exports for backwards compatibility
+export const getBubbles = bubblesService.getAllBubbles;
+export const createBubble = bubblesService.createBubble;
+
+--- END ---
+
+=== src/token-distribution/service.ts ===
+import { TokenDistributionGroup, VestingInfo, ClaimTokensResponse } from '../types';
+import { retryWithBackoff, withTimeout } from '../utils/retryLogic';
+import { circuitBreakerRegistry } from '../utils/circuitBreaker';
+import { globalRequestCache } from '../utils/requestDeduplication';
+import { toApiError } from '../utils/apiErrors';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://web-production-85519.up.railway.app';
+const API_URL = `${API_BASE_URL}/api/token-distribution`;
+const REQUEST_TIMEOUT = 30000; // 30 seconds
+const CACHE_TTL = 60000; // 1 minute for GET requests
+
+// Circuit breaker for token distribution service
+const tokenDistributionCircuit = circuitBreakerRegistry.getBreaker('token-distribution', {
+  failureThreshold: 5,
+  timeout: 60000,
+  onStateChange: (state) => {
+    console.log(`Token distribution service circuit breaker: ${state}`);
+  },
+});
+
+/**
+ * Enhanced fetch with retry, timeout, and circuit breaker
+ */
+async function resilientFetch<T>(
+  url: string,
+  options: RequestInit = {},
+  config: { skipCache?: boolean; cacheTTL?: number } = {}
+): Promise<T> {
+  const abortController = new AbortController();
+
+  try {
+    return await globalRequestCache.dedupe(
+      async () => {
+        return await tokenDistributionCircuit.execute(async () => {
+          return await retryWithBackoff(
+            async () => {
+              const timeoutPromise = withTimeout(
+                fetch(url, { ...options, signal: abortController.signal }),
+                REQUEST_TIMEOUT,
+                abortController.signal
+              );
+
+              const response = await timeoutPromise;
+
+              if (!response.ok) {
+                const error: any = new Error(`HTTP ${response.status}: ${response.statusText}`);
+                error.status = response.status;
+                error.response = response;
+                throw error;
+              }
+
+              return response.json() as Promise<T>;
+            },
+            {
+              maxRetries: 3,
+              signal: abortController.signal,
+            }
+          );
+        });
+      },
+      url,
+      { ...options, skipCache: config.skipCache, cacheTTL: config.cacheTTL }
+    );
+  } catch (error) {
+    abortController.abort();
+    throw toApiError(error);
+  }
+}
+
+/**
+ * Fetches all token distribution groups with caching and retry logic.
+ */
+export const getTokenDistributionGroups = async (options?: { skipCache?: boolean }): Promise<TokenDistributionGroup[]> => {
+  return resilientFetch<TokenDistributionGroup[]>(API_URL, { method: 'GET' }, {
+    skipCache: options?.skipCache,
+    cacheTTL: CACHE_TTL,
+  });
+};
+
+/**
+ * Fetches vesting information for a user in a specific group with retry logic.
+ * @param groupId The ID of the group.
+ * @param userId The ID of the user.
+ */
+export const getVestingInfo = async (groupId: string, userId: string): Promise<VestingInfo> => {
+  return resilientFetch<VestingInfo>(`${API_URL}/${groupId}/vested?userId=${userId}`, { method: 'GET' }, {
+    cacheTTL: CACHE_TTL,
+  });
+};
+
+/**
+ * Claims a certain amount of tokens from a group with retry logic.
+ * @param groupId The ID of the group to claim from.
+ * @param userId The ID of the user claiming tokens.
+ * @param amount The amount of tokens to claim.
+ */
+export const claimTokens = async (groupId: string, userId: string, amount: number): Promise<ClaimTokensResponse> => {
+  const result = await resilientFetch<ClaimTokensResponse>(
+    `${API_URL}/${groupId}/claim`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, amount }),
+    },
+    { skipCache: true }
+  );
+
+  // Invalidate related cache entries
+  globalRequestCache.invalidate(new RegExp(`GET:.*\/api\/token-distribution\/${groupId}`));
+  globalRequestCache.invalidate(/GET:.*\/api\/token-distribution$/);
+
+  return result;
+};
+
+/**
+ * Token distribution service object with monitoring utilities
+ */
+export const tokenDistributionService = {
+  getTokenDistributionGroups,
+  getVestingInfo,
+  claimTokens,
+
+  /**
+   * Get circuit breaker status for monitoring
+   */
+  getCircuitStatus: () => tokenDistributionCircuit.getStats(),
+
+  /**
+   * Manually reset circuit breaker
+   */
+  resetCircuit: () => tokenDistributionCircuit.reset(),
+};
+
+--- END ---
+

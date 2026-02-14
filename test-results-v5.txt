@@ -1,0 +1,163 @@
+﻿node.exe : [1m[43m DEPRECATED [49m[22m [33m"environmentMatchGlobs" is deprecated. Use `test.projects` to define 
+different configurations instead.[39m
+At C:\Program Files\nodejs\npx.ps1:29 char:3
++   & $NODE_EXE $NPX_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([1m[43m DEPRE...s instead.[39m:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+[1m[46m RUN [49m[22m [36mv3.2.4 [39m[90mC:/Users/User/Documents/GitHub/DAOV1[39m
+
+ [32mÔ£ô[39m backend/src/routes/token_distribution.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 49[2mms[22m[39m
+ [32mÔ£ô[39m backend/src/routes/proposals.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 40[2mms[22m[39m
+ [32mÔ£ô[39m templates/DAOCommandCenter.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 70[2mms[22m[39m
+[90mstdout[2m | templates/MultiSigTreasury.test.tsx[2m > [22m[2mMultiSigTreasury[2m > [22m[2mshould allow a user to create a new transaction
+[22m[39mTransaction submitted for approval!
+
+ [32mÔ£ô[39m templates/MultiSigTreasury.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[32m 205[2mms[22m[39m
+ [32mÔ£ô[39m backend/src/simple.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 2[2mms[22m[39m
+ [32mÔ£ô[39m src/templates/AgreementNegotiation.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[32m 82[2mms[22m[39m
+ [32mÔ£ô[39m templates/TokenDistribution.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[32m 207[2mms[22m[39m
+ [32mÔ£ô[39m templates/AdviserAgreements.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[32m 234[2mms[22m[39m
+ [32mÔ£ô[39m templates/IdeaBubbles.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[32m 255[2mms[22m[39m
+[90mstdout[2m | backend/src/routes/gemini.test.ts
+[22m[39mÔ£ô Query monitoring enabled (threshold: 100ms)
+
+[90mstdout[2m | backend/src/routes/agreements.test.ts
+[22m[39mÔ£ô Query monitoring enabled (threshold: 100ms)
+
+[90mstdout[2m | backend/src/routes/bubbles.test.ts
+[22m[39mÔ£ô Query monitoring enabled (threshold: 100ms)
+
+[90mstdout[2m | backend/src/routes/firstborn-agreements.test.ts
+[22m[39mÔ£ô Query monitoring enabled (threshold: 100ms)
+
+ [32mÔ£ô[39m components/Panel.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+[90mstderr[2m | templates/GovernanceVoting.test.tsx[2m > [22m[2mGovernanceVoting[2m > [22m[2mshould render 
+loading state and then the list of proposals
+[22m[39mAn empty string ("") was passed to the src attribute. This may cause the browser to download the whole page 
+again over the network. To fix this, either do not render the element at all or pass null to src instead of an empty 
+string.
+An empty string ("") was passed to the src attribute. This may cause the browser to download the whole page again over 
+the network. To fix this, either do not render the element at all or pass null to src instead of an empty string.
+
+[90mstderr[2m | templates/GovernanceVoting.test.tsx[2m > [22m[2mGovernanceVoting[2m > [22m[2mshould filter 
+proposals when a status tab is clicked
+[22m[39mAn empty string ("") was passed to the src attribute. This may cause the browser to download the whole page 
+again over the network. To fix this, either do not render the element at all or pass null to src instead of an empty 
+string.
+An empty string ("") was passed to the src attribute. This may cause the browser to download the whole page again over 
+the network. To fix this, either do not render the element at all or pass null to src instead of an empty string.
+
+[90mstderr[2m | templates/GovernanceVoting.test.tsx[2m > [22m[2mGovernanceVoting[2m > [22m[2mshould call the 
+vote service when a vote button is clicked
+[22m[39mAn empty string ("") was passed to the src attribute. This may cause the browser to download the whole page 
+again over the network. To fix this, either do not render the element at all or pass null to src instead of an empty 
+string.
+An empty string ("") was passed to the src attribute. This may cause the browser to download the whole page again over 
+the network. To fix this, either do not render the element at all or pass null to src instead of an empty string.
+
+ [32mÔ£ô[39m templates/GovernanceVoting.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[32m 149[2mms[22m[39m
+[90mstdout[2m | templates/DAOCreationWizard.test.tsx[2m > [22m[2mDAOCreationWizard[2m > [22m[2mallows navigation through all steps
+[22m[39mÔ£à Contract generated successfully, length: [33m18[39m
+
+[90mstdout[2m | backend/src/routes/gemini.test.ts
+[22m[39mÔ£ô Environment variables validated successfully
+
+[90mstdout[2m | backend/src/routes/bubbles.test.ts
+[22m[39mÔ£ô Environment variables validated successfully
+
+[90mstdout[2m | backend/src/routes/agreements.test.ts
+[22m[39mÔ£ô Environment variables validated successfully
+
+[90mstdout[2m | backend/src/routes/firstborn-agreements.test.ts
+[22m[39mÔ£ô Environment variables validated successfully
+
+[90mstdout[2m | backend/src/routes/bubbles.test.ts[2m > [22m[2mBubbles API[2m > [22m[2mGET /api/bubbles should return a list of bubbles
+[22m[39m2026-02-13 08:43:05 [[32mhttp[39m]: Request processed {"method":"GET","url":"/api/bubbles","statusCode":200,"duration":6,"ip":"::ffff:127.0.0.1"}
+
+[90mstdout[2m | backend/src/routes/agreements.test.ts[2m > [22m[2mAgreements API[2m > [22m[2mGET /api/agreements/:id should return a single agreement
+[22m[39m2026-02-13 08:43:05 [[32mhttp[39m]: Request processed {"method":"GET","url":"/api/agreements/AGMT_001","statusCode":200,"duration":8,"ip":"::ffff:127.0.0.1"}
+
+[90mstdout[2m | backend/src/routes/firstborn-agreements.test.ts[2m > [22m[2mFirst Born Agreements API[2m > [22m[2mGET /api/agreements/firstborn[2m > [22m[2mshould return all firstborn agreements
+[22m[39m2026-02-13 08:43:05 [[32mhttp[39m]: Request processed {"method":"GET","url":"/api/agreements/firstborn","statusCode":200,"duration":7,"ip":"::ffff:127.0.0.1"}
+
+[90mstdout[2m | backend/src/routes/bubbles.test.ts[2m > [22m[2mBubbles API[2m > [22m[2mPOST /api/bubbles should create a new bubble
+[22m[39m2026-02-13 08:43:05 [[32mhttp[39m]: Request processed {"method":"POST","url":"/api/bubbles","statusCode":201,"duration":0,"ip":"::ffff:127.0.0.1","body":{"name":"New Test Bubble","type":"Event"}}
+
+ [32mÔ£ô[39m backend/src/routes/bubbles.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 30[2mms[22m[39m
+[90mstdout[2m | backend/src/routes/firstborn-agreements.test.ts[2m > [22m[2mFirst Born Agreements API[2m > [22m[2mGET /api/agreements/firstborn[2m > [22m[2mshould filter by dao_id when provided
+[22m[39m2026-02-13 08:43:05 [[32mhttp[39m]: Request processed {"method":"GET","url":"/api/agreements/firstborn?dao_id=dao_001","statusCode":200,"duration":1,"ip":"::ffff:127.0.0.1","query":{"dao_id":"dao_001"}}
+
+[90mstdout[2m | backend/src/routes/agreements.test.ts[2m > [22m[2mAgreements API[2m > [22m[2mPOST /api/agreements/:agreementId/sections/:sectionKey/decide should update a section
+[22m[39m2026-02-13 08:43:05 [[32mhttp[39m]: Request processed {"method":"POST","url":"/api/agreements/AGMT_001/sections/role_term/decide","statusCode":200,"duration":1,"ip":"::ffff:127.0.0.1","body":{"decision":"accept"}}
+
+[90mstdout[2m | backend/src/routes/firstborn-agreements.test.ts[2m > [22m[2mFirst Born Agreements API[2m > [22m[2mGET /api/agreements/firstborn/:id[2m > [22m[2mshould return a specific firstborn agreement with vesting schedule
+[22m[39m2026-02-13 08:43:05 [[32mhttp[39m]: Request processed {"method":"GET","url":"/api/agreements/firstborn/1","statusCode":200,"duration":1,"ip":"::ffff:127.0.0.1"}
+
+ [32mÔ£ô[39m backend/src/routes/agreements.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 36[2mms[22m[39m
+[90mstdout[2m | backend/src/routes/firstborn-agreements.test.ts[2m > [22m[2mFirst Born Agreements API[2m > [22m[2mGET /api/agreements/firstborn/:id[2m > [22m[2mshould return 404 for non-existent agreement
+[22m[39m2026-02-13 08:43:05 [[32mhttp[39m]: Request processed {"method":"GET","url":"/api/agreements/firstborn/999","statusCode":404,"duration":1,"ip":"::ffff:127.0.0.1"}
+2026-02-13 08:43:05 [[33mwarn[39m]: Request error {"method":"GET","url":"/api/agreements/firstborn/999","statusCode":404,"duration":1,"ip":"::ffff:127.0.0.1"}
+
+[90mstdout[2m | backend/src/routes/gemini.test.ts[2m > [22m[2m/api/mentor/chat[2m > [22m[2mshould save user and AI messages to the database
+[22m[39m2026-02-13 08:43:05 [[32mhttp[39m]: Request processed {"method":"POST","url":"/api/mentor/chat","statusCode":200,"duration":20,"ip":"::ffff:127.0.0.1","body":{"sessionId":"test-session-123","prompt":"Hello, AI!"}}
+
+[90mstdout[2m | backend/src/routes/firstborn-agreements.test.ts[2m > [22m[2mFirst Born Agreements API[2m > [22m[2mPOST /api/agreements/firstborn[2m > [22m[2mshould return 400 for missing required fields
+[22m[39m2026-02-13 08:43:05 [[32mhttp[39m]: Request processed {"method":"POST","url":"/api/agreements/firstborn","statusCode":400,"duration":1,"ip":"::ffff:127.0.0.1"}
+2026-02-13 08:43:05 [[33mwarn[39m]: Request error {"method":"POST","url":"/api/agreements/firstborn","statusCode":400,"duration":1,"ip":"::ffff:127.0.0.1"}
+
+[90mstdout[2m | backend/src/routes/firstborn-agreements.test.ts[2m > [22m[2mFirst Born Agreements API[2m > [22m[2mPOST /api/agreements/firstborn[2m > [22m[2mshould return 400 for invalid currency
+[22m[39m2026-02-13 08:43:05 [[32mhttp[39m]: Request processed {"method":"POST","url":"/api/agreements/firstborn","statusCode":400,"duration":0,"ip":"::ffff:127.0.0.1","body":{"dao_id":"dao_001","personal_details":{"name":"Jane","surname":"NewInvestor","email":"jane@newinvestor.com","wallet_address":"0xabcdef1234567890abcdef1234567890abcdef12"},"capital_contribution":{"amount":5000,"currency":"INVALID_CURRENCY"},"token_reward":"[REDACTED]","cultural_benefits":["voting_rights"],"legal_framework":"Swiss Foundation"}}
+2026-02-13 08:43:05 [[33mwarn[39m]: Request error {"method":"POST","url":"/api/agreements/firstborn","statusCode":400,"duration":0,"ip":"::ffff:127.0.0.1"}
+
+[90mstdout[2m | backend/src/routes/firstborn-agreements.test.ts[2m > [22m[2mFirst Born Agreements API[2m > [22m[2mPOST /api/agreements/firstborn[2m > [22m[2mshould return 400 for invalid wallet address
+[22m[39m2026-02-13 08:43:05 [[32mhttp[39m]: Request processed {"method":"POST","url":"/api/agreements/firstborn","statusCode":400,"duration":0,"ip":"::ffff:127.0.0.1","body":{"dao_id":"dao_001","personal_details":{"name":"Jane","surname":"NewInvestor","email":"jane@newinvestor.com","wallet_address":"short"},"capital_contribution":{"amount":5000,"currency":"USD"},"token_reward":"[REDACTED]","cultural_benefits":["voting_rights"],"legal_framework":"Swiss Foundation"}}
+2026-02-13 08:43:05 [[33mwarn[39m]: Request error {"method":"POST","url":"/api/agreements/firstborn","statusCode":400,"duration":0,"ip":"::ffff:127.0.0.1"}
+
+[90mstdout[2m | backend/src/routes/firstborn-agreements.test.ts[2m > [22m[2mFirst Born Agreements API[2m > [22m[2mPOST /api/agreements/firstborn[2m > [22m[2mshould return 400 for zero contribution amount
+[22m[39m2026-02-13 08:43:05 [[32mhttp[39m]: Request processed {"method":"POST","url":"/api/agreements/firstborn","statusCode":400,"duration":0,"ip":"::ffff:127.0.0.1","body":{"dao_id":"dao_001","personal_details":{"name":"Jane","surname":"NewInvestor","email":"jane@newinvestor.com","wallet_address":"0xabcdef1234567890abcdef1234567890abcdef12"},"capital_contribution":{"amount":0,"currency":"USD"},"token_reward":"[REDACTED]","cultural_benefits":["voting_rights"],"legal_framework":"Swiss Foundation"}}
+2026-02-13 08:43:05 [[33mwarn[39m]: Request error {"method":"POST","url":"/api/agreements/firstborn","statusCode":400,"duration":0,"ip":"::ffff:127.0.0.1"}
+
+[90mstdout[2m | backend/src/routes/firstborn-agreements.test.ts[2m > [22m[2mFirst Born Agreements API[2m > [22m[2mPUT /api/agreements/firstborn/:id/status[2m > [22m[2mshould return 400 for missing required fields
+[22m[39m2026-02-13 08:43:05 [[32mhttp[39m]: Request processed {"method":"PUT","url":"/api/agreements/firstborn/1/status","statusCode":400,"duration":1,"ip":"::ffff:127.0.0.1"}
+2026-02-13 08:43:05 [[33mwarn[39m]: Request error {"method":"PUT","url":"/api/agreements/firstborn/1/status","statusCode":400,"duration":1,"ip":"::ffff:127.0.0.1"}
+
+[90mstdout[2m | backend/src/routes/firstborn-agreements.test.ts[2m > [22m[2mFirst Born Agreements API[2m > [22m[2mPUT /api/agreements/firstborn/:id/status[2m > [22m[2mshould return 400 for invalid status
+[22m[39m2026-02-13 08:43:05 [[32mhttp[39m]: Request processed {"method":"PUT","url":"/api/agreements/firstborn/1/status","statusCode":400,"duration":1,"ip":"::ffff:127.0.0.1","body":{"status":"invalid_status","changed_by":"admin"}}
+2026-02-13 08:43:05 [[33mwarn[39m]: Request error {"method":"PUT","url":"/api/agreements/firstborn/1/status","statusCode":400,"duration":1,"ip":"::ffff:127.0.0.1"}
+
+[90mstdout[2m | backend/src/routes/firstborn-agreements.test.ts[2m > [22m[2mFirst Born Agreements API[2m > [22m[2mGET /api/agreements/firstborn/:id/vesting[2m > [22m[2mshould return vesting schedule for a member
+[22m[39m2026-02-13 08:43:05 [[32mhttp[39m]: Request processed {"method":"GET","url":"/api/agreements/firstborn/1/vesting","statusCode":200,"duration":1,"ip":"::ffff:127.0.0.1"}
+
+[90mstdout[2m | backend/src/routes/firstborn-agreements.test.ts[2m > [22m[2mFirst Born Agreements API[2m > [22m[2mGET /api/agreements/firstborn/:id/vesting[2m > [22m[2mshould return 404 for non-existent member
+[22m[39m2026-02-13 08:43:05 [[32mhttp[39m]: Request processed {"method":"GET","url":"/api/agreements/firstborn/999/vesting","statusCode":404,"duration":0,"ip":"::ffff:127.0.0.1"}
+2026-02-13 08:43:05 [[33mwarn[39m]: Request error {"method":"GET","url":"/api/agreements/firstborn/999/vesting","statusCode":404,"duration":0,"ip":"::ffff:127.0.0.1"}
+
+[90mstdout[2m | backend/src/routes/gemini.test.ts[2m > [22m[2m/api/mentor/chat[2m > [22m[2mshould load history for an existing session
+[22m[39m2026-02-13 08:43:05 [[32mhttp[39m]: Request processed {"method":"POST","url":"/api/mentor/chat","statusCode":200,"duration":13,"ip":"::ffff:127.0.0.1","body":{"sessionId":"test-session-456","prompt":"This is the first message."}}
+
+[90mstdout[2m | backend/src/routes/firstborn-agreements.test.ts[2m > [22m[2mFirst Born Agreements API[2m > [22m[2mPUT /api/agreements/firstborn/:id/vesting/:releaseId/release[2m > [22m[2mshould return 400 for missing released_by
+[22m[39m2026-02-13 08:43:05 [[32mhttp[39m]: Request processed {"method":"PUT","url":"/api/agreements/firstborn/1/vesting/1/release","statusCode":400,"duration":0,"ip":"::ffff:127.0.0.1"}
+2026-02-13 08:43:05 [[33mwarn[39m]: Request error {"method":"PUT","url":"/api/agreements/firstborn/1/vesting/1/release","statusCode":400,"duration":0,"ip":"::ffff:127.0.0.1"}
+
+ [32mÔ£ô[39m backend/src/routes/firstborn-agreements.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 83[2mms[22m[39m
+[90mstdout[2m | backend/src/routes/gemini.test.ts[2m > [22m[2m/api/mentor/chat[2m > [22m[2mshould load history for an existing session
+[22m[39m2026-02-13 08:43:05 [[32mhttp[39m]: Request processed {"method":"POST","url":"/api/mentor/chat","statusCode":200,"duration":12,"ip":"::ffff:127.0.0.1","body":{"sessionId":"test-session-456","prompt":"This is the second message."}}
+
+ [32mÔ£ô[39m backend/src/routes/gemini.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 104[2mms[22m[39m
+[90mstderr[2m | templates/DAOCreationWizard.test.tsx[2m > [22m[2mDAOCreationWizard[2m > [22m[2mshows an error 
+message if AI contract generation fails
+[22m[39mError: Failed to generate contract. Please try again.
+    at handleGenerateContract 
+[90m(C:\Users\User\Documents\GitHub\DAOV1\[39mtemplates\DAOCreationWizard.tsx:169:23[90m)[39m
+
+ [32mÔ£ô[39m templates/DAOCreationWizard.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 804[2mms[22m[39m
+   [33m[2mÔ£ô[22m[39m DAOCreationWizard[2m > [22mallows navigation through all steps [33m 353[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m16 passed[39m[22m[90m (16)[39m
+[2m      Tests [22m [1m[32m49 passed[39m[22m[90m (49)[39m
+[2m   Start at [22m 08:43:02
+[2m   Duration [22m 2.75s[2m (transform 1.93s, setup 1.78s, collect 9.67s, tests 2.37s, environment 6.19s, prepare 1.81s)[22m
+

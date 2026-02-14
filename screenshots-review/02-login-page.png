@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>PIA - Project Intelligence Agent</title>
+
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#00ff88">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PIA">
+  <meta name="description" content="Control your AI agent fleet from anywhere">
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <!-- Icons -->
+  <link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+
+  <!-- Manifest -->
+  <link rel="manifest" href="/manifest.json">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <h1 class="logo">PIA</h1>
+        <span class="subtitle">Project Intelligence Agent</span>
+      </div>
+      <div class="header-center">
+        <div class="stats">
+          <div class="stat">
+            <span class="stat-value" id="stat-machines">0</span>
+            <span class="stat-label">Machines</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="stat-agents">0</span>
+            <span class="stat-label">Agents</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="stat-working">0</span>
+            <span class="stat-label">Working</span>
+          </div>
+          <div class="stat stat-alert">
+            <span class="stat-value" id="stat-alerts">0</span>
+            <span class="stat-label">Alerts</span>
+          </div>
+          <div class="stat stat-cost">
+            <span class="stat-value" id="stat-ai-cost">$0.00</span>
+            <span class="stat-label">AI Today</span>
+          </div>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="connection-status" id="connection-status">
+          <span class="status-dot"></span>
+          <span class="status-text">Connecting...</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="nav">
+      <a href="#fleet" class="nav-item active" data-view="fleet">Fleet Matrix</a>
+      <a href="#command" class="nav-item" data-view="command">Command</a>
+      <a href="#tunnel" class="nav-item" data-view="tunnel">CLI Tunnel</a>
+      <a href="#mcps" class="nav-item" data-view="mcps">MCPs</a>
+      <a href="#hooks" class="nav-item" data-view="hooks">Hooks</a>
+      <a href="#alerts" class="nav-item" data-view="alerts">Alerts</a>
+      <a href="#ai" class="nav-item" data-view="ai">AI Models</a>
+      <a href="#tasks" class="nav-item" data-view="tasks">Tasks</a>
+      <a href="#bus" class="nav-item" data-view="bus">Agent Bus</a>
+      <a href="#doctor" class="nav-item" data-view="doctor">Doctor</a>
+      <a href="#delegation" class="nav-item" data-view="delegation">Delegation</a>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Fleet View -->
+      <section id="view-fleet" class="view active">
+        <div class="view-header">
+          <h2>Fleet Matrix</h2>
+          <div class="view-controls">
+            <select id="filter-machine" class="select">
+              <option value="">All Machines</option>
+            </select>
+            <select id="filter-status" class="select">
+              <option value="">All Status</option>
+              <option value="working">Working</option>
+              <option value="idle">Idle</option>
+              <option value="waiting">Waiting</option>
+              <option value="error">Error</option>
+            </select>
+          </div>
+        </div>
+        <div class="fleet-grid" id="fleet-grid">
+          <!-- Agent tiles will be inserted here -->
+          <div class="empty-state" id="fleet-empty">
+            <p>No agents found</p>
+            <p class="text-muted">Agents will appear here when machines connect</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Command Center View -->
+      <section id="view-command" class="view">
+        <div class="view-header">
+          <h2>Command Center</h2>
+          <div class="view-controls">
+            <span id="orchestrator-status" class="connection-status">
+              <span class="status-dot"></span>
+              <span class="status-text">Connecting...</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="command-container">
+          <!-- Chat Messages -->
+          <div class="chat-messages" id="chat-messages">
+            <div class="chat-message system">
+              <div class="message-content">
+                Welcome to PIA Command Center. You can communicate with the Master Claude here.
+                <br><br>
+                <strong>Quick Commands:</strong><br>
+                • "status" - Get status report<br>
+                • "list instances" - See all Claude instances<br>
+                • "spawn [purpose]" - Create new Claude instance<br>
+                • "@InstanceName [message]" - Send to specific instance
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="quick-actions">
+            <button class="btn btn-secondary quick-action" data-command="status">Status Report</button>
+            <button class="btn btn-secondary quick-action" data-command="list instances">List Instances</button>
+            <button class="btn btn-secondary quick-action" data-command="spawn General Assistant">Spawn Claude</button>
+          </div>
+
+          <!-- Chat Input -->
+          <div class="chat-input-container">
+            <textarea id="chat-input" class="chat-input" placeholder="Type a message to the Orchestrator..." rows="2"></textarea>
+            <button id="btn-send-message" class="btn btn-primary">Send</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tunnel View -->
+      <section id="view-tunnel" class="view">
+        <div class="view-header">
+          <h2>CLI Tunnel</h2>
+          <div class="view-controls">
+            <select id="session-select" class="select">
+              <option value="">Select Session</option>
+            </select>
+            <button id="btn-new-session" class="btn btn-primary">New Session</button>
+          </div>
+        </div>
+        <div class="tunnel-container">
+          <div id="terminal" class="terminal"></div>
+        </div>
+      </section>
+
+      <!-- MCPs View -->
+      <section id="view-mcps" class="view">
+        <div class="view-header">
+          <h2>MCP Servers</h2>
+          <div class="view-controls">
+            <button id="btn-refresh-mcps" class="btn btn-secondary">Refresh</button>
+            <button id="btn-install-mcp" class="btn btn-primary">+ Install MCP</button>
+          </div>
+        </div>
+
+        <!-- Installed MCPs -->
+        <div class="mcp-section">
+          <h3>Installed MCPs</h3>
+          <div class="mcp-grid" id="mcp-installed">
+            <div class="empty-state" id="mcp-empty">
+              <p>No MCPs configured</p>
+              <p class="text-muted">Install MCPs to extend Claude's capabilities</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Available MCPs -->
+        <div class="mcp-section">
+          <h3>Available MCPs</h3>
+          <div class="mcp-categories">
+            <button class="mcp-filter active" data-category="all">All</button>
+            <button class="mcp-filter" data-category="core">Core</button>
+            <button class="mcp-filter" data-category="database">Database</button>
+            <button class="mcp-filter" data-category="development">Development</button>
+            <button class="mcp-filter" data-category="communication">Communication</button>
+            <button class="mcp-filter" data-category="storage">Storage</button>
+          </div>
+          <div class="mcp-grid" id="mcp-available">
+            <!-- Available MCPs will be inserted here -->
+          </div>
+        </div>
+
+        <!-- Install MCP Modal -->
+        <div id="mcp-modal" class="modal hidden">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3>Install MCP</h3>
+              <button class="modal-close" id="mcp-modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+              <div class="form-group">
+                <label for="mcp-name">MCP Name</label>
+                <input type="text" id="mcp-name" class="input" placeholder="e.g., filesystem">
+              </div>
+              <div class="form-group">
+                <label for="mcp-package">NPM Package</label>
+                <input type="text" id="mcp-package" class="input" placeholder="e.g., @modelcontextprotocol/server-filesystem">
+              </div>
+              <div class="form-group">
+                <label for="mcp-target">Install To</label>
+                <select id="mcp-target" class="select">
+                  <option value="global">Claude Code (Global)</option>
+                  <option value="desktop">Claude Desktop</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="mcp-env">Environment Variables (JSON)</label>
+                <textarea id="mcp-env" class="input textarea" placeholder='{"API_KEY": "your-key"}'></textarea>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-secondary" id="mcp-modal-cancel">Cancel</button>
+              <button class="btn btn-primary" id="mcp-modal-install">Install</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Hooks View -->
+      <section id="view-hooks" class="view">
+        <div class="view-header">
+          <h2>Hook Events</h2>
+          <div class="view-controls">
+            <select id="hooks-filter-type" class="select">
+              <option value="">All Events</option>
+              <option value="SessionStart">SessionStart</option>
+              <option value="PreToolUse">PreToolUse</option>
+              <option value="PostToolUse">PostToolUse</option>
+              <option value="agent_done">Agent Done</option>
+            </select>
+            <button id="btn-refresh-hooks" class="btn btn-secondary">Refresh</button>
+            <button id="btn-clear-hooks" class="btn btn-secondary">Clear</button>
+          </div>
+        </div>
+
+        <!-- Live Event Feed -->
+        <div class="hooks-stats" id="hooks-stats">
+          <div class="stat">
+            <span class="stat-value" id="hooks-total">0</span>
+            <span class="stat-label">Total Events</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="hooks-blocked">0</span>
+            <span class="stat-label">Blocked</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="hooks-completions">0</span>
+            <span class="stat-label">Completions</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="hooks-last-event">-</span>
+            <span class="stat-label">Last Event</span>
+          </div>
+        </div>
+
+        <div class="hooks-feed" id="hooks-feed">
+          <div class="empty-state" id="hooks-empty">
+            <p>No hook events yet</p>
+            <p class="text-muted">Events will appear here when Claude Code hooks fire</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Alerts View -->
+      <section id="view-alerts" class="view">
+        <div class="view-header">
+          <h2>Alerts</h2>
+          <div class="view-controls">
+            <button id="btn-ack-all" class="btn btn-secondary">Acknowledge All</button>
+          </div>
+        </div>
+        <div class="alerts-list" id="alerts-list">
+          <div class="empty-state" id="alerts-empty">
+            <p>No alerts</p>
+            <p class="text-muted">All systems operational</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI Models View -->
+      <section id="view-ai" class="view">
+        <div class="view-header">
+          <h2>AI Models</h2>
+          <div class="view-controls">
+            <button id="btn-refresh-ai" class="btn btn-secondary">Refresh Status</button>
+          </div>
+        </div>
+
+        <!-- Cost Summary -->
+        <div class="ai-cost-summary" id="ai-cost-summary">
+          <div class="cost-card">
+            <span class="cost-label">Today</span>
+            <span class="cost-value" id="cost-today">$0.00</span>
+          </div>
+          <div class="cost-card">
+            <span class="cost-label">This Week</span>
+            <span class="cost-value" id="cost-week">$0.00</span>
+          </div>
+          <div class="cost-card">
+            <span class="cost-label">This Month</span>
+            <span class="cost-value" id="cost-month">$0.00</span>
+          </div>
+          <div class="cost-card budget">
+            <span class="cost-label">Budget Remaining</span>
+            <span class="cost-value" id="budget-remaining">$10.00</span>
+          </div>
+        </div>
+
+        <!-- Provider Status -->
+        <div class="ai-section">
+          <h3>Provider Status</h3>
+          <div class="ai-providers" id="ai-providers">
+            <div class="provider-card" data-provider="ollama">
+              <div class="provider-header">
+                <span class="provider-name">Ollama (Local)</span>
+                <span class="provider-tier tier-0">FREE</span>
+              </div>
+              <div class="provider-status">
+                <span class="status-indicator"></span>
+                <span class="status-text">Checking...</span>
+              </div>
+            </div>
+            <div class="provider-card" data-provider="claude-haiku">
+              <div class="provider-header">
+                <span class="provider-name">Claude Haiku 4.5</span>
+                <span class="provider-tier tier-1">CHEAP</span>
+              </div>
+              <div class="provider-status">
+                <span class="status-indicator"></span>
+                <span class="status-text">Checking...</span>
+              </div>
+            </div>
+            <div class="provider-card" data-provider="claude-sonnet">
+              <div class="provider-header">
+                <span class="provider-name">Claude Sonnet 4.5</span>
+                <span class="provider-tier tier-2">MEDIUM</span>
+              </div>
+              <div class="provider-status">
+                <span class="status-indicator"></span>
+                <span class="status-text">Checking...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Usage -->
+        <div class="ai-section">
+          <h3>Recent Usage</h3>
+          <div class="ai-usage-table" id="ai-usage-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Provider</th>
+                  <th>Model</th>
+                  <th>Task</th>
+                  <th>Tokens</th>
+                  <th>Cost</th>
+                  <th>Duration</th>
+                </tr>
+              </thead>
+              <tbody id="ai-usage-body">
+                <tr class="empty-row">
+                  <td colspan="6">No recent AI usage</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Budget Settings -->
+        <div class="ai-section">
+          <h3>Budget Settings</h3>
+          <div class="budget-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="budget-daily">Daily Limit ($)</label>
+                <input type="number" id="budget-daily" class="input" value="10" min="0" step="0.01">
+              </div>
+              <div class="form-group">
+                <label for="budget-monthly">Monthly Limit ($)</label>
+                <input type="number" id="budget-monthly" class="input" value="100" min="0" step="0.01">
+              </div>
+              <button id="btn-save-budget" class="btn btn-primary">Save Budget</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Task Queue View -->
+      <section id="view-tasks" class="view">
+        <div class="view-header">
+          <h2>Task Queue</h2>
+          <div class="view-controls">
+            <select id="tasks-filter" class="select">
+              <option value="">All Tasks</option>
+              <option value="pending">Pending</option>
+              <option value="in_progress">In Progress</option>
+              <option value="completed">Completed</option>
+              <option value="failed">Failed</option>
+            </select>
+            <button id="btn-add-task" class="btn btn-primary">+ Add Task</button>
+          </div>
+        </div>
+
+        <!-- Engine Controls -->
+        <div class="engine-controls" id="engine-controls">
+          <div class="engine-status">
+            <span class="status-dot" id="engine-dot"></span>
+            <span id="engine-status-text">Engine: Stopped</span>
+          </div>
+          <div class="engine-stats">
+            <span class="stat-mini"><strong id="engine-processed">0</strong> processed</span>
+            <span class="stat-mini"><strong id="engine-active">0</strong> active</span>
+            <span class="stat-mini">$<strong id="engine-cost">0.00</strong> spent</span>
+          </div>
+          <button id="btn-engine-toggle" class="btn btn-secondary">Start Engine</button>
+        </div>
+
+        <!-- Queue Stats -->
+        <div class="queue-stats" id="queue-stats">
+          <div class="stat"><span class="stat-value" id="tasks-total">0</span><span class="stat-label">Total</span></div>
+          <div class="stat"><span class="stat-value" id="tasks-pending">0</span><span class="stat-label">Pending</span></div>
+          <div class="stat"><span class="stat-value" id="tasks-in-progress">0</span><span class="stat-label">In Progress</span></div>
+          <div class="stat"><span class="stat-value" id="tasks-completed">0</span><span class="stat-label">Completed</span></div>
+          <div class="stat stat-alert"><span class="stat-value" id="tasks-failed">0</span><span class="stat-label">Failed</span></div>
+        </div>
+
+        <!-- Task List -->
+        <div class="tasks-list" id="tasks-list">
+          <div class="empty-state" id="tasks-empty"><p>No tasks in queue</p><p class="text-muted">Add tasks to get started</p></div>
+        </div>
+
+        <!-- Add Task Modal -->
+        <div id="task-modal" class="modal hidden">
+          <div class="modal-content">
+            <div class="modal-header"><h3>Add Task</h3><button class="modal-close" id="task-modal-close">&times;</button></div>
+            <div class="modal-body">
+              <div class="form-group"><label for="task-title">Title</label><input type="text" id="task-title" class="input" placeholder="e.g., Review auth module"></div>
+              <div class="form-group"><label for="task-description">Description</label><textarea id="task-description" class="input textarea" placeholder="Detailed task description..."></textarea></div>
+              <div class="form-row">
+                <div class="form-group"><label for="task-priority">Priority (1-5)</label><input type="number" id="task-priority" class="input" value="3" min="1" max="5"></div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-secondary" id="task-modal-cancel">Cancel</button>
+              <button class="btn btn-primary" id="task-modal-submit">Add Task</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Agent Bus View -->
+      <section id="view-bus" class="view">
+        <div class="view-header">
+          <h2>Agent Bus</h2>
+          <div class="view-controls">
+            <button id="btn-refresh-bus" class="btn btn-secondary">Refresh</button>
+          </div>
+        </div>
+
+        <div class="bus-stats" id="bus-stats">
+          <div class="stat"><span class="stat-value" id="bus-total">0</span><span class="stat-label">Messages</span></div>
+          <div class="stat"><span class="stat-value" id="bus-subscribers">0</span><span class="stat-label">Subscribers</span></div>
+          <div class="stat"><span class="stat-value" id="bus-inboxes">0</span><span class="stat-label">Inboxes</span></div>
+        </div>
+
+        <!-- Send Message Form -->
+        <div class="bus-send">
+          <input type="text" id="bus-from" class="input" placeholder="From (agent ID)" style="width:30%">
+          <input type="text" id="bus-to" class="input" placeholder="To (agent ID or * for broadcast)" style="width:30%">
+          <input type="text" id="bus-content" class="input" placeholder="Message content" style="width:30%">
+          <button id="btn-bus-send" class="btn btn-primary">Send</button>
+        </div>
+
+        <div class="bus-feed" id="bus-feed">
+          <div class="empty-state"><p>No messages yet</p></div>
+        </div>
+      </section>
+
+      <!-- Doctor View -->
+      <section id="view-doctor" class="view">
+        <div class="view-header">
+          <h2>Doctor (Auto-Healer)</h2>
+          <div class="view-controls">
+            <button id="btn-doctor-check" class="btn btn-primary">Run Health Check</button>
+            <button id="btn-refresh-doctor" class="btn btn-secondary">Refresh</button>
+          </div>
+        </div>
+
+        <div class="doctor-report" id="doctor-report">
+          <div class="doctor-section">
+            <h3>Agent Health</h3>
+            <div class="doctor-stats" id="doctor-agent-stats">
+              <div class="stat"><span class="stat-value" id="doc-agents-total">0</span><span class="stat-label">Total</span></div>
+              <div class="stat"><span class="stat-value" id="doc-agents-healthy">0</span><span class="stat-label">Healthy</span></div>
+              <div class="stat stat-alert"><span class="stat-value" id="doc-agents-stuck">0</span><span class="stat-label">Stuck</span></div>
+              <div class="stat stat-alert"><span class="stat-value" id="doc-agents-errored">0</span><span class="stat-label">Errored</span></div>
+            </div>
+          </div>
+          <div class="doctor-section">
+            <h3>Machine Health</h3>
+            <div class="doctor-stats" id="doctor-machine-stats">
+              <div class="stat"><span class="stat-value" id="doc-machines-total">0</span><span class="stat-label">Total</span></div>
+              <div class="stat"><span class="stat-value" id="doc-machines-online">0</span><span class="stat-label">Online</span></div>
+              <div class="stat stat-alert"><span class="stat-value" id="doc-machines-offline">0</span><span class="stat-label">Offline</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="doctor-section">
+          <h3>Action Log</h3>
+          <div class="doctor-actions" id="doctor-actions">
+            <div class="empty-state"><p>No heal actions taken yet</p></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Delegation View -->
+      <section id="view-delegation" class="view">
+        <div class="view-header">
+          <h2>Delegation Rules</h2>
+          <div class="view-controls">
+            <button id="btn-refresh-delegation" class="btn btn-secondary">Refresh</button>
+          </div>
+        </div>
+
+        <div class="delegation-info">
+          <p>Delegation rules enforce agent role boundaries and cost-aware routing. Agents must stay within their capabilities.</p>
+        </div>
+
+        <div class="delegation-rules" id="delegation-rules">
+          <div class="empty-state"><p>Loading delegation rules...</p></div>
+        </div>
+
+        <div class="delegation-section">
+          <h3>Cost Tiers</h3>
+          <div class="delegation-tiers" id="delegation-tiers">
+            <div class="empty-state"><p>Loading cost tiers...</p></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Scripts -->
+  <link rel="stylesheet" href="/css/xterm.css">
+  <script src="/js/xterm.js"></script>
+  <script src="/js/xterm-addon-fit.js"></script>
+  <script type="module" src="/js/app.js"></script>
+
+  <!-- Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', async () => {
+        try {
+          const registration = await navigator.serviceWorker.register('/sw.js');
+          console.log('SW registered:', registration.scope);
+
+          // Check for updates every hour
+          setInterval(() => {
+            registration.update();
+          }, 60 * 60 * 1000);
+        } catch (error) {
+          console.error('SW registration failed:', error);
+        }
+      });
+    }
+  </script>
+</body>
+</html>
