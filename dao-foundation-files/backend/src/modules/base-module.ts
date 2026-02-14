@@ -18,6 +18,9 @@ import type {
 // processMessage() to add module-specific logic.
 // ============================================================================
 
+/** LLM provider function signature — injected at runtime from PIA's AI system */
+export type LLMProvider = (systemPrompt: string, userMessage: string) => Promise<string>;
+
 export abstract class BaseModule implements AgentModule {
   abstract readonly moduleId: AIModuleId;
   abstract readonly moduleName: string;
@@ -26,6 +29,19 @@ export abstract class BaseModule implements AgentModule {
 
   protected readonly db: Knex;
   private lastActive: string | null = null;
+
+  /** Shared LLM provider — set once via BaseModule.setLLMProvider() */
+  private static _llmProvider: LLMProvider | null = null;
+
+  /** Inject the LLM provider (called from dao-modules.ts route setup) */
+  static setLLMProvider(provider: LLMProvider): void {
+    BaseModule._llmProvider = provider;
+  }
+
+  /** Check if LLM is available */
+  static get hasLLM(): boolean {
+    return BaseModule._llmProvider !== null;
+  }
 
   constructor(db: Knex) {
     this.db = db;
@@ -61,8 +77,8 @@ export abstract class BaseModule implements AgentModule {
       // ai_conversations table may not exist yet — non-fatal
     }
 
-    // Build response (no LLM call yet — returns structured context)
-    const responseContent = this.buildResponse(message, knowledgeContext);
+    // Build response — use LLM if available, fallback to template
+    const responseContent = await this.buildResponse(message, knowledgeContext);
 
     // Store assistant response
     try {
@@ -178,20 +194,33 @@ export abstract class BaseModule implements AgentModule {
 
   // ─── Private helpers ─────────────────────────────────────────────────
 
-  private buildResponse(message: AgentMessage, knowledgeContext: string): string {
+  private async buildResponse(message: AgentMessage, knowledgeContext: string): Promise<string> {
+    // If LLM provider is available, use it for intelligent responses
+    if (BaseModule._llmProvider) {
+      try {
+        const fullSystemPrompt = this.systemPrompt + knowledgeContext;
+        const llmResponse = await BaseModule._llmProvider(fullSystemPrompt, message.content);
+        return llmResponse;
+      } catch (err) {
+        // LLM failed — fall through to template response
+        console.error(`[${this.moduleName}] LLM call failed, using template:`, err);
+      }
+    }
+
+    // Fallback: template response when no LLM is available
     const action = (message.context as Record<string, unknown>)?.action as string | undefined;
 
     if (action) {
       return `[${this.moduleName} v${this.version}] Processing "${action}" for DAO ${message.dao_id}.${knowledgeContext}\n\n` +
         `Based on the available knowledge, here is my analysis:\n\n` +
         `**Request:** ${message.content.substring(0, 200)}${message.content.length > 200 ? '...' : ''}\n\n` +
-        `*This module is ready for LLM integration. Connect an AI provider for intelligent responses.*`;
+        `*Set ANTHROPIC_API_KEY or configure Ollama for intelligent AI responses.*`;
     }
 
     return `[${this.moduleName} v${this.version}] Received your message.${knowledgeContext}\n\n` +
       `**Your message:** ${message.content.substring(0, 300)}${message.content.length > 300 ? '...' : ''}\n\n` +
       `I have access to ${knowledgeContext ? 'relevant knowledge from the database' : 'no stored knowledge yet'} for this DAO.\n\n` +
-      `*This module is ready for LLM integration. Connect an AI provider for intelligent responses.*`;
+      `*Set ANTHROPIC_API_KEY or configure Ollama for intelligent AI responses.*`;
   }
 
   private parseKnowledgeRow(row: KnowledgeItem): KnowledgeItem {

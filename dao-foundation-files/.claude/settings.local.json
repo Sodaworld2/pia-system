@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(*)",
+      "mcp__windows-mcp__*",
+      "mcp__playwright__*"
+    ]
+  }
+}
