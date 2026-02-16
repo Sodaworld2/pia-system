@@ -1,0 +1,50 @@
+appId: com.sodaworld.pia-system
+productName: PIA System
+
+directories:
+  output: release
+  buildResources: build
+
+files:
+  - dist/**/*
+  - public/**/*
+  - electron-main.cjs
+  - package.json
+  - "!**/dao-foundation-files/**"
+  - "!**/*.{ts,tsx,map}"
+  - "!**/node_modules/typescript/**"
+  - "!**/node_modules/eslint/**"
+  - "!**/node_modules/prettier/**"
+  - "!**/node_modules/vitest/**"
+  - "!**/node_modules/tsx/**"
+  - "!**/node_modules/playwright/.local-browsers/**"
+  - "!**/src/**"
+  - "!**/test/**"
+  - "!**/tests/**"
+  - "!**/.git/**"
+  - "!**/.claude/**"
+  - "!**/*.md"
+
+asarUnpack:
+  - "**/*.node"
+  - "**/node-pty/**"
+  - "**/better-sqlite3/**"
+  - dist/**/*
+
+win:
+  target:
+    - target: nsis
+    - target: portable
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  perMachine: false
+
+electronLanguages:
+  - en
+
+publish:
+  provider: github
+  owner: Sodaworld2
+  repo: pia-system

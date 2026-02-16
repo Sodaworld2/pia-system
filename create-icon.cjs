@@ -1,0 +1,30 @@
+// Script: create-icon.js
+// Creates a simple PIA icon as SVG for the Electron desktop app
+const fs = require('fs');
+const path = require('path');
+
+const buildDir = path.join(__dirname, 'build');
+if (!fs.existsSync(buildDir)) fs.mkdirSync(buildDir);
+
+// Create SVG icon - dark blue/purple gradient with "PIA" text
+const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e"/>
+      <stop offset="100%" style="stop-color:#16213e"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#58a6ff"/>
+      <stop offset="100%" style="stop-color:#a78bfa"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="32" fill="url(#bg)"/>
+  <rect x="20" y="20" width="216" height="216" rx="24" fill="none" stroke="url(#accent)" stroke-width="3" opacity="0.5"/>
+  <text x="128" y="148" text-anchor="middle" fill="url(#accent)" font-family="Arial, Helvetica, sans-serif" font-weight="bold" font-size="72">PIA</text>
+  <circle cx="128" cy="56" r="12" fill="#58a6ff" opacity="0.8"/>
+  <circle cx="96" cy="56" r="6" fill="#a78bfa" opacity="0.6"/>
+  <circle cx="160" cy="56" r="6" fill="#a78bfa" opacity="0.6"/>
+</svg>`;
+
+fs.writeFileSync(path.join(buildDir, 'icon.svg'), svg);
+console.log('Created build/icon.svg');

@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PIA — First Run Setup</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <style>
+    /* ── Reset & Base ── */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0a1a;
+      color: #e6edf3;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* ── Background Glow ── */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -40%;
+      left: -20%;
+      width: 140%;
+      height: 140%;
+      background: radial-gradient(ellipse at 30% 20%, rgba(155, 77, 202, 0.06) 0%, transparent 60%),
+                  radial-gradient(ellipse at 70% 80%, rgba(88, 166, 255, 0.04) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Dev Notice Banner ── */
+    .dev-notice {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(90deg, #d29922 0%, #e6a817 100%);
+      color: #000;
+      text-align: center;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      z-index: 1000;
+      display: none;
+    }
+
+    .dev-notice a {
+      color: #1a1a2e;
+      text-decoration: underline;
+    }
+
+    body.dev-mode .dev-notice { display: block; }
+    body.dev-mode { padding-top: 40px; }
+
+    /* ── Wizard Container ── */
+    .wizard {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 560px;
+      padding: 0 20px;
+    }
+
+    /* ── Progress Indicator ── */
+    .progress {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 32px;
+    }
+
+    .progress-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #2a2a3e;
+      transition: all 0.4s ease;
+      cursor: pointer;
+    }
+
+    .progress-dot.active {
+      background: #58a6ff;
+      box-shadow: 0 0 12px rgba(88, 166, 255, 0.4);
+      transform: scale(1.2);
+    }
+
+    .progress-dot.completed {
+      background: #3fb950;
+    }
+
+    .progress-line {
+      width: 32px;
+      height: 2px;
+      background: #2a2a3e;
+      transition: background 0.4s ease;
+    }
+
+    .progress-line.active {
+      background: #3fb950;
+    }
+
+    /* ── Step Cards ── */
+    .step-viewport {
+      overflow: hidden;
+      border-radius: 16px;
+    }
+
+    .step-track {
+      display: flex;
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .step {
+      min-width: 100%;
+      background: #1a1a2e;
+      border: 1px solid #2a2a3e;
+      border-radius: 16px;
+      padding: 40px 36px;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .step.visible {
+      opacity: 1;
+    }
+
+    /* ── Step Header ── */
+    .step-label {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #58a6ff;
+      margin-bottom: 8px;
+    }
+
+    .step h2 {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+      background: linear-gradient(135deg, #e6edf3, #a0b0c0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .step .subtitle {
+      font-size: 14px;
+      color: #64748b;
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+
+    /* ── Welcome Step (centered) ── */
+    .step-welcome {
+      text-align: center;
+      padding: 56px 36px;
+    }
+
+    .step-welcome .pia-logo {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 24px;
+      background: linear-gradient(135deg, #9b4dca, #58a6ff);
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: -1px;
+      box-shadow: 0 8px 32px rgba(155, 77, 202, 0.25);
+    }
+
+    .step-welcome h2 {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+
+    .step-welcome .subtitle {
+      margin-bottom: 36px;
+    }
+
+    .version-tag {
+      display: inline-block;
+      font-size: 11px;
+      color: #64748b;
+      background: #0f0f1e;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-top: 16px;
+    }
+
+    /* ── Form Elements ── */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #b0bec5;
+      margin-bottom: 6px;
+    }
+
+    .form-group .helper {
+      font-size: 12px;
+      color: #505868;
+      margin-top: 5px;
+      line-height: 1.4;
+    }
+
+    .form-group .helper a {
+      color: #58a6ff;
+      text-decoration: none;
+    }
+
+    .form-group .helper a:hover {
+      text-decoration: underline;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="url"] {
+      width: 100%;
+      padding: 10px 14px;
+      background: #0f0f1e;
+      border: 1px solid #2a2a3e;
+      border-radius: 8px;
+      color: #e6edf3;
+      font-size: 14px;
+      font-family: inherit;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #58a6ff;
+      box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+    }
+
+    input::placeholder {
+      color: #3a3a50;
+    }
+
+    input.invalid {
+      border-color: #f85149;
+      box-shadow: 0 0 0 3px rgba(248, 81, 73, 0.15);
+    }
+
+    .validation-msg {
+      font-size: 12px;
+      color: #f85149;
+      margin-top: 4px;
+      display: none;
+    }
+
+    .validation-msg.show {
+      display: block;
+    }
+
+    /* ── Input with Button ── */
+    .input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .input-row input {
+      flex: 1;
+    }
+
+    .input-row .btn-inline {
+      padding: 10px 14px;
+      background: #1e2a3a;
+      border: 1px solid #2a3a4e;
+      border-radius: 8px;
+      color: #58a6ff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+
+    .input-row .btn-inline:hover {
+      background: #253548;
+      border-color: #58a6ff;
+    }
+
+    /* ── Password Toggle ── */
+    .password-wrap {
+      position: relative;
+    }
+
+    .password-wrap input {
+      padding-right: 42px;
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: #505868;
+      cursor: pointer;
+      font-size: 18px;
+      padding: 2px;
+      line-height: 1;
+      transition: color 0.2s;
+    }
+
+    .password-toggle:hover {
+      color: #58a6ff;
+    }
+
+    /* ── Radio Group ── */
+    .radio-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .radio-option {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 16px;
+      background: #0f0f1e;
+      border: 1px solid #2a2a3e;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .radio-option:hover {
+      border-color: #3a3a5e;
+    }
+
+    .radio-option.selected {
+      border-color: #58a6ff;
+      background: #111128;
+      box-shadow: 0 0 0 1px rgba(88, 166, 255, 0.2);
+    }
+
+    .radio-option input[type="radio"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border: 2px solid #3a3a5e;
+      border-radius: 50%;
+      margin-top: 2px;
+      flex-shrink: 0;
+      position: relative;
+      transition: all 0.2s;
+    }
+
+    .radio-option.selected input[type="radio"] {
+      border-color: #58a6ff;
+    }
+
+    .radio-option.selected input[type="radio"]::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 8px;
+      height: 8px;
+      background: #58a6ff;
+      border-radius: 50%;
+    }
+
+    .radio-text .radio-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #e6edf3;
+    }
+
+    .radio-text .radio-desc {
+      font-size: 12px;
+      color: #505868;
+      margin-top: 2px;
+    }
+
+    /* ── Hub URL Group (conditional) ── */
+    .hub-url-group {
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height 0.4s ease, opacity 0.3s ease, margin 0.3s ease;
+      margin-top: 0;
+    }
+
+    .hub-url-group.show {
+      max-height: 220px;
+      opacity: 1;
+      margin-top: 20px;
+    }
+
+    /* ── Discovered Peers ── */
+    .peers-list {
+      margin-top: 10px;
+      display: none;
+    }
+
+    .peers-list.show {
+      display: block;
+    }
+
+    .peer-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: #0f0f1e;
+      border: 1px solid #2a2a3e;
+      border-radius: 6px;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+
+    .peer-item .peer-name {
+      font-weight: 600;
+      color: #e6edf3;
+    }
+
+    .peer-item .peer-addr {
+      color: #505868;
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: 12px;
+    }
+
+    .peer-item .btn-use {
+      padding: 4px 10px;
+      background: #1e2a3a;
+      border: 1px solid #2a3a4e;
+      border-radius: 5px;
+      color: #58a6ff;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .peer-item .btn-use:hover {
+      background: #58a6ff;
+      color: #000;
+    }
+
+    .peers-empty {
+      font-size: 12px;
+      color: #505868;
+      padding: 8px 0;
+    }
+
+    .peers-loading {
+      font-size: 12px;
+      color: #58a6ff;
+      padding: 8px 0;
+    }
+
+    /* ── Summary Card ── */
+    .summary-card {
+      background: #0f0f1e;
+      border: 1px solid #2a2a3e;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid #1a1a2a;
+    }
+
+    .summary-row:last-child {
+      border-bottom: none;
+    }
+
+    .summary-label {
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    .summary-value {
+      font-size: 13px;
+      font-weight: 600;
+      color: #e6edf3;
+      font-family: 'Consolas', 'Monaco', monospace;
+      max-width: 280px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .summary-value.masked {
+      letter-spacing: 2px;
+    }
+
+    .summary-value .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+
+    .badge.hub {
+      background: rgba(155, 77, 202, 0.15);
+      color: #bc8cff;
+    }
+
+    .badge.spoke {
+      background: rgba(88, 166, 255, 0.15);
+      color: #58a6ff;
+    }
+
+    /* ── Buttons ── */
+    .btn-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 28px;
+    }
+
+    .btn-row.center {
+      justify-content: center;
+    }
+
+    .btn {
+      padding: 11px 28px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      font-family: inherit;
+    }
+
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #58a6ff 0%, #4090e0 100%);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(88, 166, 255, 0.25);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 24px rgba(88, 166, 255, 0.35);
+    }
+
+    .btn-primary:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    .btn-launch {
+      background: linear-gradient(135deg, #3fb950 0%, #2ea043 100%);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(63, 185, 80, 0.25);
+      padding: 14px 40px;
+      font-size: 16px;
+    }
+
+    .btn-launch:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 24px rgba(63, 185, 80, 0.35);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: #64748b;
+      border: 1px solid #2a2a3e;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      color: #e6edf3;
+      border-color: #3a3a5e;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: #64748b;
+      padding: 11px 16px;
+    }
+
+    .btn-ghost:hover {
+      color: #e6edf3;
+    }
+
+    /* ── Launch Spinner ── */
+    .launch-spinner {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .launch-spinner.show {
+      display: flex;
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 3px solid #2a2a3e;
+      border-top-color: #3fb950;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .launch-spinner span {
+      font-size: 14px;
+      color: #3fb950;
+      font-weight: 600;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 620px) {
+      .wizard { max-width: 100%; }
+      .step { padding: 28px 20px; }
+      .step-welcome { padding: 36px 20px; }
+      .step h2 { font-size: 22px; }
+      .step-welcome h2 { font-size: 26px; }
+      .summary-value { max-width: 180px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Dev Mode Notice (shown when window.pia is unavailable) -->
+  <div class="dev-notice" id="devNotice">
+    Run this in the <strong>PIA Desktop app</strong> for full setup. For CLI mode, edit <code>.env</code> directly.
+  </div>
+
+  <div class="wizard">
+    <!-- Progress Indicator -->
+    <div class="progress" id="progress">
+      <div class="progress-dot active" data-step="0"></div>
+      <div class="progress-line"></div>
+      <div class="progress-dot" data-step="1"></div>
+      <div class="progress-line"></div>
+      <div class="progress-dot" data-step="2"></div>
+      <div class="progress-line"></div>
+      <div class="progress-dot" data-step="3"></div>
+    </div>
+
+    <!-- Step Viewport -->
+    <div class="step-viewport">
+      <div class="step-track" id="stepTrack">
+
+        <!-- ═══════ Step 0: Welcome ═══════ -->
+        <div class="step step-welcome visible" data-step="0">
+          <div class="pia-logo">P</div>
+          <h2>Welcome to PIA</h2>
+          <p class="subtitle">Project Intelligence Agent — your multi-machine AI orchestration system.<br>Let's set up your machine.</p>
+          <div class="btn-row center">
+            <button class="btn btn-primary" onclick="goToStep(1)">Get Started</button>
+          </div>
+          <div class="version-tag" id="versionTag"></div>
+        </div>
+
+        <!-- ═══════ Step 1: Machine Setup ═══════ -->
+        <div class="step" data-step="1">
+          <span class="step-label">Step 1 of 3</span>
+          <h2>Machine Setup</h2>
+          <p class="subtitle">Configure this machine's identity and role in your PIA network.</p>
+
+          <div class="form-group">
+            <label for="machineName">Machine Name</label>
+            <input type="text" id="machineName" placeholder="e.g. workshop-01" maxlength="50" autocomplete="off" spellcheck="false">
+            <div class="validation-msg" id="machineNameError">Machine name is required (1-50 characters).</div>
+          </div>
+
+          <div class="form-group">
+            <label>Role</label>
+            <div class="radio-group">
+              <div class="radio-option selected" data-value="hub" onclick="selectRole('hub')">
+                <input type="radio" name="role" value="hub" checked>
+                <div class="radio-text">
+                  <div class="radio-title">Hub</div>
+                  <div class="radio-desc">This machine is the central controller. Spokes connect to it.</div>
+                </div>
+              </div>
+              <div class="radio-option" data-value="spoke" onclick="selectRole('spoke')">
+                <input type="radio" name="role" value="spoke">
+                <div class="radio-text">
+                  <div class="radio-title">Spoke</div>
+                  <div class="radio-desc">Connects to an existing hub for orchestration.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="hub-url-group" id="hubUrlGroup">
+            <div class="form-group">
+              <label for="hubUrl">Hub URL</label>
+              <div class="input-row">
+                <input type="url" id="hubUrl" placeholder="ws://192.168.1.100:3000">
+                <button class="btn-inline" id="discoverBtn" onclick="discoverPeers()">Discover Peers</button>
+              </div>
+              <div class="validation-msg" id="hubUrlError">A valid Hub URL is required for spoke mode.</div>
+              <div class="peers-loading" id="peersLoading" style="display:none;">Scanning network...</div>
+              <div class="peers-list" id="peersList"></div>
+            </div>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn btn-ghost" onclick="goToStep(0)">Back</button>
+            <button class="btn btn-primary" onclick="validateAndNext(1)">Next</button>
+          </div>
+        </div>
+
+        <!-- ═══════ Step 2: API Keys ═══════ -->
+        <div class="step" data-step="2">
+          <span class="step-label">Step 2 of 3</span>
+          <h2>API Keys</h2>
+          <p class="subtitle">Connect your AI provider and secure your PIA network.</p>
+
+          <div class="form-group">
+            <label for="apiKey">Anthropic API Key</label>
+            <div class="password-wrap">
+              <input type="password" id="apiKey" placeholder="sk-ant-..." autocomplete="off" spellcheck="false">
+              <button class="password-toggle" onclick="togglePassword('apiKey', this)" title="Show/hide key" type="button">&#9673;</button>
+            </div>
+            <p class="helper">Required for Claude-powered agents. Get one at <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a></p>
+            <div class="validation-msg" id="apiKeyError">API key is required and must start with "sk-ant-".</div>
+          </div>
+
+          <div class="form-group">
+            <label for="secretToken">Secret Token</label>
+            <div class="input-row">
+              <input type="text" id="secretToken" placeholder="Shared secret for hub/spoke auth" autocomplete="off" spellcheck="false">
+              <button class="btn-inline" onclick="generateToken()">Generate Random</button>
+            </div>
+            <p class="helper">Shared secret between hub and spokes for authentication. Minimum 8 characters.</p>
+            <div class="validation-msg" id="secretTokenError">Secret token is required (minimum 8 characters).</div>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn btn-ghost" onclick="goToStep(1)">Back</button>
+            <button class="btn btn-primary" onclick="validateAndNext(2)">Next</button>
+          </div>
+        </div>
+
+        <!-- ═══════ Step 3: Confirm & Launch ═══════ -->
+        <div class="step" data-step="3">
+          <span class="step-label">Step 3 of 3</span>
+          <h2>Confirm &amp; Launch</h2>
+          <p class="subtitle">Review your settings before starting PIA.</p>
+
+          <div class="summary-card" id="summaryCard">
+            <div class="summary-row">
+              <span class="summary-label">Machine Name</span>
+              <span class="summary-value" id="sumName">--</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Role</span>
+              <span class="summary-value" id="sumRole">--</span>
+            </div>
+            <div class="summary-row" id="sumHubUrlRow" style="display:none;">
+              <span class="summary-label">Hub URL</span>
+              <span class="summary-value" id="sumHubUrl">--</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">API Key</span>
+              <span class="summary-value masked" id="sumApiKey">--</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Secret Token</span>
+              <span class="summary-value masked" id="sumToken">--</span>
+            </div>
+          </div>
+
+          <div class="btn-row center">
+            <button class="btn btn-ghost" onclick="goToStep(2)" id="backFromLaunch">Back</button>
+            <button class="btn btn-launch" id="launchBtn" onclick="launchPIA()">Launch PIA</button>
+          </div>
+
+          <div class="launch-spinner" id="launchSpinner">
+            <div class="spinner"></div>
+            <span>Starting PIA server...</span>
+          </div>
+        </div>
+
+      </div><!-- /step-track -->
+    </div><!-- /step-viewport -->
+  </div><!-- /wizard -->
+
+<script>
+(function() {
+  'use strict';
+
+  // ── State ──
+  let currentStep = 0;
+  let selectedRole = 'hub';
+
+  const hasPiaApi = typeof window.pia !== 'undefined' && window.pia !== null;
+
+  // ── Dev Mode Detection ──
+  if (!hasPiaApi) {
+    document.body.classList.add('dev-mode');
+  }
+
+  // ── Version Tag ──
+  const versionTag = document.getElementById('versionTag');
+  if (hasPiaApi && typeof window.pia.getVersion === 'function') {
+    try {
+      const ver = window.pia.getVersion();
+      if (ver) versionTag.textContent = 'v' + ver;
+    } catch (_) { /* ignore */ }
+  }
+
+  // ── Pre-fill Hostname ──
+  (async function prefillHostname() {
+    const input = document.getElementById('machineName');
+    // Try Electron API first
+    if (hasPiaApi && typeof window.pia.getHostname === 'function') {
+      try {
+        const hostname = await Promise.resolve(window.pia.getHostname());
+        if (hostname) {
+          input.value = hostname;
+          return;
+        }
+      } catch (_) { /* fall through */ }
+    }
+    // Try injected piaConfig (set by Electron preload)
+    if (window.piaConfig && window.piaConfig.hostname) {
+      input.value = window.piaConfig.hostname;
+    }
+  })();
+
+  // ── Step Navigation ──
+  window.goToStep = function(step) {
+    if (step < 0 || step > 3) return;
+
+    const track = document.getElementById('stepTrack');
+    const steps = track.querySelectorAll('.step');
+    const dots = document.querySelectorAll('.progress-dot');
+    const lines = document.querySelectorAll('.progress-line');
+
+    // Mark current step invisible
+    steps[currentStep].classList.remove('visible');
+
+    currentStep = step;
+
+    // Slide track
+    track.style.transform = 'translateX(-' + (currentStep * 100) + '%)';
+
+    // After transition, make new step visible
+    setTimeout(function() {
+      steps[currentStep].classList.add('visible');
+    }, 80);
+
+    // Update progress dots
+    dots.forEach(function(dot, i) {
+      dot.classList.remove('active', 'completed');
+      if (i === currentStep) dot.classList.add('active');
+      else if (i < currentStep) dot.classList.add('completed');
+    });
+
+    // Update progress lines
+    lines.forEach(function(line, i) {
+      line.classList.toggle('active', i < currentStep);
+    });
+
+    // If landing on confirm step, populate summary
+    if (step === 3) populateSummary();
+  };
+
+  // ── Clickable progress dots ──
+  document.querySelectorAll('.progress-dot').forEach(function(dot) {
+    dot.addEventListener('click', function() {
+      var targetStep = parseInt(this.getAttribute('data-step'));
+      // Only allow going back, or to completed steps
+      if (targetStep < currentStep) {
+        goToStep(targetStep);
+      }
+    });
+  });
+
+  // ── Role Selection ──
+  window.selectRole = function(role) {
+    selectedRole = role;
+    var options = document.querySelectorAll('.radio-option');
+    options.forEach(function(opt) {
+      var isSelected = opt.getAttribute('data-value') === role;
+      opt.classList.toggle('selected', isSelected);
+      opt.querySelector('input[type="radio"]').checked = isSelected;
+    });
+
+    var hubGroup = document.getElementById('hubUrlGroup');
+    hubGroup.classList.toggle('show', role === 'spoke');
+  };
+
+  // ── Discover Peers ──
+  window.discoverPeers = async function() {
+    if (!hasPiaApi || typeof window.pia.discoverPeers !== 'function') {
+      showPeersResult([]);
+      return;
+    }
+
+    var loading = document.getElementById('peersLoading');
+    var list = document.getElementById('peersList');
+    var btn = document.getElementById('discoverBtn');
+
+    btn.disabled = true;
+    btn.textContent = 'Scanning...';
+    loading.style.display = 'block';
+    list.classList.remove('show');
+
+    try {
+      var peers = await window.pia.discoverPeers();
+      showPeersResult(peers || []);
+    } catch (err) {
+      showPeersResult([]);
+    } finally {
+      loading.style.display = 'none';
+      btn.disabled = false;
+      btn.textContent = 'Discover Peers';
+    }
+  };
+
+  function showPeersResult(peers) {
+    var list = document.getElementById('peersList');
+    list.innerHTML = '';
+    list.classList.add('show');
+
+    if (!peers || peers.length === 0) {
+      list.innerHTML = '<div class="peers-empty">No peers found on the network. Enter the hub URL manually.</div>';
+      return;
+    }
+
+    peers.forEach(function(peer) {
+      var url = 'ws://' + peer.ip + ':' + (peer.port || 3000);
+      var item = document.createElement('div');
+      item.className = 'peer-item';
+      item.innerHTML =
+        '<div><span class="peer-name">' + escapeHtml(peer.name) + '</span>' +
+        ' <span class="peer-addr">' + escapeHtml(url) + '</span></div>' +
+        '<button class="btn-use" onclick="usePeer(\'' + escapeHtml(url) + '\')">Use</button>';
+      list.appendChild(item);
+    });
+  }
+
+  window.usePeer = function(url) {
+    document.getElementById('hubUrl').value = url;
+    clearValidation('hubUrl', 'hubUrlError');
+  };
+
+  // ── Password Toggle ──
+  window.togglePassword = function(inputId, btn) {
+    var input = document.getElementById(inputId);
+    if (input.type === 'password') {
+      input.type = 'text';
+      btn.innerHTML = '&#9675;'; // open circle = visible
+      btn.title = 'Hide key';
+    } else {
+      input.type = 'password';
+      btn.innerHTML = '&#9673;'; // filled circle = hidden
+      btn.title = 'Show key';
+    }
+  };
+
+  // ── Generate Token ──
+  window.generateToken = function() {
+    var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var token = '';
+    var array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    for (var i = 0; i < 32; i++) {
+      token += chars.charAt(array[i] % chars.length);
+    }
+    document.getElementById('secretToken').value = token;
+    clearValidation('secretToken', 'secretTokenError');
+  };
+
+  // ── Validation ──
+  function showValidation(inputId, errorId) {
+    var input = document.getElementById(inputId);
+    var error = document.getElementById(errorId);
+    if (input) input.classList.add('invalid');
+    if (error) error.classList.add('show');
+  }
+
+  function clearValidation(inputId, errorId) {
+    var input = document.getElementById(inputId);
+    var error = document.getElementById(errorId);
+    if (input) input.classList.remove('invalid');
+    if (error) error.classList.remove('show');
+  }
+
+  function clearAllValidation() {
+    document.querySelectorAll('input.invalid').forEach(function(el) { el.classList.remove('invalid'); });
+    document.querySelectorAll('.validation-msg.show').forEach(function(el) { el.classList.remove('show'); });
+  }
+
+  window.validateAndNext = function(step) {
+    clearAllValidation();
+    var valid = true;
+
+    if (step === 1) {
+      // Machine name
+      var name = document.getElementById('machineName').value.trim();
+      if (!name || name.length < 1 || name.length > 50) {
+        showValidation('machineName', 'machineNameError');
+        valid = false;
+      }
+
+      // Hub URL (only for spoke)
+      if (selectedRole === 'spoke') {
+        var hubUrl = document.getElementById('hubUrl').value.trim();
+        if (!hubUrl || !isValidUrl(hubUrl)) {
+          showValidation('hubUrl', 'hubUrlError');
+          valid = false;
+        }
+      }
+    }
+
+    if (step === 2) {
+      // API Key
+      var apiKey = document.getElementById('apiKey').value.trim();
+      if (!apiKey || !apiKey.startsWith('sk-ant-')) {
+        showValidation('apiKey', 'apiKeyError');
+        valid = false;
+      }
+
+      // Secret Token
+      var token = document.getElementById('secretToken').value.trim();
+      if (!token || token.length < 8) {
+        showValidation('secretToken', 'secretTokenError');
+        valid = false;
+      }
+    }
+
+    if (valid) {
+      goToStep(step === 1 ? 2 : 3);
+    }
+  };
+
+  function isValidUrl(str) {
+    try {
+      var url = new URL(str);
+      return url.protocol === 'ws:' || url.protocol === 'wss:' || url.protocol === 'http:' || url.protocol === 'https:';
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // ── Clear validation on input ──
+  document.getElementById('machineName').addEventListener('input', function() {
+    clearValidation('machineName', 'machineNameError');
+  });
+  document.getElementById('hubUrl').addEventListener('input', function() {
+    clearValidation('hubUrl', 'hubUrlError');
+  });
+  document.getElementById('apiKey').addEventListener('input', function() {
+    clearValidation('apiKey', 'apiKeyError');
+  });
+  document.getElementById('secretToken').addEventListener('input', function() {
+    clearValidation('secretToken', 'secretTokenError');
+  });
+
+  // ── Populate Summary ──
+  function populateSummary() {
+    var name = document.getElementById('machineName').value.trim();
+    var role = selectedRole;
+    var hubUrl = document.getElementById('hubUrl').value.trim();
+    var apiKey = document.getElementById('apiKey').value.trim();
+    var token = document.getElementById('secretToken').value.trim();
+
+    document.getElementById('sumName').textContent = name;
+
+    var roleEl = document.getElementById('sumRole');
+    roleEl.innerHTML = '<span class="badge ' + role + '">' + role.toUpperCase() + '</span>';
+
+    var hubRow = document.getElementById('sumHubUrlRow');
+    if (role === 'spoke') {
+      hubRow.style.display = 'flex';
+      document.getElementById('sumHubUrl').textContent = hubUrl;
+    } else {
+      hubRow.style.display = 'none';
+    }
+
+    // Mask API key: show first 10 chars + dots
+    var maskedKey = apiKey.substring(0, 10) + '...' + apiKey.substring(apiKey.length - 4);
+    document.getElementById('sumApiKey').textContent = maskedKey;
+
+    // Mask token: show first 4 + dots + last 4
+    var maskedToken = token.substring(0, 4) + '........' + token.substring(token.length - 4);
+    document.getElementById('sumToken').textContent = maskedToken;
+  }
+
+  // ── Launch PIA ──
+  window.launchPIA = async function() {
+    var btn = document.getElementById('launchBtn');
+    var spinner = document.getElementById('launchSpinner');
+    var backBtn = document.getElementById('backFromLaunch');
+
+    var config = {
+      machineName: document.getElementById('machineName').value.trim(),
+      role: selectedRole,
+      hubUrl: selectedRole === 'spoke' ? document.getElementById('hubUrl').value.trim() : '',
+      anthropicApiKey: document.getElementById('apiKey').value.trim(),
+      secretToken: document.getElementById('secretToken').value.trim()
+    };
+
+    btn.disabled = true;
+    btn.textContent = 'Launching...';
+    backBtn.disabled = true;
+    spinner.classList.add('show');
+
+    if (hasPiaApi && typeof window.pia.saveConfig === 'function') {
+      try {
+        await window.pia.saveConfig(config);
+        // The Electron main process handles navigation after save
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = 'Launch PIA';
+        backBtn.disabled = false;
+        spinner.classList.remove('show');
+        alert('Failed to save configuration: ' + (err.message || err));
+      }
+    } else {
+      // Dev mode fallback: log the config
+      console.log('[First-Run] Config that would be saved:', config);
+      spinner.querySelector('span').textContent = 'Config logged to console (dev mode)';
+      setTimeout(function() {
+        btn.disabled = false;
+        btn.textContent = 'Launch PIA';
+        backBtn.disabled = false;
+        spinner.classList.remove('show');
+      }, 3000);
+    }
+  };
+
+  // ── Utility ──
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.appendChild(document.createTextNode(str));
+    return div.innerHTML;
+  }
+
+})();
+</script>
+
+</body>
+</html>

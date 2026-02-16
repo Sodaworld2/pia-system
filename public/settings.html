@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PIA Settings</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0a1a;
+      color: #e6edf3;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #0a0a1a; }
+    ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
+    /* ── Header ── */
+    .settings-header {
+      background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 100%);
+      border-bottom: 1px solid #30363d;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .back-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: none;
+      border: 1px solid #30363d;
+      color: #e6edf3;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .back-btn:hover { border-color: #58a6ff; color: #58a6ff; }
+    .back-btn svg { width: 16px; height: 16px; }
+
+    .header-title h1 {
+      font-size: 20px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #9b4dca, #58a6ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.02em;
+    }
+
+    .header-title .version {
+      font-size: 12px;
+      color: #64748b;
+      font-weight: 400;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .read-only-badge {
+      background: #d29922;
+      color: #000;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      display: none;
+    }
+
+    /* ── Main Content ── */
+    .settings-content {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 32px 24px 120px;
+    }
+
+    /* ── Cards ── */
+    .settings-card {
+      background: #1a1a2e;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #30363d;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-header .icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .card-header .icon.machine   { background: rgba(88,166,255,0.15); }
+    .card-header .icon.network   { background: rgba(63,185,80,0.15); }
+    .card-header .icon.ai        { background: rgba(188,140,255,0.15); }
+    .card-header .icon.security  { background: rgba(248,81,73,0.15); }
+    .card-header .icon.features  { background: rgba(210,153,34,0.15); }
+
+    .card-header h2 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #e6edf3;
+    }
+
+    .card-body {
+      padding: 8px 0;
+    }
+
+    /* ── Setting Row ── */
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      gap: 16px;
+      transition: background 0.15s;
+    }
+    .setting-row:hover { background: rgba(255,255,255,0.02); }
+
+    .setting-label-wrap {
+      flex: 0 0 220px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .setting-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: #e6edf3;
+    }
+
+    .restart-badge {
+      font-size: 10px;
+      font-weight: 600;
+      color: #d29922;
+      background: rgba(210,153,34,0.15);
+      padding: 2px 7px;
+      border-radius: 4px;
+      white-space: nowrap;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .setting-input-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ── Inputs ── */
+    input[type="text"],
+    input[type="number"],
+    input[type="password"],
+    select {
+      width: 100%;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      color: #e6edf3;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+      transition: border-color 0.2s;
+      outline: none;
+    }
+
+    input:focus, select:focus {
+      border-color: #58a6ff;
+      box-shadow: 0 0 0 3px rgba(88,166,255,0.15);
+    }
+
+    input:disabled, select:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    select {
+      cursor: pointer;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2364748b'%3E%3Cpath d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 32px;
+    }
+
+    select option {
+      background: #0d1117;
+      color: #e6edf3;
+    }
+
+    /* ── Toggle / Show-Hide Button ── */
+    .toggle-vis-btn, .copy-btn {
+      background: none;
+      border: 1px solid #30363d;
+      color: #64748b;
+      padding: 6px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .toggle-vis-btn:hover, .copy-btn:hover {
+      border-color: #58a6ff;
+      color: #58a6ff;
+    }
+    .toggle-vis-btn svg, .copy-btn svg { width: 16px; height: 16px; }
+
+    /* ── Conditional row hiding ── */
+    .setting-row.hidden { display: none; }
+
+    /* ── Footer / Actions ── */
+    .settings-footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(180deg, rgba(10,10,26,0) 0%, #0a0a1a 20%);
+      padding: 20px 0 24px;
+      z-index: 100;
+    }
+
+    .footer-inner {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .footer-left { display: flex; gap: 10px; }
+    .footer-right { display: flex; gap: 10px; }
+
+    .btn {
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: #58a6ff;
+      color: #000;
+    }
+    .btn-primary:hover { background: #79b8ff; }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-secondary {
+      background: none;
+      border: 1px solid #30363d;
+      color: #e6edf3;
+    }
+    .btn-secondary:hover { border-color: #58a6ff; color: #58a6ff; }
+
+    .btn-danger {
+      background: none;
+      border: 1px solid #f85149;
+      color: #f85149;
+    }
+    .btn-danger:hover { background: rgba(248,81,73,0.1); }
+
+    /* ── Restart Banner ── */
+    .restart-banner {
+      display: none;
+      background: rgba(210,153,34,0.12);
+      border: 1px solid rgba(210,153,34,0.3);
+      color: #d29922;
+      padding: 12px 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .restart-banner.visible { display: flex; }
+
+    .restart-banner .msg {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .restart-btn {
+      background: #d29922;
+      color: #000;
+      border: none;
+      padding: 6px 16px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s;
+    }
+    .restart-btn:hover { background: #e0a82e; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #1a1a2e;
+      border: 1px solid #3fb950;
+      color: #3fb950;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      z-index: 9999;
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: all 0.3s;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toast.error {
+      border-color: #f85149;
+      color: #f85149;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── Import/Export Section ── */
+    .config-io {
+      background: #1a1a2e;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .config-io h3 {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-size: 11px;
+    }
+
+    .config-io-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    #importFileInput { display: none; }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .settings-header { padding: 12px 16px; }
+      .settings-content { padding: 20px 16px 120px; }
+      .setting-row { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .setting-label-wrap { flex: none; }
+      .setting-input-wrap { width: 100%; }
+      .footer-inner { flex-direction: column; gap: 12px; }
+      .footer-left, .footer-right { width: 100%; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Toast notification -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Header -->
+  <header class="settings-header">
+    <div class="header-left">
+      <button class="back-btn" onclick="window.location.href='/mission-control.html'" title="Back to Mission Control">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M7.78 12.53a.75.75 0 01-1.06 0L2.47 8.28a.75.75 0 010-1.06l4.25-4.25a.75.75 0 011.06 1.06L4.81 7h8.44a.75.75 0 010 1.5H4.81l2.97 2.97a.75.75 0 010 1.06z"/></svg>
+        Back
+      </button>
+      <div class="header-title">
+        <h1>PIA Settings</h1>
+        <span class="version" id="versionLabel"></span>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="read-only-badge" id="readOnlyBadge">READ-ONLY</span>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <main class="settings-content">
+
+    <!-- Restart Banner -->
+    <div class="restart-banner" id="restartBanner">
+      <span class="msg">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="#d29922"><path d="M8 1.5a6.5 6.5 0 100 13 6.5 6.5 0 000-13zM0 8a8 8 0 1116 0A8 8 0 010 8zm9-3a1 1 0 00-2 0v4a1 1 0 002 0V5zm-1 7.5a1 1 0 100-2 1 1 0 000 2z"/></svg>
+        Some changes require a restart to take effect.
+      </span>
+      <button class="restart-btn" onclick="restartServer()">Restart Now</button>
+    </div>
+
+    <!-- Machine -->
+    <section class="settings-card">
+      <div class="card-header">
+        <div class="icon machine">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="#58a6ff"><path d="M3.5 2A1.5 1.5 0 002 3.5v9A1.5 1.5 0 003.5 14h9a1.5 1.5 0 001.5-1.5v-9A1.5 1.5 0 0012.5 2h-9zM4 5.5a.5.5 0 01.5-.5h7a.5.5 0 010 1h-7a.5.5 0 01-.5-.5zm.5 2.5a.5.5 0 000 1h4a.5.5 0 000-1h-4z"/></svg>
+        </div>
+        <h2>Machine</h2>
+      </div>
+      <div class="card-body">
+        <div class="setting-row">
+          <div class="setting-label-wrap">
+            <span class="setting-label">Machine Name</span>
+          </div>
+          <div class="setting-input-wrap">
+            <input type="text" id="machineName" data-key="hub.machineName" placeholder="My Machine">
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label-wrap">
+            <span class="setting-label">Mode</span>
+            <span class="restart-badge">restart</span>
+          </div>
+          <div class="setting-input-wrap">
+            <select id="mode" data-key="mode" data-restart="true">
+              <option value="hub">Hub</option>
+              <option value="local">Local (Spoke)</option>
+            </select>
+          </div>
+        </div>
+        <div class="setting-row" id="hubUrlRow">
+          <div class="setting-label-wrap">
+            <span class="setting-label">Hub URL</span>
+            <span class="restart-badge">restart</span>
+          </div>
+          <div class="setting-input-wrap">
+            <input type="text" id="hubUrl" data-key="hub.url" data-restart="true" placeholder="http://hub-machine:3000">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Network -->
+    <section class="settings-card">
+      <div class="card-header">
+        <div class="icon network">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="#3fb950"><path d="M5.5 7a.5.5 0 000 1h5a.5.5 0 000-1h-5zM5 9.5a.5.5 0 01.5-.5h2a.5.5 0 010 1h-2a.5.5 0 01-.5-.5zm8-7a2 2 0 00-2-2H5a2 2 0 00-2 2v11a2 2 0 002 2h6a2 2 0 002-2v-11zM5 1.5h6a.5.5 0 01.5.5v11a.5.5 0 01-.5.5H5a.5.5 0 01-.5-.5v-11a.5.5 0 01.5-.5z"/></svg>
+        </div>
+        <h2>Network</h2>
+      </div>
+      <div class="card-body">
+        <div class="setting-row">
+          <div class="setting-label-wrap">
+            <span class="setting-label">Server Port</span>
+            <span class="restart-badge">restart</span>
+          </div>
+          <div class="setting-input-wrap">
+            <input type="number" id="serverPort" data-key="server.port" data-restart="true" min="1" max="65535" placeholder="3000">
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label-wrap">
+            <span class="setting-label">WebSocket Port</span>
+            <span class="restart-badge">restart</span>
+          </div>
+          <div class="setting-input-wrap">
+            <input type="number" id="wsPort" data-key="server.wsPort" data-restart="true" min="1" max="65535" placeholder="3001">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AI & API Keys -->
+    <section class="settings-card">
+      <div class="card-header">
+        <div class="icon ai">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="#bc8cff"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 1.5a1.25 1.25 0 110 2.5 1.25 1.25 0 010-2.5zM6.5 6h3l-.5 1H7.5l-1 4h2l.5-1h1.5l-1 2h-4l1.5-5H6l.5-1z"/></svg>
+        </div>
+        <h2>AI & API Keys</h2>
+      </div>
+      <div class="card-body">
+        <div class="setting-row">
+          <div class="setting-label-wrap">
+            <span class="setting-label">Anthropic API Key</span>
+          </div>
+          <div class="setting-input-wrap">
+            <input type="password" id="claudeApiKey" data-key="ai.claudeApiKey" data-sensitive="true" placeholder="sk-ant-...">
+            <button class="toggle-vis-btn" onclick="toggleVisibility('claudeApiKey')" title="Show/hide">
+              <svg viewBox="0 0 16 16" fill="currentColor" class="eye-icon"><path d="M8 2C4.5 2 1.6 4.4.2 7.9c-.1.2-.1.4 0 .6C1.6 11.6 4.5 14 8 14s6.4-2.4 7.8-5.9c.1-.2.1-.4 0-.6C14.4 4.4 11.5 2 8 2zm0 10.5c-2.8 0-5.2-1.8-6.3-4.5C2.8 5.3 5.2 3.5 8 3.5s5.2 1.8 6.3 4.5C13.2 10.7 10.8 12.5 8 12.5zM8 5a3 3 0 100 6 3 3 0 000-6zm0 4.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3z"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label-wrap">
+            <span class="setting-label">Primary AI</span>
+          </div>
+          <div class="setting-input-wrap">
+            <select id="aiPrimary" data-key="ai.primary">
+              <option value="ollama">Ollama</option>
+              <option value="claude">Claude</option>
+            </select>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label-wrap">
+            <span class="setting-label">Fallback AI</span>
+          </div>
+          <div class="setting-input-wrap">
+            <select id="aiFallback" data-key="ai.fallback">
+              <option value="ollama">Ollama</option>
+              <option value="claude">Claude</option>
+              <option value="none">None</option>
+            </select>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label-wrap">
+            <span class="setting-label">Ollama URL</span>
+          </div>
+          <div class="setting-input-wrap">
+            <input type="text" id="ollamaUrl" data-key="ai.ollamaUrl" placeholder="http://localhost:11434">
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label-wrap">
+            <span class="setting-label">Ollama Model</span>
+          </div>
+          <div class="setting-input-wrap">
+            <input type="text" id="ollamaModel" data-key="ai.ollamaModel" placeholder="llama3:70b">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Security -->
+    <section class="settings-card">
+      <div class="card-header">
+        <div class="icon security">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="#f85149"><path d="M8 0a8 8 0 100 16A8 8 0 008 0zm.5 4.5a.5.5 0 00-1 0v3.793L5.854 9.939a.5.5 0 10-.708.707l1.5 1.5A.5.5 0 007 12.5h1a.5.5 0 00.354-.146l2-2a.5.5 0 00-.708-.708L8.5 10.793V4.5z"/></svg>
+        </div>
+        <h2>Security</h2>
+      </div>
+      <div class="card-body">
+        <div class="setting-row">
+          <div class="setting-label-wrap">
+            <span class="setting-label">Secret Token</span>
+            <span class="restart-badge">restart</span>
+          </div>
+          <div class="setting-input-wrap">
+            <input type="password" id="secretToken" data-key="security.secretToken" data-restart="true" data-sensitive="true" placeholder="your-secret-token">
+            <button class="toggle-vis-btn" onclick="toggleVisibility('secretToken')" title="Show/hide">
+              <svg viewBox="0 0 16 16" fill="currentColor" class="eye-icon"><path d="M8 2C4.5 2 1.6 4.4.2 7.9c-.1.2-.1.4 0 .6C1.6 11.6 4.5 14 8 14s6.4-2.4 7.8-5.9c.1-.2.1-.4 0-.6C14.4 4.4 11.5 2 8 2zm0 10.5c-2.8 0-5.2-1.8-6.3-4.5C2.8 5.3 5.2 3.5 8 3.5s5.2 1.8 6.3 4.5C13.2 10.7 10.8 12.5 8 12.5zM8 5a3 3 0 100 6 3 3 0 000-6zm0 4.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3z"/></svg>
+            </button>
+            <button class="copy-btn" onclick="copyToClipboard('secretToken')" title="Copy to clipboard">
+              <svg viewBox="0 0 16 16" fill="currentColor"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"/><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="settings-card">
+      <div class="card-header">
+        <div class="icon features">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="#d29922"><path d="M8 1.5A6.5 6.5 0 001.5 8 6.5 6.5 0 008 14.5 6.5 6.5 0 0014.5 8 6.5 6.5 0 008 1.5zM0 8a8 8 0 1116 0A8 8 0 010 8zm5 1a1 1 0 100-2 1 1 0 000 2zm6-1a1 1 0 11-2 0 1 1 0 012 0zM5.32 10.68a.75.75 0 011.06.04c.216.24.63.53 1.12.73.49.2.98.3 1.5.3s1.01-.1 1.5-.3c.49-.2.904-.49 1.12-.73a.75.75 0 111.1 1.02c-.384.416-.97.82-1.62 1.1A5.09 5.09 0 018 13.5a5.09 5.09 0 01-2.1-.66c-.65-.28-1.236-.684-1.62-1.1a.75.75 0 01.04-1.06z"/></svg>
+        </div>
+        <h2>Features</h2>
+      </div>
+      <div class="card-body">
+        <div class="setting-row">
+          <div class="setting-label-wrap">
+            <span class="setting-label">Log Level</span>
+          </div>
+          <div class="setting-input-wrap">
+            <select id="logLevel" data-key="logging.level">
+              <option value="debug">Debug</option>
+              <option value="info">Info</option>
+              <option value="warn">Warn</option>
+              <option value="error">Error</option>
+            </select>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label-wrap">
+            <span class="setting-label">Default Approval Mode</span>
+          </div>
+          <div class="setting-input-wrap">
+            <select id="approvalMode" data-key="features.approvalMode">
+              <option value="auto">Auto</option>
+              <option value="manual">Manual</option>
+              <option value="yolo">Yolo</option>
+            </select>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label-wrap">
+            <span class="setting-label">Heartbeat Interval (ms)</span>
+          </div>
+          <div class="setting-input-wrap">
+            <input type="number" id="heartbeatInterval" data-key="features.heartbeatInterval" min="5000" max="300000" step="1000" placeholder="30000">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Config Import / Export -->
+    <section class="config-io">
+      <h3>Config Import / Export</h3>
+      <div class="config-io-actions">
+        <button class="btn btn-secondary" onclick="exportConfig()">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M3.5 13h9a.75.75 0 010 1.5h-9a.75.75 0 010-1.5zM8 1a.75.75 0 01.75.75v7.59l2.22-2.22a.75.75 0 111.06 1.06l-3.5 3.5a.75.75 0 01-1.06 0l-3.5-3.5a.75.75 0 111.06-1.06l2.22 2.22V1.75A.75.75 0 018 1z"/></svg>
+          Export Config
+        </button>
+        <button class="btn btn-secondary" onclick="document.getElementById('importFileInput').click()">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M3.5 13h9a.75.75 0 010 1.5h-9a.75.75 0 010-1.5zM8 1a.75.75 0 01.75.75v.5a.75.75 0 01-1.5 0v-.5A.75.75 0 018 1zm0 3a.75.75 0 01.53.22l3.5 3.5a.75.75 0 11-1.06 1.06L8.75 6.56V11a.75.75 0 01-1.5 0V6.56L5.03 8.78a.75.75 0 01-1.06-1.06l3.5-3.5A.75.75 0 018 4z"/></svg>
+          Import Config
+        </button>
+        <input type="file" id="importFileInput" accept=".json" onchange="importConfig(event)">
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="settings-footer">
+    <div class="footer-inner">
+      <div class="footer-left">
+        <button class="btn btn-secondary" onclick="resetToDefaults()">Reset to Defaults</button>
+      </div>
+      <div class="footer-right">
+        <button class="btn btn-primary" id="saveBtn" onclick="saveSettings()">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>
+          Save
+        </button>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // ── State ──
+    let originalSettings = {};
+    let isReadOnly = false;
+    let restartFieldsChanged = false;
+
+    // All setting field IDs mapped to their config key path
+    const FIELD_MAP = {
+      machineName:        'hub.machineName',
+      mode:               'mode',
+      hubUrl:             'hub.url',
+      serverPort:         'server.port',
+      wsPort:             'server.wsPort',
+      claudeApiKey:       'ai.claudeApiKey',
+      aiPrimary:          'ai.primary',
+      aiFallback:         'ai.fallback',
+      ollamaUrl:          'ai.ollamaUrl',
+      ollamaModel:        'ai.ollamaModel',
+      secretToken:        'security.secretToken',
+      logLevel:           'logging.level',
+      approvalMode:       'features.approvalMode',
+      heartbeatInterval:  'features.heartbeatInterval',
+    };
+
+    // Defaults matching config.ts
+    const DEFAULTS = {
+      'hub.machineName':        'Unknown Machine',
+      'mode':                   'hub',
+      'hub.url':                'http://localhost:3000',
+      'server.port':            3000,
+      'server.wsPort':          3001,
+      'ai.claudeApiKey':        '',
+      'ai.primary':             'ollama',
+      'ai.fallback':            'claude',
+      'ai.ollamaUrl':           'http://localhost:11434',
+      'ai.ollamaModel':         'llama3:70b',
+      'security.secretToken':   'dev-token-change-in-production',
+      'logging.level':          'info',
+      'features.approvalMode':  'auto',
+      'features.heartbeatInterval': 30000,
+    };
+
+    // Sensitive keys excluded from export
+    const SENSITIVE_KEYS = ['ai.claudeApiKey', 'security.secretToken'];
+
+    // ── Helpers ──
+
+    function getNestedValue(obj, path) {
+      return path.split('.').reduce((o, k) => (o && o[k] !== undefined) ? o[k] : undefined, obj);
+    }
+
+    function setNestedValue(obj, path, value) {
+      const parts = path.split('.');
+      let current = obj;
+      for (let i = 0; i < parts.length - 1; i++) {
+        if (!current[parts[i]] || typeof current[parts[i]] !== 'object') {
+          current[parts[i]] = {};
+        }
+        current = current[parts[i]];
+      }
+      current[parts[parts.length - 1]] = value;
+    }
+
+    function showToast(message, isError) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = isError ? 'toast error show' : 'toast show';
+      setTimeout(() => { toast.className = toast.className.replace(' show', ''); }, 3000);
+    }
+
+    function toggleVisibility(fieldId) {
+      const input = document.getElementById(fieldId);
+      input.type = input.type === 'password' ? 'text' : 'password';
+    }
+
+    function copyToClipboard(fieldId) {
+      const input = document.getElementById(fieldId);
+      const val = input.value;
+      if (!val) return;
+      navigator.clipboard.writeText(val).then(() => {
+        showToast('Copied to clipboard');
+      }).catch(() => {
+        // Fallback
+        input.type = 'text';
+        input.select();
+        document.execCommand('copy');
+        input.type = 'password';
+        showToast('Copied to clipboard');
+      });
+    }
+
+    // ── Hub URL conditional visibility ──
+    function updateHubUrlVisibility() {
+      const mode = document.getElementById('mode').value;
+      const row = document.getElementById('hubUrlRow');
+      if (mode === 'local') {
+        row.classList.remove('hidden');
+      } else {
+        row.classList.add('hidden');
+      }
+    }
+
+    // ── Restart tracking ──
+    function checkRestartNeeded() {
+      restartFieldsChanged = false;
+      for (const [fieldId, key] of Object.entries(FIELD_MAP)) {
+        const el = document.getElementById(fieldId);
+        if (!el || !el.dataset.restart) continue;
+        const currentVal = getFieldValue(fieldId);
+        const origVal = getNestedValue(originalSettings, key);
+        if (String(currentVal) !== String(origVal !== undefined ? origVal : '')) {
+          restartFieldsChanged = true;
+          break;
+        }
+      }
+      document.getElementById('restartBanner').className =
+        restartFieldsChanged ? 'restart-banner visible' : 'restart-banner';
+    }
+
+    function getFieldValue(fieldId) {
+      const el = document.getElementById(fieldId);
+      if (!el) return undefined;
+      if (el.type === 'number') {
+        return el.value === '' ? '' : Number(el.value);
+      }
+      return el.value;
+    }
+
+    // ── Populate fields from a settings object ──
+    function populateFields(settings) {
+      for (const [fieldId, key] of Object.entries(FIELD_MAP)) {
+        const el = document.getElementById(fieldId);
+        if (!el) continue;
+        let val = getNestedValue(settings, key);
+        if (val === undefined) val = DEFAULTS[key] !== undefined ? DEFAULTS[key] : '';
+        el.value = val;
+      }
+      updateHubUrlVisibility();
+    }
+
+    // ── Collect current field values into a settings object ──
+    function collectSettings() {
+      const settings = {};
+      for (const [fieldId, key] of Object.entries(FIELD_MAP)) {
+        const val = getFieldValue(fieldId);
+        if (val !== undefined && val !== '') {
+          setNestedValue(settings, key, val);
+        }
+      }
+      return settings;
+    }
+
+    // ── Save ──
+    async function saveSettings() {
+      const settings = collectSettings();
+
+      if (isReadOnly) {
+        showToast('Read-only mode: cannot save settings', true);
+        return;
+      }
+
+      try {
+        if (window.pia && window.pia.saveSettings) {
+          const result = await window.pia.saveSettings(settings);
+          showToast('Settings saved');
+          originalSettings = JSON.parse(JSON.stringify(settings));
+          if (result && result.needsRestart) {
+            restartFieldsChanged = true;
+            document.getElementById('restartBanner').className = 'restart-banner visible';
+          } else {
+            checkRestartNeeded();
+          }
+        } else {
+          showToast('Cannot save: not running in Electron', true);
+        }
+      } catch (err) {
+        showToast('Failed to save: ' + (err.message || err), true);
+      }
+    }
+
+    // ── Reset to Defaults ──
+    function resetToDefaults() {
+      if (!confirm('Reset all settings to their default values?')) return;
+      const defaultSettings = {};
+      for (const [key, val] of Object.entries(DEFAULTS)) {
+        setNestedValue(defaultSettings, key, val);
+      }
+      populateFields(defaultSettings);
+      checkRestartNeeded();
+      showToast('Fields reset to defaults (not saved yet)');
+    }
+
+    // ── Restart ──
+    async function restartServer() {
+      try {
+        if (window.pia && window.pia.restartServer) {
+          await window.pia.restartServer();
+          showToast('Server restarting...');
+          restartFieldsChanged = false;
+          document.getElementById('restartBanner').className = 'restart-banner';
+        } else {
+          showToast('Cannot restart: not running in Electron', true);
+        }
+      } catch (err) {
+        showToast('Restart failed: ' + (err.message || err), true);
+      }
+    }
+
+    // ── Export Config ──
+    function exportConfig() {
+      const settings = collectSettings();
+      // Strip sensitive keys
+      for (const key of SENSITIVE_KEYS) {
+        const parts = key.split('.');
+        let obj = settings;
+        for (let i = 0; i < parts.length - 1; i++) {
+          if (!obj[parts[i]]) break;
+          obj = obj[parts[i]];
+        }
+        delete obj[parts[parts.length - 1]];
+      }
+
+      const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'pia-config-' + new Date().toISOString().slice(0, 10) + '.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Config exported (API keys excluded)');
+    }
+
+    // ── Import Config ──
+    function importConfig(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          populateFields(imported);
+          checkRestartNeeded();
+          showToast('Config imported (review and save)');
+        } catch (err) {
+          showToast('Invalid JSON file', true);
+        }
+      };
+      reader.readAsText(file);
+      // Reset the input so the same file can be re-imported
+      event.target.value = '';
+    }
+
+    // ── Init ──
+    async function init() {
+      // Version label
+      if (window.pia && window.pia.getVersion) {
+        try {
+          const version = await window.pia.getVersion();
+          document.getElementById('versionLabel').textContent = 'v' + version;
+        } catch (_) {}
+      }
+
+      // Load settings
+      if (window.pia && window.pia.getSettings) {
+        try {
+          const settings = await window.pia.getSettings();
+          originalSettings = JSON.parse(JSON.stringify(settings));
+          populateFields(settings);
+        } catch (err) {
+          showToast('Failed to load settings: ' + err.message, true);
+          populateDefaults();
+        }
+      } else {
+        // Fallback: browser dev mode (no Electron preload)
+        isReadOnly = true;
+        document.getElementById('readOnlyBadge').style.display = 'inline-block';
+        document.getElementById('saveBtn').disabled = true;
+
+        // Try loading what we can from /api/health
+        try {
+          const resp = await fetch('/api/health');
+          if (resp.ok) {
+            const data = await resp.json();
+            // Health only returns mode + status, populate what we can
+            const partial = { mode: data.mode || 'hub' };
+            originalSettings = partial;
+            populateFields(partial);
+          }
+        } catch (_) {}
+
+        // Fill remaining with defaults
+        populateDefaults();
+      }
+
+      // Wire up change listeners
+      document.getElementById('mode').addEventListener('change', function () {
+        updateHubUrlVisibility();
+        checkRestartNeeded();
+      });
+
+      // Track changes on all inputs for restart detection
+      for (const fieldId of Object.keys(FIELD_MAP)) {
+        const el = document.getElementById(fieldId);
+        if (el) {
+          el.addEventListener('input', checkRestartNeeded);
+          el.addEventListener('change', checkRestartNeeded);
+          if (isReadOnly) el.disabled = true;
+        }
+      }
+    }
+
+    function populateDefaults() {
+      const defaultSettings = {};
+      for (const [key, val] of Object.entries(DEFAULTS)) {
+        setNestedValue(defaultSettings, key, val);
+      }
+      // Only set fields that are still empty
+      for (const [fieldId, key] of Object.entries(FIELD_MAP)) {
+        const el = document.getElementById(fieldId);
+        if (el && !el.value) {
+          let val = getNestedValue(defaultSettings, key);
+          if (val !== undefined) el.value = val;
+        }
+      }
+      updateHubUrlVisibility();
+    }
+
+    // Boot
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
