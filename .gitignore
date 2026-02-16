@@ -50,3 +50,4 @@ nul
 # Firebase credentials (NEVER commit)
 firebase-service-account.json
 **/firebase-service-account*.json
+first-run-*.png
