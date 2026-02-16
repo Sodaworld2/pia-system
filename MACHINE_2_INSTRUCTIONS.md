@@ -25,7 +25,9 @@ npm install --global windows-build-tools
 
 ## Step 3: Create the .env file
 
-Create a file called `.env` in the project root (`pia-system/.env`) with this exact content:
+**IMPORTANT: Do this AFTER git pull.** Git pull does not include .env (it's gitignored), so you must create it manually.
+
+Create a file called `.env` in the project root (`pia-system/.env`) with this **exact** content:
 
 ```env
 # PIA Configuration - Machine #2 (LOCAL SPOKE)
@@ -49,7 +51,10 @@ PIA_STUCK_THRESHOLD=300000
 PIA_LOG_LEVEL=info
 ```
 
-**Do NOT change the tokens** — they must match the hub exactly.
+### CRITICAL: Token must match exactly
+The hub expects `PIA_SECRET_TOKEN=pia-local-dev-token-2024`. If your token doesn't match, the WebSocket connection will fail with "auth failed". Do NOT use the code default (`dev-token-change-in-production`) — that's only the fallback if no .env exists. The hub's .env overrides it to `pia-local-dev-token-2024`.
+
+Same for `PIA_JWT_SECRET=pia-jwt-secret-2024` — must match exactly.
 
 ## Step 4: Start PIA
 
@@ -57,21 +62,36 @@ PIA_LOG_LEVEL=info
 npm run dev
 ```
 
+You should see output like:
+```
+[hub-client] Connecting to hub at ws://100.73.133.3:3001
+[hub-client] Authenticated with hub
+[hub-client] Registered as Machine-2
+```
+
+If you see `auth failed` or `Invalid token`, double-check your `PIA_SECRET_TOKEN` matches exactly.
+
 ## Step 5: Verify
 
 ```bash
-# Check local health — should say "mode":"local"
+# Check local health — MUST say "mode":"local"
 curl http://localhost:3000/api/health
 
 # Check hub sees you — Machine-2 should be listed as online
 curl http://100.73.133.3:3000/api/mc/machines
 ```
 
-## Step 6: Confirm
-
-Once both checks pass, you're done. Machine 1 (Izzit7) will see you in Mission Control and can send you tasks.
-
-If `curl http://100.73.133.3:3000` times out, check:
+If `curl http://100.73.133.3:3000` times out:
 - Is Tailscale running? (`tailscale status`)
 - Can you ping 100.73.133.3? (`ping 100.73.133.3`)
-- If not, try the LAN IP instead: replace `100.73.133.3` with `192.168.0.2` in the .env
+- Try the LAN IP: replace `100.73.133.3` with `192.168.0.2` in the .env and restart
+
+## Troubleshooting
+
+| Problem | Fix |
+|---------|-----|
+| WebSocket auth failed | Check `PIA_SECRET_TOKEN` matches `pia-local-dev-token-2024` exactly |
+| Mode shows "hub" not "local" | Check `PIA_MODE=local` in .env, restart PIA |
+| Can't reach hub | Check Tailscale is running, try `ping 100.73.133.3` |
+| better-sqlite3 build fails | Install Windows Build Tools or Visual Studio Build Tools |
+| Port 3000 already in use | Kill existing node process: `netstat -ano \| findstr :3000` then `taskkill /f /pid <PID>` |

@@ -66,6 +66,57 @@ POST /api/browser/task       { "task": "Take a screenshot of example.com" }
 GET  /api/browser/sessions
 ```
 
+## Session Journaling
+
+**Every agent session MUST update `SESSION_JOURNAL_2026-02-16.md` (or current date) before finishing.**
+
+A desktop app (Electron) is being built from this codebase. Other agents are building features in parallel. To keep everything in sync, journal these changes:
+
+### What to Journal
+
+| Change Type | What to Log | Why It Matters |
+|---|---|---|
+| **New API endpoints** | Route path, method, purpose | React UI needs to know what to call |
+| **New database migrations** | Migration number, table/column changes | Migration numbering must stay sequential |
+| **New config options** | Key name in `config.ts`, env var, default | Settings screen must expose all options |
+| **New native dependencies** | Package name, whether it has C++ addons | Native modules affect Electron packaging |
+| **New subprocess spawning** | What gets spawned, how path is resolved | Packaged app resolves paths differently |
+| **New WebSocket events** | Event name, payload shape | React UI subscribes to these |
+| **New HTML dashboard features** | What was added to mission-control.html | Must be ported to React UI later |
+| **Bug fixes** | What broke, what fixed it | Prevents re-introducing in the app |
+
+### Journal Entry Format
+
+```markdown
+## Session N: [Title]
+
+### Changes
+- **New endpoint**: `POST /api/foo/bar` — does X
+- **Migration 041**: Added `new_column` to `agents` table
+- **New config**: `PIA_NEW_THING` (default: `true`) — controls Y
+- **New dep**: `some-package` (pure JS, no native code)
+- **Bug fix**: Fixed Z in `src/file.ts` line N
+
+### Files Changed
+| File | Change |
+|---|---|
+| `src/api/routes/foo.ts` | **NEW** — description |
+| `src/config.ts` | Added `newThing` option |
+
+### Desktop App Impact
+[One sentence: does this affect packaging, the React UI, or settings?]
+```
+
+### Current Desktop App Plan
+
+See `ELECTRON_APP_ANALYSIS.md` for the full technical analysis. Key decisions:
+- **Framework**: Electron (wraps the Express server)
+- **UI**: Rebuilding with React + shadcn/ui (replaces mission-control.html)
+- **Packaging**: electron-builder + NSIS
+- **Both modes**: CLI (`npm run dev`) + Desktop (`electron`) from same codebase
+
+The Express server, API routes, and WebSocket events are the **contract** between backend and frontend. Keep them stable and documented.
+
 ## Do Not
 
 - Do not modify `dao-foundation-files/`

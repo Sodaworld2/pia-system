@@ -1,33 +1,40 @@
 # Machine 3 (SODA-YETI) — Reconnect to Hub
 
-You are Claude, running on Machine 3 (SODA-YETI). PIA is already installed but running in the wrong mode. You need to switch it to **local spoke** mode so it connects to the hub on Machine 1 (Izzit7).
+You are Claude, running on Machine 3 (SODA-YETI). PIA is already installed but needs to run in **local spoke** mode connecting to the hub on Machine 1 (Izzit7).
 
 ## Step 1: Stop PIA
 
 Kill the current PIA process:
 
 ```bash
-# If running in a terminal, Ctrl+C it. Or:
-taskkill /f /im node.exe
-```
-
-**Warning:** `taskkill /f /im node.exe` kills ALL node processes. If you have other node apps running (like the DAO backend), find just the PIA process:
-```bash
+# Find the PIA process on port 3000
 netstat -ano | findstr :3000
+# Kill it by PID
 taskkill /f /pid <THE_PID>
 ```
 
-## Step 2: Check the .env file
+Or if it's in a terminal, just `Ctrl+C`.
 
-The `.env` should already be updated (it was changed remotely). Verify it says:
+## Step 2: Pull latest code
 
-```env
-PIA_MODE=local
-PIA_HUB_URL=http://100.73.133.3:3000
-PIA_MACHINE_NAME=Machine-3
+```bash
+cd ~/Downloads/pia-system
+git pull
+npm install
 ```
 
-If it still says `PIA_MODE=hub` or `PIA_HUB_URL=http://localhost:3000`, update it to match this:
+## Step 3: Create or fix the .env file
+
+**IMPORTANT: git pull does NOT update .env (it's gitignored).** You must check and fix it manually.
+
+Check current mode:
+```bash
+cat .env | grep PIA_MODE
+```
+
+If it says `PIA_MODE=hub` or the file doesn't exist, you need to fix it.
+
+**Write this exact content to `.env`:**
 
 ```env
 # PIA Configuration - Machine #3 (LOCAL SPOKE)
@@ -51,20 +58,22 @@ PIA_STUCK_THRESHOLD=300000
 PIA_LOG_LEVEL=info
 ```
 
-## Step 3: Install any new dependencies
+### CRITICAL: These must be exact
+- `PIA_MODE=local` (NOT `hub`)
+- `PIA_HUB_URL=http://100.73.133.3:3000` (NOT `localhost`)
+- `PIA_SECRET_TOKEN=pia-local-dev-token-2024` (must match hub exactly)
+- `PIA_JWT_SECRET=pia-jwt-secret-2024` (must match hub exactly)
+
+## Step 4: Clean up restart trigger in index.ts
+
+A previous remote config attempt added a comment to `src/index.ts`. Check and remove it:
 
 ```bash
-npm install
+head -1 src/index.ts
 ```
 
-## Step 4: Clean up the restart trigger
-
-A restart trigger comment was added to `src/index.ts` remotely. Remove the first line if it says `// Restart trigger: 1771248010`:
-
+If the first line says `// Restart trigger: ...`, remove it:
 ```bash
-# Check first line
-head -1 src/index.ts
-# If it's a restart trigger comment, remove it:
 sed -i '1{/^\/\/ Restart trigger/d}' src/index.ts
 ```
 
@@ -74,10 +83,19 @@ sed -i '1{/^\/\/ Restart trigger/d}' src/index.ts
 npm run dev
 ```
 
+You should see output like:
+```
+[hub-client] Connecting to hub at ws://100.73.133.3:3001
+[hub-client] Authenticated with hub
+[hub-client] Registered as Machine-3
+```
+
+If you see `auth failed`, double-check `PIA_SECRET_TOKEN` matches exactly.
+
 ## Step 6: Verify
 
 ```bash
-# Check local health — should say "mode":"local"
+# Check local health — MUST say "mode":"local" (NOT "hub")
 curl http://localhost:3000/api/health
 
 # Check hub sees you — Machine-3 should be listed as online
@@ -92,6 +110,12 @@ New-NetFirewallRule -DisplayName "PIA WS" -Direction Inbound -Port 3001 -Protoco
 New-NetFirewallRule -DisplayName "Allow Ping" -Direction Inbound -Protocol ICMPv4 -Action Allow
 ```
 
-## Done
+## Troubleshooting
 
-Once the hub sees Machine-3 as online, you're connected. The hub (Izzit7) will show you in Mission Control alongside Machine-2 and itself.
+| Problem | Fix |
+|---------|-----|
+| `mode: "hub"` after restart | .env still says `PIA_MODE=hub` — fix it and restart |
+| WebSocket auth failed | `PIA_SECRET_TOKEN` doesn't match. Must be `pia-local-dev-token-2024` |
+| Can't reach hub | Check Tailscale: `tailscale status`. Try `ping 100.73.133.3` |
+| Port 3000 in use | Old process still running: `netstat -ano \| findstr :3000` then `taskkill /f /pid <PID>` |
+| `// Restart trigger` in index.ts | Remove it: `sed -i '1{/^\/\/ Restart trigger/d}' src/index.ts` |
