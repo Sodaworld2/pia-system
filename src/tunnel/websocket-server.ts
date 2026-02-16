@@ -45,7 +45,7 @@ interface IncomingMessage {
 
 interface OutgoingMessage {
   type: 'auth' | 'output' | 'buffer' | 'exit' | 'error' | 'pong' | 'agent:update' | 'alert' | 'machine:update' | 'command' | 'relay:message' | 'relay:registered' |
-        'mc:prompt' | 'mc:output' | 'mc:status' | 'mc:journal' | 'mc:agent_spawned' | 'mc:agent_killed';
+        'mc:prompt' | 'mc:output' | 'mc:status' | 'mc:journal' | 'mc:agent_spawned' | 'mc:agent_killed' | 'mc:browser_status';
   success?: boolean;
   payload?: unknown;
   sessionId?: string;
@@ -185,10 +185,10 @@ export class TunnelWebSocketServer {
     }
   }
 
-  private handleHubMessage(type: string, payload: IncomingMessage['payload']): void {
+  private async handleHubMessage(type: string, payload: IncomingMessage['payload']): Promise<void> {
     // Lazy import to avoid circular dependency
     try {
-      const { getAggregator } = require('../hub/aggregator.js');
+      const { getAggregator } = await import('../hub/aggregator.js');
       const aggregator = getAggregator();
 
       switch (type) {
@@ -257,9 +257,9 @@ export class TunnelWebSocketServer {
     }
   }
 
-  private handleRelayMessage(ws: WebSocket, type: string, payload: IncomingMessage['payload']): void {
+  private async handleRelayMessage(ws: WebSocket, type: string, payload: IncomingMessage['payload']): Promise<void> {
     try {
-      const { getCrossMachineRelay } = require('../comms/cross-machine.js');
+      const { getCrossMachineRelay } = await import('../comms/cross-machine.js');
       const relay = getCrossMachineRelay();
 
       switch (type) {
