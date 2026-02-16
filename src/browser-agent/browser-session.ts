@@ -8,19 +8,22 @@
  * SDK session with Playwright MCP pre-configured.
  */
 
-import { resolve } from 'path';
 import { getAgentSessionManager, AgentSessionConfig } from '../mission-control/agent-session.js';
 import { createLogger } from '../utils/logger.js';
+import { resolveFromAppRoot, getAppRoot, getNodeBinary } from '../electron-paths.js';
 
 const logger = createLogger('BrowserAgent');
 
 // Resolve to locally installed @playwright/mcp — no npx, no PATH issues
-const PLAYWRIGHT_MCP_CLI = resolve(process.cwd(), 'node_modules/@playwright/mcp/cli.js');
+const PLAYWRIGHT_MCP_CLI = resolveFromAppRoot('node_modules/@playwright/mcp/cli.js');
 
 const PLAYWRIGHT_MCP_SERVER = {
   name: 'playwright',
   transport: 'stdio' as const,
-  command: 'node',
+  // Use getNodeBinary() instead of hardcoded 'node' — in packaged Electron,
+  // 'node' may not be on PATH. getNodeBinary() returns process.execPath which
+  // is the Electron binary (acts as Node.js with ELECTRON_RUN_AS_NODE=1 env var).
+  command: getNodeBinary(),
   args: [PLAYWRIGHT_MCP_CLI],
 };
 
@@ -61,7 +64,7 @@ export function spawnBrowserAgent(opts: BrowserTaskOptions): string {
     machineId: 'local',
     mode: 'sdk',
     task,
-    cwd: opts.cwd || process.cwd(),
+    cwd: opts.cwd || getAppRoot(),
     approvalMode: opts.approvalMode || 'auto',
     model: opts.model || 'claude-sonnet-4-5-20250929', // Sonnet is fast enough for browser tasks
     maxBudgetUsd: opts.maxBudgetUsd || 2.00,

@@ -1145,6 +1145,27 @@
         Machines <span class="count">6 online</span>
       </div>
       <div class="machine-list" id="machineList"></div>
+
+      <!-- Browser Controller Panel -->
+      <div id="bcPanel" style="border-top:1px solid #1a1a2a;margin-top:auto;padding:0;">
+        <div onclick="document.getElementById('bcBody').style.display=document.getElementById('bcBody').style.display==='none'?'block':'none'" style="padding:8px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;">
+          <span>Browser Controller</span>
+          <span id="bcDot" style="width:8px;height:8px;border-radius:50%;background:#484f58;display:inline-block;"></span>
+        </div>
+        <div id="bcBody" style="display:none;padding:8px 12px;font-size:11px;">
+          <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;"><span style="color:#64748b;">Status</span><span id="bcStatus" style="color:#e2e8f0;">stopped</span></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:#64748b;">URL</span><span id="bcUrl" style="color:#e2e8f0;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="">-</span></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:#64748b;">Commands</span><span id="bcCommands" style="color:#e2e8f0;">0</span></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:#64748b;">Gemini</span><span id="bcGemini" style="color:#e2e8f0;">0 calls</span></div>
+          </div>
+          <div id="bcScreenshot" style="text-align:center;margin-bottom:8px;"></div>
+          <div style="display:flex;gap:8px;">
+            <button id="bcStartBtn" onclick="startBrowserController()" style="flex:1;padding:4px 8px;border:1px solid #2a2a3a;border-radius:4px;background:#0f0f18;color:#e2e8f0;font-size:11px;cursor:pointer;">Start</button>
+            <button id="bcStopBtn" onclick="stopBrowserController()" disabled style="flex:1;padding:4px 8px;border:1px solid #2a2a3a;border-radius:4px;background:#0f0f18;color:#e2e8f0;font-size:11px;cursor:pointer;opacity:0.4;">Stop</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- CENTER: Agent Detail -->
@@ -1772,6 +1793,9 @@ function handleWsMessage(msg) {
     }
     case 'authenticated':
       // Good, now subscribe
+      break;
+    case 'mc:browser_status':
+      updateBcUI(msg.payload || {});
       break;
     case 'relay:message':
       // A cross-machine message arrived — refresh board if on messages tab
@@ -3076,6 +3100,66 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ── INIT ──
+// ── BROWSER CONTROLLER ──
+
+async function startBrowserController() {
+  try {
+    await api('/api/browser/controller/start', { method: 'POST' });
+    showToast('Browser controller started');
+    pollBcStatus();
+  } catch (e) {
+    showToast('Failed to start: ' + (e.message || e));
+  }
+}
+
+async function stopBrowserController() {
+  try {
+    await api('/api/browser/controller/stop', { method: 'POST' });
+    updateBcUI({ status: 'stopped', currentUrl: null, commandsExecuted: 0, geminiCallsCount: 0 });
+    showToast('Browser controller stopped');
+  } catch (e) {
+    showToast('Failed to stop: ' + (e.message || e));
+  }
+}
+
+function updateBcUI(state) {
+  const statusEl = document.getElementById('bcStatus');
+  const urlEl = document.getElementById('bcUrl');
+  const cmdsEl = document.getElementById('bcCommands');
+  const geminiEl = document.getElementById('bcGemini');
+  const dot = document.getElementById('bcDot');
+  const startBtn = document.getElementById('bcStartBtn');
+  const stopBtn = document.getElementById('bcStopBtn');
+  const ssEl = document.getElementById('bcScreenshot');
+
+  if (statusEl) statusEl.textContent = state.status || 'stopped';
+  if (urlEl) { urlEl.textContent = state.currentUrl || '-'; urlEl.title = state.currentUrl || ''; }
+  if (cmdsEl) cmdsEl.textContent = state.commandsExecuted || state.commands || 0;
+  if (geminiEl) geminiEl.textContent = (state.geminiCallsCount || state.geminiCalls || 0) + ' calls';
+
+  if (dot) {
+    const colors = { stopped: '#484f58', idle: '#3fb950', busy: '#d29922', starting: '#d29922', error: '#f85149' };
+    dot.style.background = colors[state.status] || '#484f58';
+    if (state.status === 'busy') dot.style.animation = 'pulse 1s infinite';
+    else dot.style.animation = '';
+  }
+
+  if (startBtn) startBtn.disabled = state.status !== 'stopped';
+  if (stopBtn) { stopBtn.disabled = state.status === 'stopped'; stopBtn.style.opacity = state.status === 'stopped' ? '0.4' : '1'; }
+
+  if (ssEl && state.screenshotDataUrl) {
+    ssEl.innerHTML = '<img src="' + state.screenshotDataUrl + '" style="max-width:100%;max-height:150px;border-radius:4px;border:1px solid #1a1a2a;">';
+  }
+}
+
+async function pollBcStatus() {
+  try {
+    const state = await api('/api/browser/controller/status');
+    updateBcUI(state);
+    if (state.status !== 'stopped') setTimeout(pollBcStatus, 5000);
+  } catch { /* controller not running */ }
+}
+
 async function init() {
   // Show loading
   document.getElementById('terminalOutput').innerHTML = '<div class="term-line system">Connecting to PIA...</div>';
@@ -3086,6 +3170,9 @@ async function init() {
   // Fetch initial data
   await Promise.all([fetchMachines(), fetchAgents(), fetchPrompts()]);
   renderAll();
+
+  // Check browser controller status
+  pollBcStatus();
 
   document.getElementById('terminalOutput').innerHTML = `
     <div class="term-line system">PIA Mission Control connected.</div>

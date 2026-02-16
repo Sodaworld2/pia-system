@@ -5,6 +5,7 @@ import { join } from 'path';
 import { homedir } from 'os';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { isElectronPackaged, getNodeBinary, resolveFromAppRoot } from '../../electron-paths.js';
 
 const execAsync = promisify(exec);
 const router = Router();
@@ -259,21 +260,46 @@ router.post('/install', async (req: Request, res: Response) => {
 
     const mcpName = name || packageName.split('/').pop()?.replace('server-', '') || packageName;
 
-    // Install the package globally
+    // Install the package
     logger.info(`Installing MCP package: ${packageName}`);
 
-    try {
-      await execAsync(`npm install -g ${packageName}`, { timeout: 120000 });
-    } catch (installError) {
-      // Try with npx instead (some MCPs work better this way)
-      logger.warn(`Global install failed, will use npx: ${installError}`);
-    }
+    let mcpConfig: MCPServer;
 
-    // Create MCP config
-    const mcpConfig: MCPServer = {
-      command: 'npx',
-      args: ['-y', packageName],
-    };
+    if (isElectronPackaged()) {
+      // In packaged Electron, npm/npx are not available on PATH.
+      // Check if the package is already installed locally in node_modules.
+      // If not, we can't install it — inform the user.
+      const localModule = resolveFromAppRoot('node_modules', packageName);
+
+      if (existsSync(localModule)) {
+        // Package is bundled — use node to run its CLI entry point directly
+        logger.info(`Using bundled MCP package: ${localModule}`);
+        mcpConfig = {
+          command: getNodeBinary(),
+          args: [join(localModule, 'cli.js')],  // Most MCP servers expose cli.js
+        };
+      } else {
+        logger.warn(`MCP package ${packageName} not bundled in packaged app. Using npx as fallback (may not work).`);
+        mcpConfig = {
+          command: 'npx',
+          args: ['-y', packageName],
+        };
+      }
+    } else {
+      // In CLI/dev mode, try global install, fall back to npx
+      try {
+        await execAsync(`npm install -g ${packageName}`, { timeout: 120000 });
+      } catch (installError) {
+        // Try with npx instead (some MCPs work better this way)
+        logger.warn(`Global install failed, will use npx: ${installError}`);
+      }
+
+      // Create MCP config using npx (available in dev/CLI mode)
+      mcpConfig = {
+        command: 'npx',
+        args: ['-y', packageName],
+      };
+    }
 
     if (env) {
       mcpConfig.env = env;

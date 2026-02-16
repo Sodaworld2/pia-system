@@ -2,22 +2,28 @@
  * PIA WhatsApp Bot
  * Allows user to communicate with PIA through WhatsApp
  *
- * Uses whatsapp-web.js (unofficial WhatsApp Web client).
+ * Uses Baileys (pure WebSocket, no browser needed — ~2MB vs 200MB for whatsapp-web.js).
  * First run: displays QR code in terminal — scan with WhatsApp to link.
  * Session is persisted in data/whatsapp-session/ so you only scan once.
  */
 
-import pkg, { Message } from 'whatsapp-web.js';
-const { Client, LocalAuth } = pkg;
+import makeWASocket, {
+  DisconnectReason,
+  useMultiFileAuthState,
+  fetchLatestBaileysVersion,
+  type WASocket,
+} from '@whiskeysockets/baileys';
+import { Boom } from '@hapi/boom';
+import P from 'pino';
 // @ts-ignore — no type declarations available
 import qrcode from 'qrcode-terminal';
 import { createLogger } from '../utils/logger.js';
-import { join } from 'path';
+import { getDataSubDir } from '../electron-paths.js';
 
 const logger = createLogger('WhatsApp');
 
 interface WhatsAppConfig {
-  allowedNumbers?: string[];   // Phone numbers that can interact (e.g. '1234567890@c.us')
+  allowedNumbers?: string[];   // Phone numbers that can interact (e.g. '1234567890@s.whatsapp.net')
   sessionPath?: string;        // Where to store session data
 }
 
@@ -28,122 +34,112 @@ type MessageHandler = (
 ) => Promise<void>;
 
 export class PIAWhatsAppBot {
-  private client: InstanceType<typeof Client>;
+  private sock: WASocket | null = null;
   private config: WhatsAppConfig;
   private messageHandler?: MessageHandler;
   private isReady = false;
   private currentQr: string | null = null;
   private phoneNumber: string | null = null;
+  private authPath: string;
+  private shouldReconnect = true;
 
   constructor(config: WhatsAppConfig = {}) {
     this.config = config;
-
-    const dataPath = config.sessionPath || join(process.cwd(), 'data', 'whatsapp-session');
-
-    this.client = new Client({
-      authStrategy: new LocalAuth({ dataPath }),
-      puppeteer: {
-        headless: true,
-        executablePath: this.findChrome(),
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-gpu',
-          '--no-first-run',
-          '--disable-extensions',
-        ],
-      },
-    });
-
-    this.setupEventHandlers();
+    this.authPath = config.sessionPath || getDataSubDir('whatsapp-session');
   }
 
-  private findChrome(): string {
-    // Common Chrome paths on Windows
-    const paths = [
-      'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-      'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
-      process.env.CHROME_PATH || '',
-    ].filter(Boolean);
+  private async connect(): Promise<void> {
+    const { state, saveCreds } = await useMultiFileAuthState(this.authPath);
+    const { version } = await fetchLatestBaileysVersion();
 
-    // On other platforms, let puppeteer find it
-    if (process.platform !== 'win32') return '';
-
-    for (const p of paths) {
-      try {
-        const fs = require('fs');
-        if (fs.existsSync(p)) return p;
-      } catch { /* continue */ }
-    }
-
-    return paths[0]; // Fallback to default
-  }
-
-  private setupEventHandlers() {
-    this.client.on('qr', (qr: string) => {
-      this.currentQr = qr;
-      logger.info('WhatsApp QR code received — scan with your phone:');
-      qrcode.generate(qr, { small: true });
+    const sock = makeWASocket({
+      version,
+      auth: state,
+      logger: P({ level: 'silent' }) as any,
+      printQRInTerminal: false, // We handle QR ourselves
+      getMessage: async () => undefined,
     });
 
-    this.client.on('ready', () => {
-      this.isReady = true;
-      this.currentQr = null;
-      const info = this.client.info;
-      this.phoneNumber = info?.wid?.user || null;
-      logger.info(`WhatsApp bot ready! Connected as ${this.phoneNumber || 'unknown'}`);
-    });
+    this.sock = sock;
 
-    this.client.on('authenticated', () => {
-      logger.info('WhatsApp authenticated successfully');
-      this.currentQr = null;
-    });
+    // Save credentials on every update
+    sock.ev.on('creds.update', saveCreds);
 
-    this.client.on('auth_failure', (msg: string) => {
-      logger.error(`WhatsApp auth failure: ${msg}`);
-      this.isReady = false;
-    });
+    // Connection status
+    sock.ev.on('connection.update', (update) => {
+      const { connection, lastDisconnect, qr } = update;
 
-    this.client.on('disconnected', (reason: string) => {
-      logger.warn(`WhatsApp disconnected: ${reason}`);
-      this.isReady = false;
-    });
-
-    this.client.on('message', async (msg: Message) => {
-      // Ignore status broadcasts and group messages (optional — can enable groups later)
-      if (msg.from === 'status@broadcast') return;
-
-      // Check allowed numbers (if set)
-      if (this.config.allowedNumbers && this.config.allowedNumbers.length > 0) {
-        if (!this.config.allowedNumbers.includes(msg.from)) {
-          return;
-        }
+      if (qr) {
+        this.currentQr = qr;
+        logger.info('WhatsApp QR code received — scan with your phone:');
+        qrcode.generate(qr, { small: true });
       }
 
-      if (this.messageHandler) {
-        const respond = async (text: string) => {
-          // WhatsApp has a ~65000 char limit per message, but split at 4000 for readability
-          const chunks = this.splitMessage(text, 4000);
+      if (connection === 'open') {
+        this.isReady = true;
+        this.currentQr = null;
+        this.phoneNumber = sock.user?.id?.split(':')[0] || null;
+        logger.info(`WhatsApp bot ready! Connected as ${this.phoneNumber || 'unknown'}`);
+      }
+
+      if (connection === 'close') {
+        this.isReady = false;
+        const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
+
+        if (statusCode === DisconnectReason.loggedOut) {
+          logger.warn('WhatsApp logged out. Delete session folder to re-authenticate.');
+          this.shouldReconnect = false;
+        } else if (this.shouldReconnect) {
+          logger.info(`WhatsApp disconnected (code ${statusCode}). Reconnecting...`);
+          setTimeout(() => this.connect(), 3000);
+        }
+      }
+    });
+
+    // Incoming messages
+    sock.ev.on('messages.upsert', async ({ messages, type }) => {
+      if (type !== 'notify') return;
+
+      for (const msg of messages) {
+        // Skip messages sent by us
+        if (msg.key.fromMe) continue;
+
+        const jid = msg.key.remoteJid!;
+
+        // Ignore status broadcasts
+        if (jid === 'status@broadcast') continue;
+
+        // Check allowed numbers (if set)
+        if (this.config.allowedNumbers && this.config.allowedNumbers.length > 0) {
+          if (!this.config.allowedNumbers.includes(jid)) {
+            continue;
+          }
+        }
+
+        // Extract text content
+        const text =
+          msg.message?.conversation ||
+          msg.message?.extendedTextMessage?.text ||
+          msg.message?.imageMessage?.caption ||
+          msg.message?.videoMessage?.caption ||
+          '';
+
+        if (!text || !this.messageHandler) continue;
+
+        const respond = async (replyText: string) => {
+          const chunks = this.splitMessage(replyText, 4000);
           for (const chunk of chunks) {
-            await msg.reply(chunk);
+            await sock.sendMessage(jid, { text: chunk }, { quoted: msg });
           }
         };
 
         try {
-          logger.info(`WhatsApp message from ${msg.from}: ${msg.body.substring(0, 80)}...`);
-          await this.messageHandler(msg.body, msg.from, respond);
+          logger.info(`WhatsApp message from ${jid}: ${text.substring(0, 80)}...`);
+          await this.messageHandler(text, jid, respond);
         } catch (error) {
           logger.error(`Error handling WhatsApp message: ${error}`);
-          await msg.reply('Sorry, I encountered an error processing your message.');
+          await sock.sendMessage(jid, { text: 'Sorry, I encountered an error processing your message.' });
         }
-      }
-    });
-
-    this.client.on('message_create', (msg: Message) => {
-      // Messages sent by the bot itself (for logging)
-      if (msg.fromMe) {
-        logger.debug(`WhatsApp sent: ${msg.body.substring(0, 80)}...`);
       }
     });
   }
@@ -180,23 +176,30 @@ export class PIAWhatsAppBot {
   }
 
   async start(): Promise<void> {
-    logger.info('WhatsApp bot starting... (this may take a moment to launch browser)');
-    await this.client.initialize();
+    logger.info('WhatsApp bot starting... (pure WebSocket — no browser needed)');
+    this.shouldReconnect = true;
+    await this.connect();
   }
 
   async stop(): Promise<void> {
-    await this.client.destroy();
+    this.shouldReconnect = false;
+    if (this.sock) {
+      this.sock.ws.close();
+      this.sock = null;
+    }
     this.isReady = false;
     logger.info('WhatsApp bot stopped');
   }
 
   async sendMessage(chatId: string, text: string): Promise<void> {
-    if (!this.isReady) {
+    if (!this.isReady || !this.sock) {
       throw new Error('WhatsApp client not ready');
     }
+    // Normalize JID format: Baileys uses @s.whatsapp.net, not @c.us
+    const jid = chatId.replace('@c.us', '@s.whatsapp.net');
     const chunks = this.splitMessage(text);
     for (const chunk of chunks) {
-      await this.client.sendMessage(chatId, chunk);
+      await this.sock.sendMessage(jid, { text: chunk });
     }
   }
 

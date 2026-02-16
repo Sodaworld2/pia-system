@@ -23,6 +23,7 @@ import { createLogger } from '../utils/logger.js';
 import { getPromptManager } from './prompt-manager.js';
 import { ptyManager, PTYWrapper } from '../tunnel/pty-wrapper.js';
 import { runAutonomousTask, cancelTask, WorkerResult } from '../orchestrator/autonomous-worker.js';
+import { getNodeSpawnEnv } from '../electron-paths.js';
 import { query } from '@anthropic-ai/claude-agent-sdk';
 import type { Query, SDKMessage, SDKAssistantMessage, SDKResultMessage,
   SDKSystemMessage, SDKToolProgressMessage, SDKToolUseSummaryMessage,
@@ -399,7 +400,7 @@ export class AgentSessionManager extends EventEmitter {
       // Build query options
       // Remove CLAUDECODE env var to prevent "nested session" detection
       // Also use forward slashes for cwd on Windows
-      const cleanEnv = { ...process.env };
+      const cleanEnv = { ...process.env, ...getNodeSpawnEnv() };
       delete cleanEnv.CLAUDECODE;
       delete cleanEnv.CLAUDE_CODE_SESSION;
       // Prevent "Auth conflict" crash: the subprocess inherits ANTHROPIC_API_KEY from .env
@@ -424,7 +425,7 @@ export class AgentSessionManager extends EventEmitter {
         env: cleanEnv,
         spawnClaudeCodeProcess: (config: { command: string; args: string[]; cwd: string; env: Record<string, string> }) => {
           const spawn = cpSpawn;
-          const spawnEnv = { ...process.env, ...(config.env || {}) };
+          const spawnEnv = { ...process.env, ...(config.env || {}), ...getNodeSpawnEnv() };
           delete spawnEnv.CLAUDECODE;
           delete spawnEnv.CLAUDE_CODE_SESSION;
           delete spawnEnv.ANTHROPIC_API_KEY;
@@ -434,6 +435,8 @@ export class AgentSessionManager extends EventEmitter {
           if (session.config.enableCheckpointing !== false) {
             spawnEnv.CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING = '1';
           }
+          // process.execPath is the Electron binary in packaged mode.
+          // With ELECTRON_RUN_AS_NODE=1 (from getNodeSpawnEnv()), it acts as Node.js.
           return spawn(process.execPath, config.args || [], {
             cwd: (config.cwd || '').replace(/\\/g, '/'),
             env: spawnEnv,
@@ -490,12 +493,17 @@ export class AgentSessionManager extends EventEmitter {
       // SDK expects Record<string, McpServerConfig>, our API accepts an array with name field
       if (session.config.mcpServers?.length) {
         const mcpRecord: Record<string, Record<string, unknown>> = {};
+        // In packaged Electron, MCP servers spawned with process.execPath need
+        // ELECTRON_RUN_AS_NODE=1 so the Electron binary acts as Node.js.
+        const mcpEnvExtras = getNodeSpawnEnv();
         for (const srv of session.config.mcpServers) {
           mcpRecord[srv.name] = {
             type: srv.transport || 'stdio',
             ...(srv.command ? { command: srv.command } : {}),
             ...(srv.args ? { args: srv.args } : {}),
             ...(srv.url ? { url: srv.url } : {}),
+            // Inject ELECTRON_RUN_AS_NODE for packaged mode MCP server spawning
+            ...(Object.keys(mcpEnvExtras).length > 0 ? { env: mcpEnvExtras } : {}),
           };
         }
         queryOptions.mcpServers = mcpRecord;

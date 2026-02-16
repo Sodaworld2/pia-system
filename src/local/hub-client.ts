@@ -9,7 +9,7 @@ import { createLogger } from '../utils/logger.js';
 import { hostname, platform, cpus, totalmem, freemem } from 'os';
 import { nanoid } from 'nanoid';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
-import { join } from 'path';
+import { getMachineIdPath } from '../electron-paths.js';
 
 const logger = createLogger('HubClient');
 
@@ -41,7 +41,7 @@ export class HubClient {
   }
 
   private getOrCreateMachineId(): string {
-    const idFile = join(process.cwd(), 'data', 'machine-id');
+    const idFile = getMachineIdPath();
 
     if (existsSync(idFile)) {
       return readFileSync(idFile, 'utf-8').trim();

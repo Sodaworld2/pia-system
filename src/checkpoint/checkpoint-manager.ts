@@ -6,6 +6,7 @@
 import { existsSync, mkdirSync, writeFileSync, readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { createLogger } from '../utils/logger.js';
+import { getDataDir } from '../electron-paths.js';
 
 const logger = createLogger('Checkpoint');
 
@@ -28,7 +29,7 @@ export class CheckpointManager {
   private intervalMs: number;
   private intervals: Map<string, NodeJS.Timeout> = new Map();
 
-  constructor(dataDir: string = './data', intervalMinutes: number = 5) {
+  constructor(dataDir: string = getDataDir(), intervalMinutes: number = 5) {
     this.checkpointDir = join(dataDir, 'checkpoints');
     this.intervalMs = intervalMinutes * 60 * 1000;
 

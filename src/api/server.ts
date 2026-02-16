@@ -6,6 +6,7 @@ import { join } from 'path';
 import { readFileSync } from 'fs';
 import { createLogger } from '../utils/logger.js';
 import { config } from '../config.js';
+import { getAppRoot, getPublicDir, resolveFromAppRoot } from '../electron-paths.js';
 
 // Firebase Admin SDK
 import admin from 'firebase-admin';
@@ -13,7 +14,7 @@ import admin from 'firebase-admin';
 // Initialize Firebase Admin
 const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH || './firebase-service-account.json';
 try {
-  const serviceAccount = JSON.parse(readFileSync(join(process.cwd(), serviceAccountPath), 'utf8'));
+  const serviceAccount = JSON.parse(readFileSync(resolveFromAppRoot(serviceAccountPath), 'utf8'));
   admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
   console.log('[Firebase] Admin SDK initialized successfully');
 } catch (e) {
@@ -51,9 +52,20 @@ import daoAuthRouter from './routes/dao-auth.js';
 import browserRouter from './routes/browser.js';
 import machineBoardRouter from './routes/machine-board.js';
 import whatsappRouter from './routes/whatsapp.js';
+import settingsRouter from './routes/settings.js';
+import cortexRouter from './routes/cortex.js';
 import { getNetworkSentinel } from '../security/network-sentinel.js';
 
 const logger = createLogger('API');
+
+// Cache the version from package.json at module load (avoid reading on every health check)
+let cachedVersion = 'unknown';
+try {
+  const pkg = JSON.parse(readFileSync(join(getAppRoot(), 'package.json'), 'utf8'));
+  cachedVersion = pkg.version;
+} catch {
+  logger.warn('Could not read package.json for version');
+}
 
 // API token validation middleware — supports BOTH static API tokens AND Firebase auth
 async function validateApiToken(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -203,12 +215,15 @@ export function createServer(): Express {
   app.use('/api/browser', browserRouter);
   app.use('/api/machine-board', machineBoardRouter);
   app.use('/api/whatsapp', whatsappRouter);
+  app.use('/api/settings', settingsRouter);
+  app.use('/api/cortex', cortexRouter);
 
   // Health check
   app.get('/api/health', (_req: Request, res: Response) => {
     res.json({
       status: 'ok',
       mode: config.mode,
+      version: cachedVersion,
       timestamp: new Date().toISOString(),
     });
   });
@@ -256,11 +271,11 @@ export function createServer(): Express {
   });
 
   // Serve static files (dashboard)
-  const publicPath = join(process.cwd(), 'public');
+  const publicPath = getPublicDir();
   app.use(express.static(publicPath));
 
   // Serve root-level HTML mockups (MASTER_DASHBOARD.html, etc.)
-  const rootPath = process.cwd();
+  const rootPath = getAppRoot();
   app.get('/*.html', (req: Request, res: Response, next: Function) => {
     const filePath = join(rootPath, req.path);
     if (filePath.startsWith(rootPath) && !req.path.startsWith('/api')) {

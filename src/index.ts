@@ -93,6 +93,11 @@ async function startHub(): Promise<void> {
   const { seedDefaultSouls } = await import('./souls/seed-souls.js');
   seedDefaultSouls();
 
+  // Start The Cortex — Fleet Intelligence Brain
+  logger.info('Starting The Cortex...');
+  const { initCortex } = await import('./cortex/index.js');
+  initCortex({ collectionIntervalMs: 60000, analysisIntervalMs: 120000 });
+
   // Log startup complete
   logger.info('');
   logger.info('='.repeat(50));
@@ -155,6 +160,12 @@ function shutdown(): void {
     getDoctor().stop();
   } catch { /* may not be initialized */ }
 
+  // Stop The Cortex
+  try {
+    const { shutdownCortex } = require('./cortex/index.js');
+    shutdownCortex();
+  } catch { /* may not be initialized */ }
+
   // Stop Network Sentinel
   try {
     const { getNetworkSentinel } = require('./security/network-sentinel.js');
@@ -168,6 +179,15 @@ function shutdown(): void {
   // Close database
   logger.info('Closing database...');
   closeDatabase();
+
+  // Stop Browser Controller (prevent orphan Chromium processes)
+  try {
+    const { getBrowserController } = require('./browser-controller/controller.js');
+    const bc = getBrowserController();
+    if (bc.getState().status !== 'stopped') {
+      bc.stop();
+    }
+  } catch { /* may not be initialized */ }
 
   // Disconnect from Hub if in local mode
   if (config.mode === 'local') {

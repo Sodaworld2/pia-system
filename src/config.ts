@@ -1,9 +1,9 @@
 import { config as loadEnv } from 'dotenv';
 import { existsSync } from 'fs';
-import { resolve } from 'path';
+import { getEnvPath, getDatabasePath } from './electron-paths.js';
 
 // Load .env file
-const envPath = resolve(process.cwd(), '.env');
+const envPath = getEnvPath();
 if (existsSync(envPath)) {
   loadEnv({ path: envPath });
 }
@@ -90,7 +90,7 @@ export const config: PIAConfig = {
   },
 
   database: {
-    path: getEnv('PIA_DB_PATH', './data/pia.db'),
+    path: getEnv('PIA_DB_PATH', getDatabasePath()),
   },
 
   features: {

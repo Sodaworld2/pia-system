@@ -57,8 +57,8 @@ router.post('/send', async (req: Request, res: Response) => {
       return;
     }
 
-    // Ensure the number ends with @c.us for individual chats
-    const chatId = to.includes('@') ? to : `${to}@c.us`;
+    // Ensure the number ends with @s.whatsapp.net for Baileys (individual chats)
+    const chatId = to.includes('@') ? to : `${to}@s.whatsapp.net`;
     await bot.sendMessage(chatId, message);
 
     logger.info(`WhatsApp message sent to ${chatId}`);
