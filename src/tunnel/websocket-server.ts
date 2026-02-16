@@ -3,6 +3,7 @@ import { createLogger } from '../utils/logger.js';
 import { config } from '../config.js';
 import { ptyManager, PTYWrapper } from './pty-wrapper.js';
 import { appendSessionOutput, getSessionBuffer } from '../db/queries/sessions.js';
+import type { CrossMachineMessage } from '../comms/cross-machine.js';
 
 const logger = createLogger('WebSocket');
 
@@ -276,7 +277,7 @@ export class TunnelWebSocketServer {
             });
 
             // Subscribe this WS to relay messages
-            relay.subscribe((msg: Record<string, unknown>) => {
+            relay.subscribe((msg) => {
               if (ws.readyState === WebSocket.OPEN) {
                 this.send(ws, { type: 'relay:message', payload: msg });
               }
@@ -299,7 +300,7 @@ export class TunnelWebSocketServer {
             relay.send(
               p.to as string,
               p.content as string,
-              (p.type as string) || 'chat',
+              ((p.type as string) || 'chat') as CrossMachineMessage['type'],
               'websocket',
               p.metadata as Record<string, unknown>,
             );
@@ -312,7 +313,7 @@ export class TunnelWebSocketServer {
             relay.send(
               '*',
               p.content as string,
-              (p.type as string) || 'chat',
+              ((p.type as string) || 'chat') as CrossMachineMessage['type'],
               'websocket',
               p.metadata as Record<string, unknown>,
             );

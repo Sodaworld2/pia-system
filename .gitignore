@@ -50,4 +50,6 @@ nul
 # Firebase credentials (NEVER commit)
 firebase-service-account.json
 **/firebase-service-account*.json
+**/*firebase-adminsdk*.json
+**/.playwright-mcp/*.json
 first-run-*.png
