@@ -362,6 +362,109 @@ This is the next feature to build.
 
 ---
 
+## 16. The Cortex — Phase 1 Implementation (Fleet Intelligence Brain)
+
+### What Was Built
+
+Implemented the Minimum Viable Cortex — a fleet intelligence layer that collects telemetry from all PIA machines, analyzes patterns, and serves insights via a universal JSON API.
+
+### Architecture
+
+```
+HeartbeatService ──┐
+Doctor ────────────┤
+AllMachines DB ────┼──→ CortexDataCollector (60s interval)
+AllAgents DB ──────┤         │
+CostTracker ───────┘         ▼
+                    CortexDB (data/cortex/cortex.db)
+                             │
+                             ▼
+                    CortexIntelligence (120s interval)
+                             │
+                    ┌────────┼────────┐
+                    ▼        ▼        ▼
+                REST API  WebSocket  MQTT
+                /api/cortex/*
+```
+
+### New Files (5)
+
+| File | Purpose | Lines |
+|------|---------|-------|
+| `src/cortex/cortex-db.ts` | Separate SQLite database for telemetry/insights (gitignored `data/cortex/`) | ~190 |
+| `src/cortex/data-collector.ts` | Pulls data from HeartbeatService, Doctor, Machines, Agents every 60s | ~300 |
+| `src/cortex/intelligence.ts` | Rule-based analysis: machine health, agent health, resources, workload balance, fleet sync | ~320 |
+| `src/cortex/index.ts` | Barrel export + init/shutdown functions | ~55 |
+| `src/api/routes/cortex.ts` | 10 REST endpoints for universal data access | ~310 |
+
+### Modified Files (2)
+
+| File | Change |
+|------|--------|
+| `src/api/server.ts` | Added `import cortexRouter` + mounted at `/api/cortex` |
+| `src/index.ts` | Added `initCortex()` in startup + `shutdownCortex()` in shutdown |
+
+### API Endpoints
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/api/cortex/overview` | Fleet-wide summary: all machines, totals, health score, top insights |
+| GET | `/api/cortex/machine/:id` | Deep dive: one machine with CPU/memory/agent history charts |
+| GET | `/api/cortex/timeline` | Activity over time: events + telemetry trends per machine |
+| GET | `/api/cortex/alerts` | Active alerts and suggestions (filterable) |
+| GET | `/api/cortex/insights` | Live + stored AI observations |
+| GET | `/api/cortex/health` | System-wide health score with status breakdown |
+| GET | `/api/cortex/workload` | Load distribution across online machines |
+| POST | `/api/cortex/insights/:id/acknowledge` | Acknowledge an insight |
+| POST | `/api/cortex/insights/acknowledge-all` | Acknowledge all insights |
+| GET | `/api/cortex/status` | Cortex system status (collector/intelligence running?) |
+
+### Cortex Database Schema
+
+4 tables in `data/cortex/cortex.db`:
+- `telemetry_snapshots` — Per-machine snapshots (CPU, memory, agents, errors) every collection cycle
+- `fleet_insights` — Generated observations/suggestions/warnings/criticals with severity scoring
+- `fleet_timeline` — Significant fleet events
+- `daily_summaries` — Aggregated daily data (warm tier, not yet populated)
+
+### Data Tiers (Brain Gets Fat, Not the Repo)
+- **Hot**: Full telemetry snapshots, last 24 hours
+- **Warm**: Daily summaries, last 30 days (schema ready, aggregation TODO)
+- **Cold**: Pruned automatically by `pruneOldData()`
+
+### Intelligence Rules (Phase 1)
+
+| Rule | Triggers When | Severity |
+|------|--------------|----------|
+| All machines offline | 0 of N online | 10 (critical) |
+| Machine offline | Individual machine down | 7 (warning) |
+| Stuck agents | Doctor detects >5min stuck | 7 (warning) |
+| Agents in error | Any agent in error state | 6 (warning) |
+| CPU critical | >90% usage | 8 (warning) |
+| CPU high | >75% usage | 4 (observation) |
+| Memory critical | >90% usage | 8 (warning) |
+| Memory high | >80% usage | 4 (observation) |
+| Workload imbalance | Busiest machine has 3+ more agents than idlest | 5 (suggestion) |
+| Idle machine | Machine with 0 agents while others are busy | 3 (observation) |
+| Fleet health critical | Score <30 | 9 (critical) |
+| Fleet health degraded | Score <60 | 6 (warning) |
+
+### Test Results
+
+All endpoints verified live against running server:
+- `/api/cortex/status` — Collector running, 1+ collections
+- `/api/cortex/overview` — 6 machines (3 online, 3 offline/stale), health score 80, 3 warnings
+- `/api/cortex/health` — Status "healthy", 0 critical, 3 warnings (stale entries)
+- `/api/cortex/workload` — 3 online machines, balanced (true)
+- `/api/cortex/insights` — 3 live warnings about offline machines
+- `/api/cortex/machine/:id` — Deep dive with 12 historical snapshots + CPU/memory/agent charts
+
+### Desktop App Impact
+
+New route `/api/cortex/*` must be added to React UI when built. The Cortex DB lives in `data/cortex/` which is already under the gitignored `data/` directory. No native dependencies added.
+
+---
+
 ## 16. Architecture Decision: Hub/Spoke with Failover
 
 ### The Conflict
@@ -469,3 +572,172 @@ Based on everything across all journals, here's what makes sense for me to tackl
 
 ### My recommended next move
 **Task 3 first** (push the fix), then **Task 1** (remote agent spawning). That gives the fleet real utility — you can sit at Machine 1 and tell Machine 2 or 3 to do work.
+
+---
+---
+
+# Session 19: Fleet Deployment Execution (AGENT_PROMPT_DEPLOY_FLEET.md)
+
+## Context
+Executing the fleet deployment prompt. From journal Sessions 14-18, all 3 machines came online:
+- M1 (Izzit7) — Hub, running, i9-12900H, 64GB
+- M2 (soda-monster-hunter) — Spoke, online, Intel Ultra 7 265K, 64GB
+- M3 (SODA-YETI) — Spoke, online, Ryzen 7 7700X, 32GB
+
+Two critical bugs were fixed last session:
+1. `require()` in ESM module → `await import()` (websocket-server.ts)
+2. Auth response field mismatch in spoke client (hub-client.ts, fixed by M2's Claude)
+
+## Plan
+
+### Phase 1: Verify Current Fleet Status
+- Check hub API for machine registry
+- Ping all 3 machines via Tailscale
+- Check relay stats on hub
+
+### Phase 2: Full Mesh Verification (Phase 4 from deploy prompt)
+- Test all 6 connectivity paths: M1→M2, M1→M3, M2→M1, M2→M3, M3→M1, M3→M2
+- Test message board: send messages between machines
+- Check git sync: all machines should be on same commit
+
+### Phase 3: Gap Analysis & Fixes
+- Identify what's still broken or missing
+- Fix connectivity issues (firewall, config)
+- Remote agent spawning implementation if time permits
+
+### Phase 4: Status Report
+- Produce the fleet status report in the format from the deploy prompt
+
+### Changes Expected
+- No code changes for verification phase
+- Fixes as needed based on what verification reveals
+- Journal updates throughout
+
+---
+
+# Session 20: Continuation Check-In (New Agent)
+
+**Time:** ~16:30 UTC, 2026-02-16
+**Agent:** Claude Code (Opus 4.6) — fresh context, continuing from Session 19
+
+## Handoff from Previous Session
+
+Previous session ended with the user saying "i think promot the resty of this project for a new agent u should rest." This session picks up from that handoff.
+
+## Current Fleet Status Check
+
+| Machine | Status | PIA Running? | Last Seen |
+|---------|--------|-------------|-----------|
+| **M1 (Izzit7)** | Hub running | YES — `mode: hub`, healthy | Now (online) |
+| **M2 (Soda-Monster-Hunter)** | Spoke offline | NO — port 3000 unreachable via Tailscale | ~36 min ago |
+| **M3 (SODA-YETI)** | Spoke offline | NO — port 3000 unreachable via Tailscale | ~36 min ago |
+
+Both spoke machines dropped off. PIA is not responding on either M2 (100.127.165.12:3000) or M3 (100.102.217.69:3000). They were last seen at the same time (~1771260483 epoch), suggesting they went down simultaneously — possibly the user closed PIA on both, or a coordinated disconnect.
+
+### Stale Machine Entries (Still in DB)
+- `Main PC` (mic-pc) — offline 5+ days
+- `Main-PC` (main-pc) — offline 5+ days, duplicate
+- `Remote-Worker-1` (worker-1.local) — test/dummy entry
+
+## Unpushed Commit
+
+The critical ESM fix from last session still hasn't been pushed to GitHub:
+```
+dfb9517 fix: ESM require() crash in WebSocket hub message handler + machine setup docs
+```
+This needs to be pushed so M2 and M3 can `git pull` the fix when they come back online.
+
+## Outstanding Priority Queue (unchanged from Section 18)
+
+1. **Push commit dfb9517 to GitHub** — 5 min, blocks M2/M3 from getting the fix
+2. **Remote agent spawning** — hub accepts `machineId` but always spawns locally
+3. **Clean up stale machine entries** — Main PC, Main-PC, Remote-Worker-1
+4. **`/api/system/update` endpoint** — remote git pull + restart across fleet
+5. **Hub failover mechanism** — automatic promotion if hub dies
+
+---
+---
+
+# Session 21: Fleet Deployment Verification (AGENT_PROMPT_DEPLOY_FLEET.md)
+
+**Time:** ~16:30 UTC, 2026-02-16
+**Agent:** Claude Code (Opus 4.6)
+**Trigger:** User requested execution of `AGENT_PROMPT_DEPLOY_FLEET.md`
+
+## Context
+
+Read both journals (main + claude_code) for full context. Key facts:
+- All 3 machines were online as of previous session (Session 14-15)
+- The Cortex Phase 1 was built (Session 16 in this journal) — 5 new files, 10 API endpoints, separate SQLite DB
+- Architecture decision: Hub/Spoke with failover (not pure peer-to-peer)
+- Two critical bugs previously fixed: ESM `require()` crash, auth response field mismatch
+- Unpushed commit `dfb9517` still pending
+
+## Fleet Probe Results
+
+### Hub (M1 — Izzit7)
+- `GET /api/health` → `{"status":"ok","mode":"hub"}` — **RUNNING**
+- Machine registry shows 6 entries (3 real + 3 stale)
+- Relay stats: 0 connected machines, 0 messages (spokes disconnected)
+
+### Machine 2 (soda-monster-hunter — 100.127.165.12)
+- Tailscale status: "active; direct 192.168.0.4:41641" (network layer up)
+- ICMP ping via Tailscale: **TIMEOUT** (100% loss)
+- ICMP ping via LAN (192.168.0.4): **TIMEOUT** (100% loss)
+- PIA port 3000: **UNREACHABLE**
+- **Assessment:** Machine appears powered off or sleeping. Firewall blocking everything including ping. Needs physical access.
+
+### Machine 3 (SODA-YETI — 100.102.217.69)
+- Tailscale status: "active; direct 192.168.0.6:41641"
+- ICMP ping via Tailscale: **4ms** (responding)
+- ICMP ping via LAN (192.168.0.6): **7ms** (responding)
+- PIA port 3000: **UNREACHABLE**
+- **Assessment:** Machine is ON but PIA server is not running. Just needs `npm run dev` in the pia-system folder.
+
+### Fleet Status Report (Deploy Prompt Format)
+
+```
+FLEET STATUS REPORT
+==================
+Machine 1 (izzit7)              - [RUNNING] - git: 0f56f2e (+ uncommitted Cortex, gemini, websocket changes)
+Machine 2 (soda-monster-hunter) - [DOWN]    - git: unknown (machine unreachable)
+Machine 3 (soda-yeti)           - [DOWN]    - git: unknown (PIA not running, machine is ON)
+
+Connectivity:
+  M1 → M2: [FAIL — machine unreachable, possibly off/sleeping]
+  M1 → M3: [FAIL — machine up but PIA not running on port 3000]
+  M2 → M1: [FAIL — machine unreachable]
+  M2 → M3: [FAIL — machine unreachable]
+  M3 → M1: [FAIL — PIA not running]
+  M3 → M2: [FAIL — both down]
+
+Message Board:
+  All: [FAIL — no PIA instances to communicate with]
+
+Issues:
+  - M2 (soda-monster-hunter): appears off or sleeping; not responding to any traffic
+  - M3 (SODA-YETI): machine is up (ping responds) but PIA not running
+  - Unpushed commit dfb9517 on M1 — M2/M3 can't get latest fixes until pushed
+  - 3 stale machine entries in hub DB (Main PC, Main-PC, Remote-Worker-1)
+
+DAO Recovery (Machine 3):
+  - Not started — PIA must be running first
+```
+
+### Blockers — What's Needed From User
+
+| # | Action | Who | Why |
+|---|--------|-----|-----|
+| 1 | **Wake up / power on Machine 2** | User (physical access) | M2 not responding to any network traffic |
+| 2 | **Start PIA on Machine 3** | User or Claude on M3 | `cd pia-system && npm run dev` |
+| 3 | **Approve git push** | User | Push commit dfb9517 so M2/M3 get ESM fix |
+
+### What I Can Do Now (While Waiting for Machines)
+
+| # | Task | Effort |
+|---|------|--------|
+| 1 | Push pending commits to GitHub | 2 min |
+| 2 | Clean up stale machine entries from hub DB | 15 min |
+| 3 | Build `/api/system/update` endpoint (remote git pull + restart) | 1-2 hours |
+| 4 | Build remote agent spawning (hub forwards spawn to spoke) | 2-4 hours |
+| 5 | Commit + push Cortex code that was built in Session 16 | 10 min |

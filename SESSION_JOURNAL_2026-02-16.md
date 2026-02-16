@@ -628,3 +628,766 @@ Researched current WhatsApp libraries for Node.js (Feb 2026):
 - `qrcode-terminal` — QR code display in terminal
 
 ### TypeScript: Clean build (all errors are from dao-foundation-files/ which is excluded per CLAUDE.md)
+
+---
+---
+
+# Session 5: Fleet Deployment, The Cortex, and System Architecture
+
+## 1. Tailscale Fleet Discovery
+
+Discovered the full machine fleet via Tailscale:
+
+| Machine | Hostname | Tailscale IP | LAN IP | Status |
+|---|---|---|---|---|
+| Machine 1 | izzit7 | `100.73.133.3` | `192.168.0.2` | Running PIA |
+| Machine 2 | soda-monster-hunter | `100.127.165.12` | `192.168.0.4` | Online, PIA being set up |
+| Machine 3 | soda-yeti | `100.102.217.69` | `192.168.0.6` | Online, PIA being set up |
+| (old) | desktop-i1vgjka | `100.83.158.49` | — | Offline 800 days |
+| (old) | desktop-rm1ov6e | `100.99.94.110` | — | Offline 838 days |
+| (phone) | samsung-sm-a125f | `100.66.124.25` | — | Offline 37 days |
+
+All 3 active machines are on the same LAN (`192.168.0.x`) AND Tailscale mesh. Direct peer-to-peer connections confirmed with active traffic flowing.
+
+---
+
+## 2. Architecture Decision: All Machines Are Equal Peers
+
+**Corrected earlier assumption.** The user clarified: no machine is master. All machines are equal.
+
+- Changed from hub/local model to **peer model**
+- Every machine runs `PIA_MODE=hub` (full capabilities)
+- Mission Control can connect to and manage any machine
+- A central control system sits above all machines, not on any one machine
+- Git (GitHub) is the single source of truth — any machine can push/pull
+
+---
+
+## 3. Machine Setup Prompts
+
+### Machine 2 Setup
+Provided copy-paste prompt for Claude on soda-monster-hunter:
+- Clone repo, npm install
+- `.env` with `PIA_MODE=hub`, `PIA_MACHINE_NAME=soda-monster-hunter`
+- Tailscale IPs for all machines
+- Open own dashboard at localhost:3000
+
+### Machine 3 Setup
+Provided copy-paste prompt for Claude on soda-yeti:
+- Same PIA setup as Machine 2 but with Machine 3 identity
+- Plus DAO recovery task (read `AGENT_PROMPT_MACHINE_3_DAO_RECOVERY.md`)
+
+---
+
+## 4. Cross-Machine Update Problem Identified
+
+**Problem:** When Machine 1 makes code changes and pushes to GitHub, Machine 2 and 3 don't know about it. No notification, no auto-pull.
+
+**Solution needed:** A `/api/system/update` endpoint on each machine that:
+1. Runs `git pull origin master`
+2. Runs `npm install && npm run build`
+3. Restarts the server
+
+Machine 1 can then trigger updates across the fleet:
+```bash
+curl -X POST http://100.127.165.12:3000/api/system/update  # Machine 2
+curl -X POST http://100.102.217.69:3000/api/system/update   # Machine 3
+```
+
+This is a prerequisite for the remote command execution task (#3).
+
+---
+
+## 5. "The Cortex" — Fleet Intelligence Brain
+
+### Concept
+An AI intelligence layer that sits on top of all PIA machines. It collects data from every machine, analyzes patterns, and provides insights. The data can be viewed on any surface — browser, Vision Pro, tablet, phone, WhatsApp.
+
+### Name: "The Cortex"
+The cortex = the thinking layer of the brain. Each PIA machine is a neuron. The Cortex processes signals from all neurons and generates understanding.
+
+### Key Design Principle: The Brain Gets Fat, Not the Repo
+- Git repositories stay lean (code only)
+- The Cortex's memory/knowledge lives in a separate database (`.gitignore`'d)
+- Hot data (24h): full detail, fast access
+- Warm data (30 days): summarized
+- Cold data (older): compressed archives
+- Learned patterns: permanent, small footprint
+- Like human memory — you remember patterns and lessons, not every raw detail
+
+### Data Ecology (what The Cortex collects)
+- Per-machine: CPU, memory, disk, PIA status, active agents, terminal sessions, errors, git status, network
+- Cross-machine: sync status, message flow, workload distribution, delegation patterns
+- Temporal: activity over time, error spikes, cost accumulation, completion rates
+
+### Intelligence Layer (what The Cortex thinks)
+- **Observes:** "Machine 2 is 5 commits behind", "Agent stuck for 10 min"
+- **Suggests:** "Git pull Machine 2", "Restart stuck agent", "Balance load"
+- **Acts (with permission):** Send commands via relay, restart agents, alert via WhatsApp
+
+### Data Surfaces (where you view The Cortex)
+Universal JSON API consumed by any renderer:
+- Mission Control (browser) — Cortex tab
+- Vision Pro — spatial 3D panels, machines as floating objects
+- Tablet — responsive grid of machine cards
+- WhatsApp — "How's the fleet?" → text summary
+- Terminal — `pia cortex status`
+
+### Agent Prompt Created
+`AGENT_PROMPT_CORTEX_AI_BRAIN.md` — full exploration prompt covering:
+- Data ecology design
+- Intelligence layer architecture
+- Surface-agnostic API design
+- Where The Cortex runs (on one machine vs distributed vs separate)
+- AI engine options (Ollama vs Claude API vs rules vs hybrid)
+- Vision Pro / tablet experience design
+- Brain-gets-fat storage principle
+
+---
+
+## 6. Fleet Deployment Prompt
+
+`AGENT_PROMPT_DEPLOY_FLEET.md` — full deployment prompt covering:
+- Machine 2 setup (clone, install, .env, build, verify)
+- Machine 3 setup (same + DAO recovery)
+- Cross-registration (every machine knows about every other)
+- Full mesh verification (6 connectivity tests)
+- Firewall setup (Windows firewall rules for ports 3000, 3001)
+- Status report template
+- Troubleshooting guide
+
+Both agents are **aware of each other's existence** — the Cortex agent knows machines are being deployed, the deployment agent knows The Cortex is being designed. They're building the body and brain in parallel.
+
+---
+
+## 7. All Agent Briefings (8 total)
+
+| File | Type | Status |
+|---|---|---|
+| `MACHINE_2_SETUP_BRIEFING.md` | Setup instructions | Ready |
+| `AGENT_PROMPT_FIX_GITHUB_PUSH.md` | Fix task | Resolved by user |
+| `AGENT_PROMPT_DAO_SEPARATION.md` | Build task | Deferred (Machine 3) |
+| `AGENT_PROMPT_MACHINE_3_DAO_RECOVERY.md` | Recovery task | Ready for Machine 3 |
+| `AGENT_PROMPT_MACHINE_MESSAGING.md` | Build task | Built in Session 4 |
+| `AGENT_PROMPT_ELECTRON_APP_EXPLORATION.md` | Exploration | Ready |
+| `AGENT_PROMPT_CORTEX_AI_BRAIN.md` | Design exploration | Ready — deploying to agent |
+| `AGENT_PROMPT_DEPLOY_FLEET.md` | Deployment task | Ready — deploying to agent |
+
+---
+
+## 8. Key Decisions This Session
+
+1. **All machines are equal peers** — no hub/master, `PIA_MODE=hub` everywhere
+2. **The Cortex** is the name for PIA's Fleet Intelligence Brain
+3. **Brain gets fat, repo stays lean** — telemetry/memory stored separately from code
+4. **Surface-agnostic data** — same JSON API powers browser, Vision Pro, tablet, WhatsApp
+5. **Two parallel workstreams** — fleet deployment + Cortex design, aware of each other
+6. **Fleet update mechanism needed** — `/api/system/update` endpoint for remote git pull
+7. **Tailscale mesh confirmed working** — all 3 machines connected, direct peer-to-peer
+
+---
+
+## 9. Major Discovery: PIA Already Has 80% of The Cortex Built
+
+### Deep codebase search revealed massive existing infrastructure
+
+Keyword search across 72 files revealed that PIA already has the foundations for fleet intelligence, autonomous execution, and memory management. These systems were built in earlier sessions but hadn't been connected to the multi-machine discussion.
+
+### Existing systems map
+
+**Memory & Intelligence (the brain already exists):**
+- `src/souls/soul-engine.ts` — Persistent agent personality, memory, goals, relationships that survive across sessions and machines
+- `src/souls/memory-manager.ts` — Categorized memories (experience, decision, learning, observation, goal_progress), importance scoring (0-1), automatic summarization of old memories, pruning. **Already implements the "brain gets fat, not the repo" pattern.**
+- `src/souls/seed-souls.ts` — Pre-built agent personalities
+
+**Orchestration (execution loop already exists):**
+- `src/orchestrator/execution-engine.ts` — "The Brain of PIA" — pulls tasks from queue, routes through AI, executes, tracks cost, notifies
+- `src/orchestrator/autonomous-worker.ts` — Claude API tool loop that receives a task description, calls Claude with tools, and executes in a loop until done. **This IS the remote command execution we said was missing (Task #3).**
+- `src/orchestrator/task-queue.ts` — Priority task queue
+- `src/orchestrator/heartbeat.ts` — Machine liveness monitoring
+
+**Communication (transport already exists):**
+- `src/comms/mqtt-broker.ts` — Full pub/sub with topic hierarchy (`pia/machine/event`), wildcards (`+` single, `#` multi), retained messages. **Perfect for Cortex telemetry streaming.**
+- `src/comms/repo-router.ts` — Registry of repos across machines, task routing by capability, job history tracking
+- `src/comms/cross-machine.ts` — Machine relay (WebSocket, Tailscale, ngrok, Discord, API)
+- `src/comms/discord-bot.ts` — Discord integration
+- `src/comms/whatsapp-bot.ts` — WhatsApp integration (built Session 4)
+- `src/comms/webhooks.ts` — Webhook system
+
+**AI & Cost (multi-model already exists):**
+- `src/ai/ai-router.ts` — Routes to Claude, Ollama, OpenAI, Gemini, Grok
+- `src/ai/cost-tracker.ts` — Spend tracking per model/agent
+- `src/agents/cost-router.ts` — Routes to cheapest/best model
+- `src/agents/doctor.ts` — System health checks
+- `src/agents/agent-factory.ts` — Agent creation with capabilities
+
+**Existing UI:**
+- `FLEET_DASHBOARD_MOCKUP.html` — Already designed fleet dashboard ("Empire Fleet Dashboard")
+- `public/mission-control.html` — Live Mission Control
+- `public/visor.html` — Visor panel
+
+### Impact on task board
+
+Several tasks we thought needed building from scratch actually need WIRING UP:
+- **Task #3 (Remote command execution):** The Autonomous Worker already does this — just needs cross-machine triggering
+- **Task #2 (Multi-machine mesh):** MQTT Broker + Repo Router + Cross-Machine Relay already exist — need Tailscale auth layer
+- **Task #6 (Multi-machine dashboard):** Fleet Dashboard mockup already designed
+
+### Updated both agent prompts
+- `AGENT_PROMPT_CORTEX_AI_BRAIN.md` — Added full inventory of existing systems the Cortex agent must read and build on
+- `AGENT_PROMPT_DEPLOY_FLEET.md` — Added note about Autonomous Worker and existing infrastructure
+
+---
+
+## 10. Updated Task Board
+
+| # | Task | Status | Notes |
+|---|---|---|---|
+| 1 | Fix GitHub push block | **DONE** | User unblocked via GitHub |
+| 2 | Multi-machine mesh | Mostly built | MQTT + Repo Router + Relay exist, need Tailscale auth |
+| 3 | Remote command execution | Mostly built | Autonomous Worker exists, need cross-machine trigger |
+| 4 | Electron desktop app | Prompt ready | `AGENT_PROMPT_ELECTRON_APP_EXPLORATION.md` |
+| 5 | Onboarding flow | Blocked by #2, #4 | |
+| 6 | Multi-machine dashboard | Mockup exists | `FLEET_DASHBOARD_MOCKUP.html` |
+| 7 | Vision Pro spatial view | In Cortex design | Part of Cortex surfaces |
+| 8 | DAO separation | Deferred | Waiting for Machine 3 |
+| NEW | The Cortex | Prompt ready | `AGENT_PROMPT_CORTEX_AI_BRAIN.md` |
+| NEW | Fleet deployment | Prompt ready | `AGENT_PROMPT_DEPLOY_FLEET.md` |
+
+---
+---
+
+# Session 6: Electron Desktop App — Full Technical Exploration (Opus 4.6)
+
+## Goal
+Explore and plan building PIA as a downloadable desktop app (Electron). Research frameworks, UI options, packaging, distribution, auto-update. Produce a comprehensive analysis and phased build plan.
+
+## Key Decisions Made (with user input)
+
+| Question | Decision |
+|---|---|
+| Target user | Devs first, non-technical later |
+| Priority | Solid architecture — build it right |
+| Code signing | Not yet — accept SmartScreen warnings |
+| App size | Matters somewhat, won't reject Electron for size |
+| UI approach | **Rebuild with React + shadcn/ui** (not wrap existing HTML) |
+| CLI support | Yes — both `npm run dev` (CLI) and Electron (desktop) from same codebase |
+
+## Research Conducted
+
+Launched 3 parallel research agents:
+
+### 1. Framework Comparison (Electron vs Tauri vs Others)
+- **Electron is the only viable option** — PIA requires Node.js server, node-pty (C++ addon), better-sqlite3 (C++ addon), Firebase Admin SDK, Playwright, Claude Agent SDK. Only Electron can run all of this internally.
+- Tauri can't run Node.js natively — would need a sidecar approach which breaks with native modules
+- NW.js is viable but tiny ecosystem
+- PWA/PKG/nexe not suitable (no PTY access, no system tray, no desktop UX)
+- **Key insight**: Current `electron-main.cjs` spawns server as child process using stock Node.js (not Electron's modified Node.js), so native module ABI is simpler
+
+### 2. UI Framework for Electron
+- **React 19 + shadcn/ui + Zustand + electron-vite** recommended
+- Proven in Electron at scale: Slack, Discord, Figma, 1Password, Notion all use React + Electron
+- shadcn/ui: 83K GitHub stars, copy-paste model, professional dark desktop aesthetic, official Electron template exists
+- Zustand for state management: 2KB, no boilerplate, perfect for multiple concurrent agent streams
+- electron-vite for build tooling: purpose-built for Electron's main/preload/renderer architecture
+- VS Code does NOT use React (hand-rolled) — not relevant for our scale
+- Svelte rejected: no mature xterm.js wrappers, smaller component library ecosystem for Electron
+
+### 3. Packaging & Distribution
+- **electron-builder** (not Forge): 620K weekly downloads vs Forge's 1.7K, better NSIS installer, electron-updater for GitHub Releases, portable EXE option
+- NSIS for Windows installer (smallest size, most customizable)
+- Auto-update via electron-updater + GitHub Releases (zero infrastructure)
+- Native modules: `@electron/rebuild` handles compilation, ASAR unpacking mandatory for `.node` files
+- Cannot cross-compile — must build on each target OS (GitHub Actions matrix)
+- Code signing: Azure Trusted Signing $10/month when available to individuals (currently restricted)
+- macOS requires $99/year Apple Developer for notarization — defer
+
+## Critical Technical Finding: 15 Path Breakages
+
+Explored every file that uses `process.cwd()`, `__dirname`, or relative paths. Found **15 locations** that break in a packaged Electron app:
+
+| Severity | File | Issue |
+|---|---|---|
+| CRITICAL | `electron-main.cjs:75` | `dist/index.js` inside ASAR can't be spawned |
+| CRITICAL | `config.ts:6,93` | .env path + DB path use `process.cwd()` |
+| CRITICAL | `server.ts:259,263` | `public/` path uses `process.cwd()` |
+| CRITICAL | `agent-session.ts:437` | `process.execPath` is Electron binary, not Node |
+| CRITICAL | `database.ts:19` | better-sqlite3 native module in ASAR |
+| CRITICAL | `pty-wrapper.ts:1,53` | node-pty native module in ASAR |
+| HIGH | `hub-client.ts:44` | machine-id path uses `process.cwd()` |
+| HIGH | `checkpoint-manager.ts:31` | checkpoint dir relative path |
+| HIGH | `browser-session.ts:18` | MCP CLI path uses `process.cwd()` |
+| MEDIUM | `whatsapp-bot.ts:41` | session path uses `process.cwd()` |
+| MEDIUM | `mcps.ts:274` | `npx` not in PATH in packaged app |
+| HIGH | Multiple route files | `process.cwd()` as default cwd for spawns |
+
+**Fix strategy**: Create `src/electron-paths.ts` — centralized path resolution module that returns correct paths in both CLI and Electron mode.
+
+## Deliverables Created
+
+| File | Purpose |
+|---|---|
+| `ELECTRON_APP_ANALYSIS.md` | Full 9-chapter technical analysis (framework, UI, packaging, challenges, roadmap) |
+| `CLAUDE.md` (updated) | Added Session Journaling rules — all agents must journal API endpoints, migrations, config changes, native deps, subprocess spawning |
+| `.mcp.json` (updated) | Added Context7 MCP server for live documentation queries |
+
+## Phased Build Plan
+
+```
+Phase 1: Package what exists → working .exe               (1 day)
+Phase 2: First-run wizard + settings → install on all     (2-3 days)
+Phase 3: Auto-update → push once, all machines update     (1-2 days)
+Phase 4: Crash recovery, logging, edge cases              (2 days)
+Phase 5: New React UI → proper app feel                   (2-3 weeks)
+Phase 6: Polish, signing, macOS/Linux                     (ongoing)
+```
+
+Full plan written to `C:\Users\mic\.claude\plans\floofy-cuddling-sutherland.md` with every file, every path fix, every verification step.
+
+## Architecture Notes for Build Agent
+
+1. **Server runs as child process** — `electron-main.cjs` spawns `dist/index.js` via `child_process.spawn`. This is the correct pattern. Don't change it.
+2. **Native modules run in the child process** (stock Node.js), not Electron's modified Node.js. May not need `@electron/rebuild` for server-side modules.
+3. **`dist/**` and native modules MUST be in `asarUnpack`** or the app crashes silently.
+4. **Architecture changed to equal peers** — all machines run `PIA_MODE=hub`. First-run wizard doesn't need hub/spoke choice.
+5. **Context7 MCP** is configured in `.mcp.json` — restart Claude Code to activate. Agents can pull live Electron + electron-builder docs into prompts.
+6. **The codebase is evolving** — other agents are building chat, messaging, DAO admin, The Cortex. Journal rules in CLAUDE.md ensure changes are tracked.
+
+## Files Changed
+
+| File | Change |
+|---|---|
+| `ELECTRON_APP_ANALYSIS.md` | **NEW** — full technical analysis |
+| `CLAUDE.md` | Added Session Journaling section with template and desktop app context |
+| `.mcp.json` | Added Context7 MCP server |
+
+## Desktop App Impact
+This session was research + planning only. No code changes to the server. The analysis and plan are ready for a build agent to execute Phase 1.
+
+## Updated Task Board
+
+| # | Task | Status | Notes |
+|---|---|---|---|
+| 4 | Electron desktop app | **PLAN COMPLETE** | Analysis + 6-phase plan ready, handed to build agent |
+
+---
+
+## Sprint: Gemini Browser Controller (Built)
+
+### What It Is
+A Gemini-powered browser automation service inside PIA. Claude agents send commands via REST API; Gemini does the visual understanding of pages using its vision API (screenshots -> Gemini -> structured action decisions).
+
+### Why Gemini, Not Claude?
+- Gemini 2.0 Flash: $0.075/1M input, $0.30/1M output (much cheaper for browser tasks)
+- Free tier: 15 req/min, 2M tokens/day
+- Vision-capable: can analyze screenshots natively
+- Claude stays focused on reasoning/coding tasks
+
+### Architecture
+```
+Claude Agent -> POST /api/browser/controller/command -> BrowserController
+                                                        |-- Playwright (headless Chromium)
+                                                        |-- Gemini Vision (screenshot analysis)
+                                                        |-- AgentBus (inter-agent messaging)
+                                                        '-- WebSocket (dashboard updates)
+```
+
+### Files Created/Modified
+| File | Action | Purpose |
+|------|--------|---------|
+| `src/browser-controller/types.ts` | NEW | Interfaces: BrowserCommand, BrowserCommandResult, ControllerState, TaskStep |
+| `src/browser-controller/controller.ts` | NEW | Core: Playwright lifecycle, command dispatch, Gemini task loop, AgentBus |
+| `src/browser-controller/gemini-vision.ts` | NEW | Prompt templates: describePage, decideNextAction, extractPageText |
+| `src/ai/gemini-client.ts` | MODIFIED | Added `generateWithImage()` for Gemini vision (inlineData) |
+| `src/api/routes/browser.ts` | MODIFIED | Added 4 controller endpoints (start/command/status/stop) |
+| `src/tunnel/websocket-server.ts` | MODIFIED | Added `mc:browser_status` to OutgoingMessage type |
+| `src/index.ts` | MODIFIED | Added browser controller to shutdown handler |
+| `public/mission-control.html` | MODIFIED | Browser Controller panel in sidebar (status, URL, commands, screenshot) |
+
+### API Endpoints
+```
+POST /api/browser/controller/start    -> Launch headless Chromium
+POST /api/browser/controller/command  -> Execute: navigate/click/fill/screenshot/extractText/executeTask
+GET  /api/browser/controller/status   -> State + last screenshot as data URL
+POST /api/browser/controller/stop     -> Close browser cleanly
+```
+
+### Multi-Step Task Flow (executeTask)
+1. Screenshot current page
+2. Send to Gemini: "Here's the page. Task: {description}. What action should I take?"
+3. Gemini returns JSON: `{ action: "click", selector: "#login-btn", reasoning: "..." }`
+4. Execute the action via Playwright
+5. Repeat until Gemini says `{ done: true }` or maxSteps (20) reached
+
+### Prerequisite
+- `GEMINI_API_KEY` in `.env` (get from https://aistudio.google.com -> Get API Key)
+- `npm install playwright` (done)
+
+### Dependencies Added
+- `playwright` npm package (for direct Chromium control)
+
+---
+
+## External Feedback Integration
+
+### ChatGPT — Hub/Spoke Architecture
+- Hub/Spoke + automatic failover is the right call. NOT peer-to-peer.
+- Cortex is a layer on top of hub, not an infrastructure replacement.
+- When hub dies, workers keep working autonomously. Hub re-syncs on restart.
+- Need: one `PIA_ARCHITECTURE.md` source of truth to stop agents inventing different designs.
+
+### Gemini — MCP Strategy
+- Local install (npm install) over npx — more robust, works offline.
+- We already fixed this: `@playwright/mcp` installed locally, resolved via absolute path.
+
+---
+
+## Reference Links
+- [Electron Docs](https://www.electronjs.org/docs/latest/)
+- [electron-builder](https://www.electron.build/)
+- [electron-vite](https://electron-vite.org/)
+- [shadcn/ui](https://ui.shadcn.com/)
+- [Context7 Electron Docs](https://context7.com/electron/electron) — 553 indexed pages
+- [Slack Engineering: Rebuilding on Electron](https://slack.engineering/rebuilding-slack-on-the-desktop/)
+- [Google AI Studio](https://aistudio.google.com) — Get Gemini API key
+- [Gemini Vision API](https://ai.google.dev/gemini-api/docs/image-understanding) — inlineData format
+
+---
+---
+
+# Session 7: WhatsApp Library Swap — whatsapp-web.js → Baileys (Claude Code / Opus 4.6)
+
+## What Changed
+
+Replaced `whatsapp-web.js` with `@whiskeysockets/baileys` as the WhatsApp integration library.
+
+### Why
+| | whatsapp-web.js (removed) | Baileys (installed) |
+|---|---|---|
+| Runtime | Puppeteer + Chrome (~200MB) | Pure WebSocket (~2MB) |
+| TypeScript | JS + DT types | Native TypeScript |
+| Auth | QR code only | QR code + pairing code |
+| Browser needed | Yes (headless Chrome) | No |
+| Dependencies | Heavy (puppeteer, chrome) | Lightweight (ws, pino, protobufjs) |
+| Multi-machine | Breaks on headless servers without Chrome | Works anywhere Node.js runs |
+
+### Files Changed
+| File | Change |
+|------|--------|
+| `src/comms/whatsapp-bot.ts` | Full rewrite — `PIAWhatsAppBot` now uses Baileys `makeWASocket` instead of whatsapp-web.js `Client`. Same class interface (onMessage, start, stop, sendMessage, getStatus, getQR). Added auto-reconnect with `DisconnectReason` handling. Session stored via `useMultiFileAuthState`. Preserved `getDataSubDir` from electron-paths.js (added by Electron session). |
+| `src/api/routes/whatsapp.ts` | JID format: `@c.us` → `@s.whatsapp.net` (Baileys format) |
+| `package.json` | Removed: `whatsapp-web.js`. Added: `@whiskeysockets/baileys`, `@hapi/boom`, `pino` |
+
+### Key Technical Differences
+- **No Chrome/Puppeteer** — Baileys connects directly to WhatsApp's WebSocket servers
+- **JID format** — Baileys uses `12345678901@s.whatsapp.net` (not `@c.us`)
+- **Connection events** — Uses `connection.update` event with `connection: 'open' | 'close' | 'connecting'` instead of `ready`/`disconnected`
+- **Messages** — Uses `messages.upsert` event with `type: 'notify'` filter instead of `message` event
+- **Sending** — `sock.sendMessage(jid, { text })` instead of `client.sendMessage(chatId, text)`
+- **Auth persistence** — `useMultiFileAuthState(path)` stores Signal protocol keys to disk, `creds.update` event saves on changes
+- **Auto-reconnect** — Built-in reconnect on temporary disconnects (408, 428, 515), no reconnect on logged out (401)
+- **Quoted replies** — Messages are sent as quoted replies: `{ quoted: msg }` option
+
+### What Stays the Same
+- Class interface: `PIAWhatsAppBot` with same methods
+- Singleton pattern: `createWhatsAppBot()` / `getWhatsAppBot()`
+- Message handler callback: `onMessage(async (msg, userId, respond) => {})`
+- Integration with orchestrator via `src/comms/index.ts`
+- All 5 API endpoints: status, qr, send, start, stop
+- Dashboard UI: WhatsApp status indicator + QR modal (unchanged)
+- Session persistence path: `data/whatsapp-session/`
+
+### TypeScript Status
+- Zero WhatsApp-related TypeScript errors
+- 3 pre-existing errors in `websocket-server.ts` (type narrowing, not from this change)
+
+### Desktop App Impact
+- Removed heavy Chrome/Puppeteer dependency — WhatsApp now works on any machine without Chrome installed
+- Lighter package size for Electron bundling
+- No native module dependency from WhatsApp (was a path breakage risk in Electron)
+
+## Cross-Session Notes
+
+### What Other Agents Have Done (from journals)
+- **Claude Code (other instance)**: All 3 machines online (Izzit7 + SODA-YETI + soda-monster-hunter). Fixed critical `require()` ESM bug in websocket-server.ts. Hub/spoke with failover architecture recommended. Cross-journal review completed.
+- **Session 5**: The Cortex fleet intelligence brain concept. 80% of infrastructure already exists (soul-engine, memory-manager, execution-engine, autonomous-worker, mqtt-broker).
+- **Session 6**: Full Electron desktop app analysis. React + shadcn/ui + electron-vite. 15 path breakages identified. `src/electron-paths.ts` created for centralized path resolution.
+- **Gemini sprint**: Browser controller built with Gemini vision for screenshot analysis. 4 new endpoints.
+
+### Architecture Consensus
+- Hub/spoke with automatic failover is confirmed approach (not pure peer)
+- The Cortex sits on top of hub data, not an infrastructure change
+- All machines run same codebase, different .env, different SQLite DB
+
+---
+
+## Session: Electron Desktop App — Phase 1-3 Build
+
+### Summary
+Built the complete Electron desktop app packaging pipeline: path abstraction for packaged mode, electron-builder config, first-run wizard, settings page, auto-updater, secure API key storage, Tailscale peer discovery, and GitHub Actions CI/CD.
+
+### Changes
+
+#### Phase 1: Working .exe Foundation
+- **New file**: `src/electron-paths.ts` — Centralized path resolution (CLI vs Electron packaged). Exports getAppRoot(), getDataDir(), getEnvPath(), getPublicDir(), getDatabasePath(), getMachineIdPath(), etc.
+- **Rewrite**: `electron-main.cjs` — Full rewrite for packaged ASAR paths, port conflict resolution (3000-3010), server crash restart (3 retries/5min), env injection (ELECTRON_PACKAGED, ELECTRON_APP_PATH, ELECTRON_DATA_DIR), data dir creation
+- **Modified**: `src/config.ts` — .env path → getEnvPath(), DB path default → getDatabasePath()
+- **Modified**: `src/api/server.ts` — Firebase path → resolveFromAppRoot(), public dir → getPublicDir(), root path → getAppRoot()
+- **Modified**: `src/local/hub-client.ts` — machine-id → getMachineIdPath()
+- **Modified**: `src/checkpoint/checkpoint-manager.ts` — dataDir default → getDataDir()
+- **Modified**: `src/comms/whatsapp-bot.ts` — session path → getDataSubDir('whatsapp-session')
+- **Modified**: `src/browser-agent/browser-session.ts` — MCP CLI → resolveFromAppRoot(), cwd → getAppRoot()
+- **New file**: `electron-builder.yml` — NSIS + portable targets, asarUnpack for native modules
+- **New file**: `build/icon.svg` — App icon (256x256)
+- **Modified**: `package.json` — main → electron-main.cjs, added electron:dev/electron:build/electron:build:portable scripts
+- **New dep**: `electron-builder` (dev dependency)
+
+#### Phase 2: First-Run, Settings, Secure Storage
+- **New file**: `public/first-run.html` — First-run setup wizard (machine name, role, hub URL, API key, secret token)
+- **New file**: `public/settings.html` — Settings page (all config options, restart-required badges, config export/import)
+- **New file**: `electron-preload.cjs` — contextBridge preload exposing window.pia API (IPC to main process)
+- **New file**: `src/utils/tailscale-discovery.ts` — Discovers PIA instances on Tailscale network (runs `tailscale status --json`, probes /api/health)
+- **New endpoint**: `GET/PUT /api/settings` — Read/write .env config via REST
+- **New endpoint**: `GET /api/settings/export` — Export config (without sensitive keys)
+- **New endpoint**: `POST /api/settings/import` — Import config
+- **New file**: `src/api/routes/settings.ts` — Settings route implementation
+- **Modified**: `src/api/server.ts` — Registered settings route
+- **Modified**: `electron-main.cjs` — Added IPC handlers for all preload channels, safeStorage encrypt/decrypt for API keys, first-run detection, settings read/write, Tailscale peer discovery, tray Settings menu item
+- **New dep**: `electron-updater` (production dependency)
+
+#### Phase 3: Auto-Update + CI/CD
+- **New file**: `.github/workflows/build-desktop.yml` — GitHub Actions workflow: triggered on tag v*, builds Windows NSIS + portable, publishes to GitHub Releases
+- **Modified**: `electron-main.cjs` — electron-updater integration (auto-download, notifications, tray progress, quit-and-install)
+
+### Files Changed
+| File | Change |
+|---|---|
+| `src/electron-paths.ts` | **NEW** — Centralized path resolution for CLI + Electron |
+| `electron-main.cjs` | **REWRITE** — Packaged paths, port conflict, crash restart, IPC, safeStorage, auto-update |
+| `electron-builder.yml` | **NEW** — Build config for NSIS + portable |
+| `electron-preload.cjs` | **NEW** — contextBridge preload script |
+| `public/first-run.html` | **NEW** — First-run setup wizard |
+| `public/settings.html` | **NEW** — Settings page |
+| `src/api/routes/settings.ts` | **NEW** — Settings REST API |
+| `src/utils/tailscale-discovery.ts` | **NEW** — Tailscale peer discovery |
+| `.github/workflows/build-desktop.yml` | **NEW** — CI/CD for desktop builds |
+| `build/icon.svg` | **NEW** — App icon |
+| `create-icon.cjs` | **NEW** — Icon generation script |
+| `src/config.ts` | Uses electron-paths for .env and DB |
+| `src/api/server.ts` | Uses electron-paths for public/root paths + settings route |
+| `src/local/hub-client.ts` | Uses electron-paths for machine-id |
+| `src/checkpoint/checkpoint-manager.ts` | Uses electron-paths for data dir |
+| `src/comms/whatsapp-bot.ts` | Uses electron-paths for session dir |
+| `src/browser-agent/browser-session.ts` | Uses electron-paths for MCP CLI + cwd |
+| `package.json` | electron-main.cjs as main, build scripts, new deps |
+
+### Desktop App Impact
+This IS the desktop app build. All Express server paths, API routes, and WebSocket events remain stable — the electron-paths module falls back to process.cwd() in CLI mode. No breaking changes to the backend contract.
+
+### New WebSocket Events
+None — all new functionality uses REST API (/api/settings) and Electron IPC channels.
+
+### Build Commands
+```bash
+npm run electron:dev              # Dev: build + launch Electron
+npm run electron:build            # Package: Windows NSIS + portable
+npm run electron:build:portable   # Package: portable only
+```
+
+### Next Steps (Phase 4-6)
+- Phase 4: Production hardening (log rotation, native module edge cases, npx/MCP path resolution in packaged mode)
+- Phase 5: React + shadcn/ui rebuild of the dashboard
+- Phase 6: Polish (command palette, multi-window, code signing, macOS/Linux builds)
+
+---
+---
+
+# Consolidated Status Report — All Work Feb 16, 2026 (Claude Code / Opus 4.6)
+
+## Purpose
+This entry consolidates ALL work done across ALL agents on Feb 16, recording what exists, what's changed, and the full state of uncommitted work.
+
+---
+
+## Complete File Inventory — Everything Uncommitted
+
+### Modified Files (19)
+
+| File | What Changed | By Which Session |
+|------|-------------|-----------------|
+| `.claude/settings.local.json` | Settings updates | Multiple |
+| `SESSION_JOURNAL_2026-02-16.md` | Sessions 4-7, Gemini sprint, Electron Phase 1-3, this consolidation | Multiple |
+| `SESSION_JOURNAL_2026-02-16_claude_code.md` | Sections 7-18 (machine linking, bug fixes, all 3 online) | Claude Code (other instance) |
+| `electron-main.cjs` | Full rewrite — ASAR paths, port conflict, crash restart, IPC, safeStorage, auto-update | Electron session |
+| `package-lock.json` | Dependency tree changes | Multiple |
+| `package.json` | +baileys +@hapi/boom +pino +electron-builder +electron-updater, -whatsapp-web.js, main→electron-main.cjs, new scripts | Baileys swap + Electron |
+| `public/mission-control.html` | Messages tab, WhatsApp status/QR modal, Gemini browser controller panel, streaming line-break fix | Sessions 4, 7, 12 |
+| `src/ai/gemini-client.ts` | Added `generateWithImage()` for Gemini vision | Gemini sprint |
+| `src/api/routes/browser.ts` | Added 4 browser controller endpoints | Gemini sprint |
+| `src/api/routes/mcps.ts` | MCP route updates | Electron session |
+| `src/api/routes/whatsapp.ts` | JID format `@c.us` → `@s.whatsapp.net` | Baileys swap (Session 7) |
+| `src/api/server.ts` | Mounted machine-board, whatsapp, settings routes + electron-paths | Sessions 4, 7, Electron |
+| `src/browser-agent/browser-session.ts` | Uses electron-paths for MCP CLI + cwd | Electron session |
+| `src/checkpoint/checkpoint-manager.ts` | Uses electron-paths for data dir | Electron session |
+| `src/comms/whatsapp-bot.ts` | Full rewrite — whatsapp-web.js → Baileys (pure WebSocket) + electron-paths | Session 7 (Baileys swap) |
+| `src/config.ts` | .env path → getEnvPath(), DB path → getDatabasePath() | Electron session |
+| `src/index.ts` | Browser controller shutdown handler | Gemini sprint |
+| `src/local/hub-client.ts` | Auth response field fix + electron-paths for machine-id | Claude Code (M2 fix) + Electron |
+| `src/mission-control/agent-session.ts` | Permission mode fixes, streaming, MCP support | Sessions 2, 13 |
+
+### New Files (23)
+
+| File | Purpose | By Which Session |
+|------|---------|-----------------|
+| `src/electron-paths.ts` | Centralized path resolution (CLI vs Electron packaged) | Electron Phase 1 |
+| `electron-builder.yml` | Build config for NSIS + portable targets | Electron Phase 1 |
+| `electron-preload.cjs` | contextBridge preload — window.pia IPC API | Electron Phase 2 |
+| `create-icon.cjs` | App icon generation script | Electron Phase 1 |
+| `build/icon.svg` | App icon (256x256) | Electron Phase 1 |
+| `public/first-run.html` | First-run setup wizard (name, role, hub URL, API key) | Electron Phase 2 |
+| `public/settings.html` | Settings page (config, restart badges, export/import) | Electron Phase 2 |
+| `src/api/routes/settings.ts` | Settings REST API (GET/PUT /api/settings) | Electron Phase 2 |
+| `src/utils/tailscale-discovery.ts` | Tailscale peer discovery (runs `tailscale status --json`) | Electron Phase 2 |
+| `.github/workflows/build-desktop.yml` | CI/CD — tag v* → Windows build → GitHub Releases | Electron Phase 3 |
+| `src/browser-controller/types.ts` | Browser command/result/state interfaces | Gemini sprint |
+| `src/browser-controller/controller.ts` | Playwright lifecycle, command dispatch, Gemini task loop | Gemini sprint |
+| `src/browser-controller/gemini-vision.ts` | Prompt templates for page description, action decisions | Gemini sprint |
+| `src/cortex/index.ts` | Cortex fleet intelligence module entry | Cortex session |
+| `src/cortex/cortex-db.ts` | Cortex database layer | Cortex session |
+| `src/cortex/data-collector.ts` | Machine telemetry collection | Cortex session |
+| `src/cortex/intelligence.ts` | Fleet intelligence analysis | Cortex session |
+| `src/api/routes/cortex.ts` | Cortex API endpoints | Cortex session |
+| `AGENT_PROMPT_CORTEX_AI_BRAIN.md` | Cortex design exploration prompt | Session 5 |
+| `AGENT_PROMPT_DEPLOY_FLEET.md` | Fleet deployment task prompt | Session 5 |
+| `AGENT_PROMPT_VISION_PRO_EXPLORATION.md` | Vision Pro research prompt | Session 5 |
+| `src/db/queries/machine-messages.ts` | Machine message board queries (7 functions) | Session 4 |
+| `src/api/routes/machine-board.ts` | Machine message board REST API (7 endpoints) | Session 4 |
+
+### Git State
+- **Branch:** `master`
+- **1 commit ahead of origin:** `dfb9517` — ESM require() fix + machine setup docs (unpushed)
+- **19 modified + 23 new files** uncommitted
+- **Screenshots:** 8 first-run wizard screenshots (untracked, probably shouldn't commit)
+
+---
+
+## What Each Session Built (Summary)
+
+### Session 1-3 (ChatGPT — earlier today)
+- Permission architecture deep dive (6 layers identified)
+- Visual indicators, MCP support, browser agent prototype
+- Multi-machine strategy (Tailscale), git deployment, 4 agent briefings
+
+### Session 4 (ChatGPT/Opus — this conversation, earlier)
+- **Machine Message Board** — `machine_messages` SQLite table, persistence wired into cross-machine relay, 7 API endpoints, Messages tab in Mission Control
+- **WhatsApp Integration** — whatsapp-web.js bot, 5 API endpoints, dashboard status indicator + QR modal
+
+### Session 5 (ChatGPT)
+- Fleet deployment prompts, The Cortex concept
+- Discovered 80% of Cortex already exists (soul-engine, memory-manager, execution-engine, mqtt-broker)
+- Architecture: all machines equal peers (later revised to hub/spoke with failover)
+
+### Session 6 (ChatGPT)
+- Full Electron desktop app analysis — React + shadcn/ui + electron-vite
+- 15 path breakages identified, 6-phase build plan
+
+### Session 7 (This conversation — Opus 4.6)
+- **Baileys swap** — Replaced whatsapp-web.js (200MB Chrome) with @whiskeysockets/baileys (2MB WebSocket)
+- Same PIAWhatsAppBot class interface, native TypeScript, auto-reconnect
+- JID format updated: `@c.us` → `@s.whatsapp.net`
+
+### Electron Desktop App — Phase 1-3 (separate agent)
+- **Phase 1:** `src/electron-paths.ts`, `electron-main.cjs` rewrite, `electron-builder.yml`, path abstraction across 6 files
+- **Phase 2:** First-run wizard (`first-run.html`), settings page (`settings.html`), preload script, Tailscale peer discovery, settings REST API, safeStorage for API keys
+- **Phase 3:** Auto-updater via electron-updater, GitHub Actions CI/CD workflow
+
+### Gemini Browser Controller (separate sprint)
+- Gemini-powered browser automation: Playwright + Gemini Vision for screenshot analysis
+- 4 new API endpoints: start, command, status, stop
+- Multi-step task loop: screenshot → Gemini decides action → Playwright executes → repeat
+
+### Claude Code (other instance) — Machine Linking
+- All 3 machines online (Izzit7 + SODA-YETI + soda-monster-hunter)
+- Fixed critical `require()` ESM bug in websocket-server.ts
+- Fixed auth response field mismatch in hub-client.ts (from M2's Claude)
+- Token mismatch debugging, instruction files v2 for M2 and M3
+- Hub/spoke with failover architecture recommended
+
+### Session 12 (ChatGPT)
+- Streaming line-breaking bug fixed — accumulator pattern replaces per-token div creation
+
+### Session 13 (ChatGPT)
+- Auto-approved prompts now visible as green cards in Mission Control
+- Default spawn mode changed from Manual to Auto
+
+---
+
+## Architecture Decisions (Consolidated)
+
+| Decision | Status | Source |
+|----------|--------|--------|
+| Hub/spoke with automatic failover | Confirmed | Claude Code + ChatGPT feedback |
+| Tailscale for secure networking | Deployed | Session 3 + Claude Code |
+| All machines same codebase, different .env/DB | Deployed | All sessions |
+| Electron for desktop app | Plan complete, Phase 1-3 built | Session 6 + Electron sprint |
+| React + shadcn/ui for new UI | Decision made, not started | Session 6 |
+| Baileys for WhatsApp (not whatsapp-web.js) | Swapped | Session 7 |
+| The Cortex for fleet intelligence | Module started | Session 5 |
+| Gemini for browser vision tasks | Built | Gemini sprint |
+
+---
+
+## Fleet Status
+
+| Machine | CPU | RAM | Status | PIA |
+|---------|-----|-----|--------|-----|
+| Izzit7 (M1) | i9-12900H (20T) | 64GB | Hub | Running |
+| SODA-YETI (M3) | Ryzen 7 7700X (16T) | 32GB | Spoke | Online |
+| soda-monster-hunter (M2) | Intel Ultra 7 265K (20T) | 64GB | Spoke | Online |
+| **TOTAL** | **56 threads** | **160 GB** | | |
+
+---
+
+## Dependencies Changed
+
+| Added | Version | Why |
+|-------|---------|-----|
+| `@whiskeysockets/baileys` | ^7.0.0-rc.9 | WhatsApp (replaces whatsapp-web.js) |
+| `@hapi/boom` | ^10.0.1 | Baileys disconnect error typing |
+| `pino` | ^10.3.1 | Baileys logging dependency |
+| `electron-builder` | ^26.7.0 | Desktop app packaging (dev) |
+| `electron-updater` | (bundled) | Auto-update for desktop |
+
+| Removed | Why |
+|---------|-----|
+| `whatsapp-web.js` | Replaced by Baileys (no Chrome needed) |
+
+---
+
+## What's Next (Priority Queue)
+
+| # | Task | Status | Effort |
+|---|------|--------|--------|
+| 1 | Commit + push all uncommitted work | Ready | 5 min |
+| 2 | Remote agent spawning (hub → spoke) | Not started | 1-2 days |
+| 3 | Clean stale machine entries in hub DB | Not started | 30 min |
+| 4 | `/api/system/update` endpoint (remote git pull) | Not started | 1 day |
+| 5 | Hub failover (auto-promote spoke if hub dies) | Not started | 1-2 weeks |
+| 6 | Wire Autonomous Worker for cross-machine tasks | Not started | 2-3 days |
+| 7 | The Cortex Phase 1 (wire existing infrastructure) | Module started | 1 week |
+| 8 | Electron Phase 4 (production hardening) | Not started | 2 days |
+| 9 | Fleet Dashboard (wire FLEET_DASHBOARD_MOCKUP.html) | Mockup exists | 3 days |
+| 10 | DAO separation to DAOV1 repo | Deferred | When ready |
+
+---
+
+## Cross-Session Learnings
+
+1. **PIA's File API is a remote management tool** — reconfigured Machine 3's .env over the network via REST
+2. **Token synchronization is the #1 setup pain point** — code default differs from .env value
+3. **`require()` in ESM modules is a silent killer** — hub message handler crashed on every spoke registration
+4. **Electron path abstraction works** — `src/electron-paths.ts` with `getDataSubDir()` etc. falls back to `process.cwd()` in CLI mode
+5. **Baileys >> whatsapp-web.js** — no browser, native TS, lighter, pairing code option
+6. **80% of "The Cortex" already exists** — soul-engine, memory-manager, execution-engine, autonomous-worker, mqtt-broker just need wiring
+7. **Hub/spoke beats pure peer** — every major orchestration platform (K8s, Docker Swarm, Consul, Nomad) uses this model
+8. **Three Claudes across three machines sharing fixes through git** — the multi-agent collaboration pattern works
