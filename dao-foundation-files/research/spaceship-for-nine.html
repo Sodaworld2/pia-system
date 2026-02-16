@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SodaWorld — Spaceship for 9 People</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #0a0a1a;
+    color: #e0e0e0;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  .hero {
+    text-align: center;
+    padding: 50px 20px 30px;
+    background: linear-gradient(180deg, #12122a 0%, #0a0a1a 100%);
+  }
+  .hero h1 {
+    font-size: 3em;
+    background: linear-gradient(135deg, #ff6b6b, #ffa500, #ffdd57);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 10px;
+  }
+  .hero .subtitle {
+    font-size: 1.3em;
+    color: #888;
+    max-width: 700px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+  .hero .counter {
+    margin-top: 25px;
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+  }
+  .counter-item {
+    text-align: center;
+  }
+  .counter-item .num {
+    font-size: 3.5em;
+    font-weight: 900;
+    line-height: 1;
+  }
+  .counter-item .label {
+    font-size: 0.85em;
+    color: #666;
+    margin-top: 4px;
+  }
+  .num.red { color: #ff6b6b; }
+  .num.green { color: #51cf66; }
+  .num.orange { color: #ffa500; }
+  .num.blue { color: #74c0fc; }
+
+  /* ── LEGO BLOCKS ── */
+  .section {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+  }
+  .section-title {
+    font-size: 1.6em;
+    margin-bottom: 25px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #222;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-title .icon { font-size: 1.4em; }
+
+  /* THE vs reality split */
+  .split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-bottom: 50px;
+  }
+  @media (max-width: 800px) {
+    .split { grid-template-columns: 1fr; }
+  }
+  .split-panel {
+    border-radius: 16px;
+    padding: 25px;
+    position: relative;
+    overflow: hidden;
+  }
+  .split-panel.building {
+    background: linear-gradient(135deg, #1a1a3e, #12122a);
+    border: 2px solid #333;
+  }
+  .split-panel.reality {
+    background: linear-gradient(135deg, #1a2e1a, #0a1a0a);
+    border: 2px solid #2a5a2a;
+  }
+  .panel-label {
+    font-size: 0.75em;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: 15px;
+    opacity: 0.6;
+  }
+  .panel-label.red { color: #ff6b6b; }
+  .panel-label.green { color: #51cf66; }
+
+  /* LEGO BRICK */
+  .lego-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .lego-brick {
+    position: relative;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 0.85em;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+    cursor: default;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.3);
+  }
+  .lego-brick:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 0 rgba(0,0,0,0.3);
+  }
+  .lego-brick::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: 12px;
+    width: 14px;
+    height: 7px;
+    border-radius: 4px 4px 0 0;
+    background: inherit;
+    filter: brightness(1.1);
+  }
+  .lego-brick::after {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: 34px;
+    width: 14px;
+    height: 7px;
+    border-radius: 4px 4px 0 0;
+    background: inherit;
+    filter: brightness(1.1);
+  }
+  /* Colors */
+  .brick-red { background: #c92a2a; color: #fff; }
+  .brick-orange { background: #d9480f; color: #fff; }
+  .brick-yellow { background: #e67700; color: #fff; }
+  .brick-green { background: #2b8a3e; color: #fff; }
+  .brick-blue { background: #1864ab; color: #fff; }
+  .brick-purple { background: #7048e8; color: #fff; }
+  .brick-teal { background: #0b7285; color: #fff; }
+  .brick-pink { background: #a61e4d; color: #fff; }
+  .brick-gray { background: #495057; color: #fff; }
+  .brick-dark { background: #212529; color: #aaa; border: 1px dashed #555; }
+
+  .brick-sm { padding: 8px 14px; font-size: 0.8em; }
+  .brick-tag {
+    font-size: 0.65em;
+    background: rgba(0,0,0,0.3);
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: auto;
+    white-space: nowrap;
+  }
+
+  /* PEOPLE ROW */
+  .people-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 15px;
+    justify-content: center;
+  }
+  .person {
+    text-align: center;
+    width: 70px;
+  }
+  .person-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4em;
+    margin: 0 auto 5px;
+    border: 2px solid rgba(255,255,255,0.2);
+  }
+  .person-name {
+    font-size: 0.65em;
+    color: #888;
+    line-height: 1.2;
+  }
+  .person-role {
+    font-size: 0.55em;
+    color: #555;
+  }
+
+  /* WHATSAPP */
+  .whatsapp-mock {
+    background: #0b141a;
+    border-radius: 16px;
+    padding: 15px;
+    margin-top: 15px;
+    border: 1px solid #1f2c34;
+  }
+  .wa-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #1f2c34;
+    margin-bottom: 10px;
+  }
+  .wa-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #2b8a3e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8em;
+  }
+  .wa-name { font-size: 0.85em; font-weight: 600; }
+  .wa-members { font-size: 0.65em; color: #667781; }
+  .wa-msg {
+    margin: 6px 0;
+    max-width: 80%;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 0.75em;
+    line-height: 1.4;
+  }
+  .wa-msg.sent {
+    background: #005c4b;
+    margin-left: auto;
+    border-bottom-right-radius: 2px;
+  }
+  .wa-msg.received {
+    background: #1f2c34;
+    border-bottom-left-radius: 2px;
+  }
+  .wa-msg .wa-sender {
+    font-size: 0.85em;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  .wa-msg .wa-sender.marcus { color: #ff6b6b; }
+  .wa-msg .wa-sender.sarah { color: #74c0fc; }
+  .wa-msg .wa-sender.james { color: #51cf66; }
+  .wa-msg .wa-time {
+    font-size: 0.75em;
+    color: rgba(255,255,255,0.4);
+    text-align: right;
+    margin-top: 2px;
+  }
+
+  /* SCALE COMPARISON */
+  .scale-bar {
+    margin: 10px 0;
+    position: relative;
+  }
+  .scale-bar-bg {
+    height: 28px;
+    background: #1a1a2e;
+    border-radius: 14px;
+    overflow: hidden;
+    position: relative;
+  }
+  .scale-bar-fill {
+    height: 100%;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    padding-left: 12px;
+    font-size: 0.75em;
+    font-weight: 700;
+    transition: width 1s ease;
+  }
+  .scale-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7em;
+    color: #666;
+    margin-top: 4px;
+  }
+  .scale-marker {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 3px;
+    background: #ff6b6b;
+    z-index: 2;
+  }
+  .scale-marker-label {
+    position: absolute;
+    top: -18px;
+    font-size: 0.6em;
+    color: #ff6b6b;
+    font-weight: 700;
+    white-space: nowrap;
+    transform: translateX(-50%);
+  }
+
+  /* VERDICT */
+  .verdict {
+    max-width: 1200px;
+    margin: 0 auto 60px;
+    padding: 30px;
+    background: linear-gradient(135deg, #1a1a3e, #0a0a1a);
+    border: 2px solid #ffa500;
+    border-radius: 16px;
+    text-align: center;
+  }
+  .verdict h2 {
+    font-size: 1.8em;
+    color: #ffa500;
+    margin-bottom: 15px;
+  }
+  .verdict p {
+    font-size: 1em;
+    color: #aaa;
+    max-width: 700px;
+    margin: 0 auto 15px;
+    line-height: 1.7;
+  }
+  .verdict .takeaway {
+    display: inline-block;
+    background: rgba(255,165,0,0.15);
+    border: 1px solid rgba(255,165,0,0.3);
+    padding: 12px 24px;
+    border-radius: 10px;
+    color: #ffdd57;
+    font-weight: 600;
+    margin-top: 10px;
+  }
+
+  /* TABLE COMPARISON */
+  .comp-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+    font-size: 0.85em;
+  }
+  .comp-table th {
+    text-align: left;
+    padding: 8px 12px;
+    background: #1a1a2e;
+    color: #888;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8em;
+    letter-spacing: 1px;
+  }
+  .comp-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #1a1a2e;
+  }
+  .comp-table tr:hover td {
+    background: rgba(255,255,255,0.03);
+  }
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.8em;
+    font-weight: 600;
+  }
+  .tag-need { background: rgba(81,207,102,0.15); color: #51cf66; }
+  .tag-later { background: rgba(255,165,0,0.15); color: #ffa500; }
+  .tag-overkill { background: rgba(255,107,107,0.15); color: #ff6b6b; }
+  .tag-yes { background: rgba(81,207,102,0.15); color: #51cf66; }
+  .tag-no { background: rgba(255,107,107,0.15); color: #ff6b6b; }
+
+  /* FOOTER */
+  footer {
+    text-align: center;
+    padding: 30px;
+    color: #444;
+    font-size: 0.8em;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ HERO ═══════════════════ -->
+<div class="hero">
+  <h1>Spaceship for 9 People</h1>
+  <div class="subtitle">
+    A brutally honest look at what we're building vs. what we actually need right now
+  </div>
+  <div class="counter">
+    <div class="counter-item">
+      <div class="num red">9</div>
+      <div class="label">Current Members</div>
+    </div>
+    <div class="counter-item">
+      <div class="num orange">13</div>
+      <div class="label">New Tables Planned</div>
+    </div>
+    <div class="counter-item">
+      <div class="num blue">19</div>
+      <div class="label">New API Endpoints</div>
+    </div>
+    <div class="counter-item">
+      <div class="num green">0</div>
+      <div class="label">External Users</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ SECTION 1: GOVERNANCE ═══════════════════ -->
+<div class="section">
+  <div class="section-title">
+    <span class="icon">1.</span> Governance — What We're Building vs. What 9 People Need
+  </div>
+  <div class="split">
+    <!-- BUILDING -->
+    <div class="split-panel building">
+      <div class="panel-label red">What we're building</div>
+      <div class="lego-stack">
+        <div class="lego-brick brick-red">
+          13-status proposal lifecycle
+          <span class="brick-tag">ENS / Compound scale</span>
+        </div>
+        <div class="lego-brick brick-orange">
+          Delegation system + circular detection
+          <span class="brick-tag">1000+ members</span>
+        </div>
+        <div class="lego-brick brick-yellow">
+          Flash-loan voting protection
+          <span class="brick-tag">DeFi attacks</span>
+        </div>
+        <div class="lego-brick brick-purple">
+          Tiered quorum by proposal type
+          <span class="brick-tag">4 tiers</span>
+        </div>
+        <div class="lego-brick brick-blue">
+          Proposal execution engine
+          <span class="brick-tag">auto-execute</span>
+        </div>
+        <div class="lego-brick brick-teal">
+          Security council + veto power
+          <span class="brick-tag">Arbitrum model</span>
+        </div>
+        <div class="lego-brick brick-pink">
+          Vote snapshots at proposal creation
+          <span class="brick-tag">anti-manipulation</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- REALITY -->
+    <div class="split-panel reality">
+      <div class="panel-label green">What 9 people actually need</div>
+      <div class="lego-stack">
+        <div class="lego-brick brick-green">
+          "Hey should we do this?" "Yeah sure"
+          <span class="brick-tag">WhatsApp</span>
+        </div>
+        <div class="lego-brick brick-green brick-sm">
+          Simple yes / no / abstain vote
+        </div>
+        <div class="lego-brick brick-dark brick-sm">
+          Delegation? Marcus is in the room
+        </div>
+        <div class="lego-brick brick-dark brick-sm">
+          Flash-loan protection? No token exists
+        </div>
+        <div class="lego-brick brick-dark brick-sm">
+          Security council? It's the same 3 founders
+        </div>
+      </div>
+
+      <div class="whatsapp-mock">
+        <div class="wa-header">
+          <div class="wa-avatar">S</div>
+          <div>
+            <div class="wa-name">SodaWorld Council</div>
+            <div class="wa-members">Marcus, Sarah, James, Lisa, David, +4</div>
+          </div>
+        </div>
+        <div class="wa-msg received">
+          <div class="wa-sender marcus">Marcus</div>
+          should we approve the CertiK audit? 45k SODA
+          <div class="wa-time">14:32</div>
+        </div>
+        <div class="wa-msg received">
+          <div class="wa-sender sarah">Sarah</div>
+          yes, we need it before token launch
+          <div class="wa-time">14:33</div>
+        </div>
+        <div class="wa-msg received">
+          <div class="wa-sender james">James</div>
+          agreed
+          <div class="wa-time">14:35</div>
+        </div>
+        <div class="wa-msg sent">
+          3/3 founders approved. Done in 3 minutes.
+          <div class="wa-time">14:35</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ SECTION 2: TREASURY ═══════════════════ -->
+<div class="section">
+  <div class="section-title">
+    <span class="icon">2.</span> Treasury — Bank Vault for an Empty Room
+  </div>
+  <div class="split">
+    <div class="split-panel building">
+      <div class="panel-label red">What we're building</div>
+      <div class="lego-stack">
+        <div class="lego-brick brick-red">
+          Multi-sig approval flow
+          <span class="brick-tag">1-sig / 2-sig / 3-sig</span>
+        </div>
+        <div class="lego-brick brick-orange">
+          4-tier spending policies
+          <span class="brick-tag">micro to large</span>
+        </div>
+        <div class="lego-brick brick-yellow">
+          Daily spending cap enforcement
+          <span class="brick-tag">50k SODA/day</span>
+        </div>
+        <div class="lego-brick brick-purple">
+          Runway calculator with alerts
+          <span class="brick-tag">3/6 month warnings</span>
+        </div>
+        <div class="lego-brick brick-blue">
+          Treasury transaction audit trail
+          <span class="brick-tag">every transaction</span>
+        </div>
+        <div class="lego-brick brick-teal">
+          Anomaly detection system
+          <span class="brick-tag">Safe Shield model</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="split-panel reality">
+      <div class="panel-label green">Current treasury reality</div>
+      <div class="lego-stack">
+        <div class="lego-brick brick-green">
+          Treasury balance: fictional numbers
+          <span class="brick-tag">seed data</span>
+        </div>
+        <div class="lego-brick brick-dark brick-sm">
+          Real money in treasury: $0.00
+        </div>
+        <div class="lego-brick brick-dark brick-sm">
+          Real transactions: 0
+        </div>
+        <div class="lego-brick brick-dark brick-sm">
+          On-chain wallet: doesn't exist
+        </div>
+        <div class="lego-brick brick-dark brick-sm">
+          Need anomaly detection for: nothing
+        </div>
+      </div>
+
+      <div style="margin-top:20px; text-align: center;">
+        <div style="font-size: 4em; opacity: 0.3;">$0</div>
+        <div style="color: #666; font-size: 0.85em;">Total real value secured by this system</div>
+      </div>
+
+      <div style="margin-top: 20px; padding: 12px; background: rgba(255,107,107,0.1); border-radius: 10px; border-left: 3px solid #ff6b6b;">
+        <div style="font-size: 0.8em; color: #ff6b6b; font-weight: 600;">Honest question</div>
+        <div style="font-size: 0.8em; color: #aaa; margin-top: 4px;">
+          Would you install a $50,000 security system in a house with no furniture?
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ SECTION 3: AGREEMENTS ═══════════════════ -->
+<div class="section">
+  <div class="section-title">
+    <span class="icon">3.</span> Agreements — International Law for a Group Chat
+  </div>
+  <div class="split">
+    <div class="split-panel building">
+      <div class="panel-label red">What we're building</div>
+      <div class="lego-stack">
+        <div class="lego-brick brick-red">
+          EIP-712 typed signature structure
+          <span class="brick-tag">Ethereum standard</span>
+        </div>
+        <div class="lego-brick brick-orange">
+          3-tier dispute resolution
+          <span class="brick-tag">internal / Kleros / JAMS</span>
+        </div>
+        <div class="lego-brick brick-yellow">
+          Content hashing + nonce replay protection
+          <span class="brick-tag">tamper-proof</span>
+        </div>
+        <div class="lego-brick brick-purple">
+          Witness co-signatures
+          <span class="brick-tag">council cosign</span>
+        </div>
+        <div class="lego-brick brick-blue">
+          Clawback + good/bad leaver clauses
+          <span class="brick-tag">advisor terms</span>
+        </div>
+        <div class="lego-brick brick-teal">
+          Performance review scheduling
+          <span class="brick-tag">monthly/quarterly</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="split-panel reality">
+      <div class="panel-label green">Current agreement reality</div>
+      <div class="lego-stack">
+        <div class="lego-brick brick-green">
+          7 agreements exist — all in "draft" status
+          <span class="brick-tag">none active</span>
+        </div>
+        <div class="lego-brick brick-green brick-sm">
+          Signatures: stored as text strings
+        </div>
+        <div class="lego-brick brick-dark brick-sm">
+          Dispute between 9 friends? "Let's talk about it"
+        </div>
+        <div class="lego-brick brick-dark brick-sm">
+          Kleros arbitration? For what dispute?
+        </div>
+        <div class="lego-brick brick-dark brick-sm">
+          EIP-712? No blockchain connected
+        </div>
+      </div>
+
+      <div style="margin-top: 15px; padding: 12px; background: rgba(255,165,0,0.1); border-radius: 10px; border-left: 3px solid #ffa500;">
+        <div style="font-size: 0.8em; color: #ffa500; font-weight: 600;">The counter-argument</div>
+        <div style="font-size: 0.8em; color: #aaa; margin-top: 4px;">
+          These agreements WILL matter when real advisors and investors join. Building the structure now means you're ready when it counts. But today? Nobody has signed anything.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ SECTION 4: TOKENS ═══════════════════ -->
+<div class="section">
+  <div class="section-title">
+    <span class="icon">4.</span> Token Distribution — Vesting Calculator for Imaginary Money
+  </div>
+  <div class="split">
+    <div class="split-panel building">
+      <div class="panel-label red">What we're building</div>
+      <div class="lego-stack">
+        <div class="lego-brick brick-red">
+          6-category allocation (was 4)
+          <span class="brick-tag">100M SODA</span>
+        </div>
+        <div class="lego-brick brick-orange">
+          Vesting schedules table + calculator
+          <span class="brick-tag">daily computation</span>
+        </div>
+        <div class="lego-brick brick-yellow">
+          Single/double trigger acceleration
+          <span class="brick-tag">acquisition events</span>
+        </div>
+        <div class="lego-brick brick-purple">
+          Milestone-based vesting
+          <span class="brick-tag">hybrid model</span>
+        </div>
+        <div class="lego-brick brick-blue">
+          Token supply tracking (mint/burn/lock)
+          <span class="brick-tag">real-time</span>
+        </div>
+        <div class="lego-brick brick-teal">
+          Token operations history
+          <span class="brick-tag">full audit</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="split-panel reality">
+      <div class="panel-label green">Current token reality</div>
+      <div class="lego-stack">
+        <div class="lego-brick brick-green">
+          SODA token: number in SQLite column
+          <span class="brick-tag">not on any chain</span>
+        </div>
+        <div class="lego-brick brick-dark brick-sm">
+          Market price: $0.00 (doesn't trade)
+        </div>
+        <div class="lego-brick brick-dark brick-sm">
+          Token contract deployed: no
+        </div>
+        <div class="lego-brick brick-dark brick-sm">
+          Vesting to calculate: fictional amounts
+        </div>
+        <div class="lego-brick brick-dark brick-sm">
+          Acceleration trigger: no company to acquire
+        </div>
+      </div>
+
+      <div style="margin-top:20px;">
+        <div style="font-size: 0.8em; color: #666; margin-bottom: 8px;">What "100,000,000 SODA" actually looks like today:</div>
+        <div class="scale-bar">
+          <div class="scale-bar-bg">
+            <div class="scale-bar-fill" style="width: 100%; background: linear-gradient(90deg, #333, #444);">
+              100M SODA = a number in a database
+            </div>
+          </div>
+        </div>
+        <div style="font-size: 0.8em; color: #666; margin-top: 12px; margin-bottom: 8px;">What it needs to be for any of this to matter:</div>
+        <div class="scale-bar">
+          <div class="scale-bar-bg">
+            <div class="scale-bar-fill" style="width: 15%; background: linear-gradient(90deg, #c92a2a, #ff6b6b);">
+              We are here
+            </div>
+            <div class="scale-marker" style="left: 15%;">
+              <div class="scale-marker-label">Today</div>
+            </div>
+          </div>
+          <div class="scale-bar-label">
+            <span>Number in DB</span>
+            <span>Smart contract</span>
+            <span>Listed on DEX</span>
+            <span>Real value</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ THE 9 PEOPLE ═══════════════════ -->
+<div class="section">
+  <div class="section-title">
+    <span class="icon">5.</span> These Are the 9 People This Is All For
+  </div>
+  <div style="background: linear-gradient(135deg, #1a1a3e, #12122a); border-radius: 16px; padding: 30px; border: 2px solid #333;">
+    <div class="people-row">
+      <div class="person">
+        <div class="person-avatar" style="background: #c92a2a;">M</div>
+        <div class="person-name">Marcus Chen</div>
+        <div class="person-role">Founder / CTO</div>
+      </div>
+      <div class="person">
+        <div class="person-avatar" style="background: #1864ab;">S</div>
+        <div class="person-name">Sarah Williams</div>
+        <div class="person-role">Founder / CEO</div>
+      </div>
+      <div class="person">
+        <div class="person-avatar" style="background: #2b8a3e;">J</div>
+        <div class="person-name">James Wright</div>
+        <div class="person-role">Founder / Creative</div>
+      </div>
+      <div class="person">
+        <div class="person-avatar" style="background: #7048e8;">L</div>
+        <div class="person-name">Lisa Park</div>
+        <div class="person-role">Advisor / Legal</div>
+      </div>
+      <div class="person">
+        <div class="person-avatar" style="background: #0b7285;">D</div>
+        <div class="person-name">David Kumar</div>
+        <div class="person-role">Advisor / Blockchain</div>
+      </div>
+      <div class="person">
+        <div class="person-avatar" style="background: #d9480f;">E</div>
+        <div class="person-name">Emma Rodriguez</div>
+        <div class="person-role">Contributor / Dev</div>
+      </div>
+      <div class="person">
+        <div class="person-avatar" style="background: #a61e4d;">A</div>
+        <div class="person-name">Alex Thompson</div>
+        <div class="person-role">Contributor / Community</div>
+      </div>
+      <div class="person">
+        <div class="person-avatar" style="background: #495057;">M</div>
+        <div class="person-name">Mia Foster</div>
+        <div class="person-role">Member / Investor</div>
+      </div>
+      <div class="person">
+        <div class="person-avatar" style="background: #495057;">N</div>
+        <div class="person-name">Noah Baker</div>
+        <div class="person-role">Observer / Investor</div>
+      </div>
+    </div>
+    <div style="text-align: center; margin-top: 25px; color: #666; font-size: 0.9em;">
+      9 people. 3 founders who talk daily. 2 advisors. 2 contributors. 2 investors.<br>
+      <span style="color: #ff6b6b; font-weight: 600;">Building infrastructure designed for thousands.</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ SCALE REALITY CHECK ═══════════════════ -->
+<div class="section">
+  <div class="section-title">
+    <span class="icon">6.</span> Feature vs. Scale Reality Check
+  </div>
+
+  <table class="comp-table">
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th>Designed For</th>
+        <th>SodaWorld Today</th>
+        <th>Verdict</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Delegation system</td>
+        <td>DAOs with 100+ token holders who can't all vote</td>
+        <td>9 members who all know each other</td>
+        <td><span class="tag tag-later">Build later</span></td>
+      </tr>
+      <tr>
+        <td>Flash-loan vote protection</td>
+        <td>On-chain DAOs with liquid tokens on DEXes</td>
+        <td>Token doesn't exist on any chain</td>
+        <td><span class="tag tag-overkill">Overkill now</span></td>
+      </tr>
+      <tr>
+        <td>4-tier spending policies</td>
+        <td>Treasuries managing real money ($1M+)</td>
+        <td>$0 in real treasury</td>
+        <td><span class="tag tag-later">Build later</span></td>
+      </tr>
+      <tr>
+        <td>Daily spending cap</td>
+        <td>Preventing runaway automated spending</td>
+        <td>All spending is manual by founders</td>
+        <td><span class="tag tag-overkill">Overkill now</span></td>
+      </tr>
+      <tr>
+        <td>Runway calculator</td>
+        <td>Tracking burn rate of real funds</td>
+        <td>No real funds to burn</td>
+        <td><span class="tag tag-later">Build later</span></td>
+      </tr>
+      <tr>
+        <td>EIP-712 signatures</td>
+        <td>On-chain signature verification</td>
+        <td>No chain, no verification</td>
+        <td><span class="tag tag-later">Build later</span></td>
+      </tr>
+      <tr>
+        <td>3-tier dispute resolution</td>
+        <td>Large DAOs with adversarial members</td>
+        <td>9 friends</td>
+        <td><span class="tag tag-overkill">Overkill now</span></td>
+      </tr>
+      <tr>
+        <td>Vesting calculator</td>
+        <td>Tracking real token unlocks</td>
+        <td>Tokens are just database numbers</td>
+        <td><span class="tag tag-later">Build later</span></td>
+      </tr>
+      <tr>
+        <td>Acceleration clauses</td>
+        <td>Acquisitions, terminations</td>
+        <td>No company entity, no acquisitions possible</td>
+        <td><span class="tag tag-overkill">Overkill now</span></td>
+      </tr>
+      <tr>
+        <td>Token supply tracking</td>
+        <td>Real tokens minting/burning on-chain</td>
+        <td>Fixed number: 100,000,000 in seed data</td>
+        <td><span class="tag tag-later">Build later</span></td>
+      </tr>
+      <tr>
+        <td style="color: #51cf66;">Content hashing</td>
+        <td>Tamper detection for legal documents</td>
+        <td>7 agreements need integrity proof</td>
+        <td><span class="tag tag-need">Need now</span></td>
+      </tr>
+      <tr>
+        <td style="color: #51cf66;">Basic proposal flow</td>
+        <td>Any organization making decisions</td>
+        <td>10 proposals exist, need proper lifecycle</td>
+        <td><span class="tag tag-need">Need now</span></td>
+      </tr>
+      <tr>
+        <td style="color: #51cf66;">Audit logging</td>
+        <td>Any production system</td>
+        <td>No record of who did what</td>
+        <td><span class="tag tag-need">Need now</span></td>
+      </tr>
+      <tr>
+        <td style="color: #51cf66;">User authentication</td>
+        <td>Any multi-user application</td>
+        <td>MISSING entirely</td>
+        <td><span class="tag tag-need">Need now</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══════════════════ VERDICT ═══════════════════ -->
+<div class="section">
+  <div class="verdict">
+    <h2>So What's the Right Move?</h2>
+    <p>
+      The research is real. The features are legit. The sprint plan is solid engineering.
+      But there's a gap between <strong>building the platform of the future</strong> and
+      <strong>building what the 9 current users actually need today</strong>.
+    </p>
+    <p>
+      The sweet spot: <strong>build the tables and types now</strong> (they're cheap), but
+      <strong>skip the complex logic until there are real users and real money</strong>.
+      A vesting_schedules table costs nothing to create. A full acceleration clause engine
+      with milestone verification is weeks of work for a feature nobody will trigger.
+    </p>
+    <p style="color: #fff;">
+      Build the skeleton. Don't furnish every room.
+    </p>
+    <div class="takeaway">
+      Create the 13 tables (that's just SQL). Skip the complex engines. Ship auth first.
+    </div>
+  </div>
+</div>
+
+<footer>
+  SodaWorld DAO Research &mdash; "Spaceship for 9 People" &mdash; February 15, 2026<br>
+  Created by Claude Opus 4.6 &mdash; Devil's Advocate Mode
+</footer>
+
+</body>
+</html>
