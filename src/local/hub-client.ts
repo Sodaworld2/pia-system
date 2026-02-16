@@ -143,7 +143,7 @@ export class HubClient {
   private handleMessage(msg: HubMessage): void {
     switch (msg.type) {
       case 'auth':
-        if ((msg.payload as { success: boolean })?.success) {
+        if ((msg as any).success || (msg.payload as any)?.success) {
           logger.info('Authenticated with Hub');
         } else {
           logger.error('Hub authentication failed');
