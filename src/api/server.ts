@@ -3,8 +3,22 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { join } from 'path';
+import { readFileSync } from 'fs';
 import { createLogger } from '../utils/logger.js';
 import { config } from '../config.js';
+
+// Firebase Admin SDK
+import admin from 'firebase-admin';
+
+// Initialize Firebase Admin
+const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH || './firebase-service-account.json';
+try {
+  const serviceAccount = JSON.parse(readFileSync(join(process.cwd(), serviceAccountPath), 'utf8'));
+  admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+  console.log('[Firebase] Admin SDK initialized successfully');
+} catch (e) {
+  console.warn('[Firebase] Admin SDK not initialized:', (e as Error).message);
+}
 
 // Import routes
 import machinesRouter from './routes/machines.js';
@@ -33,31 +47,59 @@ import workSessionsRouter from './routes/work-sessions.js';
 import missionControlRouter from './routes/mission-control.js';
 import daoModulesRouter from './routes/dao-modules.js';
 import daoProxyRouter from './routes/dao-proxy.js';
+import daoAuthRouter from './routes/dao-auth.js';
+import browserRouter from './routes/browser.js';
 import { getNetworkSentinel } from '../security/network-sentinel.js';
 
 const logger = createLogger('API');
 
-// API token validation middleware
-function validateApiToken(req: Request, res: Response, next: NextFunction): void {
-  // Skip validation for health check and static files
-  if (req.path === '/api/health' || !req.path.startsWith('/api')) {
+// API token validation middleware — supports BOTH static API tokens AND Firebase auth
+async function validateApiToken(req: Request, res: Response, next: NextFunction): Promise<void> {
+  // Skip validation for health check, static files, and dao auth routes
+  if (req.path === '/api/health' || !req.path.startsWith('/api') || req.path.startsWith('/api/dao/auth')) {
     next();
     return;
   }
 
-  const token = req.headers['x-api-token'] || req.headers['authorization']?.replace('Bearer ', '');
-
-  if (!token || token !== config.security.secretToken) {
-    // Record failed auth for intrusion detection
-    try {
-      const ip = req.ip || req.socket.remoteAddress || 'unknown';
-      getNetworkSentinel().recordFailedAuth(ip);
-    } catch { /* sentinel may not be initialized yet */ }
-    res.status(401).json({ error: 'Unauthorized: Invalid or missing API token' });
+  // 1. Try static API token first (x-api-token header)
+  const apiToken = req.headers['x-api-token'] as string | undefined;
+  if (apiToken && apiToken === config.security.secretToken) {
+    next();
     return;
   }
 
-  next();
+  // 2. Try Bearer token — could be static token OR Firebase ID token
+  const authHeader = req.headers['authorization'];
+  const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.replace('Bearer ', '') : undefined;
+
+  // Check if bearer token matches static secret
+  if (bearerToken && bearerToken === config.security.secretToken) {
+    next();
+    return;
+  }
+
+  // 3. Try to verify as Firebase ID token
+  if (bearerToken) {
+    try {
+      const decodedToken = await admin.auth().verifyIdToken(bearerToken);
+      // Attach Firebase user info to request for downstream handlers
+      (req as any).firebaseUser = decodedToken;
+      (req as any).firebaseUid = decodedToken.uid;
+      next();
+      return;
+    } catch (firebaseError) {
+      // Firebase verification failed — fall through to unauthorized
+      logger.debug(`Firebase token verification failed: ${firebaseError}`);
+    }
+  }
+
+  // All auth methods failed
+  try {
+    const ip = req.ip || req.socket.remoteAddress || 'unknown';
+    getNetworkSentinel().recordFailedAuth(ip);
+  } catch { /* sentinel may not be initialized yet */ }
+  res.status(401).json({ error: 'Unauthorized: Invalid or missing API token' });
+  return;
 }
 
 // Rate limiter for API routes (very relaxed for development/testing)
@@ -84,11 +126,12 @@ export function createServer(): Express {
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-hashes'", "unpkg.com"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-hashes'", "unpkg.com", "apis.google.com", "www.gstatic.com", "https://www.gstatic.com/firebasejs/"],
         scriptSrcAttr: ["'unsafe-inline'"], // Allow onclick handlers
         styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", "data:", "blob:"],
-        connectSrc: ["'self'", "ws:", "wss:"],
+        imgSrc: ["'self'", "data:", "blob:", "https://*.googleusercontent.com"],
+        connectSrc: ["'self'", "ws:", "wss:", "https://*.googleapis.com", "https://*.google.com", "https://identitytoolkit.googleapis.com", "https://securetoken.googleapis.com"],
+        frameSrc: ["'self'", "*.firebaseapp.com", "*.google.com"],
         fontSrc: ["'self'"],
         upgradeInsecureRequests: null, // Disable — no HTTPS on Tailscale LAN
       },
@@ -118,6 +161,9 @@ export function createServer(): Express {
 
   // Apply rate limiting to all API routes
   app.use('/api', apiLimiter);
+
+  // Mount DAO auth routes BEFORE the validateApiToken middleware (these are public)
+  app.use('/api/dao/auth', daoAuthRouter);
 
   // Apply token validation to protected routes
   app.use('/api', validateApiToken);
@@ -152,6 +198,7 @@ export function createServer(): Express {
   app.use('/api/mc', missionControlRouter);
   app.use('/api/modules', daoModulesRouter);
   app.use('/api/dao-proxy', daoProxyRouter);
+  app.use('/api/browser', browserRouter);
 
   // Health check
   app.get('/api/health', (_req: Request, res: Response) => {

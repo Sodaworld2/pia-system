@@ -4,9 +4,13 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { nanoid } from 'nanoid';
 import { createLogger } from '../../utils/logger.js';
 import { getAgentSessionManager } from '../../mission-control/agent-session.js';
 import { getPromptManager } from '../../mission-control/prompt-manager.js';
+import { getDatabase } from '../../db/database.js';
+import { getAllMachines } from '../../db/queries/machines.js';
+import { getAllAgents, getAgentsByMachine } from '../../db/queries/agents.js';
 
 const router = Router();
 const logger = createLogger('MissionControlAPI');
@@ -62,20 +66,17 @@ async function wireEvents(): Promise<void> {
 router.post('/agents', async (req: Request, res: Response): Promise<void> => {
   try {
     await wireEvents();
-    const { machineId = 'local', mode = 'api', task, cwd, approvalMode = 'manual', model, maxBudget } = req.body;
-
-    if (!task) {
-      res.status(400).json({ error: 'task is required' });
-      return;
-    }
+    const { machineId = 'local', mode = 'sdk', task, cwd, approvalMode = 'auto', model, maxBudget,
+            effort, systemPrompt, maxTurns, disallowedTools, allowedTools, additionalDirectories,
+            networkPolicy, mcpServers, fallbackModel, enableCheckpointing, loadProjectSettings, autoRestart } = req.body;
 
     if (!cwd) {
       res.status(400).json({ error: 'cwd is required' });
       return;
     }
 
-    if (mode !== 'api' && mode !== 'pty') {
-      res.status(400).json({ error: 'mode must be "api" or "pty"' });
+    if (mode !== 'sdk' && mode !== 'api' && mode !== 'pty') {
+      res.status(400).json({ error: 'mode must be "sdk", "api", or "pty"' });
       return;
     }
 
@@ -83,11 +84,23 @@ router.post('/agents', async (req: Request, res: Response): Promise<void> => {
     const session = mgr.spawn({
       machineId,
       mode,
-      task,
+      task: task || '',
       cwd,
       approvalMode,
       model,
       maxBudgetUsd: maxBudget,
+      effort,
+      systemPrompt,
+      maxTurns,
+      disallowedTools,
+      allowedTools,
+      additionalDirectories,
+      networkPolicy,
+      mcpServers,
+      fallbackModel,
+      enableCheckpointing: enableCheckpointing !== false, // default true
+      loadProjectSettings: loadProjectSettings !== false, // default true
+      autoRestart: autoRestart !== false, // default true
     });
 
     logger.info(`Agent session spawned via API: ${session.id} (mode: ${mode})`);
@@ -113,19 +126,194 @@ router.get('/agents', (_req: Request, res: Response) => {
       id: s.id,
       mode: s.config.mode,
       task: s.config.task.substring(0, 200),
+      cwd: s.config.cwd,
       status: s.status,
       approvalMode: s.config.approvalMode,
+      model: s.config.model || 'claude-opus-4-6',
       cost: s.cost,
       tokensIn: s.tokensIn,
       tokensOut: s.tokensOut,
       toolCalls: s.toolCalls,
       createdAt: s.createdAt,
       errorMessage: s.errorMessage,
+      restartCount: s.restartCount,
+      hasAllowlist: !!(s.config.allowedTools?.length),
+      hasNetworkPolicy: !!(s.config.networkPolicy),
     }));
     res.json({ agents });
   } catch (error) {
     logger.error(`Failed to list agents: ${error}`);
     res.status(500).json({ error: 'Failed to list agents' });
+  }
+});
+
+/**
+ * GET /api/mc/agents/fleet
+ * All agents across all machines (aggregator + local MC sessions)
+ */
+router.get('/agents/fleet', (_req: Request, res: Response) => {
+  try {
+    const mgr = getAgentSessionManager();
+    const localSessions = mgr.getAllSessions().map(s => ({
+      id: s.id,
+      machineId: s.config.machineId || 'local',
+      machineName: 'LOCAL',
+      mode: s.config.mode,
+      task: s.config.task.substring(0, 200),
+      cwd: s.config.cwd,
+      status: s.status,
+      approvalMode: s.config.approvalMode,
+      model: s.config.model || 'claude-opus-4-6',
+      cost: s.cost,
+      tokensIn: s.tokensIn,
+      tokensOut: s.tokensOut,
+      toolCalls: s.toolCalls,
+      createdAt: s.createdAt,
+      errorMessage: s.errorMessage,
+      source: 'mission-control',
+    }));
+
+    // DB agents from aggregator (remote machines)
+    const dbAgents = getAllAgents().map(a => ({
+      id: a.id,
+      machineId: a.machine_id,
+      machineName: a.machine_id,
+      mode: a.type,
+      task: a.current_task || '',
+      cwd: '',
+      status: a.status,
+      approvalMode: 'unknown',
+      model: 'unknown',
+      cost: 0,
+      tokensIn: a.tokens_used || 0,
+      tokensOut: 0,
+      toolCalls: 0,
+      createdAt: a.started_at ? a.started_at * 1000 : 0,
+      errorMessage: null,
+      source: 'aggregator',
+    }));
+
+    // Merge: prefer MC sessions over DB records for the same agent
+    const mcIds = new Set(localSessions.map(s => s.id));
+    const remoteAgents = dbAgents.filter(a => !mcIds.has(a.id));
+
+    res.json({ agents: [...localSessions, ...remoteAgents] });
+  } catch (error) {
+    logger.error(`Failed to get fleet: ${error}`);
+    res.status(500).json({ error: 'Failed to get fleet agents' });
+  }
+});
+
+/**
+ * GET /api/mc/machines
+ * All connected machines + status
+ */
+router.get('/machines', (_req: Request, res: Response) => {
+  try {
+    const dbMachines = getAllMachines();
+    const machines = dbMachines.map(m => ({
+      id: m.id,
+      name: m.name,
+      hostname: m.hostname,
+      ipAddress: m.ip_address,
+      status: m.status,
+      lastSeen: m.last_seen,
+      capabilities: m.capabilities,
+      createdAt: m.created_at,
+      agents: getAgentsByMachine(m.id).length,
+    }));
+    res.json({ machines });
+  } catch (error) {
+    logger.error(`Failed to get machines: ${error}`);
+    res.status(500).json({ error: 'Failed to get machines' });
+  }
+});
+
+/**
+ * GET /api/mc/settings
+ * Get global security defaults
+ */
+router.get('/settings', (_req: Request, res: Response) => {
+  try {
+    const db = getDatabase();
+    db.exec(`CREATE TABLE IF NOT EXISTS mc_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      updated_at INTEGER DEFAULT (unixepoch())
+    )`);
+    const rows = db.prepare('SELECT key, value FROM mc_settings').all() as Array<{ key: string; value: string }>;
+    const settings: Record<string, unknown> = {};
+    for (const row of rows) {
+      try { settings[row.key] = JSON.parse(row.value); } catch { settings[row.key] = row.value; }
+    }
+    res.json({ settings });
+  } catch (error) {
+    logger.error(`Failed to get settings: ${error}`);
+    res.status(500).json({ error: 'Failed to get settings' });
+  }
+});
+
+/**
+ * POST /api/mc/settings
+ * Save global security defaults
+ */
+router.post('/settings', (req: Request, res: Response) => {
+  try {
+    const db = getDatabase();
+    db.exec(`CREATE TABLE IF NOT EXISTS mc_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      updated_at INTEGER DEFAULT (unixepoch())
+    )`);
+    const entries = req.body;
+    if (!entries || typeof entries !== 'object') {
+      res.status(400).json({ error: 'Body must be an object of key-value pairs' });
+      return;
+    }
+    const upsert = db.prepare(`INSERT INTO mc_settings (key, value, updated_at) VALUES (?, ?, unixepoch())
+      ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`);
+    const tx = db.transaction(() => {
+      for (const [key, value] of Object.entries(entries)) {
+        upsert.run(key, JSON.stringify(value));
+      }
+    });
+    tx();
+    res.json({ success: true, message: 'Settings saved' });
+  } catch (error) {
+    logger.error(`Failed to save settings: ${error}`);
+    res.status(500).json({ error: 'Failed to save settings' });
+  }
+});
+
+/**
+ * POST /api/mc/machines/:id/command
+ * Send command to specific machine via relay
+ */
+router.post('/machines/:id/command', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { command, data } = req.body;
+    const machineId = req.params.id as string;
+
+    if (!command) {
+      res.status(400).json({ error: 'command is required' });
+      return;
+    }
+
+    // Try to send via WebSocket
+    try {
+      const { getWebSocketServer } = await import('../../tunnel/websocket-server.js');
+      const ws = getWebSocketServer();
+      ws.broadcast({
+        type: 'command',
+        payload: { targetMachine: machineId, command, data },
+      });
+      res.json({ success: true, message: `Command '${command}' sent to machine ${machineId}` });
+    } catch {
+      res.status(503).json({ error: 'WebSocket server not available' });
+    }
+  } catch (error) {
+    logger.error(`Failed to send command: ${error}`);
+    res.status(500).json({ error: 'Failed to send command' });
   }
 });
 
@@ -203,8 +391,8 @@ router.post('/agents/:id/mode', (req: Request, res: Response) => {
   try {
     const { mode } = req.body;
 
-    if (mode !== 'manual' && mode !== 'auto') {
-      res.status(400).json({ error: 'mode must be "manual" or "auto"' });
+    if (!['manual', 'auto', 'yolo', 'plan'].includes(mode)) {
+      res.status(400).json({ error: 'mode must be "manual", "auto", "yolo", or "plan"' });
       return;
     }
 
@@ -256,6 +444,21 @@ router.delete('/agents/:id', (req: Request, res: Response) => {
 });
 
 /**
+ * GET /api/mc/health
+ * Health check — aggregate stats for all agents
+ */
+router.get('/health', (_req: Request, res: Response) => {
+  try {
+    const mgr = getAgentSessionManager();
+    const health = mgr.getHealth();
+    res.json(health);
+  } catch (error) {
+    logger.error(`Health check failed: ${error}`);
+    res.status(500).json({ error: 'Health check failed' });
+  }
+});
+
+/**
  * GET /api/mc/prompts
  * Get all pending prompts across all agents
  */
@@ -267,6 +470,76 @@ router.get('/prompts', (_req: Request, res: Response) => {
   } catch (error) {
     logger.error(`Failed to get prompts: ${error}`);
     res.status(500).json({ error: 'Failed to get prompts' });
+  }
+});
+
+/**
+ * GET /api/mc/templates
+ * List saved mission templates
+ */
+router.get('/templates', (_req: Request, res: Response) => {
+  try {
+    const db = getDatabase();
+    // Ensure table exists
+    db.exec(`CREATE TABLE IF NOT EXISTS mc_templates (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      description TEXT DEFAULT '',
+      config TEXT NOT NULL,
+      created_at INTEGER DEFAULT (unixepoch())
+    )`);
+    const rows = db.prepare(`SELECT id, name, description, config, created_at as createdAt FROM mc_templates ORDER BY created_at DESC`).all() as Array<{
+      id: string; name: string; description: string; config: string; createdAt: number;
+    }>;
+    const templates = rows.map(r => ({ ...r, config: JSON.parse(r.config) }));
+    res.json({ templates });
+  } catch (error) {
+    logger.error(`Failed to list templates: ${error}`);
+    res.status(500).json({ error: 'Failed to list templates' });
+  }
+});
+
+/**
+ * POST /api/mc/templates
+ * Save a mission template
+ */
+router.post('/templates', (req: Request, res: Response) => {
+  try {
+    const { name, description, config } = req.body;
+    if (!name || !config) {
+      res.status(400).json({ error: 'name and config are required' });
+      return;
+    }
+    const db = getDatabase();
+    db.exec(`CREATE TABLE IF NOT EXISTS mc_templates (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      description TEXT DEFAULT '',
+      config TEXT NOT NULL,
+      created_at INTEGER DEFAULT (unixepoch())
+    )`);
+    const id = nanoid();
+    db.prepare(`INSERT INTO mc_templates (id, name, description, config) VALUES (?, ?, ?, ?)`)
+      .run(id, name, description || '', JSON.stringify(config));
+    res.status(201).json({ id, name, message: 'Template saved' });
+  } catch (error) {
+    logger.error(`Failed to save template: ${error}`);
+    res.status(500).json({ error: 'Failed to save template' });
+  }
+});
+
+/**
+ * DELETE /api/mc/templates/:id
+ * Delete a mission template
+ */
+router.delete('/templates/:id', (req: Request, res: Response) => {
+  try {
+    const db = getDatabase();
+    db.prepare(`DELETE FROM mc_templates WHERE id = ?`).run(req.params.id);
+    res.json({ success: true });
+  } catch (error) {
+    logger.error(`Failed to delete template: ${error}`);
+    res.status(500).json({ error: 'Failed to delete template' });
   }
 });
 

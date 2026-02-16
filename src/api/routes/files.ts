@@ -109,16 +109,81 @@ router.get('/list', (req: Request, res: Response): void => {
     }
 
     const entries = fs.readdirSync(dirPath, { withFileTypes: true });
-    const items = entries.map(e => ({
-      name: e.name,
-      type: e.isDirectory() ? 'directory' : 'file',
-      size: e.isFile() ? fs.statSync(path.join(dirPath, e.name)).size : undefined,
-    }));
+    const items = entries.map(e => {
+      try {
+        const stat = fs.statSync(path.join(dirPath, e.name));
+        return {
+          name: e.name,
+          type: e.isDirectory() ? 'directory' : 'file',
+          size: e.isFile() ? stat.size : undefined,
+          mtime: stat.mtimeMs,
+        };
+      } catch {
+        return { name: e.name, type: e.isDirectory() ? 'directory' : 'file' };
+      }
+    });
 
     res.json({ path: dirPath, items, count: items.length });
   } catch (error) {
     logger.error(`Directory list failed: ${error}`);
     res.status(500).json({ error: `List failed: ${(error as Error).message}` });
+  }
+});
+
+/**
+ * GET /api/files/search?q=...&root=...&maxDepth=...
+ * Search for directories by name (recursive, breadth-first)
+ */
+router.get('/search', (req: Request, res: Response): void => {
+  try {
+    const query = (req.query.q as string || '').toLowerCase();
+    const root = (req.query.root as string) || 'C:\\Users';
+    const maxDepth = parseInt(req.query.maxDepth as string) || 4;
+    const maxResults = parseInt(req.query.maxResults as string) || 20;
+
+    if (!query || query.length < 2) {
+      res.status(400).json({ error: 'q must be at least 2 characters' });
+      return;
+    }
+
+    if (!fs.existsSync(root)) {
+      res.status(404).json({ error: 'Root directory not found' });
+      return;
+    }
+
+    const results: { name: string; path: string; depth: number }[] = [];
+    const queue: { dir: string; depth: number }[] = [{ dir: root, depth: 0 }];
+
+    while (queue.length > 0 && results.length < maxResults) {
+      const { dir, depth } = queue.shift()!;
+      if (depth > maxDepth) continue;
+
+      try {
+        const entries = fs.readdirSync(dir, { withFileTypes: true });
+        for (const entry of entries) {
+          if (!entry.isDirectory()) continue;
+          if (entry.name.startsWith('.') || entry.name === 'node_modules' || entry.name === '$Recycle.Bin' || entry.name === 'AppData') continue;
+
+          const fullPath = path.join(dir, entry.name);
+
+          if (entry.name.toLowerCase().includes(query)) {
+            results.push({ name: entry.name, path: fullPath, depth });
+            if (results.length >= maxResults) break;
+          }
+
+          if (depth < maxDepth) {
+            queue.push({ dir: fullPath, depth: depth + 1 });
+          }
+        }
+      } catch {
+        // Permission denied or other read error — skip
+      }
+    }
+
+    res.json({ query, root, results, count: results.length });
+  } catch (error) {
+    logger.error(`Directory search failed: ${error}`);
+    res.status(500).json({ error: `Search failed: ${(error as Error).message}` });
   }
 });
 

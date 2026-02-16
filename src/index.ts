@@ -3,6 +3,7 @@ import { initDatabase, closeDatabase } from './db/database.js';
 import { createServer, startServer } from './api/server.js';
 import { initWebSocketServer } from './tunnel/websocket-server.js';
 import { ptyManager } from './tunnel/pty-wrapper.js';
+// Force reload after ESM fix
 import { createLogger } from './utils/logger.js';
 
 const logger = createLogger('Main');

@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SodaWorld DAO — Token Ledger</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #050508;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+    a { color: #9b4dca; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .nav {
+      background: linear-gradient(135deg, #0a0a12, #0f0f18);
+      border-bottom: 1px solid #1e1e2e;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-brand {
+      font-size: 18px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #9b4dca, #58a6ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .nav-links { display: flex; gap: 20px; font-size: 14px; }
+    .nav-links a { color: #94a3b8; }
+    .nav-links a.active { color: #9b4dca; }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .page-header h1 { font-size: 24px; }
+
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #9b4dca, #7c3aed);
+      color: white;
+    }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid #2a2a3a;
+      color: #94a3b8;
+    }
+    .btn-outline:hover { border-color: #9b4dca; color: #e2e8f0; }
+
+    /* Balances grid */
+    .balances-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .balance-card {
+      background: #0a0a12;
+      border: 1px solid #1e1e2e;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .balance-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #9b4dca, #58a6ff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: white;
+      flex-shrink: 0;
+    }
+    .balance-info { flex: 1; min-width: 0; }
+    .balance-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .balance-role { font-size: 11px; color: #64748b; }
+    .balance-amount {
+      font-size: 20px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #9b4dca, #58a6ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Ledger table */
+    .panel {
+      background: #0a0a12;
+      border: 1px solid #1e1e2e;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid #1e1e2e;
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th {
+      text-align: left;
+      padding: 10px 18px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      border-bottom: 1px solid #1e1e2e;
+    }
+    td {
+      padding: 12px 18px;
+      font-size: 13px;
+      border-bottom: 1px solid #0f0f18;
+    }
+    tr:hover td { background: rgba(155,77,202,0.03); }
+
+    .type-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .type-mint { background: rgba(63,185,80,0.15); color: #3fb950; }
+    .type-transfer { background: rgba(88,166,255,0.15); color: #58a6ff; }
+    .type-burn { background: rgba(248,81,73,0.15); color: #f85149; }
+    .type-reward { background: rgba(210,153,34,0.15); color: #d29922; }
+
+    .amount-cell { font-weight: 600; font-variant-numeric: tabular-nums; }
+    .amount-positive { color: #3fb950; }
+    .amount-negative { color: #f85149; }
+
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 16px;
+    }
+    .pagination button:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    .empty-text { color: #475569; font-size: 13px; padding: 32px; text-align: center; }
+
+    .total-supply {
+      background: linear-gradient(135deg, rgba(155,77,202,0.1), rgba(88,166,255,0.05));
+      border: 1px solid rgba(155,77,202,0.2);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .supply-label { font-size: 14px; color: #94a3b8; }
+    .supply-value {
+      font-size: 28px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #9b4dca, #58a6ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: #0a0a12;
+      border: 1px solid #1e1e2e;
+      border-radius: 16px;
+      padding: 28px;
+      width: 100%;
+      max-width: 480px;
+    }
+    .modal h2 { font-size: 20px; margin-bottom: 20px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; color: #94a3b8; margin-bottom: 6px; }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 10px 14px;
+      background: #0f0f18;
+      border: 1px solid #2a2a3a;
+      border-radius: 8px;
+      color: #e2e8f0;
+      font-size: 14px;
+      outline: none;
+    }
+    .form-group input:focus { border-color: #9b4dca; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+    @media (max-width: 768px) {
+      .balances-grid { grid-template-columns: 1fr 1fr; }
+      th, td { padding: 8px 12px; font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-brand">SodaWorld DAO</div>
+    <div class="nav-links">
+      <a href="/dao-dashboard.html">Dashboard</a>
+      <a href="/dao-tokens.html" class="active">Tokens</a>
+      <a href="/dao-voting.html">Voting</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="page-header">
+      <h1>SODA Token Ledger</h1>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-primary" id="issue-btn" style="display:none" onclick="openIssue()">Issue Tokens</button>
+        <button class="btn btn-outline" id="transfer-btn" onclick="openTransfer()">Transfer</button>
+      </div>
+    </div>
+
+    <!-- Total supply -->
+    <div class="total-supply">
+      <div>
+        <div class="supply-label">Total Supply (Minted)</div>
+        <div style="font-size:12px;color:#475569;margin-top:2px">All SODA tokens in circulation</div>
+      </div>
+      <div class="supply-value" id="total-supply">0</div>
+    </div>
+
+    <!-- Balances -->
+    <h3 style="font-size:16px;margin-bottom:14px">Member Balances</h3>
+    <div class="balances-grid" id="balances-grid">
+      <div class="empty-text">Loading...</div>
+    </div>
+
+    <!-- Transaction ledger -->
+    <div class="panel">
+      <div class="panel-header">
+        <span>Transaction History</span>
+        <span style="font-size:12px;color:#64748b" id="tx-count"></span>
+      </div>
+      <div id="ledger-body">
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>From</th>
+              <th>To</th>
+              <th>Amount</th>
+              <th>Reason</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="ledger-table">
+            <tr><td colspan="6" class="empty-text">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <button class="btn btn-outline" id="prev-btn" onclick="prevPage()" disabled>Previous</button>
+        <span id="page-info" style="font-size:12px;color:#64748b">Page 1</span>
+        <button class="btn btn-outline" id="next-btn" onclick="nextPage()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Issue Tokens Modal -->
+  <div class="modal-overlay" id="issue-modal">
+    <div class="modal">
+      <h2>Issue SODA Tokens</h2>
+      <div class="form-group">
+        <label>Recipient</label>
+        <select id="issue-recipient"></select>
+      </div>
+      <div class="form-group">
+        <label>Amount</label>
+        <input type="number" id="issue-amount" placeholder="100" min="1">
+      </div>
+      <div class="form-group">
+        <label>Reason</label>
+        <input type="text" id="issue-reason" placeholder="Initial allocation, bounty reward, etc.">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="closeModals()">Cancel</button>
+        <button class="btn btn-primary" onclick="submitIssue()">Issue Tokens</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Transfer Modal -->
+  <div class="modal-overlay" id="transfer-modal">
+    <div class="modal">
+      <h2>Transfer SODA Tokens</h2>
+      <div class="form-group">
+        <label>From</label>
+        <select id="transfer-from"></select>
+      </div>
+      <div class="form-group">
+        <label>To</label>
+        <select id="transfer-to"></select>
+      </div>
+      <div class="form-group">
+        <label>Amount</label>
+        <input type="number" id="transfer-amount" placeholder="50" min="1">
+      </div>
+      <div class="form-group">
+        <label>Reason</label>
+        <input type="text" id="transfer-reason" placeholder="Payment, compensation, etc.">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="closeModals()">Cancel</button>
+        <button class="btn btn-primary" onclick="submitTransfer()">Transfer</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script>
+    firebase.initializeApp({
+      apiKey: "REDACTED_FIREBASE_API_KEY",
+      authDomain: "REDACTED_PROJECT_ID.firebaseapp.com",
+      projectId: "REDACTED_PROJECT_ID"
+    });
+    const authInstance = firebase.auth();
+
+    let currentUser = null;
+    let members = [];
+    let currentPage = 0;
+    const PAGE_SIZE = 20;
+
+    async function getHeaders() {
+      const user = authInstance.currentUser;
+      if (user) {
+        const token = await user.getIdToken();
+        return { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+      }
+      return { 'x-api-token': 'pia-local-dev-token-2024', 'Content-Type': 'application/json' };
+    }
+
+    async function api(path, opts = {}) {
+      const headers = await getHeaders();
+      const res = await fetch(`/api/modules${path}`, { ...opts, headers });
+      return res.json();
+    }
+
+    function initials(name) {
+      if (!name) return '?';
+      return name.split(' ').map(w => w[0]).join('').toUpperCase().substring(0, 2);
+    }
+
+    async function loadBalances() {
+      try {
+        const data = await api('/tokens/balances?dao_id=sodaworld-dao-001');
+        const balances = data.balances || [];
+        let totalSupply = 0;
+
+        if (balances.length === 0) {
+          document.getElementById('balances-grid').innerHTML =
+            '<div class="empty-text" style="grid-column:1/-1">No token balances yet. Issue tokens to get started.</div>';
+        } else {
+          document.getElementById('balances-grid').innerHTML = balances.map(b => {
+            const bal = parseFloat(b.balance || 0);
+            totalSupply += bal;
+            return `
+              <div class="balance-card">
+                <div class="balance-avatar">${initials(b.display_name)}</div>
+                <div class="balance-info">
+                  <div class="balance-name">${b.display_name || b.email || 'Unknown'}</div>
+                  <div class="balance-role">${b.dao_role || 'member'}</div>
+                </div>
+                <div class="balance-amount">${bal.toLocaleString()}</div>
+              </div>
+            `;
+          }).join('');
+        }
+
+        document.getElementById('total-supply').textContent = totalSupply.toLocaleString() + ' SODA';
+
+        // Populate dropdowns
+        members = balances;
+        const opts = balances.map(b =>
+          `<option value="${b.user_id}">${b.display_name || b.email}</option>`
+        ).join('');
+        document.getElementById('issue-recipient').innerHTML = opts;
+        document.getElementById('transfer-from').innerHTML = opts;
+        document.getElementById('transfer-to').innerHTML = opts;
+      } catch (err) {
+        console.error('Failed to load balances:', err);
+      }
+    }
+
+    async function loadLedger() {
+      try {
+        const offset = currentPage * PAGE_SIZE;
+        const data = await api(`/tokens/ledger?dao_id=sodaworld-dao-001&limit=${PAGE_SIZE}&offset=${offset}`);
+        const txs = data.transactions || [];
+
+        document.getElementById('tx-count').textContent = `${txs.length} transactions`;
+
+        if (txs.length === 0 && currentPage === 0) {
+          document.getElementById('ledger-table').innerHTML =
+            '<tr><td colspan="6" class="empty-text">No transactions yet</td></tr>';
+        } else {
+          document.getElementById('ledger-table').innerHTML = txs.map(tx => `
+            <tr>
+              <td><span class="type-badge type-${tx.type}">${tx.type}</span></td>
+              <td>${tx.from_display_name || tx.from_user_id || '—'}</td>
+              <td>${tx.to_display_name || tx.to_user_id || '—'}</td>
+              <td class="amount-cell amount-positive">+${parseFloat(tx.amount).toLocaleString()}</td>
+              <td style="color:#94a3b8">${tx.reason || '—'}</td>
+              <td style="color:#64748b">${new Date(tx.created_at).toLocaleDateString()}</td>
+            </tr>
+          `).join('');
+        }
+
+        document.getElementById('page-info').textContent = `Page ${currentPage + 1}`;
+        document.getElementById('prev-btn').disabled = currentPage === 0;
+        document.getElementById('next-btn').disabled = txs.length < PAGE_SIZE;
+      } catch (err) {
+        console.error('Failed to load ledger:', err);
+      }
+    }
+
+    function prevPage() { if (currentPage > 0) { currentPage--; loadLedger(); } }
+    function nextPage() { currentPage++; loadLedger(); }
+
+    function openIssue() { document.getElementById('issue-modal').classList.add('active'); }
+    function openTransfer() { document.getElementById('transfer-modal').classList.add('active'); }
+    function closeModals() {
+      document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+    }
+
+    async function submitIssue() {
+      const toUserId = document.getElementById('issue-recipient').value;
+      const amount = parseFloat(document.getElementById('issue-amount').value);
+      const reason = document.getElementById('issue-reason').value.trim();
+      if (!amount || amount <= 0) { alert('Enter a valid amount'); return; }
+
+      try {
+        const data = await api('/tokens/issue', {
+          method: 'POST',
+          body: JSON.stringify({
+            dao_id: 'sodaworld-dao-001',
+            to_user_id: toUserId,
+            amount,
+            reason: reason || 'Token issuance',
+            approved_by: currentUser?.id || 'founder'
+          })
+        });
+        if (data.success) {
+          closeModals();
+          document.getElementById('issue-amount').value = '';
+          document.getElementById('issue-reason').value = '';
+          loadBalances();
+          loadLedger();
+        } else { alert(data.error || 'Failed'); }
+      } catch (err) { alert('Failed: ' + err.message); }
+    }
+
+    async function submitTransfer() {
+      const from = document.getElementById('transfer-from').value;
+      const to = document.getElementById('transfer-to').value;
+      const amount = parseFloat(document.getElementById('transfer-amount').value);
+      const reason = document.getElementById('transfer-reason').value.trim();
+
+      if (from === to) { alert('Cannot transfer to same person'); return; }
+      if (!amount || amount <= 0) { alert('Enter a valid amount'); return; }
+
+      try {
+        const data = await api('/tokens/transfer', {
+          method: 'POST',
+          body: JSON.stringify({
+            dao_id: 'sodaworld-dao-001',
+            from_user_id: from,
+            to_user_id: to,
+            amount,
+            reason: reason || 'Transfer'
+          })
+        });
+        if (data.success) {
+          closeModals();
+          document.getElementById('transfer-amount').value = '';
+          document.getElementById('transfer-reason').value = '';
+          loadBalances();
+          loadLedger();
+        } else { alert(data.error || 'Failed'); }
+      } catch (err) { alert('Failed: ' + err.message); }
+    }
+
+    // Close modals on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(m => {
+      m.addEventListener('click', (e) => { if (e.target === e.currentTarget) closeModals(); });
+    });
+
+    // Init
+    authInstance.onAuthStateChanged(user => {
+      const stored = localStorage.getItem('dao_user');
+      if (stored) currentUser = JSON.parse(stored);
+      const role = currentUser?.dao_role || currentUser?.role || 'member';
+      if (role === 'founder') {
+        document.getElementById('issue-btn').style.display = 'inline-block';
+      }
+      loadBalances();
+      loadLedger();
+    });
+  </script>
+</body>
+</html>

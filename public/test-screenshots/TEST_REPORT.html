@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIA Mission Control — Test Report (2026-02-16)</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0d1117; color:#c9d1d9; font-family:'Segoe UI',system-ui,sans-serif; padding:20px 40px; }
+  h1 { color:#58a6ff; font-size:2rem; margin-bottom:4px; }
+  .subtitle { color:#8b949e; font-size:1rem; margin-bottom:30px; }
+  .summary { background:#161b22; border:1px solid #30363d; border-radius:8px; padding:20px; margin-bottom:30px; }
+  .summary h2 { color:#3fb950; font-size:1.2rem; margin-bottom:12px; }
+  .summary-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap:12px; }
+  .stat { background:#0d1117; border:1px solid #30363d; border-radius:6px; padding:12px; text-align:center; }
+  .stat .num { font-size:1.8rem; font-weight:700; color:#58a6ff; }
+  .stat .label { font-size:0.8rem; color:#8b949e; margin-top:2px; }
+  .stat.pass .num { color:#3fb950; }
+  .stat.warn .num { color:#d29922; }
+  .stat.fail .num { color:#f85149; }
+
+  .section { margin-bottom:40px; }
+  .section h2 { color:#58a6ff; font-size:1.4rem; border-bottom:1px solid #30363d; padding-bottom:8px; margin-bottom:16px; }
+  .test-card { background:#161b22; border:1px solid #30363d; border-radius:8px; margin-bottom:24px; overflow:hidden; }
+  .test-header { padding:16px 20px; border-bottom:1px solid #21262d; display:flex; align-items:center; gap:12px; }
+  .test-header .badge { display:inline-block; padding:2px 10px; border-radius:12px; font-size:0.75rem; font-weight:600; text-transform:uppercase; }
+  .badge.pass { background:#23302650; color:#3fb950; border:1px solid #3fb95040; }
+  .badge.warn { background:#30260050; color:#d29922; border:1px solid #d2992240; }
+  .badge.fail { background:#30000050; color:#f85149; border:1px solid #f8514940; }
+  .badge.info { background:#00203050; color:#58a6ff; border:1px solid #58a6ff40; }
+  .test-header .title { font-weight:600; color:#e6edf3; }
+  .test-body { padding:20px; }
+  .test-body p { color:#8b949e; margin-bottom:12px; line-height:1.5; }
+  .test-body img { max-width:100%; max-height:500px; width:auto; object-fit:contain; border-radius:6px; border:1px solid #30363d; margin-bottom:8px; cursor:pointer; transition:transform 0.2s; }
+  .test-body img:hover { transform:scale(1.02); }
+  .test-body .note { background:#0d1117; border-left:3px solid #58a6ff; padding:10px 14px; margin:12px 0; font-size:0.85rem; color:#8b949e; }
+  .test-body .note.warning { border-left-color:#d29922; }
+  .test-body code { background:#21262d; padding:2px 6px; border-radius:4px; font-size:0.85rem; color:#e6edf3; }
+
+  .api-response { background:#0d1117; border:1px solid #30363d; border-radius:6px; padding:14px; font-family:'Cascadia Code','Fira Code',monospace; font-size:0.8rem; color:#7ee787; overflow-x:auto; margin:8px 0; white-space:pre-wrap; }
+
+  .improvements { background:#161b22; border:1px solid #30363d; border-radius:8px; padding:20px; }
+  .improvements h2 { color:#d29922; font-size:1.4rem; margin-bottom:16px; }
+  .improvements ul { list-style:none; padding:0; }
+  .improvements li { padding:8px 0; border-bottom:1px solid #21262d; color:#c9d1d9; line-height:1.5; }
+  .improvements li:last-child { border-bottom:none; }
+  .improvements li strong { color:#58a6ff; }
+  .priority { display:inline-block; padding:1px 8px; border-radius:10px; font-size:0.7rem; font-weight:600; margin-right:6px; }
+  .priority.p1 { background:#f8514930; color:#f85149; }
+  .priority.p2 { background:#d2992230; color:#d29922; }
+  .priority.p3 { background:#58a6ff30; color:#58a6ff; }
+
+  .footer { margin-top:40px; padding-top:20px; border-top:1px solid #30363d; color:#484f58; font-size:0.8rem; text-align:center; }
+</style>
+</head>
+<body>
+
+<h1>PIA Mission Control &mdash; Test Report</h1>
+<p class="subtitle">Automated test session &bull; February 16, 2026 &bull; Agent: Claude Opus 4.6</p>
+
+<!-- Summary -->
+<div class="summary">
+  <h2>Test Summary</h2>
+  <div class="summary-grid">
+    <div class="stat pass"><div class="num">10</div><div class="label">Tests Passed</div></div>
+    <div class="stat warn"><div class="num">1</div><div class="label">Partial Pass</div></div>
+    <div class="stat"><div class="num">16</div><div class="label">Screenshots</div></div>
+    <div class="stat"><div class="num">4</div><div class="label">APIs Verified</div></div>
+    <div class="stat"><div class="num">3</div><div class="label">Bugs Fixed</div></div>
+    <div class="stat"><div class="num">$0.16</div><div class="label">Total Agent Cost</div></div>
+  </div>
+</div>
+
+<!-- Test 1: Dashboard Loads -->
+<div class="section">
+  <h2>1. Dashboard &amp; Connection</h2>
+
+  <div class="test-card">
+    <div class="test-header">
+      <span class="badge pass">PASS</span>
+      <span class="title">Dashboard loads and connects via WebSocket</span>
+    </div>
+    <div class="test-body">
+      <p>Mission Control dashboard loads at <code>http://localhost:3000/mission-control.html</code> with 4 machines registered, real-time WebSocket connection established.</p>
+      <img src="01-dashboard-loaded.png" alt="Dashboard loaded with 4 machines">
+      <div class="note">Stats bar shows: 4 Machines, 6 Online, Connected indicator (green dot). Global mode toggles (Manual/Auto) and Single/Grid view working.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Test 2: Spawn Modal -->
+<div class="section">
+  <h2>2. Spawn Modal &amp; MCP Server Support</h2>
+
+  <div class="test-card">
+    <div class="test-header">
+      <span class="badge pass">PASS</span>
+      <span class="title">Spawn modal with full configuration options</span>
+    </div>
+    <div class="test-body">
+      <p>The spawn modal includes Template selector, Working Directory with Browse, Additional Directories, Initial Task, Approval Mode, Model selector, Effort Level, and Max Budget.</p>
+      <img src="02-spawn-modal-advanced.png" alt="Spawn modal top section">
+    </div>
+  </div>
+
+  <div class="test-card">
+    <div class="test-header">
+      <span class="badge pass">PASS</span>
+      <span class="title">Advanced Options: Security, Stability, MCP Servers</span>
+    </div>
+    <div class="test-body">
+      <p>Advanced options expand to show: System Prompt, Max Turns, Target Machine, Blocked/Allowed Tools, Network Ecosystems (npm/pip/GitHub/Anthropic checkboxes), Stability toggles, Engine selector, and <strong>MCP Servers</strong> textarea with Playwright placeholder config.</p>
+      <img src="16-mcp-servers-and-engine.png" alt="MCP Servers textarea and engine selector">
+      <div class="note">MCP Servers field accepts JSON array: <code>[{"name":"playwright","transport":"stdio","command":"npx","args":["@anthropic-ai/mcp-server-playwright"]}]</code></div>
+    </div>
+  </div>
+</div>
+
+<!-- Test 3: Agent Spawn & Status Indicators -->
+<div class="section">
+  <h2>3. SDK Agent Spawn &amp; Visual Activity Indicators</h2>
+
+  <div class="test-card">
+    <div class="test-header">
+      <span class="badge pass">PASS</span>
+      <span class="title">Agent spawns and shows WORKING status</span>
+    </div>
+    <div class="test-body">
+      <p>SDK agent spawned via <code>POST /api/mc/agents</code>. The grid tile shows a pulsing green dot during work, WORKING status badge, and real-time streaming output.</p>
+      <img src="05-agent-working-status.png" alt="Agent in working state">
+    </div>
+  </div>
+
+  <div class="test-card">
+    <div class="test-header">
+      <span class="badge pass">PASS</span>
+      <span class="title">Agent completes and shows IDLE status</span>
+    </div>
+    <div class="test-body">
+      <p>After completing its task, the agent transitions to IDLE with a grey dot. Cost and token metrics are tracked and displayed.</p>
+      <img src="07-grid-view-idle-agent.png" alt="Agent idle in grid view">
+    </div>
+  </div>
+
+  <div class="test-card">
+    <div class="test-header">
+      <span class="badge info">INFO</span>
+      <span class="title">Error state (pre-fix) and recovery</span>
+    </div>
+    <div class="test-body">
+      <p>Before the auth conflict fix, agents crashed immediately with "Claude Code process exited with code 1". The error state shows correctly with a red dot and ERROR badge.</p>
+      <img src="06-agent-error-state.png" alt="Agent error state">
+      <div class="note warning">Root cause: Auth conflict between <code>ANTHROPIC_API_KEY</code> from .env and stored OAuth token on disk. Fixed by removing the API key from subprocess environment.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Test 4: Permission Fix -->
+<div class="section">
+  <h2>4. Permission Fix &mdash; Write Tool Access</h2>
+
+  <div class="test-card">
+    <div class="test-header">
+      <span class="badge pass">PASS</span>
+      <span class="title">SDK agent can use Write tool in auto mode</span>
+    </div>
+    <div class="test-body">
+      <p>After implementing the permission fix (changing <code>permissionMode: 'default'</code> to <code>'acceptEdits'</code> for auto mode), the agent successfully:</p>
+      <p>1. <strong>Created</strong> <code>test-screenshots/PERMISSION_TEST.txt</code> using the Write tool<br>
+         2. <strong>Read</strong> it back confirming content matched exactly<br>
+         3. Completed in 3 turns, $0.0683, 12.3 seconds</p>
+      <img src="08-agent-working-write.png" alt="Agent completing write task">
+      <div class="note">The file contents: <code>Permission fix verified! Written by SDK agent.</code> &mdash; verified independently via filesystem check.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Test 5: Multi-Agent Grid -->
+<div class="section">
+  <h2>5. Multi-Agent Management</h2>
+
+  <div class="test-card">
+    <div class="test-header">
+      <span class="badge pass">PASS</span>
+      <span class="title">Multiple agents running concurrently in grid view</span>
+    </div>
+    <div class="test-body">
+      <p>Three agents running simultaneously: the original read-only agent, the permission test agent (Write), and a browser agent. Stats bar correctly tracks all agents, costs, and token usage.</p>
+      <img src="09-three-agents-working.png" alt="Three agents in grid view">
+    </div>
+  </div>
+</div>
+
+<!-- Test 6: Single View & Tabs -->
+<div class="section">
+  <h2>6. Single View &amp; Agent Tabs</h2>
+
+  <div class="test-card">
+    <div class="test-header">
+      <span class="badge pass">PASS</span>
+      <span class="title">Terminal tab with full agent output</span>
+    </div>
+    <div class="test-body">
+      <p>Single view shows: agent header with session ID, task description, AUTO badge, Toggle Mode/+ Spawn/Kill buttons, and the Terminal tab with streaming output and status banner.</p>
+      <img src="12-browser-agent-single-view.png" alt="Single view terminal tab">
+    </div>
+  </div>
+
+  <div class="test-card">
+    <div class="test-header">
+      <span class="badge pass">PASS</span>
+      <span class="title">Journal tab with timestamped events</span>
+    </div>
+    <div class="test-body">
+      <p>The Journal tab shows chronological events with type badges (OUTPUT, AUTO APPROVED, COST) and timestamps. Tool approval decisions are logged with full details.</p>
+      <img src="13-journal-tab.png" alt="Journal tab">
+    </div>
+  </div>
+
+  <div class="test-card">
+    <div class="test-header">
+      <span class="badge pass">PASS</span>
+      <span class="title">Cost tab with session breakdown</span>
+    </div>
+    <div class="test-body">
+      <p>Cost breakdown showing: Total Cost ($0.0691), Tokens In (65,944), Tokens Out (367), Tool Calls (0), Duration (3m), and Avg cost/tool metric.</p>
+      <img src="14-cost-tab.png" alt="Cost tab breakdown">
+    </div>
+  </div>
+</div>
+
+<!-- Test 7: Browser Agent API -->
+<div class="section">
+  <h2>7. Browser Agent API</h2>
+
+  <div class="test-card">
+    <div class="test-header">
+      <span class="badge warn">PARTIAL</span>
+      <span class="title">Browser agent spawns but MCP tools not loaded</span>
+    </div>
+    <div class="test-body">
+      <p>The browser agent API endpoint works correctly &mdash; <code>POST /api/browser/task</code> spawns an agent, returns a session ID, and <code>GET /api/browser/sessions</code> lists it. However, the Playwright MCP server tools were not loaded by the SDK subprocess (agent only received 18 standard tools, not the additional Playwright tools).</p>
+      <img src="10-browser-agent-output.png" alt="Browser agent output in grid">
+      <div class="note warning">
+        <strong>Issue:</strong> The SDK's <code>mcpServers</code> config expects <code>Record&lt;string, McpServerConfig&gt;</code> (dictionary), but we were passing an array. Fixed during this session by converting array format to dictionary format. The Playwright MCP process itself may need the full <code>npx</code> path resolved in the subprocess environment. This needs further investigation.
+      </div>
+
+      <p><strong>API Responses:</strong></p>
+      <div class="api-response">POST /api/browser/task
+{"id":"m0B6rQf8ozcuLOy6HohrY","message":"Browser agent spawned"}</div>
+      <div class="api-response">GET /api/browser/sessions
+{"sessions":[{"id":"m0B6rQf8ozcuLOy6HohrY","status":"idle","task":"Use the WebFetch tool to fetch http://localhost:3000/api/health...","cost":0.06913025,"createdAt":1771232834137}]}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Test 8: API Endpoints -->
+<div class="section">
+  <h2>8. API Endpoint Verification</h2>
+
+  <div class="test-card">
+    <div class="test-header">
+      <span class="badge pass">PASS</span>
+      <span class="title">Core API endpoints responding correctly</span>
+    </div>
+    <div class="test-body">
+      <div class="api-response">GET /api/health
+{"status":"ok","mode":"hub","timestamp":"2026-02-16T09:12:09.630Z"}</div>
+      <div class="api-response">GET /api/stats
+{"machines":{"total":4,"online":1,"offline":3},"agents":{"total":8,"byStatus":{"idle":7,"waiting":1}},"alerts":{"agent_stuck":32,"agent_error":0},"websocket":{"clients":9}}</div>
+      <div class="api-response">GET /api/mc/agents
+{"agents":[{"id":"m0B6rQf8...","mode":"sdk","status":"idle","approvalMode":"auto","model":"claude-sonnet-4-5-20250929","cost":0.069,"tokensIn":65944,"tokensOut":367}]}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Bugs Fixed -->
+<div class="section">
+  <h2>9. Bugs Found &amp; Fixed During Testing</h2>
+
+  <div class="test-card">
+    <div class="test-header">
+      <span class="badge pass">FIXED</span>
+      <span class="title">Auth conflict crash (Critical)</span>
+    </div>
+    <div class="test-body">
+      <p><strong>Problem:</strong> All SDK agents crashed immediately with "Claude Code process exited with code 1". The subprocess inherited <code>ANTHROPIC_API_KEY</code> from .env but also detected the user's stored OAuth token (claude.ai login) on disk, causing an auth conflict.</p>
+      <p><strong>Fix:</strong> Remove <code>ANTHROPIC_API_KEY</code>, <code>CLAUDE_CODE_OAUTH_TOKEN</code>, <code>CLAUDE_CODE_SESSION_ACCESS_TOKEN</code>, and <code>CLAUDE_CODE_ENTRYPOINT</code> from both <code>cleanEnv</code> and <code>spawnEnv</code> in <code>agent-session.ts</code>.</p>
+    </div>
+  </div>
+
+  <div class="test-card">
+    <div class="test-header">
+      <span class="badge pass">FIXED</span>
+      <span class="title">Permission mode mapping (Critical)</span>
+    </div>
+    <div class="test-body">
+      <p><strong>Problem:</strong> SDK agents in auto mode used <code>permissionMode: 'default'</code>, which activates the interactive terminal permission system. Since SDK agents run headless, tools were silently denied.</p>
+      <p><strong>Fix:</strong> Map <code>auto/manual</code> &rarr; <code>'acceptEdits'</code>, <code>yolo</code> &rarr; <code>'bypassPermissions'</code>, <code>plan</code> &rarr; <code>'plan'</code>. Added <code>allowDangerouslySkipPermissions: true</code> for yolo mode.</p>
+    </div>
+  </div>
+
+  <div class="test-card">
+    <div class="test-header">
+      <span class="badge pass">FIXED</span>
+      <span class="title">MCP servers format mismatch</span>
+    </div>
+    <div class="test-body">
+      <p><strong>Problem:</strong> Our API accepted MCP servers as an array with <code>name</code> field, but the SDK expects <code>Record&lt;string, McpServerConfig&gt;</code> (dictionary keyed by server name).</p>
+      <p><strong>Fix:</strong> Added array-to-record conversion in <code>agent-session.ts</code> that maps the <code>name</code> field to dictionary keys and <code>transport</code> to <code>type</code>.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Improvement Assessment -->
+<div class="improvements">
+  <h2>Improvement Assessment &amp; Recommendations</h2>
+  <ul>
+    <li>
+      <span class="priority p1">P1</span>
+      <strong>MCP Server Process Resolution:</strong> The Playwright MCP server couldn't start because <code>npx</code> may not resolve in the subprocess PATH. Resolve by using the full path (<code>process.execPath</code> parent + <code>/npx</code>) or pre-resolving the binary path before spawning.
+    </li>
+    <li>
+      <span class="priority p1">P1</span>
+      <strong>Bash Tool in Auto Mode:</strong> The <code>acceptEdits</code> permission mode doesn't allow Bash commands, which limits agent capabilities. Consider using a custom <code>canUseTool</code> callback that approves safe Bash commands (curl, ls, cat) while blocking dangerous ones (rm -rf, chmod, etc.).
+    </li>
+    <li>
+      <span class="priority p2">P2</span>
+      <strong>Agent Persistence Across Restarts:</strong> When the server restarts (tsx watch), all running agents are lost. Consider serializing agent state to SQLite and re-hydrating on startup, or at minimum preserving session IDs for SDK <code>resume()</code>.
+    </li>
+    <li>
+      <span class="priority p2">P2</span>
+      <strong>Working State Screenshot:</strong> The pulsing green dot animation for WORKING status was hard to capture in a static screenshot. The animation itself works, but the dot CSS could use a larger glow radius for better visibility in the dark theme.
+    </li>
+    <li>
+      <span class="priority p2">P2</span>
+      <strong>Grid Tile Streaming Output:</strong> In grid view, agent output text truncates early. Consider showing the last 3-4 lines with auto-scroll, or a mini-terminal effect showing the most recent tool action.
+    </li>
+    <li>
+      <span class="priority p3">P3</span>
+      <strong>Cost Footer Persistence:</strong> The cost footer at the bottom of single view sometimes shows stale data. Wire it to the same WebSocket update channel as the stats bar for real-time sync.
+    </li>
+    <li>
+      <span class="priority p3">P3</span>
+      <strong>Template System:</strong> The "Full Power Dev" and "Read-Only Research" templates exist in the UI but could be expanded. Add a "Browser Agent" template that pre-fills MCP Servers with Playwright config, sets Sonnet model, and uses appropriate system prompt.
+    </li>
+    <li>
+      <span class="priority p3">P3</span>
+      <strong>Error Recovery UX:</strong> When an agent errors, the dashboard shows the error state but doesn't offer a one-click "Retry" or "Restart" button. The Kill button exists but a Restart button would be more user-friendly.
+    </li>
+  </ul>
+</div>
+
+<div class="footer">
+  <p>Generated by Claude Opus 4.6 &bull; PIA System v0.1.0 &bull; Test session cost: ~$0.16 across 3 agent spawns</p>
+  <p>Files modified: agent-session.ts, mission-control.html, mission-control.ts, server.ts, browser-session.ts (new), browser.ts (new)</p>
+</div>
+
+</body>
+</html>

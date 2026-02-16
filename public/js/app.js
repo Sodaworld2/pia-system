@@ -621,6 +621,9 @@ class PIADashboard {
     // New session button
     document.getElementById('btn-new-session').addEventListener('click', () => this.createNewSession());
 
+    // Launch Browser Controller
+    document.getElementById('btn-launch-browser')?.addEventListener('click', () => this.launchBrowserController());
+
     // Acknowledge all alerts
     document.getElementById('btn-ack-all').addEventListener('click', async () => {
       await apiFetch('/api/alerts/ack-all', { method: 'POST' });
@@ -720,6 +723,118 @@ class PIADashboard {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+  }
+
+  // ============ Browser Controller ============
+
+  async launchBrowserController() {
+    // Show a quick modal/prompt to get URL or task
+    let modal = document.getElementById('browser-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'browser-modal';
+      modal.className = 'modal';
+      modal.style.display = 'none';
+      modal.innerHTML = `
+        <div class="modal-content" style="max-width:500px;">
+          <div class="modal-header">
+            <h3 style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:20px;">🌐</span> Browser Controller
+            </h3>
+            <button class="modal-close" onclick="document.getElementById('browser-modal').style.display='none'">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="browser-url">URL to navigate</label>
+              <input type="text" id="browser-url" class="input" placeholder="https://example.com" value="https://example.com">
+            </div>
+            <div class="form-group">
+              <label for="browser-task">Task (optional — override with custom instruction)</label>
+              <textarea id="browser-task" class="input textarea" placeholder="e.g., Take a screenshot of the homepage and describe what you see" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="browser-mode">Approval Mode</label>
+              <select id="browser-mode" class="select">
+                <option value="yolo">Yolo (full auto)</option>
+                <option value="auto">Auto (safe tools auto-approved)</option>
+                <option value="manual">Manual (approve each action)</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="document.getElementById('browser-modal').style.display='none'">Cancel</button>
+            <button class="btn btn-primary" id="btn-browser-go" style="background:linear-gradient(135deg,#7c3aed,#2563eb);border:none;">
+              Launch
+            </button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      // Close on outside click
+      modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
+
+      // Launch button handler
+      document.getElementById('btn-browser-go').addEventListener('click', () => this.doBrowserLaunch());
+    }
+
+    modal.style.display = 'flex';
+    document.getElementById('browser-url').focus();
+  }
+
+  async doBrowserLaunch() {
+    const url = document.getElementById('browser-url').value.trim();
+    const task = document.getElementById('browser-task').value.trim();
+    const approvalMode = document.getElementById('browser-mode').value;
+
+    if (!url && !task) {
+      alert('Enter a URL or task');
+      return;
+    }
+
+    const launchBtn = document.getElementById('btn-browser-go');
+    const originalText = launchBtn.textContent;
+    launchBtn.textContent = 'Launching...';
+    launchBtn.disabled = true;
+
+    try {
+      const body = { approvalMode };
+      if (task) {
+        body.task = task;
+        if (url) body.url = url;
+      } else {
+        body.url = url;
+      }
+
+      const res = await apiFetch('/api/browser/task', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        alert('Failed to launch: ' + (err.error || 'Unknown error'));
+        return;
+      }
+
+      const data = await res.json();
+
+      // Close modal
+      document.getElementById('browser-modal').style.display = 'none';
+
+      // Show success notification
+      this.addChatMessage(`Browser Controller launched (${data.id?.substring(0, 8)}). ${data.message || ''}`, 'system');
+
+      // Refresh agent list after a short delay
+      setTimeout(() => this.loadData(), 2000);
+
+    } catch (error) {
+      console.error('Failed to launch browser controller:', error);
+      alert('Failed to launch browser controller: ' + error.message);
+    } finally {
+      launchBtn.textContent = originalText;
+      launchBtn.disabled = false;
+    }
   }
 
   // ============ MCP Management ============

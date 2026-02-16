@@ -1,0 +1,53 @@
+version: "3.8"
+
+services:
+  # --------------------------------------------------------
+  # PIA Hub - Central coordination server
+  # --------------------------------------------------------
+  pia-hub:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pia-hub
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+    environment:
+      - PIA_MODE=hub
+      - PIA_HOST=0.0.0.0
+      - PIA_PORT=3000
+      - PIA_WS_PORT=3001
+      - PIA_DB_PATH=/app/data/pia.db
+      - PIA_SECRET_TOKEN=pia-local-dev-token-2024
+      - PIA_NO_BROWSER=1
+    volumes:
+      - pia-hub-data:/app/data
+    restart: unless-stopped
+
+  # --------------------------------------------------------
+  # PIA Spoke - Worker node connecting to hub
+  # --------------------------------------------------------
+  pia-spoke:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pia-spoke
+    environment:
+      - PIA_MODE=spoke
+      - PIA_HOST=0.0.0.0
+      - PIA_PORT=3000
+      - PIA_WS_PORT=3001
+      - PIA_DB_PATH=/app/data/pia.db
+      - PIA_HUB_URL=ws://pia-hub:3001
+      - PIA_SECRET_TOKEN=pia-local-dev-token-2024
+      - PIA_NO_BROWSER=1
+    volumes:
+      - pia-spoke-data:/app/data
+      - ./repos:/repos
+    depends_on:
+      - pia-hub
+    restart: unless-stopped
+
+volumes:
+  pia-hub-data:
+  pia-spoke-data:

@@ -357,7 +357,7 @@ function getMigrations(): Migration[] {
           task TEXT NOT NULL,
           cwd TEXT NOT NULL,
           approval_mode TEXT NOT NULL DEFAULT 'manual' CHECK (approval_mode IN ('manual', 'auto')),
-          model TEXT DEFAULT 'claude-sonnet-4-5-20250929',
+          model TEXT DEFAULT 'claude-opus-4-6',
           status TEXT NOT NULL DEFAULT 'starting',
           cost_usd REAL DEFAULT 0,
           tokens_in INTEGER DEFAULT 0,
@@ -588,6 +588,85 @@ function getMigrations(): Migration[] {
         CREATE INDEX IF NOT EXISTS idx_bounties_status ON bounties(status);
         CREATE INDEX IF NOT EXISTS idx_marketplace_items_type ON marketplace_items(type);
         CREATE INDEX IF NOT EXISTS idx_marketplace_items_status ON marketplace_items(status);
+      `,
+    },
+    {
+      name: '030_sdk_mode',
+      sql: `
+        -- Expand mc_agent_sessions.mode CHECK to include 'sdk'
+        -- SQLite can't ALTER CHECK constraints, so recreate the table
+        CREATE TABLE IF NOT EXISTS mc_agent_sessions_new (
+          id TEXT PRIMARY KEY,
+          machine_id TEXT NOT NULL DEFAULT 'local',
+          mode TEXT NOT NULL CHECK (mode IN ('api', 'pty', 'sdk')),
+          task TEXT NOT NULL,
+          cwd TEXT NOT NULL,
+          approval_mode TEXT NOT NULL DEFAULT 'manual' CHECK (approval_mode IN ('manual', 'auto')),
+          model TEXT DEFAULT 'claude-opus-4-6',
+          status TEXT NOT NULL DEFAULT 'starting',
+          cost_usd REAL DEFAULT 0,
+          tokens_in INTEGER DEFAULT 0,
+          tokens_out INTEGER DEFAULT 0,
+          tool_calls INTEGER DEFAULT 0,
+          error_message TEXT,
+          created_at INTEGER DEFAULT (unixepoch()),
+          completed_at INTEGER
+        );
+
+        INSERT OR IGNORE INTO mc_agent_sessions_new
+          (id, machine_id, mode, task, cwd, approval_mode, model, status, cost_usd, tokens_in, tokens_out, tool_calls, error_message, created_at, completed_at)
+          SELECT id, machine_id, mode, task, cwd, approval_mode, model, status, cost_usd, tokens_in, tokens_out, tool_calls, error_message, created_at, completed_at
+          FROM mc_agent_sessions;
+        DROP TABLE IF EXISTS mc_agent_sessions;
+        ALTER TABLE mc_agent_sessions_new RENAME TO mc_agent_sessions;
+      `,
+    },
+    {
+      name: '031_approval_modes',
+      sql: `
+        CREATE TABLE IF NOT EXISTS mc_agent_sessions_new (
+          id TEXT PRIMARY KEY,
+          machine_id TEXT NOT NULL DEFAULT 'local',
+          mode TEXT NOT NULL CHECK (mode IN ('api', 'pty', 'sdk')),
+          task TEXT NOT NULL,
+          cwd TEXT NOT NULL,
+          approval_mode TEXT NOT NULL DEFAULT 'manual' CHECK (approval_mode IN ('manual', 'auto', 'yolo', 'plan')),
+          model TEXT DEFAULT 'claude-opus-4-6',
+          status TEXT NOT NULL DEFAULT 'starting',
+          cost_usd REAL DEFAULT 0,
+          tokens_in INTEGER DEFAULT 0,
+          tokens_out INTEGER DEFAULT 0,
+          tool_calls INTEGER DEFAULT 0,
+          error_message TEXT,
+          created_at INTEGER DEFAULT (unixepoch()),
+          completed_at INTEGER
+        );
+        INSERT OR IGNORE INTO mc_agent_sessions_new
+          (id, machine_id, mode, task, cwd, approval_mode, model, status, cost_usd, tokens_in, tokens_out, tool_calls, error_message, created_at, completed_at)
+          SELECT id, machine_id, mode, task, cwd, approval_mode, model, status, cost_usd, tokens_in, tokens_out, tool_calls, error_message, created_at, completed_at
+          FROM mc_agent_sessions;
+        DROP TABLE IF EXISTS mc_agent_sessions;
+        ALTER TABLE mc_agent_sessions_new RENAME TO mc_agent_sessions;
+      `,
+    },
+    {
+      name: '035_token_transactions',
+      sql: `
+        CREATE TABLE IF NOT EXISTS token_transactions (
+          id TEXT PRIMARY KEY,
+          dao_id TEXT NOT NULL,
+          from_user_id TEXT,
+          to_user_id TEXT NOT NULL,
+          amount REAL NOT NULL,
+          type TEXT NOT NULL CHECK(type IN ('mint', 'transfer', 'burn', 'reward')),
+          reason TEXT,
+          approved_by TEXT,
+          reference_id TEXT,
+          created_at TEXT DEFAULT (datetime('now'))
+        );
+        CREATE INDEX IF NOT EXISTS idx_token_tx_dao ON token_transactions(dao_id);
+        CREATE INDEX IF NOT EXISTS idx_token_tx_to ON token_transactions(to_user_id);
+        CREATE INDEX IF NOT EXISTS idx_token_tx_from ON token_transactions(from_user_id);
       `,
     },
   ];

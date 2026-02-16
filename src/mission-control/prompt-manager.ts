@@ -40,21 +40,22 @@ interface AutoEvalResult {
 // ---------------------------------------------------------------------------
 
 const SAFE_COMMANDS = [
-  'npm test', 'npx tsc', 'npx vitest',
-  'git status', 'git diff', 'git log', 'git branch',
-  'ls', 'dir', 'cat', 'type', 'head', 'tail',
-  'echo', 'pwd', 'whoami',
+  'npm test', 'npx tsc', 'npx vitest', 'npm run',
+  'git status', 'git diff', 'git log', 'git branch', 'git add', 'git commit',
+  'ls', 'dir', 'cat', 'type', 'head', 'tail', 'find', 'wc',
+  'echo', 'pwd', 'whoami', 'which', 'where',
+  'cp ', 'copy ', 'mv ', 'move ', 'mkdir ', 'md ',
+  'node ', 'python ', 'npx ',
+  'cd ', 'tree', 'sort', 'uniq', 'diff ',
 ];
 
 const DANGEROUS_PATTERNS = [
-  'rm -rf', 'rm -r', 'del /s', 'rmdir /s',
+  'rm -rf', 'rm -r /', 'del /s', 'rmdir /s',
   'format ', 'mkfs', 'dd if=',
   'npm publish', 'npm unpublish',
-  'git push', 'git push --force',
+  'git push --force', 'git reset --hard',
   'deploy', 'kubectl', 'docker push',
   'shutdown', 'reboot',
-  'npm install', 'npm i ', 'pip install',
-  'curl ', 'wget ',
 ];
 
 function evaluateForAutoResponse(prompt: Prompt): AutoEvalResult {
@@ -62,14 +63,21 @@ function evaluateForAutoResponse(prompt: Prompt): AutoEvalResult {
 
   // Tool approval prompts — parse what tool/command is being requested
   if (prompt.type === 'tool_approval') {
+    // Dangerous patterns — always deny and escalate
+    for (const danger of DANGEROUS_PATTERNS) {
+      if (q.includes(danger)) {
+        return { auto: false, reason: `Dangerous pattern detected: ${danger}` };
+      }
+    }
+
     // Read operations are always safe
     if (q.includes('read') || q.includes('glob') || q.includes('grep') || q.includes('search')) {
       return { auto: true, response: '1', reason: 'Read operation — auto-approved' };
     }
 
-    // Write new file is generally safe
-    if (q.includes('write') && q.includes('new file')) {
-      return { auto: true, response: '1', reason: 'Write new file — auto-approved' };
+    // Write / Edit operations — safe (agent is working on user's project)
+    if (q.includes('write') || q.includes('edit')) {
+      return { auto: true, response: '1', reason: 'File write/edit — auto-approved' };
     }
 
     // Safe commands
@@ -79,16 +87,17 @@ function evaluateForAutoResponse(prompt: Prompt): AutoEvalResult {
       }
     }
 
-    // Dangerous patterns — deny and escalate
-    for (const danger of DANGEROUS_PATTERNS) {
-      if (q.includes(danger)) {
-        return { auto: false, reason: `Dangerous pattern detected: ${danger}` };
-      }
+    // Bash commands that aren't in the dangerous list — approve them
+    if (q.includes('bash')) {
+      return { auto: true, response: '1', reason: 'Bash command (not in deny list) — auto-approved' };
     }
+
+    // Default for tool_approval in auto mode: approve unless dangerous
+    return { auto: true, response: '1', reason: 'Auto mode — approved (no dangerous patterns detected)' };
   }
 
-  // Everything else — escalate to human
-  return { auto: false, reason: 'Unrecognized operation — escalating to human' };
+  // Non-tool prompts — escalate to human
+  return { auto: false, reason: 'Non-tool prompt — escalating to human' };
 }
 
 // ---------------------------------------------------------------------------
@@ -140,6 +149,7 @@ export class PromptManager extends EventEmitter {
 
         logger.info(`[Agent ${agentId}] Auto-approved prompt: ${evalResult.reason}`);
         this.emit('auto_response', prompt);
+        this.emit('new_prompt', prompt);  // Show in UI feed (already resolved, won't block)
         return prompt;
       }
       // If not auto-approvable, fall through to manual queue

@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PIA Mission Control</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="/css/xterm.css">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -270,6 +271,8 @@
 
     .mode-indicator.manual { background: #0d1830; color: #58a6ff; }
     .mode-indicator.auto { background: #0d2818; color: #3fb950; }
+    .mode-indicator.yolo { background: #2d1a0d; color: #f0883e; }
+    .mode-indicator.plan { background: #1a0d2d; color: #bc8cff; }
 
     /* ── Center: Agent Detail / Terminal ── */
     .center-panel {
@@ -460,6 +463,9 @@
     .prompt-card.urgent { border-color: #d29922; border-left: 3px solid #d29922; }
     .prompt-card.active { border-color: #9b4dca; background: #12101e; }
     .prompt-card.resolved { opacity: 0.5; border-color: #1a3a2d; }
+    .prompt-card.auto-approved { border-color: #1a3a2d; background: #0a1a12; border-left: 3px solid #3fb950; opacity: 0.8; }
+    .prompt-card.auto-approved .prompt-question { color: #8b949e; }
+    .auto-badge { display: inline-block; background: #1a3a2d; color: #3fb950; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 3px; margin-left: 8px; }
 
     .prompt-card-header {
       display: flex;
@@ -663,7 +669,7 @@
       flex: 1;
       display: none;
       grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-      grid-template-rows: repeat(auto-fit, minmax(250px, 1fr));
+      grid-template-rows: repeat(auto-fit, minmax(350px, 1fr));
       gap: 6px;
       padding: 6px;
       overflow-y: auto;
@@ -712,9 +718,12 @@
       flex-shrink: 0;
     }
 
-    .grid-tile-title .dot.working { background: #3fb950; }
-    .grid-tile-title .dot.waiting { background: #d29922; animation: pulse 1.5s infinite; }
+    .grid-tile-title .dot.working { background: #3fb950; animation: pulse 1.5s infinite; box-shadow: 0 0 6px #3fb95066; }
+    .grid-tile-title .dot.waiting { background: #d29922; animation: pulse 0.8s infinite; box-shadow: 0 0 6px #d2992266; }
+    .grid-tile-title .dot.starting { background: #58a6ff; animation: pulse 0.6s infinite; box-shadow: 0 0 6px #58a6ff66; }
     .grid-tile-title .dot.idle { background: #484f58; }
+    .grid-tile-title .dot.done { background: #58a6ff; box-shadow: 0 0 4px #58a6ff44; }
+    .grid-tile-title .dot.error { background: #f85149; box-shadow: 0 0 6px #f8514966; }
 
     .grid-tile-badges {
       display: flex;
@@ -733,6 +742,8 @@
     .grid-tile-badges .badge.machine { background: #1c2333; color: #58a6ff; }
     .grid-tile-badges .badge.mode-m { background: #0d1830; color: #58a6ff; }
     .grid-tile-badges .badge.mode-a { background: #0d2818; color: #3fb950; }
+    .grid-tile-badges .badge.mode-y { background: #2d1a0d; color: #f0883e; }
+    .grid-tile-badges .badge.mode-p { background: #1a0d2d; color: #bc8cff; }
     .grid-tile-badges .badge.cost { background: #1a1a2e; color: #8b949e; }
 
     .grid-tile-body {
@@ -762,6 +773,39 @@
       display: flex;
       justify-content: space-between;
       flex-shrink: 0;
+    }
+
+    .grid-tile-input {
+      display: flex;
+      padding: 4px 6px;
+      border-top: 1px solid #1a1a2a;
+      background: #0d0d18;
+      flex-shrink: 0;
+    }
+
+    .grid-tile-input input {
+      flex: 1;
+      background: #0a0a12;
+      border: 1px solid #2a2a3a;
+      border-radius: 4px;
+      color: #e6edf3;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      outline: none;
+    }
+
+    .grid-tile-input input:focus { border-color: #9b4dca; }
+
+    .grid-tile-input button {
+      background: #9b4dca;
+      border: none;
+      color: white;
+      padding: 4px 10px;
+      border-radius: 4px;
+      margin-left: 4px;
+      cursor: pointer;
+      font-size: 11px;
     }
 
     /* View Toggle Button */
@@ -916,6 +960,17 @@
       box-shadow: 0 0 8px #3fb95066;
     }
 
+    .agent-status-banner.starting {
+      background: linear-gradient(90deg, #0a0a1a, #0d0d18);
+      color: #58a6ff;
+      border-bottom-color: #1a1a3a;
+    }
+    .agent-status-banner.starting .status-dot {
+      background: #58a6ff;
+      animation: pulse 0.6s infinite;
+      box-shadow: 0 0 8px #58a6ff66;
+    }
+
     .agent-status-banner .status-text { flex: 1; }
     .agent-status-banner .status-detail {
       font-size: 11px;
@@ -955,6 +1010,7 @@
         <button class="view-toggle-btn" onclick="setView('grid')" id="viewGrid">Grid</button>
       </div>
       <button class="btn purple" onclick="openSpawnModal()">+ Spawn Agent</button>
+      <a href="/pia-admin.html" style="color:#58a6ff;font-size:12px;text-decoration:none;padding:5px 12px;border:1px solid #2a2a3e;border-radius:6px;transition:all 0.2s;">PIA Admin</a>
       <div class="ws-status">
         <div class="ws-dot"></div>
         <span>Connected</span>
@@ -1058,32 +1114,191 @@
 
   <!-- SPAWN MODAL -->
   <div class="modal-overlay" id="spawnModal">
-    <div class="modal">
+    <div class="modal" style="max-width:520px;max-height:90vh;overflow-y:auto;">
       <h2>Spawn New Agent</h2>
-      <label>Target Machine</label>
-      <select id="spawnMachine">
-        <option value="machine-1">DESKTOP-PIA (local)</option>
-        <option value="machine-2">TOWER-DEV (100.64.1.2)</option>
-        <option value="machine-3">MACBOOK-PRO (100.64.1.3)</option>
-        <option value="machine-4">CLOUD-GPU (100.64.1.4)</option>
-        <option value="machine-5">MINI-BUILD (100.64.1.5)</option>
-        <option value="machine-6">NUC-TEST (100.64.1.6)</option>
+
+      <label>Template (optional)</label>
+      <select id="spawnTemplate" onchange="applyTemplate()" style="margin-bottom:6px;">
+        <option value="">— No template (manual config) —</option>
       </select>
-      <label>Mode</label>
-      <select id="spawnMode">
-        <option value="api">API Mode (PIA drives Claude API)</option>
-        <option value="pty">PTY Mode (spawn real Claude CLI)</option>
-      </select>
+
       <label>Working Directory</label>
-      <input type="text" id="spawnCwd" placeholder="C:\Users\mic\Projects\my-app" value="C:\Users\mic\Downloads\pia-system">
-      <label>Initial Task</label>
-      <textarea id="spawnTask" placeholder="Describe what this agent should work on...">Fix the failing unit tests in src/api/routes/</textarea>
-      <label>Initial Mode</label>
-      <select id="spawnInitMode">
-        <option value="manual">Manual (approve every action)</option>
-        <option value="auto">Auto (safety policy decides)</option>
-      </select>
-      <div class="modal-actions">
+      <div style="display:flex;gap:6px;">
+        <input type="text" id="spawnCwd" placeholder="C:\Users\mic\Projects\my-app" value="C:\Users\mic\Downloads\pia-system" style="flex:1;" onchange="suggestAdditionalDirs(this.value)">
+        <button class="btn purple" onclick="openFolderBrowser()" style="white-space:nowrap;padding:8px 12px;">Browse</button>
+      </div>
+      <div id="folderBrowser" style="display:none;background:#0a0a14;border:1px solid #2a2a3a;border-radius:6px;margin-top:4px;">
+        <div id="folderNav" style="display:flex;gap:4px;padding:6px 8px;background:#12121e;border-bottom:1px solid #1a1a2a;flex-wrap:wrap;align-items:center;"></div>
+        <div style="display:flex;gap:4px;padding:4px 8px;border-bottom:1px solid #1a1a2a;background:#0d0d16;">
+          <input type="text" id="folderSearchInput" placeholder="Search folders..." onkeydown="if(event.key==='Enter')searchFolders()" style="flex:1;font-size:11px;padding:3px 8px;background:#0a0a14;border:1px solid #2a2a3a;border-radius:4px;color:#e2e8f0;">
+          <button onclick="searchFolders()" style="font-size:10px;padding:3px 8px;background:#1a1a2e;color:#9b4dca;border:1px solid #2a2a3a;border-radius:4px;cursor:pointer;">Search</button>
+          <button onclick="clearFolderSearch()" id="folderSearchClear" style="display:none;font-size:10px;padding:3px 8px;background:#2a1a1a;color:#f85149;border:1px solid #3a2a2a;border-radius:4px;cursor:pointer;">Clear</button>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px;border-bottom:1px solid #1a1a2a;background:#0d0d16;">
+          <div style="display:flex;gap:4px;">
+            <button onclick="setFolderSort('name')" id="sortName" class="fb-sort active" style="font-size:10px;padding:2px 8px;border:1px solid #2a2a3a;border-radius:3px;background:#1a1a2e;color:#9b4dca;cursor:pointer;">Name</button>
+            <button onclick="setFolderSort('date')" id="sortDate" class="fb-sort" style="font-size:10px;padding:2px 8px;border:1px solid #2a2a3a;border-radius:3px;background:#0a0a14;color:#64748b;cursor:pointer;">Date</button>
+            <button onclick="setFolderSort('type')" id="sortType" class="fb-sort" style="font-size:10px;padding:2px 8px;border:1px solid #2a2a3a;border-radius:3px;background:#0a0a14;color:#64748b;cursor:pointer;">Type</button>
+          </div>
+          <label style="font-size:10px;color:#64748b;display:flex;align-items:center;gap:4px;">
+            <input type="checkbox" id="folderShowHidden" onchange="reloadFolderList()" style="width:12px;height:12px;"> Hidden
+          </label>
+        </div>
+        <div id="folderList" style="font-size:12px;font-family:monospace;max-height:250px;overflow-y:auto;"></div>
+      </div>
+
+      <label>Additional Directories (agent can access files here too)</label>
+      <div style="display:flex;gap:6px;">
+        <input type="text" id="spawnAdditionalDirs" placeholder="e.g. C:\Users\mic\Downloads, C:\Users\mic\shared-libs" style="font-size:12px;flex:1;">
+        <button class="btn purple" onclick="openAddDirBrowser()" style="white-space:nowrap;padding:8px 12px;">Browse</button>
+      </div>
+      <div id="addDirBrowser" style="display:none;background:#0a0a14;border:1px solid #2a2a3a;border-radius:6px;margin-top:4px;">
+        <div id="addDirNav" style="display:flex;gap:4px;padding:6px 8px;background:#12121e;border-bottom:1px solid #1a1a2a;flex-wrap:wrap;align-items:center;"></div>
+        <div style="display:flex;gap:4px;padding:4px 8px;border-bottom:1px solid #1a1a2a;background:#0d0d16;">
+          <input type="text" id="addDirSearchInput" placeholder="Search folders..." onkeydown="if(event.key==='Enter')searchAddDirs()" style="flex:1;font-size:11px;padding:3px 8px;background:#0a0a14;border:1px solid #2a2a3a;border-radius:4px;color:#e2e8f0;">
+          <button onclick="searchAddDirs()" style="font-size:10px;padding:3px 8px;background:#1a1a2e;color:#9b4dca;border:1px solid #2a2a3a;border-radius:4px;cursor:pointer;">Search</button>
+          <button onclick="clearAddDirSearch()" id="addDirSearchClear" style="display:none;font-size:10px;padding:3px 8px;background:#2a1a1a;color:#f85149;border:1px solid #3a2a2a;border-radius:4px;cursor:pointer;">Clear</button>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px;border-bottom:1px solid #1a1a2a;background:#0d0d16;">
+          <div style="display:flex;gap:4px;">
+            <button onclick="setAddDirSort('name')" id="addSortName" class="adb-sort active" style="font-size:10px;padding:2px 8px;border:1px solid #2a2a3a;border-radius:3px;background:#1a1a2e;color:#9b4dca;cursor:pointer;">Name</button>
+            <button onclick="setAddDirSort('date')" id="addSortDate" class="adb-sort" style="font-size:10px;padding:2px 8px;border:1px solid #2a2a3a;border-radius:3px;background:#0a0a14;color:#64748b;cursor:pointer;">Date</button>
+            <button onclick="setAddDirSort('type')" id="addSortType" class="adb-sort" style="font-size:10px;padding:2px 8px;border:1px solid #2a2a3a;border-radius:3px;background:#0a0a14;color:#64748b;cursor:pointer;">Type</button>
+          </div>
+          <label style="font-size:10px;color:#64748b;display:flex;align-items:center;gap:4px;">
+            <input type="checkbox" id="addDirShowHidden" onchange="reloadAddDirList()" style="width:12px;height:12px;"> Hidden
+          </label>
+        </div>
+        <div id="addDirList" style="font-size:12px;font-family:monospace;max-height:250px;overflow-y:auto;"></div>
+      </div>
+      <div style="font-size:10px;color:#64748b;margin-top:4px;margin-bottom:8px;">Comma-separated paths. Agent can read/write files here in addition to the working directory.</div>
+
+      <label>Initial Task (optional — leave blank to start chatting)</label>
+      <textarea id="spawnTask" placeholder="Leave empty to start a conversation, or describe a task..."></textarea>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div>
+          <label>Approval Mode</label>
+          <select id="spawnInitMode">
+            <option value="auto">Auto (approve unless dangerous)</option>
+            <option value="manual">Manual (approve every action)</option>
+            <option value="yolo">Yolo (approve EVERYTHING)</option>
+            <option value="plan">Plan Only (read-only, no execution)</option>
+          </select>
+        </div>
+        <div>
+          <label>Model</label>
+          <select id="spawnModel">
+            <option value="claude-opus-4-6" selected>Opus 4.6 (most capable)</option>
+            <option value="claude-sonnet-4-5-20250929">Sonnet 4.5 (fast + capable)</option>
+            <option value="claude-haiku-4-5-20251001">Haiku 4.5 (fastest, cheapest)</option>
+          </select>
+        </div>
+        <div>
+          <label>Effort Level</label>
+          <select id="spawnEffort">
+            <option value="">Default</option>
+            <option value="max">Max (deepest reasoning)</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low (fastest)</option>
+          </select>
+        </div>
+        <div>
+          <label>Max Budget ($)</label>
+          <input type="number" id="spawnBudget" value="5" min="0.5" max="100" step="0.5" style="width:100%;">
+        </div>
+      </div>
+
+      <!-- Advanced Options (collapsible) -->
+      <div style="margin-top:10px;">
+        <div onclick="document.getElementById('advancedOpts').style.display = document.getElementById('advancedOpts').style.display === 'none' ? 'block' : 'none'; this.querySelector('span').textContent = document.getElementById('advancedOpts').style.display === 'none' ? '+' : '-';"
+             style="cursor:pointer;color:#9b4dca;font-size:12px;font-weight:600;padding:4px 0;">
+          <span>+</span> Advanced Options
+        </div>
+        <div id="advancedOpts" style="display:none;">
+          <label>System Prompt (instructions for the agent)</label>
+          <textarea id="spawnSystemPrompt" placeholder="e.g. You are a senior developer. Always write tests. Never modify package.json without asking." style="height:60px;font-size:11px;"></textarea>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div>
+              <label>Max Turns</label>
+              <input type="number" id="spawnMaxTurns" placeholder="Unlimited" min="1" max="200" style="width:100%;">
+            </div>
+            <div>
+              <label>Target Machine</label>
+              <select id="spawnMachine">
+                <option value="local">LOCAL</option>
+              </select>
+            </div>
+          </div>
+
+          <label>Blocked Tools (comma-separated)</label>
+          <input type="text" id="spawnDisallowedTools" placeholder="e.g. Bash, Write (leave empty for all tools)">
+
+          <label>Allowed Tools Only (comma-separated — overrides blocklist)</label>
+          <input type="text" id="spawnAllowedTools" placeholder="e.g. Read, Grep, Glob, Edit (empty = all allowed)">
+
+          <!-- Additional Directories moved to main section above -->
+
+          <label style="margin-top:8px;font-weight:600;color:#9b4dca;">Security (inspired by gh-aw)</label>
+          <div style="margin-bottom:6px;">
+            <label style="font-size:11px;color:#8892b0;">Network Ecosystems (allowed domains)</label>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:2px;">
+              <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;">
+                <input type="checkbox" id="ecoNpm" checked> npm
+              </label>
+              <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;">
+                <input type="checkbox" id="ecoPip"> pip
+              </label>
+              <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;">
+                <input type="checkbox" id="ecoGithub" checked> GitHub
+              </label>
+              <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;">
+                <input type="checkbox" id="ecoAnthropic" checked> Anthropic
+              </label>
+            </div>
+          </div>
+          <label style="font-size:11px;color:#8892b0;">Additional Allowed Domains</label>
+          <input type="text" id="spawnAllowedDomains" placeholder="e.g. api.openai.com, registry.npmjs.org" style="font-size:11px;">
+          <label style="font-size:11px;color:#8892b0;">Blocked Domains</label>
+          <input type="text" id="spawnBlockedDomains" placeholder="e.g. evil.com, malware.net" style="font-size:11px;">
+
+          <label style="margin-top:8px;font-weight:600;color:#9b4dca;">Stability</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer;">
+              <input type="checkbox" id="spawnCheckpointing" checked> File Checkpointing
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer;">
+              <input type="checkbox" id="spawnProjectSettings" checked> Load CLAUDE.md
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer;">
+              <input type="checkbox" id="spawnAutoRestart" checked> Auto-Restart on Error
+            </label>
+            <div>
+              <label style="font-size:11px;">Fallback Model</label>
+              <select id="spawnFallbackModel" style="font-size:11px;padding:2px 4px;">
+                <option value="claude-sonnet-4-5-20250929">Sonnet 4.5 (default)</option>
+                <option value="claude-haiku-4-5-20251001">Haiku 4.5</option>
+                <option value="">None</option>
+              </select>
+            </div>
+          </div>
+
+          <label>Engine</label>
+          <select id="spawnMode">
+            <option value="sdk" selected>SDK Mode (Claude Agent SDK)</option>
+            <option value="api">API Mode (PIA drives Claude API)</option>
+            <option value="pty">PTY Mode (spawn real Claude CLI)</option>
+          </select>
+
+          <label style="margin-top:8px;font-weight:600;color:#9b4dca;">MCP Servers</label>
+          <textarea id="spawnMcpServers" placeholder='[{"name":"playwright","transport":"stdio","command":"npx","args":["@anthropic-ai/mcp-server-playwright"]}]' style="height:60px;font-size:10px;font-family:monospace;"></textarea>
+          <div style="font-size:10px;color:#64748b;margin-top:2px;">JSON array of MCP server configs. Each needs: name, transport (stdio/sse/http), and command+args or url.</div>
+        </div>
+      </div>
+
+      <div class="modal-actions" style="margin-top:12px;">
         <button class="btn-cancel" onclick="closeSpawnModal()">Cancel</button>
         <button class="btn purple" onclick="spawnAgent()">Spawn Agent</button>
       </div>
@@ -1106,6 +1321,7 @@ let machines = [];        // from /api/machines
 let agents = [];          // from /api/mc/agents
 let prompts = [];         // from /api/mc/prompts + WebSocket
 let outputBuffers = {};   // agentId -> [{type, text}]
+let streamingAccum = {};  // agentId -> string (accumulates partial tokens before \n)
 let selectedMachine = null;
 let selectedAgent = null;
 let activeAgentTab = 'terminal';
@@ -1160,6 +1376,7 @@ async function fetchAgents() {
       name: a.id.substring(0, 8),
       status: mapStatus(a.status),
       task: a.task || '',
+      cwd: a.cwd || '',
       mode: a.approvalMode || 'manual',
       machineId: a.machineId || 'local',
       cost: a.cost || 0,
@@ -1301,16 +1518,44 @@ function handleWsMessage(msg) {
       const { sessionId, data } = msg.payload || {};
       if (!sessionId || !data) return;
       if (!outputBuffers[sessionId]) outputBuffers[sessionId] = [];
-      // Split into lines, classify each
-      data.split('\n').filter(l => l.trim()).forEach(line => {
-        outputBuffers[sessionId].push(classifyLine(line));
-      });
+      if (streamingAccum[sessionId] === undefined) streamingAccum[sessionId] = '';
+
+      const buf = outputBuffers[sessionId];
+
+      // Remove previous streaming preview line (it will be replaced with updated text)
+      if (buf.length > 0 && buf[buf.length - 1]._streaming) {
+        buf.pop();
+      }
+
+      // Accumulate incoming text fragment
+      streamingAccum[sessionId] += data;
+
+      // Split by newlines — everything before the last \n is a completed line
+      const parts = streamingAccum[sessionId].split('\n');
+
+      // Flush completed lines (all parts except the last)
+      for (let i = 0; i < parts.length - 1; i++) {
+        if (parts[i].trim()) {
+          buf.push(classifyLine(parts[i]));
+        }
+      }
+
+      // Keep the last part as the in-progress streaming text
+      streamingAccum[sessionId] = parts[parts.length - 1];
+
+      // Show the in-progress text as a live preview line
+      if (streamingAccum[sessionId].trim()) {
+        const preview = classifyLine(streamingAccum[sessionId]);
+        preview._streaming = true;
+        buf.push(preview);
+      }
+
       // If this agent is selected, update the terminal live
       if (selectedAgent === sessionId && activeAgentTab === 'terminal') {
         renderTerminal(sessionId);
       }
-      // Update grid view if active
-      if (currentView === 'grid') renderGridView();
+      // Update grid view if active — only refresh the tile body to preserve input focus
+      if (currentView === 'grid') updateGridTileBody(sessionId);
       break;
     }
     case 'mc:prompt': {
@@ -1318,6 +1563,7 @@ function handleWsMessage(msg) {
       if (!p) return;
       // Add to prompt list if not already there
       if (!prompts.find(pp => pp.id === p.id)) {
+        const isAutoApproved = p.status === 'auto_approved';
         prompts.push({
           id: p.id,
           agentId: p.agentId,
@@ -1327,19 +1573,26 @@ function handleWsMessage(msg) {
           question: p.question || '',
           options: p.options || ['Allow', 'Deny', 'Skip'],
           type: p.type || 'tool_approval',
-          resolved: false,
+          resolved: isAutoApproved,
+          resolvedWith: isAutoApproved ? (p.autoReason || 'Auto-approved') : undefined,
+          status: p.status || 'pending',
         });
-        renderPrompts();
-        // Update agent status to waiting
-        const agent = agents.find(a => a.id === p.agentId);
-        if (agent) {
-          agent.status = 'waiting';
-          renderAll();
-          if (selectedAgent === p.agentId) {
-            updateAgentStatusUI(agent);
-          }
+        // Cap auto-approved history at 100 entries
+        if (prompts.length > 100) {
+          const autoIdx = prompts.findIndex(pp => pp.status === 'auto_approved');
+          if (autoIdx !== -1) prompts.splice(autoIdx, 1);
         }
-        showToast(`New prompt from ${(p.agentId || '').substring(0, 8)}`);
+        renderPrompts();
+        // Only change agent status to waiting for NON-auto-approved prompts
+        if (!isAutoApproved) {
+          const agent = agents.find(a => a.id === p.agentId);
+          if (agent) {
+            agent.status = 'waiting';
+            renderAll();
+            if (selectedAgent === p.agentId) updateAgentStatusUI(agent);
+          }
+          showToast(`New prompt from ${(p.agentId || '').substring(0, 8)}`);
+        }
       }
       break;
     }
@@ -1354,6 +1607,17 @@ function handleWsMessage(msg) {
         // Update status banner + input bar for the selected agent
         if (selectedAgent === sessionId) {
           updateAgentStatusUI(agent);
+        }
+        if (status === 'done' || status === 'idle' || status === 'error') {
+          // Flush any remaining streaming accumulator text as a final line
+          if (streamingAccum[sessionId] && streamingAccum[sessionId].trim()) {
+            if (!outputBuffers[sessionId]) outputBuffers[sessionId] = [];
+            const buf = outputBuffers[sessionId];
+            // Remove streaming preview
+            if (buf.length > 0 && buf[buf.length - 1]._streaming) buf.pop();
+            buf.push(classifyLine(streamingAccum[sessionId]));
+            streamingAccum[sessionId] = '';
+          }
         }
         if (status === 'done') {
           showToast(`Agent ${sessionId.substring(0, 8)} completed`);
@@ -1610,25 +1874,32 @@ async function renderJournal(agentId) {
 function renderPrompts() {
   const list = document.getElementById('promptList');
   const count = document.getElementById('promptCount');
-  const pending = prompts.filter(p => !p.resolved);
-  count.textContent = pending.length + ' pending';
+  const pending = prompts.filter(p => !p.resolved && p.status !== 'auto_approved');
+  const autoCount = prompts.filter(p => p.status === 'auto_approved').length;
+  count.textContent = pending.length > 0
+    ? pending.length + ' pending'
+    : autoCount > 0 ? autoCount + ' auto-approved' : '0 pending';
 
   if (prompts.length === 0) {
     list.innerHTML = '<div style="color:#64748b;text-align:center;padding:40px;font-size:13px;">No prompts. Agents running in auto mode or idle.</div>';
     return;
   }
 
-  list.innerHTML = prompts.map(p => `
-    <div class="prompt-card ${!p.resolved ? 'urgent' : 'resolved'}" id="prompt-${esc(p.id)}">
+  list.innerHTML = prompts.map(p => {
+    const isAuto = p.status === 'auto_approved';
+    const cardClass = isAuto ? 'auto-approved' : (!p.resolved ? 'urgent' : 'resolved');
+    return `
+    <div class="prompt-card ${cardClass}" id="prompt-${esc(p.id)}">
       <div class="prompt-card-header">
         <div>
-          <div class="prompt-agent-name">${esc(p.agentName)}</div>
+          <div class="prompt-agent-name">${esc(p.agentName)}${isAuto ? '<span class="auto-badge">AUTO</span>' : ''}</div>
           <span class="prompt-machine-tag">${esc(p.machine)}</span>
         </div>
         <div class="prompt-time">${formatAgo(p.timestamp)}</div>
       </div>
       <div class="prompt-question">${esc(p.question)}</div>
-      ${p.resolved ? '<div style="color:#3fb950;font-size:12px;font-weight:600;">Responded: ' + esc(p.resolvedWith || p.status) + '</div>' : `
+      ${isAuto ? '<div style="color:#3fb950;font-size:11px;">Auto-approved</div>'
+        : p.resolved ? '<div style="color:#3fb950;font-size:12px;font-weight:600;">Responded: ' + esc(p.resolvedWith || p.status) + '</div>' : `
         <div class="prompt-options">
           ${p.options.map((opt, i) => `
             <div class="prompt-option-btn" onclick="respondToPrompt('${esc(p.id)}', ${i + 1}, '${esc(p.agentId)}', this)">
@@ -1644,7 +1915,7 @@ function renderPrompts() {
         </div>
       `}
     </div>
-  `).join('');
+  `; }).join('');
 }
 
 // ── RESPOND TO PROMPT (REAL API) ──
@@ -1714,8 +1985,45 @@ async function spawnAgent() {
   const task = document.getElementById('spawnTask').value.trim();
   const approvalMode = document.getElementById('spawnInitMode').value;
   const cwd = document.getElementById('spawnCwd').value.trim();
+  const model = document.getElementById('spawnModel').value;
+  const effort = document.getElementById('spawnEffort').value || undefined;
+  const maxBudget = parseFloat(document.getElementById('spawnBudget').value) || 5;
+  const systemPrompt = document.getElementById('spawnSystemPrompt').value.trim() || undefined;
+  const maxTurns = parseInt(document.getElementById('spawnMaxTurns').value) || undefined;
+  const disallowedToolsRaw = document.getElementById('spawnDisallowedTools').value.trim();
+  const disallowedTools = disallowedToolsRaw ? disallowedToolsRaw.split(',').map(t => t.trim()).filter(Boolean) : undefined;
+  const allowedToolsRaw = document.getElementById('spawnAllowedTools').value.trim();
+  const allowedTools = allowedToolsRaw ? allowedToolsRaw.split(',').map(t => t.trim()).filter(Boolean) : undefined;
+  const addDirsRaw = document.getElementById('spawnAdditionalDirs').value.trim();
+  const additionalDirectories = addDirsRaw ? addDirsRaw.split(',').map(d => d.trim()).filter(Boolean) : undefined;
+  const enableCheckpointing = document.getElementById('spawnCheckpointing').checked;
+  const loadProjectSettings = document.getElementById('spawnProjectSettings').checked;
+  const autoRestart = document.getElementById('spawnAutoRestart').checked;
+  const fallbackModel = document.getElementById('spawnFallbackModel').value || undefined;
 
-  if (!task) { showToast('Please enter a task'); return; }
+  // MCP servers
+  const mcpServersRaw = document.getElementById('spawnMcpServers').value.trim();
+  let mcpServers;
+  if (mcpServersRaw) {
+    try {
+      mcpServers = JSON.parse(mcpServersRaw);
+      if (!Array.isArray(mcpServers)) { showToast('MCP Servers must be a JSON array'); return; }
+    } catch (e) { showToast('Invalid MCP Servers JSON: ' + e.message); return; }
+  }
+
+  // Network policy — ecosystems + custom domains
+  const ecosystems = [];
+  if (document.getElementById('ecoNpm').checked) ecosystems.push('npm');
+  if (document.getElementById('ecoPip').checked) ecosystems.push('pip');
+  if (document.getElementById('ecoGithub').checked) ecosystems.push('github');
+  if (document.getElementById('ecoAnthropic').checked) ecosystems.push('anthropic');
+  const allowedDomainsRaw = document.getElementById('spawnAllowedDomains').value.trim();
+  const allowedDomains = allowedDomainsRaw ? allowedDomainsRaw.split(',').map(d => d.trim()).filter(Boolean) : undefined;
+  const blockedDomainsRaw = document.getElementById('spawnBlockedDomains').value.trim();
+  const blockedDomains = blockedDomainsRaw ? blockedDomainsRaw.split(',').map(d => d.trim()).filter(Boolean) : undefined;
+  const networkPolicy = (ecosystems.length || allowedDomains || blockedDomains)
+    ? { ecosystems, allowedDomains, blockedDomains } : undefined;
+
   if (!cwd) { showToast('Please enter a working directory'); return; }
 
   closeSpawnModal();
@@ -1724,7 +2032,10 @@ async function spawnAgent() {
   try {
     const data = await api('/api/mc/agents', {
       method: 'POST',
-      body: { machineId, mode, task, cwd, approvalMode },
+      body: { machineId, mode, task, cwd, approvalMode, model, maxBudget,
+              effort, systemPrompt, maxTurns, disallowedTools, allowedTools,
+              additionalDirectories, networkPolicy, mcpServers,
+              enableCheckpointing, loadProjectSettings, autoRestart, fallbackModel },
     });
 
     showToast(`Agent spawned: ${data.id?.substring(0, 8)}`);
@@ -1735,7 +2046,7 @@ async function spawnAgent() {
     if (data.id) {
       outputBuffers[data.id] = [
         { type: 'system', text: `Agent ${data.id.substring(0, 8)} started (${mode} mode, ${approvalMode})` },
-        { type: 'system', text: `Task: ${task}` },
+        { type: 'system', text: task ? `Task: ${task}` : `Ready — type a message to start` },
         { type: 'system', text: '────────────────────────────────────────' },
       ];
       selectAgent(data.id);
@@ -1776,7 +2087,9 @@ async function toggleMode() {
   const agent = agents.find(a => a.id === selectedAgent);
   if (!agent) return;
 
-  const newMode = agent.mode === 'manual' ? 'auto' : 'manual';
+  const modeOrder = ['manual', 'auto', 'yolo', 'plan'];
+  const currentIdx = modeOrder.indexOf(agent.mode);
+  const newMode = modeOrder[(currentIdx + 1) % modeOrder.length];
 
   try {
     await api(`/api/mc/agents/${selectedAgent}/mode`, {
@@ -1864,15 +2177,416 @@ function switchAgentTab(tab) {
 }
 
 // ── MODAL ──
-function openSpawnModal() {
+let loadedTemplates = [];
+
+async function openSpawnModal() {
   document.getElementById('spawnModal').classList.add('visible');
   if (selectedMachine) {
     document.getElementById('spawnMachine').value = selectedMachine;
   }
+  // Load templates
+  try {
+    const data = await api('/api/mc/templates');
+    loadedTemplates = data.templates || [];
+    const sel = document.getElementById('spawnTemplate');
+    sel.innerHTML = '<option value="">— No template (manual config) —</option>';
+    for (const t of loadedTemplates) {
+      sel.innerHTML += `<option value="${t.id}">${t.name}${t.description ? ' — ' + t.description : ''}</option>`;
+    }
+  } catch { /* templates not available yet */ }
+}
+
+function applyTemplate() {
+  const id = document.getElementById('spawnTemplate').value;
+  if (!id) return;
+  const tmpl = loadedTemplates.find(t => t.id === id);
+  if (!tmpl || !tmpl.config) return;
+  const c = tmpl.config;
+  if (c.cwd) document.getElementById('spawnCwd').value = c.cwd;
+  if (c.approvalMode) document.getElementById('spawnInitMode').value = c.approvalMode;
+  if (c.model) document.getElementById('spawnModel').value = c.model;
+  if (c.effort) document.getElementById('spawnEffort').value = c.effort;
+  if (c.maxBudgetUsd) document.getElementById('spawnBudget').value = c.maxBudgetUsd;
+  if (c.systemPrompt) document.getElementById('spawnSystemPrompt').value = c.systemPrompt;
+  if (c.maxTurns) document.getElementById('spawnMaxTurns').value = c.maxTurns;
+  if (c.disallowedTools) document.getElementById('spawnDisallowedTools').value = c.disallowedTools.join(', ');
+  if (c.allowedTools) document.getElementById('spawnAllowedTools').value = c.allowedTools.join(', ');
+  if (c.mode) document.getElementById('spawnMode').value = c.mode;
+  // Network policy
+  if (c.networkPolicy) {
+    const eco = c.networkPolicy.ecosystems || [];
+    document.getElementById('ecoNpm').checked = eco.includes('npm');
+    document.getElementById('ecoPip').checked = eco.includes('pip');
+    document.getElementById('ecoGithub').checked = eco.includes('github');
+    document.getElementById('ecoAnthropic').checked = eco.includes('anthropic');
+    if (c.networkPolicy.allowedDomains) document.getElementById('spawnAllowedDomains').value = c.networkPolicy.allowedDomains.join(', ');
+    if (c.networkPolicy.blockedDomains) document.getElementById('spawnBlockedDomains').value = c.networkPolicy.blockedDomains.join(', ');
+  }
+  showToast(`Template "${tmpl.name}" applied`);
 }
 
 function closeSpawnModal() {
   document.getElementById('spawnModal').classList.remove('visible');
+  document.getElementById('folderBrowser').style.display = 'none';
+  document.getElementById('addDirBrowser').style.display = 'none';
+}
+
+let folderSort = 'name';
+let folderCurrentPath = '';
+let folderCachedItems = [];
+
+async function openFolderBrowser() {
+  const browser = document.getElementById('folderBrowser');
+  const cwdInput = document.getElementById('spawnCwd');
+  const currentPath = cwdInput.value.trim() || 'C:\\Users\\mic';
+
+  browser.style.display = 'block';
+  await loadFolderList(currentPath);
+}
+
+function setFolderSort(sort) {
+  folderSort = sort;
+  document.querySelectorAll('.fb-sort').forEach(b => {
+    b.style.background = '#0a0a14';
+    b.style.color = '#64748b';
+  });
+  const btn = document.getElementById('sort' + sort.charAt(0).toUpperCase() + sort.slice(1));
+  if (btn) { btn.style.background = '#1a1a2e'; btn.style.color = '#9b4dca'; }
+  renderFolderItems();
+}
+
+function reloadFolderList() {
+  if (folderCurrentPath) loadFolderList(folderCurrentPath);
+}
+
+async function loadFolderList(dirPath) {
+  folderCurrentPath = dirPath;
+  const list = document.getElementById('folderList');
+  list.innerHTML = '<div style="padding:8px;color:#64748b;">Loading...</div>';
+
+  // Build breadcrumb nav
+  const nav = document.getElementById('folderNav');
+  const parts = dirPath.split(/[\\/]/).filter(Boolean);
+  let navHtml = '';
+  let accumulated = '';
+  parts.forEach((part, i) => {
+    accumulated += (i === 0 && !dirPath.startsWith('/') ? '' : (i === 0 ? '/' : '\\')) + part;
+    const pathForClick = accumulated.replace(/\\/g, '\\\\');
+    const isLast = i === parts.length - 1;
+    if (isLast) {
+      navHtml += `<span style="color:#9b4dca;font-size:11px;font-weight:600;">${esc(part)}</span>`;
+    } else {
+      navHtml += `<span onclick="loadFolderList('${esc(pathForClick)}')" style="color:#58a6ff;font-size:11px;cursor:pointer;">${esc(part)}</span><span style="color:#484f58;font-size:11px;">/</span>`;
+    }
+  });
+  navHtml += `<button onclick="selectFolder('${esc(dirPath).replace(/\\/g, '\\\\')}')" style="background:#3fb950;color:#000;border:none;border-radius:4px;padding:2px 10px;font-size:10px;font-weight:700;cursor:pointer;margin-left:auto;">Select This</button>`;
+  nav.innerHTML = navHtml;
+
+  try {
+    const data = await api(`/api/files/list?path=${encodeURIComponent(dirPath)}`);
+    folderCachedItems = data.items || [];
+    renderFolderItems();
+  } catch (e) {
+    list.innerHTML = `<div style="padding:8px;color:#f85149;">Failed to load: ${e.message}</div>`;
+  }
+}
+
+function renderFolderItems() {
+  const list = document.getElementById('folderList');
+  const showHidden = document.getElementById('folderShowHidden')?.checked;
+  const dirPath = folderCurrentPath;
+
+  let items = folderCachedItems.filter(i => {
+    if (!showHidden && i.name.startsWith('.')) return false;
+    return true;
+  });
+
+  // Separate dirs and files
+  let dirs = items.filter(i => i.type === 'directory');
+  let files = items.filter(i => i.type === 'file');
+
+  // Sort
+  const sortFn = (a, b) => {
+    if (folderSort === 'date') return (b.mtime || 0) - (a.mtime || 0);
+    if (folderSort === 'type') return (a.name.split('.').pop() || '').localeCompare(b.name.split('.').pop() || '');
+    return a.name.localeCompare(b.name);
+  };
+  dirs.sort(sortFn);
+  files.sort(sortFn);
+
+  // Parent directory link
+  const parentPath = dirPath.replace(/[\\/][^\\/]+$/, '') || dirPath;
+  let html = '';
+  if (parentPath !== dirPath) {
+    html += `<div onclick="loadFolderList('${esc(parentPath).replace(/\\/g, '\\\\')}')" style="padding:4px 8px;cursor:pointer;color:#58a6ff;border-bottom:1px solid #0d0d18;font-weight:600;" onmouseover="this.style.background='#1a1a2a'" onmouseout="this.style.background='transparent'">..</div>`;
+  }
+
+  // Directories
+  dirs.forEach(d => {
+    const fullPath = dirPath + '\\' + d.name;
+    const dateStr = d.mtime ? new Date(d.mtime).toLocaleDateString() : '';
+    html += `<div onclick="loadFolderList('${esc(fullPath).replace(/\\/g, '\\\\')}')" style="padding:4px 8px;cursor:pointer;color:#e2e8f0;border-bottom:1px solid #0d0d18;display:flex;justify-content:space-between;align-items:center;" onmouseover="this.style.background='#1a1a2a'" onmouseout="this.style.background='transparent'">
+      <span>📁 ${esc(d.name)}</span>
+      <span style="color:#484f58;font-size:10px;">${dateStr}</span>
+    </div>`;
+  });
+
+  // Files (dimmed, not clickable for selection but shown for context)
+  files.forEach(f => {
+    const dateStr = f.mtime ? new Date(f.mtime).toLocaleDateString() : '';
+    const sizeStr = f.size ? (f.size > 1048576 ? (f.size/1048576).toFixed(1)+'MB' : f.size > 1024 ? (f.size/1024).toFixed(0)+'KB' : f.size+'B') : '';
+    html += `<div style="padding:4px 8px;color:#484f58;border-bottom:1px solid #0d0d18;display:flex;justify-content:space-between;align-items:center;font-size:11px;">
+      <span>  ${esc(f.name)}</span>
+      <span style="font-size:10px;">${sizeStr} ${dateStr}</span>
+    </div>`;
+  });
+
+  if (dirs.length === 0 && files.length === 0) {
+    html += '<div style="padding:8px;color:#64748b;font-style:italic;">Empty folder</div>';
+  }
+
+  list.innerHTML = html;
+}
+
+function selectFolder(path) {
+  document.getElementById('spawnCwd').value = path;
+  document.getElementById('folderBrowser').style.display = 'none';
+  document.getElementById('folderSearchInput').value = '';
+  document.getElementById('folderSearchClear').style.display = 'none';
+  suggestAdditionalDirs(path);
+}
+
+// ── FOLDER SEARCH (Working Directory) ──
+async function searchFolders() {
+  const query = document.getElementById('folderSearchInput').value.trim();
+  if (!query || query.length < 2) return;
+
+  const list = document.getElementById('folderList');
+  list.innerHTML = '<div style="padding:8px;color:#64748b;">Searching...</div>';
+  document.getElementById('folderSearchClear').style.display = 'inline-block';
+
+  // Hide sort/breadcrumbs during search
+  document.getElementById('folderNav').innerHTML = `<span style="color:#9b4dca;font-size:11px;font-weight:600;">Search results for "${esc(query)}"</span>`;
+
+  try {
+    const root = document.getElementById('spawnCwd').value.trim().replace(/[\\/][^\\/]+$/, '') || 'C:\\Users';
+    const data = await api(`/api/files/search?q=${encodeURIComponent(query)}&root=${encodeURIComponent(root)}&maxDepth=5&maxResults=25`);
+    const results = data.results || [];
+
+    if (results.length === 0) {
+      list.innerHTML = '<div style="padding:8px;color:#64748b;font-style:italic;">No folders found matching "' + esc(query) + '"</div>';
+      return;
+    }
+
+    let html = '';
+    results.forEach(r => {
+      const escapedPath = esc(r.path).replace(/\\/g, '\\\\');
+      html += `<div style="padding:5px 8px;cursor:pointer;color:#e2e8f0;border-bottom:1px solid #0d0d18;display:flex;justify-content:space-between;align-items:center;" onmouseover="this.style.background='#1a1a2a'" onmouseout="this.style.background='transparent'">
+        <span onclick="loadFolderList('${escapedPath}')" style="flex:1;cursor:pointer;display:flex;flex-direction:column;">
+          <span>📁 <strong>${esc(r.name)}</strong></span>
+          <span style="font-size:10px;color:#64748b;margin-top:1px;">${esc(r.path)}</span>
+        </span>
+        <button onclick="event.stopPropagation();selectFolder('${escapedPath}')" style="background:#3fb950;color:#000;border:none;border-radius:4px;padding:2px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">Select</button>
+      </div>`;
+    });
+
+    list.innerHTML = html;
+  } catch (e) {
+    list.innerHTML = `<div style="padding:8px;color:#f85149;">Search failed: ${e.message}</div>`;
+  }
+}
+
+function clearFolderSearch() {
+  document.getElementById('folderSearchInput').value = '';
+  document.getElementById('folderSearchClear').style.display = 'none';
+  if (folderCurrentPath) loadFolderList(folderCurrentPath);
+}
+
+function suggestAdditionalDirs(cwdPath) {
+  const addDirsInput = document.getElementById('spawnAdditionalDirs');
+  // Only suggest if the field is empty (don't overwrite user entries)
+  if (addDirsInput.value.trim()) return;
+  // Suggest the parent directory so agent can access sibling files
+  const normalized = cwdPath.replace(/\\/g, '/').replace(/\/+$/, '');
+  const parent = normalized.substring(0, normalized.lastIndexOf('/'));
+  if (parent && parent !== normalized) {
+    addDirsInput.value = parent;
+  }
+}
+
+// ── ADDITIONAL DIRECTORIES BROWSER ──
+let addDirSort = 'name';
+let addDirCurrentPath = '';
+let addDirCachedItems = [];
+
+async function openAddDirBrowser() {
+  const browser = document.getElementById('addDirBrowser');
+  const cwdInput = document.getElementById('spawnCwd');
+  const startPath = cwdInput.value.trim() || 'C:\\Users\\mic';
+  // Start from parent of cwd so user can pick sibling folders
+  const parentPath = startPath.replace(/[\\/][^\\/]+$/, '') || startPath;
+  browser.style.display = 'block';
+  await loadAddDirList(parentPath);
+}
+
+function setAddDirSort(sort) {
+  addDirSort = sort;
+  document.querySelectorAll('.adb-sort').forEach(b => {
+    b.style.background = '#0a0a14';
+    b.style.color = '#64748b';
+  });
+  const btn = document.getElementById('addSort' + sort.charAt(0).toUpperCase() + sort.slice(1));
+  if (btn) { btn.style.background = '#1a1a2e'; btn.style.color = '#9b4dca'; }
+  renderAddDirItems();
+}
+
+function reloadAddDirList() {
+  if (addDirCurrentPath) loadAddDirList(addDirCurrentPath);
+}
+
+async function loadAddDirList(dirPath) {
+  addDirCurrentPath = dirPath;
+  const list = document.getElementById('addDirList');
+  list.innerHTML = '<div style="padding:8px;color:#64748b;">Loading...</div>';
+
+  // Breadcrumb nav
+  const nav = document.getElementById('addDirNav');
+  const parts = dirPath.split(/[\\/]/).filter(Boolean);
+  let navHtml = '';
+  let accumulated = '';
+  parts.forEach((part, i) => {
+    accumulated += (i === 0 && !dirPath.startsWith('/') ? '' : (i === 0 ? '/' : '\\')) + part;
+    const pathForClick = accumulated.replace(/\\/g, '\\\\');
+    const isLast = i === parts.length - 1;
+    if (isLast) {
+      navHtml += `<span style="color:#9b4dca;font-size:11px;font-weight:600;">${esc(part)}</span>`;
+    } else {
+      navHtml += `<span onclick="loadAddDirList('${esc(pathForClick)}')" style="color:#58a6ff;font-size:11px;cursor:pointer;">${esc(part)}</span><span style="color:#484f58;font-size:11px;">/</span>`;
+    }
+  });
+  navHtml += `<button onclick="selectAddDir('${esc(dirPath).replace(/\\/g, '\\\\')}')" style="background:#3fb950;color:#000;border:none;border-radius:4px;padding:2px 10px;font-size:10px;font-weight:700;cursor:pointer;margin-left:auto;">+ Add This</button>`;
+  nav.innerHTML = navHtml;
+
+  try {
+    const data = await api(`/api/files/list?path=${encodeURIComponent(dirPath)}`);
+    addDirCachedItems = data.items || [];
+    renderAddDirItems();
+  } catch (e) {
+    list.innerHTML = `<div style="padding:8px;color:#f85149;">Failed to load: ${e.message}</div>`;
+  }
+}
+
+function renderAddDirItems() {
+  const list = document.getElementById('addDirList');
+  const showHidden = document.getElementById('addDirShowHidden')?.checked;
+  const dirPath = addDirCurrentPath;
+
+  let items = addDirCachedItems.filter(i => {
+    if (!showHidden && i.name.startsWith('.')) return false;
+    return true;
+  });
+
+  let dirs = items.filter(i => i.type === 'directory');
+  let files = items.filter(i => i.type === 'file');
+
+  const sortFn = (a, b) => {
+    if (addDirSort === 'date') return (b.mtime || 0) - (a.mtime || 0);
+    if (addDirSort === 'type') return (a.name.split('.').pop() || '').localeCompare(b.name.split('.').pop() || '');
+    return a.name.localeCompare(b.name);
+  };
+  dirs.sort(sortFn);
+  files.sort(sortFn);
+
+  const parentPath = dirPath.replace(/[\\/][^\\/]+$/, '') || dirPath;
+  let html = '';
+  if (parentPath !== dirPath) {
+    html += `<div onclick="loadAddDirList('${esc(parentPath).replace(/\\/g, '\\\\')}')" style="padding:4px 8px;cursor:pointer;color:#58a6ff;border-bottom:1px solid #0d0d18;font-weight:600;" onmouseover="this.style.background='#1a1a2a'" onmouseout="this.style.background='transparent'">..</div>`;
+  }
+
+  dirs.forEach(d => {
+    const fullPath = dirPath + '\\' + d.name;
+    const escapedPath = esc(fullPath).replace(/\\/g, '\\\\');
+    const dateStr = d.mtime ? new Date(d.mtime).toLocaleDateString() : '';
+    html += `<div style="padding:4px 8px;cursor:pointer;color:#e2e8f0;border-bottom:1px solid #0d0d18;display:flex;justify-content:space-between;align-items:center;" onmouseover="this.style.background='#1a1a2a'" onmouseout="this.style.background='transparent'">
+      <span onclick="loadAddDirList('${escapedPath}')" style="flex:1;cursor:pointer;">📁 ${esc(d.name)}</span>
+      <span style="display:flex;align-items:center;gap:8px;">
+        <span style="color:#484f58;font-size:10px;">${dateStr}</span>
+        <button onclick="event.stopPropagation();selectAddDir('${escapedPath}')" style="background:#1a1a2e;color:#9b4dca;border:1px solid #2a2a3a;border-radius:3px;padding:1px 6px;font-size:10px;cursor:pointer;">+ Add</button>
+      </span>
+    </div>`;
+  });
+
+  files.forEach(f => {
+    const dateStr = f.mtime ? new Date(f.mtime).toLocaleDateString() : '';
+    const sizeStr = f.size ? (f.size > 1048576 ? (f.size/1048576).toFixed(1)+'MB' : f.size > 1024 ? (f.size/1024).toFixed(0)+'KB' : f.size+'B') : '';
+    html += `<div style="padding:4px 8px;color:#484f58;border-bottom:1px solid #0d0d18;display:flex;justify-content:space-between;align-items:center;font-size:11px;">
+      <span>  ${esc(f.name)}</span>
+      <span style="font-size:10px;">${sizeStr} ${dateStr}</span>
+    </div>`;
+  });
+
+  if (dirs.length === 0 && files.length === 0) {
+    html += '<div style="padding:8px;color:#64748b;font-style:italic;">Empty folder</div>';
+  }
+
+  list.innerHTML = html;
+}
+
+function selectAddDir(path) {
+  const input = document.getElementById('spawnAdditionalDirs');
+  const existing = input.value.trim();
+  const currentPaths = existing ? existing.split(',').map(p => p.trim()) : [];
+  if (!currentPaths.includes(path)) {
+    input.value = existing ? existing + ', ' + path : path;
+  }
+  document.getElementById('addDirBrowser').style.display = 'none';
+  document.getElementById('addDirSearchInput').value = '';
+  document.getElementById('addDirSearchClear').style.display = 'none';
+}
+
+// ── FOLDER SEARCH (Additional Directories) ──
+async function searchAddDirs() {
+  const query = document.getElementById('addDirSearchInput').value.trim();
+  if (!query || query.length < 2) return;
+
+  const list = document.getElementById('addDirList');
+  list.innerHTML = '<div style="padding:8px;color:#64748b;">Searching...</div>';
+  document.getElementById('addDirSearchClear').style.display = 'inline-block';
+
+  document.getElementById('addDirNav').innerHTML = `<span style="color:#9b4dca;font-size:11px;font-weight:600;">Search results for "${esc(query)}"</span>`;
+
+  try {
+    const root = document.getElementById('spawnCwd').value.trim().replace(/[\\/][^\\/]+$/, '') || 'C:\\Users';
+    const data = await api(`/api/files/search?q=${encodeURIComponent(query)}&root=${encodeURIComponent(root)}&maxDepth=5&maxResults=25`);
+    const results = data.results || [];
+
+    if (results.length === 0) {
+      list.innerHTML = '<div style="padding:8px;color:#64748b;font-style:italic;">No folders found matching "' + esc(query) + '"</div>';
+      return;
+    }
+
+    let html = '';
+    results.forEach(r => {
+      const escapedPath = esc(r.path).replace(/\\/g, '\\\\');
+      html += `<div style="padding:5px 8px;cursor:pointer;color:#e2e8f0;border-bottom:1px solid #0d0d18;display:flex;justify-content:space-between;align-items:center;" onmouseover="this.style.background='#1a1a2a'" onmouseout="this.style.background='transparent'">
+        <span onclick="loadAddDirList('${escapedPath}')" style="flex:1;cursor:pointer;display:flex;flex-direction:column;">
+          <span>📁 <strong>${esc(r.name)}</strong></span>
+          <span style="font-size:10px;color:#64748b;margin-top:1px;">${esc(r.path)}</span>
+        </span>
+        <button onclick="event.stopPropagation();selectAddDir('${escapedPath}')" style="background:#3fb950;color:#000;border:none;border-radius:4px;padding:2px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">+ Add</button>
+      </div>`;
+    });
+
+    list.innerHTML = html;
+  } catch (e) {
+    list.innerHTML = `<div style="padding:8px;color:#f85149;">Search failed: ${e.message}</div>`;
+  }
+}
+
+function clearAddDirSearch() {
+  document.getElementById('addDirSearchInput').value = '';
+  document.getElementById('addDirSearchClear').style.display = 'none';
+  if (addDirCurrentPath) loadAddDirList(addDirCurrentPath);
 }
 
 // ── VIEW TOGGLE ──
@@ -1914,34 +2628,60 @@ function renderGridView() {
 
   grid.innerHTML = agents.map(a => {
     const machine = machines.find(m => m.id === a.machineId) || { name: 'LOCAL' };
-    const lines = (outputBuffers[a.id] || []).slice(-8);
+    const lines = (outputBuffers[a.id] || []).slice(-20);
     const elapsed = a.createdAt ? Math.floor((Date.now() - a.createdAt) / 60000) : 0;
+    const folderName = (a.cwd || a.config?.cwd || '').split(/[\\/]/).filter(Boolean).pop() || 'unknown';
     return `
       <div class="grid-tile ${a.status === 'waiting' ? 'waiting' : ''} ${selectedAgent === a.id ? 'selected' : ''}"
            onclick="gridTileClick('${esc(a.id)}')">
         <div class="grid-tile-header">
           <div class="grid-tile-title">
             <div class="dot ${a.status}"></div>
-            <span>${esc(a.name)}</span>
+            <span title="${esc(a.cwd || '')}">${esc(folderName)}</span>
           </div>
           <div class="grid-tile-badges">
-            <span class="badge machine">${esc(machine.name)}</span>
-            <span class="badge ${a.mode === 'auto' ? 'mode-a' : 'mode-m'}">${a.mode}</span>
+            <span class="badge mode-${a.mode[0]}">${a.mode}</span>
             <span class="badge cost">$${(a.cost || 0).toFixed(2)}</span>
           </div>
         </div>
-        <div class="grid-tile-body">
-          <div class="gl system" style="color:#64748b;margin-bottom:4px;">${esc(a.task.substring(0, 100))}</div>
+        <div class="grid-tile-body" id="gridBody-${esc(a.id)}">
+          ${a.task ? `<div class="gl system" style="color:#64748b;margin-bottom:4px;">${esc(a.task.substring(0, 100))}</div>` : ''}
           ${lines.map(l => `<div class="gl ${l.type}">${l.type === 'tool' ? '<span style="color:#bc8cff;">' + esc(l.text) + '</span>' : esc(l.text)}</div>`).join('')}
         </div>
+        <div class="grid-tile-input" onclick="event.stopPropagation()">
+          <input type="text" id="gridInput-${esc(a.id)}" placeholder="Message..." onkeydown="if(event.key==='Enter')gridSend('${esc(a.id)}')">
+          <button onclick="gridSend('${esc(a.id)}')">Send</button>
+        </div>
         <div class="grid-tile-footer">
-          <span>${a.status.toUpperCase()}</span>
+          <span>${a.status.toUpperCase()}${a.restartCount ? ' (R' + a.restartCount + ')' : ''}</span>
+          <span>${a.hasAllowlist ? '[AL]' : ''}${a.hasNetworkPolicy ? '[NP]' : ''}</span>
+          <span>${a.model ? a.model.replace('claude-','').replace(/-\d{8}$/,'').substring(0,10) : 'opus'}</span>
           <span>${(a.tokensIn/1000).toFixed(0)}K in</span>
           <span>${elapsed}m</span>
         </div>
       </div>
     `;
   }).join('');
+
+  // Auto-scroll each tile body to bottom
+  agents.forEach(a => {
+    const body = document.getElementById('gridBody-' + a.id);
+    if (body) body.scrollTop = body.scrollHeight;
+  });
+}
+
+function updateGridTileBody(sessionId) {
+  const body = document.getElementById('gridBody-' + sessionId);
+  if (!body) return;
+  const agent = agents.find(a => a.id === sessionId);
+  const lines = (outputBuffers[sessionId] || []).slice(-20);
+  let html = '';
+  if (agent && agent.task) {
+    html += `<div class="gl system" style="color:#64748b;margin-bottom:4px;">${esc(agent.task.substring(0, 100))}</div>`;
+  }
+  html += lines.map(l => `<div class="gl ${l.type}">${l.type === 'tool' ? '<span style="color:#bc8cff;">' + esc(l.text) + '</span>' : esc(l.text)}</div>`).join('');
+  body.innerHTML = html;
+  body.scrollTop = body.scrollHeight;
 }
 
 function gridTileClick(agentId) {
@@ -1954,6 +2694,28 @@ function gridTileClick(agentId) {
   if (agent) selectedMachine = agent.machineId || 'local';
   renderGridView();
   renderMachines();
+}
+
+async function gridSend(agentId) {
+  const input = document.getElementById('gridInput-' + agentId);
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  if (!outputBuffers[agentId]) outputBuffers[agentId] = [];
+  outputBuffers[agentId].push({ type: 'prompt', text: '> ' + text });
+  renderGridView();
+
+  try {
+    await api(`/api/mc/agents/${agentId}/respond`, {
+      method: 'POST',
+      body: { choice: text },
+    });
+  } catch (e) {
+    outputBuffers[agentId].push({ type: 'error', text: 'Failed: ' + e.message });
+    renderGridView();
+  }
 }
 
 // ── UTILITIES ──

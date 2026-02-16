@@ -1,5 +1,5 @@
 /**
- * DAO Module API Routes — Full SodaWorld DAO backend (40+ endpoints)
+ * DAO Module API Routes — Full SodaWorld DAO backend (45+ endpoints)
  *
  * Core (6):      GET /, /status, /:id  |  POST /:id/chat, /:id/learn  |  GET /:id/knowledge
  * Coach (3):     POST coach/okrs, coach/milestones, coach/swot
@@ -11,6 +11,7 @@
  * Agreements (2):POST agreements/:id/request-signatures  |  GET agreements/:id
  * Bounties (4):  GET bounties  |  POST bounties/create, bounties/:id/claim, bounties/:id/complete
  * Marketplace(2):GET marketplace  |  POST marketplace/create
+ * Tokens (5):    POST tokens/issue, tokens/transfer  |  GET tokens/ledger, tokens/balance/:userId, tokens/balances
  * Maintenance(2):POST dao/fix-data
  */
 
@@ -1127,6 +1128,335 @@ router.get('/dao/health', async (_req: Request, res: Response) => {
   } catch (error) {
     logger.error(`Health check error: ${error}`);
     res.status(500).json({ healthy: false, error: `${error}` });
+  }
+});
+
+
+// ─── Invite / Approve Member Endpoints ────────────────────────────────────────
+
+/** POST /api/modules/dao/invite — Record an invitation (founder only) */
+router.post('/dao/invite', async (req: Request, res: Response) => {
+  try {
+    const { dao_id, email, role, invited_by } = req.body;
+    if (!email) {
+      res.status(400).json({ error: 'Missing required field: email' });
+      return;
+    }
+    const k = getKnex();
+    const daoId = dao_id || 'sodaworld-dao-001';
+    const crypto = await import('crypto');
+    const now = new Date().toISOString();
+
+    // Check if user already exists
+    const existingUser = await k('users').where({ email }).first();
+    if (existingUser) {
+      // Check if already a member
+      const existingMember = await k('dao_members')
+        .where({ dao_id: daoId, user_id: existingUser.id })
+        .whereNull('left_at')
+        .first();
+      if (existingMember) {
+        res.status(409).json({ error: 'User is already a DAO member', member: existingMember });
+        return;
+      }
+      // Add as member
+      const memberId = `dm-${crypto.randomUUID()}`;
+      await k('dao_members').insert({
+        id: memberId,
+        dao_id: daoId,
+        user_id: existingUser.id,
+        role: role || 'member',
+        joined_at: now,
+        left_at: null,
+        voting_power: 1.0,
+        reputation_score: 0,
+        metadata: JSON.stringify({ invited_by: invited_by || 'founder', invited_at: now }),
+      });
+      res.json({ success: true, message: 'Existing user added to DAO', member_id: memberId });
+      return;
+    }
+
+    // Create a placeholder user for the invite
+    const userId = `user-inv-${crypto.randomUUID().substring(0, 8)}`;
+    await k('users').insert({
+      id: userId,
+      firebase_uid: null,
+      email,
+      display_name: email.split('@')[0],
+      avatar_url: null,
+      role: role || 'member',
+      wallet_address: null,
+      metadata: JSON.stringify({ invited_by: invited_by || 'founder', invite_pending: true, invited_at: now }),
+      created_at: now,
+      updated_at: now,
+    });
+
+    const memberId = `dm-${crypto.randomUUID()}`;
+    await k('dao_members').insert({
+      id: memberId,
+      dao_id: daoId,
+      user_id: userId,
+      role: role || 'member',
+      joined_at: now,
+      left_at: null,
+      voting_power: 1.0,
+      reputation_score: 0,
+      metadata: JSON.stringify({ invited_by: invited_by || 'founder', invite_pending: true }),
+    });
+
+    bus.emit({ type: 'member.invited', source: 'api', dao_id: daoId, payload: { email, role, invited_by } });
+
+    res.json({ success: true, message: 'Invitation recorded', user_id: userId, member_id: memberId });
+  } catch (error) {
+    logger.error(`Invite error: ${error}`);
+    res.status(500).json({ error: `Failed to invite: ${error}` });
+  }
+});
+
+// ─── Token Ledger Endpoints ───────────────────────────────────────────────────────
+
+/** POST /api/modules/tokens/issue — Mint new tokens to a user */
+router.post('/tokens/issue', async (req: Request, res: Response) => {
+  try {
+    const { dao_id, to_user_id, amount, reason, approved_by } = req.body;
+    if (!dao_id || !to_user_id || !amount) {
+      res.status(400).json({ error: 'Missing required fields: dao_id, to_user_id, amount' });
+      return;
+    }
+    if (amount <= 0) {
+      res.status(400).json({ error: 'Amount must be greater than 0' });
+      return;
+    }
+    const k = getKnex();
+    const crypto = await import('crypto');
+
+    // Validate to_user_id is a DAO member
+    const member = await k('dao_members')
+      .where({ dao_id, user_id: to_user_id })
+      .whereNull('left_at')
+      .first();
+    if (!member) {
+      res.status(400).json({ error: `User ${to_user_id} is not a member of DAO ${dao_id}` });
+      return;
+    }
+
+    const id = `tx-${crypto.randomUUID().substring(0, 12)}`;
+    const now = new Date().toISOString();
+    await k('token_transactions').insert({
+      id,
+      dao_id,
+      from_user_id: null,
+      to_user_id,
+      amount,
+      type: 'mint',
+      reason: reason || null,
+      approved_by: approved_by || null,
+      reference_id: null,
+      created_at: now,
+    });
+
+    const transaction = { id, dao_id, from_user_id: null, to_user_id, amount, type: 'mint', reason, approved_by, created_at: now };
+
+    bus.emit({
+      type: 'token.issued',
+      source: 'treasury',
+      dao_id,
+      payload: transaction,
+    });
+
+    res.json({ success: true, transaction });
+  } catch (error) {
+    logger.error(`Token issue error: ${error}`);
+    res.status(500).json({ error: `Failed to issue tokens: ${error}` });
+  }
+});
+/** POST /api/modules/tokens/transfer — Transfer tokens between users */
+router.post('/tokens/transfer', async (req: Request, res: Response) => {
+  try {
+    const { dao_id, from_user_id, to_user_id, amount, reason } = req.body;
+    if (!dao_id || !from_user_id || !to_user_id || !amount) {
+      res.status(400).json({ error: 'Missing required fields: dao_id, from_user_id, to_user_id, amount' });
+      return;
+    }
+    if (amount <= 0) {
+      res.status(400).json({ error: 'Amount must be greater than 0' });
+      return;
+    }
+    const k = getKnex();
+    const crypto = await import('crypto');
+
+    // Validate both users are DAO members
+    const fromMember = await k('dao_members')
+      .where({ dao_id, user_id: from_user_id })
+      .whereNull('left_at')
+      .first();
+    if (!fromMember) {
+      res.status(400).json({ error: `User ${from_user_id} is not a member of DAO ${dao_id}` });
+      return;
+    }
+    const toMember = await k('dao_members')
+      .where({ dao_id, user_id: to_user_id })
+      .whereNull('left_at')
+      .first();
+    if (!toMember) {
+      res.status(400).json({ error: `User ${to_user_id} is not a member of DAO ${dao_id}` });
+      return;
+    }
+
+    // Calculate from_user's balance from transaction history
+    const received = await k('token_transactions')
+      .where({ dao_id, to_user_id: from_user_id })
+      .sum('amount as total')
+      .first();
+    const sent = await k('token_transactions')
+      .where({ dao_id, from_user_id })
+      .sum('amount as total')
+      .first();
+    const balance = ((received as { total: number })?.total || 0) - ((sent as { total: number })?.total || 0);
+
+    if (balance < amount) {
+      res.status(400).json({ error: `Insufficient balance. User ${from_user_id} has ${balance} tokens, tried to send ${amount}` });
+      return;
+    }
+
+    const id = `tx-${crypto.randomUUID().substring(0, 12)}`;
+    const now = new Date().toISOString();
+    await k('token_transactions').insert({
+      id,
+      dao_id,
+      from_user_id,
+      to_user_id,
+      amount,
+      type: 'transfer',
+      reason: reason || null,
+      approved_by: null,
+      reference_id: null,
+      created_at: now,
+    });
+
+    const transaction = { id, dao_id, from_user_id, to_user_id, amount, type: 'transfer', reason, created_at: now };
+
+    bus.emit({
+      type: 'token.transferred',
+      source: 'treasury',
+      dao_id,
+      payload: transaction,
+    });
+
+    res.json({ success: true, transaction });
+  } catch (error) {
+    logger.error(`Token transfer error: ${error}`);
+    res.status(500).json({ error: `Failed to transfer tokens: ${error}` });
+  }
+});
+/** GET /api/modules/tokens/ledger — Get token transaction history */
+router.get('/tokens/ledger', async (req: Request, res: Response) => {
+  try {
+    const daoId = (req.query.dao_id as string) || 'sodaworld-dao-001';
+    const limit = parseInt(req.query.limit as string) || 50;
+    const offset = parseInt(req.query.offset as string) || 0;
+    const k = getKnex();
+
+    const transactions = await k('token_transactions')
+      .where({ 'token_transactions.dao_id': daoId })
+      .leftJoin('users as from_user', 'token_transactions.from_user_id', 'from_user.id')
+      .leftJoin('users as to_user', 'token_transactions.to_user_id', 'to_user.id')
+      .select(
+        'token_transactions.*',
+        'from_user.display_name as from_display_name',
+        'to_user.display_name as to_display_name',
+      )
+      .orderBy('token_transactions.created_at', 'desc')
+      .limit(limit)
+      .offset(offset);
+
+    res.json({ transactions });
+  } catch (error) {
+    logger.error(`Token ledger error: ${error}`);
+    res.status(500).json({ error: 'Failed to get token ledger' });
+  }
+});
+
+/** GET /api/modules/tokens/balance/:userId — Get a user's token balance */
+router.get('/tokens/balance/:userId', async (req: Request, res: Response) => {
+  try {
+    const userId = param(req, 'userId');
+    const daoId = (req.query.dao_id as string) || 'sodaworld-dao-001';
+    const k = getKnex();
+
+    const received = await k('token_transactions')
+      .where({ dao_id: daoId, to_user_id: userId })
+      .sum('amount as total')
+      .first();
+    const sent = await k('token_transactions')
+      .where({ dao_id: daoId, from_user_id: userId })
+      .sum('amount as total')
+      .first();
+    const balance = ((received as { total: number })?.total || 0) - ((sent as { total: number })?.total || 0);
+
+    const txCount = await k('token_transactions')
+      .where({ dao_id: daoId })
+      .where(function () {
+        this.where({ to_user_id: userId }).orWhere({ from_user_id: userId });
+      })
+      .count('* as count')
+      .first();
+
+    res.json({
+      user_id: userId,
+      balance,
+      transactions_count: (txCount as { count: number })?.count || 0,
+    });
+  } catch (error) {
+    logger.error(`Token balance error: ${error}`);
+    res.status(500).json({ error: 'Failed to get token balance' });
+  }
+});
+/** GET /api/modules/tokens/balances — Get all member balances */
+router.get('/tokens/balances', async (req: Request, res: Response) => {
+  try {
+    const daoId = (req.query.dao_id as string) || 'sodaworld-dao-001';
+    const k = getKnex();
+
+    // Get all current DAO members
+    const members = await k('dao_members')
+      .where({ dao_id: daoId })
+      .whereNull('left_at')
+      .leftJoin('users', 'dao_members.user_id', 'users.id')
+      .select(
+        'users.id as user_id',
+        'users.display_name',
+        'users.email',
+        'dao_members.role as dao_role',
+      );
+
+    // Calculate balance for each member
+    const balances = await Promise.all(
+      members.map(async (m: { user_id: string; display_name: string; email: string; dao_role: string }) => {
+        const received = await k('token_transactions')
+          .where({ dao_id: daoId, to_user_id: m.user_id })
+          .sum('amount as total')
+          .first();
+        const sent = await k('token_transactions')
+          .where({ dao_id: daoId, from_user_id: m.user_id })
+          .sum('amount as total')
+          .first();
+        const balance = ((received as { total: number })?.total || 0) - ((sent as { total: number })?.total || 0);
+
+        return {
+          user_id: m.user_id,
+          display_name: m.display_name,
+          email: m.email,
+          dao_role: m.dao_role,
+          balance,
+        };
+      }),
+    );
+
+    res.json({ balances });
+  } catch (error) {
+    logger.error(`Token balances error: ${error}`);
+    res.status(500).json({ error: 'Failed to get token balances' });
   }
 });
 
