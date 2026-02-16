@@ -214,6 +214,69 @@ Format: List issues with severity (HIGH/MEDIUM/LOW)`;
   }
 
   /**
+   * Generate content with an image (vision).
+   * Sends base64-encoded image alongside text prompt using inlineData.
+   */
+  async generateWithImage(
+    prompt: string,
+    imageBase64: string,
+    mimeType: string = 'image/png',
+    model?: string,
+  ): Promise<{ text: string; tokensUsed: number; durationMs: number }> {
+    const startTime = Date.now();
+    const modelToUse = model || 'gemini-2.0-flash';
+
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/models/${modelToUse}:generateContent?key=${this.apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  { text: prompt },
+                  {
+                    inlineData: {
+                      mimeType,
+                      data: imageBase64,
+                    },
+                  },
+                ],
+              },
+            ],
+            generationConfig: {
+              temperature: 0.3,
+              maxOutputTokens: 2048,
+            },
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Gemini vision HTTP ${response.status}: ${error}`);
+      }
+
+      const result = await response.json() as GeminiResponse;
+      const durationMs = Date.now() - startTime;
+      const tokensUsed = result.usageMetadata?.totalTokenCount || 0;
+
+      logger.info(`Gemini vision completed (${modelToUse}, ${durationMs}ms, ${tokensUsed} tokens)`);
+
+      return {
+        text: result.candidates[0]?.content?.parts[0]?.text || '',
+        tokensUsed,
+        durationMs,
+      };
+    } catch (error) {
+      logger.error(`Gemini vision failed: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
    * Get estimated cost for a response
    */
   getEstimatedCost(inputTokens: number, outputTokens: number): number {

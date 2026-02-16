@@ -1,12 +1,15 @@
 /**
  * Browser Agent API Routes
- * Spawn browser agents with Playwright MCP pre-configured
+ * - Claude-powered browser agents (Playwright MCP)
+ * - Gemini-powered browser controller (direct Playwright)
  */
 
 import { Router, Request, Response } from 'express';
 import { createLogger } from '../../utils/logger.js';
 import { spawnBrowserAgent } from '../../browser-agent/browser-session.js';
 import { getAgentSessionManager } from '../../mission-control/agent-session.js';
+import { getBrowserController } from '../../browser-controller/controller.js';
+import type { BrowserCommand } from '../../browser-controller/types.js';
 
 const router = Router();
 const logger = createLogger('BrowserAPI');
@@ -91,6 +94,104 @@ router.get('/sessions', (_req: Request, res: Response) => {
   } catch (error) {
     logger.error(`Failed to list browser sessions: ${error}`);
     res.status(500).json({ error: 'Failed to list browser sessions' });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
+// Gemini Browser Controller — direct Playwright + Gemini vision
+// ══════════════════════════════════════════════════════════════
+
+/**
+ * POST /api/browser/controller/start
+ * Launch the Gemini browser controller
+ */
+router.post('/controller/start', async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const controller = getBrowserController();
+    const state = controller.getState();
+
+    if (state.status !== 'stopped') {
+      res.status(409).json({ error: 'Browser controller already running', state });
+      return;
+    }
+
+    await controller.start();
+    logger.info('Browser controller started via API');
+    res.status(201).json({ message: 'Browser controller started', state: controller.getState() });
+  } catch (error) {
+    logger.error(`Failed to start browser controller: ${error}`);
+    res.status(500).json({ error: `Failed to start: ${(error as Error).message}` });
+  }
+});
+
+/**
+ * POST /api/browser/controller/command
+ * Execute a browser command (navigate, click, fill, screenshot, extractText, executeTask, etc.)
+ */
+router.post('/controller/command', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const controller = getBrowserController();
+    const state = controller.getState();
+
+    if (state.status === 'stopped') {
+      res.status(503).json({ error: 'Browser controller not running. POST /controller/start first.' });
+      return;
+    }
+
+    if (state.status === 'busy') {
+      res.status(429).json({ error: 'Browser controller is busy. Wait for current command to complete.' });
+      return;
+    }
+
+    const command: BrowserCommand = req.body;
+    if (!command.type) {
+      res.status(400).json({ error: 'command.type is required' });
+      return;
+    }
+
+    const result = await controller.execute(command);
+    res.json(result);
+  } catch (error) {
+    logger.error(`Controller command failed: ${error}`);
+    res.status(500).json({ error: `Command failed: ${(error as Error).message}` });
+  }
+});
+
+/**
+ * GET /api/browser/controller/status
+ * Get controller state + last screenshot as data URL
+ */
+router.get('/controller/status', (_req: Request, res: Response) => {
+  try {
+    const controller = getBrowserController();
+    const state = controller.getState();
+
+    const response: Record<string, unknown> = { ...state };
+    if (state.lastScreenshot) {
+      response.screenshotDataUrl = `data:image/png;base64,${state.lastScreenshot}`;
+      delete response.lastScreenshot; // Don't double-send the raw base64
+    }
+
+    res.json(response);
+  } catch (error) {
+    logger.error(`Failed to get controller status: ${error}`);
+    res.status(500).json({ error: 'Failed to get status' });
+  }
+});
+
+/**
+ * POST /api/browser/controller/stop
+ * Stop the browser controller
+ */
+router.post('/controller/stop', async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const controller = getBrowserController();
+    await controller.stop();
+    logger.info('Browser controller stopped via API');
+    res.json({ message: 'Browser controller stopped' });
+  } catch (error) {
+    logger.error(`Failed to stop browser controller: ${error}`);
+    res.status(500).json({ error: `Failed to stop: ${(error as Error).message}` });
   }
 });
 
