@@ -435,6 +435,107 @@
       line-height: 1.5;
     }
 
+    /* ── Machine Messages View ── */
+    .messages-view {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 16px;
+      display: none;
+      flex-direction: column;
+    }
+    .messages-view.active { display: flex; }
+
+    .messages-compose {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-shrink: 0;
+    }
+    .messages-compose select,
+    .messages-compose input {
+      background: #0f0f18;
+      border: 1px solid #1e1e30;
+      color: #c9d1d9;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+    .messages-compose select { width: 160px; }
+    .messages-compose input { flex: 1; }
+    .messages-compose button {
+      background: #9b4dca;
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .messages-compose button:hover { background: #b065e0; }
+
+    .msg-card {
+      background: #0f0f18;
+      border: 1px solid #1e1e30;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 6px;
+    }
+    .msg-card.unread { border-left: 3px solid #9b4dca; }
+    .msg-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    .msg-from { font-size: 12px; font-weight: 700; color: #bc8cff; }
+    .msg-time { font-size: 10px; color: #484f58; }
+    .msg-type-badge {
+      font-size: 9px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      display: inline-block;
+      margin-left: 8px;
+    }
+    .msg-type-badge.chat { background: #0d1830; color: #58a6ff; }
+    .msg-type-badge.command { background: #1f0d2a; color: #bc8cff; }
+    .msg-type-badge.status { background: #0d2818; color: #3fb950; }
+    .msg-type-badge.task { background: #2a1f0f; color: #d29922; }
+    .msg-type-badge.file { background: #1a1a2e; color: #8b949e; }
+    .msg-type-badge.heartbeat { background: #0f0f18; color: #484f58; }
+    .msg-content {
+      font-size: 13px;
+      color: #c9d1d9;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .msg-card .msg-mark-read {
+      font-size: 10px;
+      color: #484f58;
+      cursor: pointer;
+      float: right;
+      margin-top: 4px;
+    }
+    .msg-card .msg-mark-read:hover { color: #9b4dca; }
+    .messages-empty {
+      color: #484f58;
+      text-align: center;
+      padding: 40px 0;
+      font-size: 13px;
+    }
+    .msg-unread-badge {
+      background: #9b4dca;
+      color: #fff;
+      font-size: 9px;
+      padding: 1px 6px;
+      border-radius: 10px;
+      margin-left: 6px;
+      font-weight: 700;
+    }
+
     /* ── Right Panel: Prompt Queue ── */
     .prompt-panel {
       width: 360px;
@@ -1015,6 +1116,10 @@
         <div class="ws-dot"></div>
         <span>Connected</span>
       </div>
+      <div class="ws-status" id="waStatus" style="cursor:pointer;" onclick="toggleWhatsApp()" title="Click to connect/disconnect WhatsApp">
+        <div class="ws-dot" id="waDot" style="background:#484f58;"></div>
+        <span id="waLabel">WhatsApp</span>
+      </div>
     </div>
   </div>
 
@@ -1060,6 +1165,7 @@
         <div class="agent-tab active" data-tab="terminal" onclick="switchAgentTab('terminal')">Terminal</div>
         <div class="agent-tab" data-tab="journal" onclick="switchAgentTab('journal')">Journal</div>
         <div class="agent-tab" data-tab="cost" onclick="switchAgentTab('cost')">Cost</div>
+        <div class="agent-tab" data-tab="messages" onclick="switchAgentTab('messages')">Messages <span id="msgUnreadBadge" class="msg-unread-badge" style="display:none;">0</span></div>
       </div>
 
       <!-- Agent Status Banner -->
@@ -1092,6 +1198,19 @@
       <!-- Journal View (hidden by default) -->
       <div class="journal-view" id="journalView"></div>
 
+      <!-- Messages View (hidden by default) -->
+      <div class="messages-view" id="messagesView">
+        <div class="messages-compose">
+          <select id="msgTargetMachine">
+            <option value="*">All Machines</option>
+          </select>
+          <input type="text" id="msgContent" placeholder="Type a message..."
+                 onkeydown="if(event.key==='Enter')sendBoardMessage()">
+          <button onclick="sendBoardMessage()">Send</button>
+        </div>
+        <div id="messagesListContainer"></div>
+      </div>
+
       <!-- Cost footer -->
       <div class="cost-tracker" id="costTracker" style="display:none;">
         <div class="cost-item">Session: <span class="cost-value" id="costSession">$0.00</span></div>
@@ -1113,6 +1232,22 @@
   </div>
 
   <!-- SPAWN MODAL -->
+  <!-- WhatsApp QR Modal -->
+  <div class="modal-overlay" id="waModal">
+    <div class="modal" style="max-width:400px;text-align:center;">
+      <h2>WhatsApp Pairing</h2>
+      <div id="waModalBody">
+        <p style="color:#8b949e;font-size:13px;">Starting WhatsApp... Check server terminal for QR code.</p>
+        <p style="color:#8b949e;font-size:12px;margin-top:12px;">Or scan the QR code below when it appears:</p>
+        <div id="waQrDisplay" style="margin:16px auto;padding:16px;background:#fff;border-radius:8px;display:inline-block;min-height:60px;">
+          <span style="color:#484f58;font-size:12px;">Waiting for QR...</span>
+        </div>
+        <p style="color:#484f58;font-size:11px;">Open WhatsApp on your phone &rarr; Settings &rarr; Linked Devices &rarr; Link a Device</p>
+      </div>
+      <button class="btn ghost" onclick="document.getElementById('waModal').classList.remove('visible')" style="margin-top:12px;">Close</button>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="spawnModal">
     <div class="modal" style="max-width:520px;max-height:90vh;overflow-y:auto;">
       <h2>Spawn New Agent</h2>
@@ -1638,6 +1773,15 @@ function handleWsMessage(msg) {
     case 'authenticated':
       // Good, now subscribe
       break;
+    case 'relay:message':
+      // A cross-machine message arrived — refresh board if on messages tab
+      if (activeAgentTab === 'messages') {
+        fetchAndRenderMessages();
+      } else {
+        // Just update badge
+        updateUnreadBadge();
+      }
+      break;
   }
 }
 
@@ -1733,7 +1877,7 @@ function selectMachine(machineId) {
     document.getElementById('centerTitle').textContent = machine.name + ' — No agents running';
     document.getElementById('centerMode').style.display = 'none';
     document.getElementById('centerActions').style.display = 'flex';
-    document.getElementById('agentTabs').style.display = 'none';
+    document.getElementById('agentTabs').style.display = 'flex';
     document.getElementById('costTracker').style.display = 'none';
     document.getElementById('terminalOutput').innerHTML = `
       <div class="term-line system">Machine: ${esc(machine.name)} (${esc(machine.ip)})</div>
@@ -2152,9 +2296,15 @@ function switchAgentTab(tab) {
   document.getElementById('terminalView').style.display = tab === 'terminal' || tab === 'cost' ? 'flex' : 'none';
   document.getElementById('journalView').style.display = tab === 'journal' ? 'block' : 'none';
   document.getElementById('journalView').classList.toggle('active', tab === 'journal');
+  document.getElementById('messagesView').style.display = tab === 'messages' ? 'flex' : 'none';
+  document.getElementById('messagesView').classList.toggle('active', tab === 'messages');
 
   if (tab === 'journal' && selectedAgent) {
     renderJournal(selectedAgent);
+  }
+
+  if (tab === 'messages') {
+    fetchAndRenderMessages();
   }
 
   if (tab === 'cost' && selectedAgent) {
@@ -2173,6 +2323,177 @@ function switchAgentTab(tab) {
         <div class="term-line output">  Avg cost/tool:  $${((agent.cost || 0) / Math.max(agent.toolCalls || 1, 1)).toFixed(4)}</div>
       `;
     }
+  }
+}
+
+// ── WHATSAPP INTEGRATION ──
+let waConnected = false;
+let waPolling = null;
+
+async function fetchWhatsAppStatus() {
+  try {
+    const data = await api('/api/whatsapp/status');
+    waConnected = data.ready;
+    const dot = document.getElementById('waDot');
+    const label = document.getElementById('waLabel');
+    if (data.ready) {
+      dot.style.background = '#25D366';
+      label.textContent = 'WA: ' + (data.phone || 'Connected');
+    } else if (data.qrPending) {
+      dot.style.background = '#d29922';
+      label.textContent = 'WA: Scan QR';
+    } else if (data.enabled) {
+      dot.style.background = '#f85149';
+      label.textContent = 'WA: Starting...';
+    } else {
+      dot.style.background = '#484f58';
+      label.textContent = 'WhatsApp';
+    }
+    return data;
+  } catch (e) {
+    return { enabled: false, ready: false };
+  }
+}
+
+async function toggleWhatsApp() {
+  const status = await fetchWhatsAppStatus();
+  if (status.ready) {
+    // Already connected — offer to disconnect
+    if (confirm('WhatsApp is connected. Disconnect?')) {
+      await api('/api/whatsapp/stop', { method: 'POST' });
+      fetchWhatsAppStatus();
+      if (waPolling) { clearInterval(waPolling); waPolling = null; }
+    }
+    return;
+  }
+
+  // Start WhatsApp
+  try {
+    await api('/api/whatsapp/start', { method: 'POST' });
+    document.getElementById('waModal').classList.add('visible');
+    // Start polling for QR code and connection status
+    startWaPolling();
+  } catch (e) {
+    showToast('Failed to start WhatsApp');
+  }
+}
+
+function startWaPolling() {
+  if (waPolling) clearInterval(waPolling);
+  waPolling = setInterval(async () => {
+    const status = await fetchWhatsAppStatus();
+    if (status.ready) {
+      // Connected! Close modal, stop polling
+      document.getElementById('waModal').classList.remove('visible');
+      document.getElementById('waQrDisplay').innerHTML = '<span style="color:#25D366;font-size:14px;font-weight:700;">Connected!</span>';
+      showToast('WhatsApp connected as ' + (status.phone || 'unknown'));
+      clearInterval(waPolling);
+      waPolling = null;
+      return;
+    }
+    // Try to fetch QR
+    try {
+      const qrData = await api('/api/whatsapp/qr');
+      if (qrData.qr) {
+        // Render QR code as a simple text block (the actual QR displays in server terminal)
+        document.getElementById('waQrDisplay').innerHTML =
+          '<div style="font-family:monospace;font-size:8px;line-height:8px;color:#000;white-space:pre;">' +
+          'QR ready in server terminal' +
+          '</div><p style="color:#25D366;font-size:12px;margin-top:8px;">Scan the QR code shown in the PIA server terminal</p>';
+      }
+    } catch { /* ignore */ }
+  }, 3000);
+}
+
+// Check WhatsApp status on page load
+setTimeout(fetchWhatsAppStatus, 2000);
+
+// ── MACHINE MESSAGE BOARD ──
+let boardMessages = [];
+
+async function fetchAndRenderMessages() {
+  try {
+    const data = await api('/api/machine-board?limit=100');
+    boardMessages = data.messages || [];
+  } catch (e) {
+    console.warn('Failed to fetch board messages:', e);
+  }
+  renderBoardMessages();
+  updateMsgTargetDropdown();
+  updateUnreadBadge();
+}
+
+function renderBoardMessages() {
+  const container = document.getElementById('messagesListContainer');
+  if (!boardMessages.length) {
+    container.innerHTML = '<div class="messages-empty">No messages yet. Send a message to another machine.</div>';
+    return;
+  }
+  container.innerHTML = boardMessages.map(m => {
+    const time = new Date(m.created_at * 1000).toLocaleTimeString();
+    const date = new Date(m.created_at * 1000).toLocaleDateString();
+    const isUnread = !m.read;
+    const toLabel = m.to_machine_id === '*' ? 'All' : esc(m.to_machine_name || m.to_machine_id);
+    return `
+      <div class="msg-card ${isUnread ? 'unread' : ''}">
+        <div class="msg-card-header">
+          <span>
+            <span class="msg-from">${esc(m.from_machine_name || m.from_machine_id)}</span>
+            <span style="color:#484f58;font-size:11px;"> &rarr; ${toLabel}</span>
+            <span class="msg-type-badge ${m.type}">${m.type}</span>
+          </span>
+          <span class="msg-time">${date} ${time}</span>
+        </div>
+        <div class="msg-content">${esc(m.content)}</div>
+        ${isUnread ? `<span class="msg-mark-read" onclick="markBoardMsgRead('${esc(m.id)}')">Mark read</span>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function updateMsgTargetDropdown() {
+  const sel = document.getElementById('msgTargetMachine');
+  const opts = ['<option value="*">All Machines</option>'];
+  machines.forEach(m => {
+    opts.push(`<option value="${esc(m.id)}">${esc(m.name)}</option>`);
+  });
+  sel.innerHTML = opts.join('');
+}
+
+async function sendBoardMessage() {
+  const to = document.getElementById('msgTargetMachine').value;
+  const content = document.getElementById('msgContent').value.trim();
+  if (!content) return;
+  try {
+    await api('/api/machine-board/send', { method: 'POST', body: { to, content, type: 'chat' } });
+    document.getElementById('msgContent').value = '';
+    fetchAndRenderMessages();
+  } catch (e) {
+    console.error('Failed to send board message:', e);
+    showToast('Failed to send message');
+  }
+}
+
+async function markBoardMsgRead(messageId) {
+  try {
+    await api(`/api/machine-board/${messageId}/read`, { method: 'POST' });
+    const msg = boardMessages.find(m => m.id === messageId);
+    if (msg) msg.read = true;
+    renderBoardMessages();
+    updateUnreadBadge();
+  } catch (e) {
+    console.error('Failed to mark read:', e);
+  }
+}
+
+function updateUnreadBadge() {
+  const unread = boardMessages.filter(m => !m.read).length;
+  const badge = document.getElementById('msgUnreadBadge');
+  if (unread > 0) {
+    badge.textContent = unread;
+    badge.style.display = 'inline';
+  } else {
+    badge.style.display = 'none';
   }
 }
 

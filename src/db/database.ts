@@ -669,6 +669,29 @@ function getMigrations(): Migration[] {
         CREATE INDEX IF NOT EXISTS idx_token_tx_from ON token_transactions(from_user_id);
       `,
     },
+    {
+      name: '040_machine_messages',
+      sql: `
+        CREATE TABLE IF NOT EXISTS machine_messages (
+          id TEXT PRIMARY KEY,
+          from_machine_id TEXT NOT NULL,
+          from_machine_name TEXT NOT NULL,
+          to_machine_id TEXT NOT NULL,
+          to_machine_name TEXT DEFAULT '',
+          channel TEXT NOT NULL,
+          type TEXT NOT NULL DEFAULT 'chat',
+          content TEXT NOT NULL,
+          metadata TEXT DEFAULT '{}',
+          read INTEGER DEFAULT 0,
+          created_at INTEGER DEFAULT (unixepoch())
+        );
+        CREATE INDEX IF NOT EXISTS idx_mm_from ON machine_messages(from_machine_id);
+        CREATE INDEX IF NOT EXISTS idx_mm_to ON machine_messages(to_machine_id);
+        CREATE INDEX IF NOT EXISTS idx_mm_type ON machine_messages(type);
+        CREATE INDEX IF NOT EXISTS idx_mm_read ON machine_messages(read);
+        CREATE INDEX IF NOT EXISTS idx_mm_created ON machine_messages(created_at);
+      `,
+    },
   ];
 }
 

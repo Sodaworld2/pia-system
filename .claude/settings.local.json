@@ -86,7 +86,8 @@
       "mcp__windows-mcp__Scrape",
       "mcp__windows-mcp__MultiSelect",
       "mcp__windows-mcp__MultiEdit",
-      "Bash($resp = curl -s http://100.102.217.69:3000/api/sessions/1CIVrvbZU3AJXBJBm7BiG -H \"X-Api-Token: pia-local-dev-token-2024\")"
+      "Bash($resp = curl -s http://100.102.217.69:3000/api/sessions/1CIVrvbZU3AJXBJBm7BiG -H \"X-Api-Token: pia-local-dev-token-2024\")",
+      "WebFetch(domain:context7.com)"
     ]
   },
   "hooks": {

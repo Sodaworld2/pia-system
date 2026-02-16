@@ -110,7 +110,7 @@ router.get('/messages', (req: Request, res: Response) => {
     const relay = getCrossMachineRelay();
     const machineId = typeof req.query.machineId === 'string' ? req.query.machineId : undefined;
     const msgType = typeof req.query.type === 'string' ? req.query.type as 'chat' | 'command' | 'status' | 'file' | 'task' | 'heartbeat' : undefined;
-    const channel = typeof req.query.channel === 'string' ? req.query.channel as 'websocket' | 'tailscale' | 'ngrok' | 'discord' | 'api' : undefined;
+    const channel = typeof req.query.channel === 'string' ? req.query.channel as 'websocket' | 'tailscale' | 'ngrok' | 'discord' | 'whatsapp' | 'api' : undefined;
     const since = typeof req.query.since === 'string' ? parseInt(req.query.since, 10) : undefined;
     const limit = typeof req.query.limit === 'string' ? parseInt(req.query.limit, 10) : 50;
 

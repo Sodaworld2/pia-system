@@ -3,6 +3,10 @@
     "puppeteer": {
       "command": "npx",
       "args": ["-y", "@anthropic-ai/puppeteer-mcp@latest"]
+    },
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp@latest"]
     }
   }
 }

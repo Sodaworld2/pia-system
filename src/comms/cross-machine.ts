@@ -14,6 +14,7 @@
 import { WebSocket } from 'ws';
 import { createLogger } from '../utils/logger.js';
 import { getAgentBus } from './agent-bus.js';
+import { saveMachineMessage } from '../db/queries/machine-messages.js';
 import { nanoid } from 'nanoid';
 
 const logger = createLogger('CrossMachine');
@@ -32,14 +33,14 @@ export interface RemoteMachine {
   connectedAt: number;
   lastSeen: number;
   ws?: WebSocket;            // live WebSocket connection (if connected)
-  channels: ('websocket' | 'tailscale' | 'ngrok' | 'discord' | 'api')[];
+  channels: ('websocket' | 'tailscale' | 'ngrok' | 'discord' | 'whatsapp' | 'api')[];
 }
 
 export interface CrossMachineMessage {
   id: string;
   from: { machineId: string; machineName: string };
   to: { machineId: string; machineName: string } | '*';   // '*' = broadcast
-  channel: 'websocket' | 'tailscale' | 'ngrok' | 'discord' | 'api';
+  channel: 'websocket' | 'tailscale' | 'ngrok' | 'discord' | 'whatsapp' | 'api';
   type: 'chat' | 'command' | 'status' | 'file' | 'task' | 'heartbeat';
   content: string;
   metadata?: Record<string, unknown>;
@@ -146,6 +147,23 @@ export class CrossMachineRelay {
       this.messageLog.splice(0, this.messageLog.length - 5000);
     }
 
+    // Persist to database
+    try {
+      saveMachineMessage({
+        id: msg.id,
+        from_machine_id: msg.from.machineId,
+        from_machine_name: msg.from.machineName,
+        to_machine_id: typeof msg.to === 'string' ? msg.to : msg.to.machineId,
+        to_machine_name: typeof msg.to === 'string' ? '' : msg.to.machineName,
+        channel: msg.channel,
+        type: msg.type,
+        content: msg.content,
+        metadata: msg.metadata,
+      });
+    } catch (err) {
+      logger.warn(`Failed to persist outgoing message: ${err}`);
+    }
+
     // Route the message
     if (toMachineId === '*') {
       // Broadcast to all connected machines
@@ -186,6 +204,23 @@ export class CrossMachineRelay {
   handleIncoming(msg: CrossMachineMessage): void {
     this.messageLog.push(msg);
     this.notifySubscribers(msg);
+
+    // Persist to database
+    try {
+      saveMachineMessage({
+        id: msg.id,
+        from_machine_id: msg.from.machineId,
+        from_machine_name: msg.from.machineName,
+        to_machine_id: typeof msg.to === 'string' ? msg.to : msg.to.machineId,
+        to_machine_name: typeof msg.to === 'string' ? '' : msg.to.machineName,
+        channel: msg.channel,
+        type: msg.type,
+        content: msg.content,
+        metadata: msg.metadata,
+      });
+    } catch (err) {
+      logger.warn(`Failed to persist incoming message: ${err}`);
+    }
 
     // Forward to agent bus
     const bus = getAgentBus();

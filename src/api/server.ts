@@ -49,6 +49,8 @@ import daoModulesRouter from './routes/dao-modules.js';
 import daoProxyRouter from './routes/dao-proxy.js';
 import daoAuthRouter from './routes/dao-auth.js';
 import browserRouter from './routes/browser.js';
+import machineBoardRouter from './routes/machine-board.js';
+import whatsappRouter from './routes/whatsapp.js';
 import { getNetworkSentinel } from '../security/network-sentinel.js';
 
 const logger = createLogger('API');
@@ -199,6 +201,8 @@ export function createServer(): Express {
   app.use('/api/modules', daoModulesRouter);
   app.use('/api/dao-proxy', daoProxyRouter);
   app.use('/api/browser', browserRouter);
+  app.use('/api/machine-board', machineBoardRouter);
+  app.use('/api/whatsapp', whatsappRouter);
 
   // Health check
   app.get('/api/health', (_req: Request, res: Response) => {
