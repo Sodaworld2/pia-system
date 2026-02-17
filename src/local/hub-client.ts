@@ -370,9 +370,9 @@ export class HubClient {
   }
 
   private handleListDirectory(data: Record<string, unknown>): void {
+    const requestId = (data.requestId as string) || '';
     try {
       const dirPath = data.path as string;
-      const requestId = data.requestId as string;
       if (!dirPath) {
         this.send({ type: 'command:result', payload: { action: 'list_directory', requestId, success: false, error: 'path is required' } });
         return;
@@ -396,17 +396,17 @@ export class HubClient {
       this.send({ type: 'command:result', payload: { action: 'list_directory', requestId, success: true, path: dirPath, items, count: items.length } });
       logger.debug(`Listed directory: ${dirPath} (${items.length} items)`);
     } catch (error) {
-      this.send({ type: 'command:result', payload: { action: 'list_directory', requestId: (data as any).requestId, success: false, error: `${error}` } });
+      this.send({ type: 'command:result', payload: { action: 'list_directory', requestId, success: false, error: `${error}` } });
     }
   }
 
   private handleSearchDirectory(data: Record<string, unknown>): void {
+    const requestId = (data.requestId as string) || '';
     try {
       const query = ((data.q as string) || '').toLowerCase();
       const root = (data.root as string) || (platform() === 'win32' ? 'C:\\Users' : '/home');
       const maxDepth = (data.maxDepth as number) || 4;
       const maxResults = (data.maxResults as number) || 20;
-      const requestId = data.requestId as string;
 
       if (!query || query.length < 2) {
         this.send({ type: 'command:result', payload: { action: 'search_directory', requestId, success: false, error: 'q must be at least 2 characters' } });
@@ -420,8 +420,13 @@ export class HubClient {
 
       const results: { name: string; path: string; depth: number }[] = [];
       const queue: { dir: string; depth: number }[] = [{ dir: root, depth: 0 }];
+      const deadline = Date.now() + 12000; // 12s cap — must finish before hub's 15s timeout
 
       while (queue.length > 0 && results.length < maxResults) {
+        if (Date.now() > deadline) {
+          logger.warn(`Search timed out after 12s for "${query}" from ${root}`);
+          break;
+        }
         const { dir, depth } = queue.shift()!;
         if (depth > maxDepth) continue;
         try {
@@ -442,7 +447,7 @@ export class HubClient {
       this.send({ type: 'command:result', payload: { action: 'search_directory', requestId, success: true, query, root, results, count: results.length } });
       logger.debug(`Searched directories: "${query}" from ${root} (${results.length} results)`);
     } catch (error) {
-      this.send({ type: 'command:result', payload: { action: 'search_directory', requestId: (data as any).requestId, success: false, error: `${error}` } });
+      this.send({ type: 'command:result', payload: { action: 'search_directory', requestId, success: false, error: `${error}` } });
     }
   }
 
