@@ -237,6 +237,8 @@ export class HubClient {
         enableCheckpointing: data.enableCheckpointing !== false,
         loadProjectSettings: data.loadProjectSettings !== false,
         autoRestart: data.autoRestart !== false,
+        mcpServers: data.mcpServers as Array<{ name: string; transport: 'stdio' | 'sse' | 'http'; command?: string; args?: string[]; url?: string }> | undefined,
+        fallbackModel: data.fallbackModel as string | undefined,
       });
 
       // Register with hub

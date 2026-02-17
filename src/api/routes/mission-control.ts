@@ -91,7 +91,8 @@ router.post('/agents', async (req: Request, res: Response): Promise<void> => {
             action: 'spawn_agent',
             data: { mode, task, cwd, approvalMode, model, maxBudget, effort, systemPrompt,
                     maxTurns, disallowedTools, allowedTools, additionalDirectories,
-                    enableCheckpointing, loadProjectSettings, autoRestart },
+                    enableCheckpointing, loadProjectSettings, autoRestart,
+                    networkPolicy, mcpServers, fallbackModel },
           },
         });
 
