@@ -8,7 +8,8 @@ import { config } from '../config.js';
 import { createLogger } from '../utils/logger.js';
 import { hostname, platform, cpus, totalmem, freemem } from 'os';
 import { nanoid } from 'nanoid';
-import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync, readdirSync, statSync } from 'fs';
+import * as path from 'path';
 import { getMachineIdPath } from '../electron-paths.js';
 
 const logger = createLogger('HubClient');
@@ -187,6 +188,14 @@ export class HubClient {
         this.sendStatus();
         break;
 
+      case 'list_directory':
+        this.handleListDirectory(command.data as Record<string, unknown>);
+        break;
+
+      case 'search_directory':
+        this.handleSearchDirectory(command.data as Record<string, unknown>);
+        break;
+
       default:
         logger.warn(`Unknown command: ${command.action}`);
     }
@@ -357,6 +366,83 @@ export class HubClient {
       logger.info(`Input sent to remote agent: ${agentId}`);
     } catch (error) {
       logger.error(`Failed to send input to remote agent: ${error}`);
+    }
+  }
+
+  private handleListDirectory(data: Record<string, unknown>): void {
+    try {
+      const dirPath = data.path as string;
+      const requestId = data.requestId as string;
+      if (!dirPath) {
+        this.send({ type: 'command:result', payload: { action: 'list_directory', requestId, success: false, error: 'path is required' } });
+        return;
+      }
+
+      if (!existsSync(dirPath)) {
+        this.send({ type: 'command:result', payload: { action: 'list_directory', requestId, success: false, error: 'Directory not found' } });
+        return;
+      }
+
+      const entries = readdirSync(dirPath, { withFileTypes: true });
+      const items = entries.map(e => {
+        try {
+          const stat = statSync(path.join(dirPath, e.name));
+          return { name: e.name, type: e.isDirectory() ? 'directory' : 'file', size: e.isFile() ? stat.size : undefined, mtime: stat.mtimeMs };
+        } catch {
+          return { name: e.name, type: e.isDirectory() ? 'directory' : 'file' };
+        }
+      });
+
+      this.send({ type: 'command:result', payload: { action: 'list_directory', requestId, success: true, path: dirPath, items, count: items.length } });
+      logger.debug(`Listed directory: ${dirPath} (${items.length} items)`);
+    } catch (error) {
+      this.send({ type: 'command:result', payload: { action: 'list_directory', requestId: (data as any).requestId, success: false, error: `${error}` } });
+    }
+  }
+
+  private handleSearchDirectory(data: Record<string, unknown>): void {
+    try {
+      const query = ((data.q as string) || '').toLowerCase();
+      const root = (data.root as string) || (platform() === 'win32' ? 'C:\\Users' : '/home');
+      const maxDepth = (data.maxDepth as number) || 4;
+      const maxResults = (data.maxResults as number) || 20;
+      const requestId = data.requestId as string;
+
+      if (!query || query.length < 2) {
+        this.send({ type: 'command:result', payload: { action: 'search_directory', requestId, success: false, error: 'q must be at least 2 characters' } });
+        return;
+      }
+
+      if (!existsSync(root)) {
+        this.send({ type: 'command:result', payload: { action: 'search_directory', requestId, success: false, error: 'Root directory not found' } });
+        return;
+      }
+
+      const results: { name: string; path: string; depth: number }[] = [];
+      const queue: { dir: string; depth: number }[] = [{ dir: root, depth: 0 }];
+
+      while (queue.length > 0 && results.length < maxResults) {
+        const { dir, depth } = queue.shift()!;
+        if (depth > maxDepth) continue;
+        try {
+          const entries = readdirSync(dir, { withFileTypes: true });
+          for (const entry of entries) {
+            if (!entry.isDirectory()) continue;
+            if (entry.name.startsWith('.') || entry.name === 'node_modules' || entry.name === '$Recycle.Bin' || entry.name === 'AppData') continue;
+            const fullPath = path.join(dir, entry.name);
+            if (entry.name.toLowerCase().includes(query)) {
+              results.push({ name: entry.name, path: fullPath, depth });
+              if (results.length >= maxResults) break;
+            }
+            if (depth < maxDepth) queue.push({ dir: fullPath, depth: depth + 1 });
+          }
+        } catch { /* permission denied — skip */ }
+      }
+
+      this.send({ type: 'command:result', payload: { action: 'search_directory', requestId, success: true, query, root, results, count: results.length } });
+      logger.debug(`Searched directories: "${query}" from ${root} (${results.length} results)`);
+    } catch (error) {
+      this.send({ type: 'command:result', payload: { action: 'search_directory', requestId: (data as any).requestId, success: false, error: `${error}` } });
     }
   }
 

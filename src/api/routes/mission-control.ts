@@ -360,6 +360,132 @@ router.post('/machines/:id/command', async (req: Request, res: Response): Promis
 });
 
 /**
+ * GET /api/mc/machines/:id/files/list?path=...
+ * List directory on a remote machine
+ */
+router.get('/machines/:id/files/list', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const machineId = req.params.id as string;
+    const dirPath = req.query.path as string;
+
+    if (!dirPath) {
+      res.status(400).json({ error: 'path query parameter is required' });
+      return;
+    }
+
+    // Local machine — use the local file API directly
+    if (machineId === 'local' || machineId === localMachineId()) {
+      const fs = await import('fs');
+      const path = await import('path');
+      if (!fs.existsSync(dirPath)) {
+        res.status(404).json({ error: 'Directory not found' });
+        return;
+      }
+      const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+      const items = entries.map(e => {
+        try {
+          const stat = fs.statSync(path.join(dirPath, e.name));
+          return { name: e.name, type: e.isDirectory() ? 'directory' : 'file', size: e.isFile() ? stat.size : undefined, mtime: stat.mtimeMs };
+        } catch {
+          return { name: e.name, type: e.isDirectory() ? 'directory' : 'file' };
+        }
+      });
+      res.json({ path: dirPath, items, count: items.length });
+      return;
+    }
+
+    // Remote machine — proxy via WebSocket
+    const { getWebSocketServer } = await import('../../tunnel/websocket-server.js');
+    const ws = getWebSocketServer();
+    const result = await ws.sendToMachineAsync(machineId, 'list_directory', { path: dirPath as string });
+
+    if (result.success) {
+      res.json({ path: result.path, items: result.items, count: result.count });
+    } else {
+      res.status(400).json({ error: result.error || 'Failed to list directory' });
+    }
+  } catch (error) {
+    logger.error(`Remote file list failed: ${error}`);
+    res.status(500).json({ error: `${(error as Error).message}` });
+  }
+});
+
+/**
+ * GET /api/mc/machines/:id/files/search?q=...&root=...
+ * Search directories on a remote machine
+ */
+router.get('/machines/:id/files/search', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const machineId = req.params.id as string;
+    const q = req.query.q as string;
+    const root = req.query.root as string;
+    const maxDepth = parseInt(req.query.maxDepth as string) || 4;
+    const maxResults = parseInt(req.query.maxResults as string) || 20;
+
+    if (!q || q.length < 2) {
+      res.status(400).json({ error: 'q must be at least 2 characters' });
+      return;
+    }
+
+    // Local machine — use the local file API directly
+    if (machineId === 'local' || machineId === localMachineId()) {
+      const fs = await import('fs');
+      const path = await import('path');
+      const searchRoot = root || 'C:\\Users';
+      if (!fs.existsSync(searchRoot)) {
+        res.status(404).json({ error: 'Root directory not found' });
+        return;
+      }
+      const results: { name: string; path: string; depth: number }[] = [];
+      const queue: { dir: string; depth: number }[] = [{ dir: searchRoot, depth: 0 }];
+      while (queue.length > 0 && results.length < maxResults) {
+        const { dir, depth } = queue.shift()!;
+        if (depth > maxDepth) continue;
+        try {
+          const entries = fs.readdirSync(dir, { withFileTypes: true });
+          for (const entry of entries) {
+            if (!entry.isDirectory()) continue;
+            if (entry.name.startsWith('.') || entry.name === 'node_modules' || entry.name === '$Recycle.Bin' || entry.name === 'AppData') continue;
+            const fullPath = path.join(dir, entry.name);
+            if (entry.name.toLowerCase().includes(q.toLowerCase())) {
+              results.push({ name: entry.name, path: fullPath, depth });
+              if (results.length >= maxResults) break;
+            }
+            if (depth < maxDepth) queue.push({ dir: fullPath, depth: depth + 1 });
+          }
+        } catch { /* skip */ }
+      }
+      res.json({ query: q, root: searchRoot, results, count: results.length });
+      return;
+    }
+
+    // Remote machine — proxy via WebSocket
+    const { getWebSocketServer } = await import('../../tunnel/websocket-server.js');
+    const ws = getWebSocketServer();
+    const result = await ws.sendToMachineAsync(machineId, 'search_directory', { q: q as string, root: root as string, maxDepth, maxResults }, 15000);
+
+    if (result.success) {
+      res.json({ query: result.query, root: result.root, results: result.results, count: result.count });
+    } else {
+      res.status(400).json({ error: result.error || 'Failed to search directories' });
+    }
+  } catch (error) {
+    logger.error(`Remote file search failed: ${error}`);
+    res.status(500).json({ error: `${(error as Error).message}` });
+  }
+});
+
+// Helper: get local machine ID for comparison
+function localMachineId(): string {
+  try {
+    const { getMachineByHostname } = require('../../db/queries/machines.js');
+    const os = require('os');
+    const machine = getMachineByHostname(os.hostname());
+    return machine?.id || '';
+  } catch { return ''; }
+}
+
+/**
  * GET /api/mc/agents/:id
  * Get agent details + output buffer
  * For remote agents, requests buffer from the spoke machine

@@ -2580,10 +2580,28 @@ let folderSort = 'name';
 let folderCurrentPath = '';
 let folderCachedItems = [];
 
+function getSelectedMachineId() {
+  const sel = document.getElementById('spawnMachine');
+  return sel ? sel.value : 'local';
+}
+
+function getSelectedMachinePlatform() {
+  const machineId = getSelectedMachineId();
+  const machine = machines.find(m => m.id === machineId);
+  const caps = machine?.capabilities || {};
+  const plat = caps.platform || caps.resources?.platform || '';
+  return (typeof plat === 'string' && plat.includes('win')) ? 'win32' : 'linux';
+}
+
+function getDefaultBrowsePath() {
+  const plat = getSelectedMachinePlatform();
+  return plat === 'win32' ? 'C:\\Users' : '/home';
+}
+
 async function openFolderBrowser() {
   const browser = document.getElementById('folderBrowser');
   const cwdInput = document.getElementById('spawnCwd');
-  const currentPath = cwdInput.value.trim() || 'C:\\Users\\mic';
+  const currentPath = cwdInput.value.trim() || getDefaultBrowsePath();
 
   browser.style.display = 'block';
   await loadFolderList(currentPath);
@@ -2628,7 +2646,8 @@ async function loadFolderList(dirPath) {
   nav.innerHTML = navHtml;
 
   try {
-    const data = await api(`/api/files/list?path=${encodeURIComponent(dirPath)}`);
+    const machineId = getSelectedMachineId();
+    const data = await api(`/api/mc/machines/${encodeURIComponent(machineId)}/files/list?path=${encodeURIComponent(dirPath)}`);
     folderCachedItems = data.items || [];
     renderFolderItems();
   } catch (e) {
@@ -2714,8 +2733,9 @@ async function searchFolders() {
   document.getElementById('folderNav').innerHTML = `<span style="color:#9b4dca;font-size:11px;font-weight:600;">Search results for "${esc(query)}"</span>`;
 
   try {
-    const root = document.getElementById('spawnCwd').value.trim().replace(/[\\/][^\\/]+$/, '') || 'C:\\Users';
-    const data = await api(`/api/files/search?q=${encodeURIComponent(query)}&root=${encodeURIComponent(root)}&maxDepth=5&maxResults=25`);
+    const root = document.getElementById('spawnCwd').value.trim().replace(/[\\/][^\\/]+$/, '') || getDefaultBrowsePath();
+    const machineId = getSelectedMachineId();
+    const data = await api(`/api/mc/machines/${encodeURIComponent(machineId)}/files/search?q=${encodeURIComponent(query)}&root=${encodeURIComponent(root)}&maxDepth=5&maxResults=25`);
     const results = data.results || [];
 
     if (results.length === 0) {
@@ -2813,7 +2833,8 @@ async function loadAddDirList(dirPath) {
   nav.innerHTML = navHtml;
 
   try {
-    const data = await api(`/api/files/list?path=${encodeURIComponent(dirPath)}`);
+    const machineId = getSelectedMachineId();
+    const data = await api(`/api/mc/machines/${encodeURIComponent(machineId)}/files/list?path=${encodeURIComponent(dirPath)}`);
     addDirCachedItems = data.items || [];
     renderAddDirItems();
   } catch (e) {
@@ -2901,8 +2922,9 @@ async function searchAddDirs() {
   document.getElementById('addDirNav').innerHTML = `<span style="color:#9b4dca;font-size:11px;font-weight:600;">Search results for "${esc(query)}"</span>`;
 
   try {
-    const root = document.getElementById('spawnCwd').value.trim().replace(/[\\/][^\\/]+$/, '') || 'C:\\Users';
-    const data = await api(`/api/files/search?q=${encodeURIComponent(query)}&root=${encodeURIComponent(root)}&maxDepth=5&maxResults=25`);
+    const root = document.getElementById('spawnCwd').value.trim().replace(/[\\/][^\\/]+$/, '') || getDefaultBrowsePath();
+    const machineId = getSelectedMachineId();
+    const data = await api(`/api/mc/machines/${encodeURIComponent(machineId)}/files/search?q=${encodeURIComponent(query)}&root=${encodeURIComponent(root)}&maxDepth=5&maxResults=25`);
     const results = data.results || [];
 
     if (results.length === 0) {

@@ -58,6 +58,7 @@ export class TunnelWebSocketServer {
   private clients: Map<WebSocket, Client> = new Map();
   private mcSubscribers: Set<WebSocket> = new Set();
   private machineClients: Map<string, WebSocket> = new Map(); // machineId → WebSocket
+  private pendingRequests: Map<string, { resolve: (data: Record<string, unknown>) => void; timer: NodeJS.Timeout }> = new Map();
   private heartbeatInterval: NodeJS.Timeout | null = null;
 
   constructor(port: number) {
@@ -210,13 +211,20 @@ export class TunnelWebSocketServer {
         if (!client.authenticated) return;
         if (msg.payload) {
           const p = msg.payload as Record<string, unknown>;
+          // Resolve pending async request if there's a requestId
+          if (p.requestId && this.pendingRequests.has(p.requestId as string)) {
+            const pending = this.pendingRequests.get(p.requestId as string)!;
+            clearTimeout(pending.timer);
+            this.pendingRequests.delete(p.requestId as string);
+            pending.resolve(p);
+          }
           if (p.action === 'spawn_agent' && p.success) {
             this.broadcastMc({
               type: 'mc:agent_spawned',
               payload: { machineId: p.machineId, agentId: p.agentId, message: p.message },
             });
           }
-          logger.info(`Command result from spoke: ${JSON.stringify(p)}`);
+          logger.info(`Command result from spoke: ${JSON.stringify(p).substring(0, 200)}`);
         }
         break;
 
@@ -563,6 +571,30 @@ export class TunnelWebSocketServer {
     }
     logger.warn(`Machine ${machineId} not connected — cannot send command`);
     return false;
+  }
+
+  // Send command to a machine and wait for the response (with timeout)
+  sendToMachineAsync(machineId: string, action: string, data: Record<string, unknown>, timeoutMs = 10000): Promise<Record<string, unknown>> {
+    return new Promise((resolve, reject) => {
+      const requestId = `req_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      const timer = setTimeout(() => {
+        this.pendingRequests.delete(requestId);
+        reject(new Error(`Timeout waiting for response from machine ${machineId}`));
+      }, timeoutMs);
+
+      this.pendingRequests.set(requestId, { resolve, timer });
+
+      const sent = this.sendToMachine(machineId, {
+        type: 'command',
+        payload: { action, data: { ...data, requestId } },
+      });
+
+      if (!sent) {
+        clearTimeout(timer);
+        this.pendingRequests.delete(requestId);
+        reject(new Error(`Machine ${machineId} is not connected`));
+      }
+    });
   }
 
   // Get list of connected machine IDs
