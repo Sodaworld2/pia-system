@@ -164,9 +164,23 @@ export class TunnelWebSocketServer {
         // Track machine WebSocket connection for targeted commands
         if (msg.type === 'machine:register' && msg.payload?.id) {
           this.machineClients.set(msg.payload.id, ws);
-          logger.info(`Machine ${msg.payload.id} (${msg.payload.name}) connection tracked`);
+          logger.info(`Machine ${msg.payload.id} (${msg.payload.name}) connection tracked (client ID)`);
+          // Also track by DB ID (may differ from client ID if machine was found by hostname)
+          this.handleHubMessage(msg.type, msg.payload).then(() => {
+            try {
+              const { getMachineByHostname } = require('../db/queries/machines.js');
+              if (msg.payload?.hostname) {
+                const dbMachine = getMachineByHostname(msg.payload.hostname);
+                if (dbMachine && dbMachine.id !== msg.payload.id) {
+                  this.machineClients.set(dbMachine.id, ws);
+                  logger.info(`Machine also tracked by DB ID: ${dbMachine.id}`);
+                }
+              }
+            } catch { /* ignore */ }
+          });
+        } else {
+          this.handleHubMessage(msg.type, msg.payload);
         }
-        this.handleHubMessage(msg.type, msg.payload);
         break;
 
       // Remote agent output streaming (spoke → hub → dashboard)
