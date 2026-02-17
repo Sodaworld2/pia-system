@@ -23,6 +23,7 @@ import { createAlert } from '../db/queries/alerts.js';
 import { getWebSocketServer } from '../tunnel/websocket-server.js';
 import { config } from '../config.js';
 import { getAlertMonitor } from './alert-monitor.js';
+import { getDatabase } from '../db/database.js';
 
 const logger = createLogger('Aggregator');
 
@@ -69,7 +70,7 @@ export class HubAggregator {
       // Update existing machine — refresh name, capabilities, and heartbeat
       updateMachineHeartbeat(machine.id, data.capabilities);
       if (data.name && data.name !== machine.name) {
-        const db = (await import('../db/database.js')).getDatabase();
+        const db = getDatabase();
         db.prepare('UPDATE machines SET name = ? WHERE id = ?').run(data.name, machine.id);
         logger.info(`Machine name updated: ${machine.name} → ${data.name}`);
       }
