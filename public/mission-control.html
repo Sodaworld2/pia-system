@@ -1513,6 +1513,7 @@ async function fetchMachines() {
       ip: m.ip_address || m.ipAddress || 'local',
       status: m.status || 'online',
       mode: 'manual',
+      capabilities: m.capabilities || {},
     }));
   } catch (e) {
     // If no machines registered, show local machine
@@ -2633,7 +2634,13 @@ async function loadFolderList(dirPath) {
   let navHtml = '';
   let accumulated = '';
   parts.forEach((part, i) => {
-    accumulated += (i === 0 && !dirPath.startsWith('/') ? '' : (i === 0 ? '/' : '\\')) + part;
+    if (i === 0 && /^[A-Za-z]:$/.test(part)) {
+      accumulated = part + '\\'; // C: → C:\ (bare C: means CWD on Windows)
+    } else if (i === 0 && dirPath.startsWith('/')) {
+      accumulated = '/' + part;
+    } else {
+      accumulated += '\\' + part;
+    }
     const pathForClick = accumulated.replace(/\\/g, '\\\\');
     const isLast = i === parts.length - 1;
     if (isLast) {
@@ -2820,7 +2827,13 @@ async function loadAddDirList(dirPath) {
   let navHtml = '';
   let accumulated = '';
   parts.forEach((part, i) => {
-    accumulated += (i === 0 && !dirPath.startsWith('/') ? '' : (i === 0 ? '/' : '\\')) + part;
+    if (i === 0 && /^[A-Za-z]:$/.test(part)) {
+      accumulated = part + '\\';
+    } else if (i === 0 && dirPath.startsWith('/')) {
+      accumulated = '/' + part;
+    } else {
+      accumulated += '\\' + part;
+    }
     const pathForClick = accumulated.replace(/\\/g, '\\\\');
     const isLast = i === parts.length - 1;
     if (isLast) {
