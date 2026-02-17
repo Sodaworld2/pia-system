@@ -226,7 +226,7 @@ Then clone fresh:
   npm install
 
 STEP 6 — Create .env file at C:\Users\mic\Downloads\pia-system\.env containing exactly:
-PIA_MODE=hub
+PIA_MODE=local
 PIA_MACHINE_NAME=soda-monster-hunter
 PIA_HUB_URL=http://100.73.133.3:3000
 PIA_SECRET_TOKEN=pia-fleet-token-2024

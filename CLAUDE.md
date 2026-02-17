@@ -7,6 +7,8 @@ Dashboard at `/mission-control.html`. Server runs on port 3000.
 
 ## Architecture
 
+**READ `PIA_ARCHITECTURE.md` FIRST** — it is the single source of truth for hub/worker design, modes, registration, and remote spawning. Do not contradict it.
+
 ```
 src/mission-control/agent-session.ts  — Core: spawns SDK/PTY/API agent sessions
 src/mission-control/prompt-manager.ts — Tool approval routing (auto/manual/yolo)
