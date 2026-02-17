@@ -66,8 +66,13 @@ export class HubAggregator {
     }
 
     if (machine) {
-      // Update existing machine
+      // Update existing machine — refresh name, capabilities, and heartbeat
       updateMachineHeartbeat(machine.id, data.capabilities);
+      if (data.name && data.name !== machine.name) {
+        const db = (await import('../db/database.js')).getDatabase();
+        db.prepare('UPDATE machines SET name = ? WHERE id = ?').run(data.name, machine.id);
+        logger.info(`Machine name updated: ${machine.name} → ${data.name}`);
+      }
       machine = getMachineById(machine.id)!;
       logger.info(`Machine reconnected: ${machine.name}`);
     } else {
