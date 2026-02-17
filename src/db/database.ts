@@ -692,6 +692,34 @@ function getMigrations(): Migration[] {
         CREATE INDEX IF NOT EXISTS idx_mm_created ON machine_messages(created_at);
       `,
     },
+    {
+      name: '041_fix_known_projects_unique',
+      sql: `
+        -- Fix: allow same project name on different machines
+        -- Old: UNIQUE(name) — breaks when M1 and M2 both have "pia-system"
+        -- New: UNIQUE(name, machine_name) — per-machine uniqueness
+        CREATE TABLE IF NOT EXISTS known_projects_new (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          path TEXT NOT NULL,
+          machine_name TEXT,
+          github_repo TEXT,
+          last_session_id TEXT,
+          last_worked_at INTEGER,
+          session_count INTEGER DEFAULT 0,
+          metadata TEXT DEFAULT '{}',
+          created_at INTEGER DEFAULT (unixepoch()),
+          UNIQUE(name, machine_name)
+        );
+        INSERT OR IGNORE INTO known_projects_new
+          SELECT * FROM known_projects;
+        DROP TABLE known_projects;
+        ALTER TABLE known_projects_new RENAME TO known_projects;
+        CREATE INDEX IF NOT EXISTS idx_known_projects_name ON known_projects(name);
+        CREATE INDEX IF NOT EXISTS idx_known_projects_machine ON known_projects(machine_name);
+        CREATE INDEX IF NOT EXISTS idx_known_projects_last ON known_projects(last_worked_at);
+      `,
+    },
   ];
 }
 

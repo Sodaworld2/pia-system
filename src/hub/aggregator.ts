@@ -20,10 +20,12 @@ import {
   Agent,
 } from '../db/queries/agents.js';
 import { createAlert } from '../db/queries/alerts.js';
+import { getDatabase } from '../db/database.js';
 import { getWebSocketServer } from '../tunnel/websocket-server.js';
 import { config } from '../config.js';
 import { getAlertMonitor } from './alert-monitor.js';
-import { getDatabase } from '../db/database.js';
+import { scanGitRepos } from '../utils/project-scanner.js';
+import { hostname } from 'os';
 
 const logger = createLogger('Aggregator');
 
@@ -41,6 +43,41 @@ export class HubAggregator {
   start(): void {
     logger.info('Hub Aggregator started');
     this.startHealthCheck();
+    // Scan hub machine's own repos
+    this.scanHubProjects();
+  }
+
+  /** Scan the hub machine's filesystem for git repos and store them in known_projects */
+  private scanHubProjects(): void {
+    const projects = scanGitRepos();
+    if (projects.length === 0) return;
+
+    try {
+      const db = getDatabase();
+      // Find or create hub's own machine entry so projects use the real DB ID
+      let hubMachine = getMachineByHostname(hostname());
+      if (!hubMachine) {
+        // First startup — register hub as a machine so it has a proper ID
+        hubMachine = createMachine({
+          name: `Local (${hostname()})`,
+          hostname: hostname(),
+          capabilities: {},
+        });
+        logger.info(`Hub registered itself as machine ${hubMachine.id}`);
+      }
+
+      const upsert = db.prepare(`
+        INSERT INTO known_projects (id, name, path, machine_name)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(name, machine_name) DO UPDATE SET path = excluded.path
+      `);
+      for (const proj of projects) {
+        upsert.run(`${hubMachine.id}:${proj.name}`, proj.name, proj.path, hubMachine.id);
+      }
+      logger.info(`Hub: found ${projects.length} repos (machine ${hubMachine.id})`);
+    } catch (err) {
+      logger.warn(`Failed to store hub projects: ${err}`);
+    }
   }
 
   stop(): void {
@@ -98,6 +135,34 @@ export class HubAggregator {
     if (machine.id !== data.id) {
       this.clientToDbId.set(data.id, machine.id);
       logger.info(`Mapped client ID ${data.id} → DB ID ${machine.id}`);
+    }
+
+    // Store known projects from this machine
+    const knownProjects = (data.capabilities?.knownProjects as Array<{ name: string; path: string }>) || [];
+    if (knownProjects.length > 0) {
+      try {
+        const db = getDatabase();
+        const upsert = db.prepare(`
+          INSERT INTO known_projects (id, name, path, machine_name)
+          VALUES (?, ?, ?, ?)
+          ON CONFLICT(name, machine_name) DO UPDATE SET path = excluded.path
+        `);
+        const del = db.prepare(`DELETE FROM known_projects WHERE machine_name = ? AND path NOT IN (${knownProjects.map(() => '?').join(',')})`);
+
+        db.transaction(() => {
+          // Upsert each project
+          for (const proj of knownProjects) {
+            const id = `${machine.id}:${proj.name}`;
+            upsert.run(id, proj.name, proj.path, machine.id);
+          }
+          // Remove stale projects for this machine
+          del.run(machine.id, ...knownProjects.map(p => p.path));
+        })();
+
+        logger.info(`Stored ${knownProjects.length} projects for ${machine.name}`);
+      } catch (err) {
+        logger.warn(`Failed to store projects for ${machine.name}: ${err}`);
+      }
     }
 
     // Notify dashboard

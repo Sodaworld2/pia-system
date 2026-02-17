@@ -360,6 +360,29 @@ router.post('/machines/:id/command', async (req: Request, res: Response): Promis
 });
 
 /**
+ * GET /api/mc/machines/:id/projects
+ * List known git repositories on a machine (from project registry)
+ */
+router.get('/machines/:id/projects', (_req: Request, res: Response) => {
+  try {
+    const machineId = _req.params.id as string;
+    const db = getDatabase();
+
+    const projects = db.prepare(`
+      SELECT id, name, path, machine_name, last_worked_at, session_count
+      FROM known_projects
+      WHERE machine_name = ?
+      ORDER BY last_worked_at DESC NULLS LAST, name ASC
+    `).all(machineId);
+
+    res.json({ projects });
+  } catch (error) {
+    logger.error(`Failed to get projects: ${error}`);
+    res.status(500).json({ error: 'Failed to get projects' });
+  }
+});
+
+/**
  * GET /api/mc/machines/:id/files/list?path=...
  * List directory on a remote machine
  */

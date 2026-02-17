@@ -11,6 +11,7 @@ import { nanoid } from 'nanoid';
 import { existsSync, readFileSync, writeFileSync, readdirSync, statSync } from 'fs';
 import * as path from 'path';
 import { getMachineIdPath } from '../electron-paths.js';
+import { scanGitRepos, KnownProject } from '../utils/project-scanner.js';
 
 const logger = createLogger('HubClient');
 
@@ -127,6 +128,15 @@ export class HubClient {
   private getCapabilities(): Record<string, unknown> {
     const cpuInfo = cpus();
 
+    // Scan for git repos on this machine
+    let knownProjects: KnownProject[] = [];
+    try {
+      knownProjects = scanGitRepos();
+      logger.info(`Found ${knownProjects.length} git repos: ${knownProjects.map(p => p.name).join(', ')}`);
+    } catch (err) {
+      logger.warn(`Failed to scan git repos: ${err}`);
+    }
+
     return {
       platform: platform(),
       hostname: hostname(),
@@ -134,10 +144,9 @@ export class HubClient {
       cpuModel: cpuInfo[0]?.model || 'Unknown',
       totalMemory: totalmem(),
       freeMemory: freemem(),
-      // GPU detection would require additional libraries
-      // For now, assume GPU presence based on config
       gpu: process.env.PIA_HAS_GPU === 'true' ? 'RTX 5090' : null,
       ollama: process.env.PIA_OLLAMA_AVAILABLE === 'true',
+      knownProjects,
     };
   }
 

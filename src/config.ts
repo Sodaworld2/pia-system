@@ -22,6 +22,7 @@ export interface PIAConfig {
   hub: {
     url: string;
     machineName: string;
+    projectRoots: string[];
   };
   ai: {
     primary: 'ollama' | 'claude';
@@ -79,6 +80,8 @@ export const config: PIAConfig = {
   hub: {
     url: getEnv('PIA_HUB_URL', 'http://localhost:3000'),
     machineName: getEnv('PIA_MACHINE_NAME', 'Unknown Machine'),
+    /** Extra directories to scan for git repos (comma-separated). Added to default scan paths. */
+    projectRoots: getEnv('PIA_PROJECT_ROOTS', '').split(',').map(s => s.trim()).filter(Boolean),
   },
 
   ai: {

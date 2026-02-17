@@ -1278,8 +1278,13 @@
         <option value="">— No template (manual config) —</option>
       </select>
 
-      <label>Working Directory</label>
-      <div style="display:flex;gap:6px;">
+      <label>Project</label>
+      <select id="spawnProject" onchange="onProjectSelect()" style="margin-bottom:6px;">
+        <option value="">Loading projects...</option>
+      </select>
+
+      <label id="spawnCwdLabel">Working Directory</label>
+      <div id="spawnCwdRow" style="display:flex;gap:6px;">
         <input type="text" id="spawnCwd" placeholder="C:\Users\mic\Projects\my-app" value="C:\Users\mic\Downloads\pia-system" style="flex:1;" onchange="suggestAdditionalDirs(this.value)">
         <button class="btn purple" onclick="openFolderBrowser()" style="white-space:nowrap;padding:8px 12px;">Browse</button>
       </div>
@@ -1887,6 +1892,63 @@ function renderMachines() {
   sel.innerHTML = machines.map(m =>
     `<option value="${esc(m.id)}">${esc(m.name)} (${esc(m.ip)})</option>`
   ).join('');
+  // Add change handler for project loading
+  sel.onchange = () => loadProjectsForMachine(sel.value);
+}
+
+// ── PROJECT REGISTRY ──
+let machineProjects = {};
+
+async function loadProjectsForMachine(machineId) {
+  const projSel = document.getElementById('spawnProject');
+  if (!projSel) return;
+  projSel.innerHTML = '<option value="">Loading...</option>';
+
+  try {
+    const data = await api(`/api/mc/machines/${encodeURIComponent(machineId)}/projects`);
+    const projects = data.projects || [];
+    machineProjects[machineId] = projects;
+
+    let html = '';
+    if (projects.length > 0) {
+      for (const p of projects) {
+        html += `<option value="${esc(p.path)}" title="${esc(p.path)}">${esc(p.name)} — ${esc(p.path)}</option>`;
+      }
+    }
+    html += '<option value="__custom__">📁 Custom path...</option>';
+    projSel.innerHTML = html;
+
+    // Auto-select first project and fill CWD
+    if (projects.length > 0) {
+      projSel.value = projects[0].path;
+      onProjectSelect();
+    }
+  } catch (e) {
+    projSel.innerHTML = '<option value="__custom__">📁 Custom path (no projects found)</option>';
+  }
+}
+
+function onProjectSelect() {
+  const projSel = document.getElementById('spawnProject');
+  const cwdInput = document.getElementById('spawnCwd');
+  const cwdRow = document.getElementById('spawnCwdRow');
+  const cwdLabel = document.getElementById('spawnCwdLabel');
+
+  if (!projSel || !cwdInput) return;
+
+  if (projSel.value === '__custom__') {
+    // Show manual CWD input
+    cwdRow.style.display = 'flex';
+    cwdLabel.style.display = '';
+    cwdInput.value = '';
+    cwdInput.focus();
+  } else if (projSel.value) {
+    // Auto-fill CWD from selected project
+    cwdInput.value = projSel.value;
+    cwdRow.style.display = 'flex';
+    cwdLabel.style.display = 'none';
+    suggestAdditionalDirs(projSel.value);
+  }
 }
 
 function selectMachine(machineId) {
@@ -2540,6 +2602,9 @@ async function openSpawnModal() {
       sel.innerHTML += `<option value="${t.id}">${t.name}${t.description ? ' — ' + t.description : ''}</option>`;
     }
   } catch { /* templates not available yet */ }
+  // Load projects for the selected machine
+  const machineId = document.getElementById('spawnMachine').value || 'local';
+  loadProjectsForMachine(machineId);
 }
 
 function applyTemplate() {
