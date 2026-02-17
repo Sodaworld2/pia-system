@@ -417,7 +417,7 @@ export class AgentSessionManager extends EventEmitter {
       }
 
       const queryOptions: Record<string, unknown> = {
-        cwd: session.config.cwd.replace(/\\/g, '/'),
+        cwd: session.config.cwd,
         model: session.config.model || 'claude-opus-4-6',
         maxBudgetUsd: session.config.maxBudgetUsd || 5.00,
         permissionMode,
