@@ -54,6 +54,7 @@ import machineBoardRouter from './routes/machine-board.js';
 import whatsappRouter from './routes/whatsapp.js';
 import settingsRouter from './routes/settings.js';
 import cortexRouter from './routes/cortex.js';
+import systemRouter from './routes/system.js';
 import { getNetworkSentinel } from '../security/network-sentinel.js';
 
 const logger = createLogger('API');
@@ -217,6 +218,7 @@ export function createServer(): Express {
   app.use('/api/whatsapp', whatsappRouter);
   app.use('/api/settings', settingsRouter);
   app.use('/api/cortex', cortexRouter);
+  app.use('/api/system', systemRouter);
 
   // Health check
   app.get('/api/health', (_req: Request, res: Response) => {

@@ -17,7 +17,8 @@ interface Client {
 interface IncomingMessage {
   type: 'auth' | 'subscribe' | 'unsubscribe' | 'input' | 'resize' | 'ping' |
         'machine:register' | 'machine:heartbeat' | 'machine:status' |
-        'agent:register' | 'agent:update' | 'agent:remove' | 'pong' |
+        'agent:register' | 'agent:update' | 'agent:remove' | 'agent:output' | 'agent:buffer' | 'pong' |
+        'command:result' |
         'relay:register' | 'relay:send' | 'relay:broadcast' |
         'mc:subscribe' | 'mc:respond';
   payload?: {
@@ -56,6 +57,7 @@ export class TunnelWebSocketServer {
   private wss: WebSocketServer;
   private clients: Map<WebSocket, Client> = new Map();
   private mcSubscribers: Set<WebSocket> = new Set();
+  private machineClients: Map<string, WebSocket> = new Map(); // machineId → WebSocket
   private heartbeatInterval: NodeJS.Timeout | null = null;
 
   constructor(port: number) {
@@ -89,6 +91,13 @@ export class TunnelWebSocketServer {
       ws.on('close', () => {
         this.clients.delete(ws);
         this.mcSubscribers.delete(ws);
+        // Remove from machine tracking
+        for (const [machineId, machineWs] of this.machineClients) {
+          if (machineWs === ws) {
+            this.machineClients.delete(machineId);
+            logger.info(`Machine ${machineId} disconnected`);
+          }
+        }
         logger.info(`Client disconnected (${this.clients.size} remaining)`);
       });
 
@@ -152,7 +161,54 @@ export class TunnelWebSocketServer {
           this.send(ws, { type: 'error', payload: 'Not authenticated' });
           return;
         }
+        // Track machine WebSocket connection for targeted commands
+        if (msg.type === 'machine:register' && msg.payload?.id) {
+          this.machineClients.set(msg.payload.id, ws);
+          logger.info(`Machine ${msg.payload.id} (${msg.payload.name}) connection tracked`);
+        }
         this.handleHubMessage(msg.type, msg.payload);
+        break;
+
+      // Remote agent output streaming (spoke → hub → dashboard)
+      case 'agent:output':
+        if (!client.authenticated) return;
+        if (msg.payload) {
+          const p = msg.payload as Record<string, unknown>;
+          this.broadcastMc({
+            type: 'mc:output',
+            payload: { sessionId: p.sessionId, data: p.data },
+          });
+        }
+        break;
+
+      // Remote agent buffer response (spoke → hub, forwarded to requesting client)
+      case 'agent:buffer':
+        if (!client.authenticated) return;
+        if (msg.payload) {
+          this.broadcastMc({
+            type: 'mc:output',
+            payload: {
+              sessionId: (msg.payload as Record<string, unknown>).sessionId,
+              data: (msg.payload as Record<string, unknown>).buffer,
+              isBuffer: true,
+            },
+          });
+        }
+        break;
+
+      // Command result from spoke (confirmation/error)
+      case 'command:result':
+        if (!client.authenticated) return;
+        if (msg.payload) {
+          const p = msg.payload as Record<string, unknown>;
+          if (p.action === 'spawn_agent' && p.success) {
+            this.broadcastMc({
+              type: 'mc:agent_spawned',
+              payload: { machineId: p.machineId, agentId: p.agentId, message: p.message },
+            });
+          }
+          logger.info(`Command result from spoke: ${JSON.stringify(p)}`);
+        }
         break;
 
       // Mission Control messages
@@ -486,6 +542,28 @@ export class TunnelWebSocketServer {
         payload: { code },
       });
     });
+  }
+
+  // Send command to a specific machine by ID
+  sendToMachine(machineId: string, msg: OutgoingMessage): boolean {
+    const ws = this.machineClients.get(machineId);
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      this.send(ws, msg);
+      return true;
+    }
+    logger.warn(`Machine ${machineId} not connected — cannot send command`);
+    return false;
+  }
+
+  // Get list of connected machine IDs
+  getConnectedMachines(): string[] {
+    const connected: string[] = [];
+    for (const [machineId, ws] of this.machineClients) {
+      if (ws.readyState === WebSocket.OPEN) {
+        connected.push(machineId);
+      }
+    }
+    return connected;
   }
 
   // Send agent update to all clients

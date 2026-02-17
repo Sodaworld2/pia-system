@@ -168,15 +168,19 @@ export class HubClient {
 
     switch (command.action) {
       case 'spawn_agent':
-        // TODO: Spawn new agent via Claude-Flow or direct CLI
+        this.handleSpawnAgent(command.data as Record<string, unknown>);
         break;
 
       case 'kill_agent':
-        // TODO: Kill specified agent
+        this.handleKillAgent(command.data as Record<string, unknown>);
         break;
 
       case 'send_input':
-        // TODO: Send input to agent session
+        this.handleSendInput(command.data as Record<string, unknown>);
+        break;
+
+      case 'get_buffer':
+        this.handleGetBuffer(command.data as Record<string, unknown>);
         break;
 
       case 'get_status':
@@ -185,6 +189,174 @@ export class HubClient {
 
       default:
         logger.warn(`Unknown command: ${command.action}`);
+    }
+  }
+
+  private async handleSpawnAgent(data: Record<string, unknown>): Promise<void> {
+    try {
+      const { getAgentSessionManager } = await import('../mission-control/agent-session.js');
+      const mgr = getAgentSessionManager();
+
+      const session = mgr.spawn({
+        id: data.id as string | undefined,
+        machineId: this.machineId,
+        mode: (data.mode as 'sdk' | 'api' | 'pty') || 'sdk',
+        task: (data.task as string) || '',
+        cwd: (data.cwd as string) || process.cwd(),
+        approvalMode: (data.approvalMode as 'manual' | 'auto' | 'yolo' | 'plan') || 'auto',
+        model: data.model as string | undefined,
+        maxBudgetUsd: data.maxBudget as number | undefined,
+        effort: data.effort as 'low' | 'medium' | 'high' | 'max' | undefined,
+        systemPrompt: data.systemPrompt as string | undefined,
+        maxTurns: data.maxTurns as number | undefined,
+        disallowedTools: data.disallowedTools as string[] | undefined,
+        allowedTools: data.allowedTools as string[] | undefined,
+        additionalDirectories: data.additionalDirectories as string[] | undefined,
+        enableCheckpointing: data.enableCheckpointing !== false,
+        loadProjectSettings: data.loadProjectSettings !== false,
+        autoRestart: data.autoRestart !== false,
+      });
+
+      // Register with hub
+      this.registerAgent({
+        id: session.id,
+        name: session.config.task.substring(0, 50) || 'Remote Agent',
+        type: session.config.mode,
+        status: 'working',
+        progress: 0,
+        current_task: session.config.task.substring(0, 200),
+      });
+
+      // Send confirmation back to hub
+      this.send({
+        type: 'command:result',
+        payload: {
+          action: 'spawn_agent',
+          success: true,
+          machineId: this.machineId,
+          agentId: session.id,
+          message: `Agent ${session.id} spawned in ${session.config.mode} mode`,
+        },
+      });
+
+      logger.info(`Remote agent spawned: ${session.id} (${session.config.mode})`);
+
+      // Wire up output streaming to hub (real-time text deltas)
+      mgr.on('output', (evt: { sessionId: string; data: string }) => {
+        if (evt.sessionId === session.id) {
+          this.send({
+            type: 'agent:output',
+            payload: { machineId: this.machineId, sessionId: session.id, data: evt.data },
+          });
+        }
+      });
+
+      // Wire up status updates to hub
+      mgr.on('status', (evt: { sessionId: string; status: string }) => {
+        if (evt.sessionId === session.id) {
+          this.updateAgent(session.id, { status: evt.status as AgentStatus['status'] });
+        }
+      });
+
+      mgr.on('complete', (evt: { sessionId: string }) => {
+        if (evt.sessionId === session.id) {
+          this.updateAgent(session.id, { status: 'completed' });
+        }
+      });
+
+      mgr.on('error', (evt: { sessionId: string; error: string }) => {
+        if (evt.sessionId === session.id) {
+          this.updateAgent(session.id, { status: 'error', last_output: evt.error });
+        }
+      });
+    } catch (error) {
+      logger.error(`Failed to spawn remote agent: ${error}`);
+      this.send({
+        type: 'command:result',
+        payload: {
+          action: 'spawn_agent',
+          success: false,
+          machineId: this.machineId,
+          error: `${error}`,
+        },
+      });
+    }
+  }
+
+  private async handleKillAgent(data: Record<string, unknown>): Promise<void> {
+    try {
+      const agentId = data.agentId as string;
+      if (!agentId) {
+        logger.warn('kill_agent: no agentId provided');
+        return;
+      }
+
+      const { getAgentSessionManager } = await import('../mission-control/agent-session.js');
+      const mgr = getAgentSessionManager();
+      mgr.kill(agentId);
+      this.removeAgent(agentId);
+
+      this.send({
+        type: 'command:result',
+        payload: {
+          action: 'kill_agent',
+          success: true,
+          machineId: this.machineId,
+          agentId,
+        },
+      });
+
+      logger.info(`Remote agent killed: ${agentId}`);
+    } catch (error) {
+      logger.error(`Failed to kill remote agent: ${error}`);
+    }
+  }
+
+  private async handleGetBuffer(data: Record<string, unknown>): Promise<void> {
+    try {
+      const agentId = data.agentId as string;
+      if (!agentId) {
+        logger.warn('get_buffer: no agentId provided');
+        return;
+      }
+
+      const { getAgentSessionManager } = await import('../mission-control/agent-session.js');
+      const mgr = getAgentSessionManager();
+      const session = mgr.getSession(agentId);
+
+      const buffer = session ? session.outputBuffer : '';
+
+      this.send({
+        type: 'agent:buffer',
+        payload: {
+          machineId: this.machineId,
+          sessionId: agentId,
+          buffer: buffer.substring(buffer.length - 50000), // last 50KB
+        },
+      });
+
+      logger.debug(`Buffer sent for remote agent: ${agentId} (${buffer.length} chars)`);
+    } catch (error) {
+      logger.error(`Failed to get buffer for remote agent: ${error}`);
+    }
+  }
+
+  private async handleSendInput(data: Record<string, unknown>): Promise<void> {
+    try {
+      const agentId = data.agentId as string;
+      const input = data.input as string;
+      if (!agentId || input === undefined) {
+        logger.warn('send_input: missing agentId or input');
+        return;
+      }
+
+      const { getAgentSessionManager } = await import('../mission-control/agent-session.js');
+      const mgr = getAgentSessionManager();
+      mgr.respond(agentId, input);
+
+      logger.info(`Input sent to remote agent: ${agentId}`);
+    } catch (error) {
+      logger.error(`Failed to send input to remote agent: ${error}`);
     }
   }
 

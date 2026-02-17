@@ -80,6 +80,38 @@ router.post('/agents', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // Remote spawn: if machineId is not 'local', forward to the remote machine
+    if (machineId && machineId !== 'local') {
+      try {
+        const { getWebSocketServer } = await import('../../tunnel/websocket-server.js');
+        const ws = getWebSocketServer();
+        const sent = ws.sendToMachine(machineId, {
+          type: 'command',
+          payload: {
+            action: 'spawn_agent',
+            data: { mode, task, cwd, approvalMode, model, maxBudget, effort, systemPrompt,
+                    maxTurns, disallowedTools, allowedTools, additionalDirectories,
+                    enableCheckpointing, loadProjectSettings, autoRestart },
+          },
+        });
+
+        if (sent) {
+          logger.info(`Remote agent spawn request sent to machine ${machineId}`);
+          res.status(202).json({
+            message: `Spawn request sent to machine ${machineId}`,
+            machineId,
+            mode,
+          });
+        } else {
+          res.status(503).json({ error: `Machine ${machineId} is not connected` });
+        }
+      } catch (err) {
+        res.status(503).json({ error: `Failed to reach machine ${machineId}: ${err}` });
+      }
+      return;
+    }
+
+    // Local spawn
     const mgr = getAgentSessionManager();
     const session = mgr.spawn({
       machineId,
@@ -299,15 +331,25 @@ router.post('/machines/:id/command', async (req: Request, res: Response): Promis
       return;
     }
 
-    // Try to send via WebSocket
+    // Send targeted command to specific machine via WebSocket
     try {
       const { getWebSocketServer } = await import('../../tunnel/websocket-server.js');
       const ws = getWebSocketServer();
-      ws.broadcast({
+      const sent = ws.sendToMachine(machineId, {
         type: 'command',
-        payload: { targetMachine: machineId, command, data },
+        payload: { action: command, data },
       });
-      res.json({ success: true, message: `Command '${command}' sent to machine ${machineId}` });
+
+      if (sent) {
+        res.json({ success: true, message: `Command '${command}' sent to machine ${machineId}` });
+      } else {
+        // Fallback: broadcast if machine not directly connected
+        ws.broadcast({
+          type: 'command',
+          payload: { targetMachine: machineId, action: command, data },
+        });
+        res.json({ success: true, message: `Command '${command}' broadcast (machine ${machineId} not directly connected)` });
+      }
     } catch {
       res.status(503).json({ error: 'WebSocket server not available' });
     }
@@ -320,31 +362,80 @@ router.post('/machines/:id/command', async (req: Request, res: Response): Promis
 /**
  * GET /api/mc/agents/:id
  * Get agent details + output buffer
+ * For remote agents, requests buffer from the spoke machine
  */
-router.get('/agents/:id', (req: Request, res: Response) => {
+router.get('/agents/:id', async (req: Request, res: Response): Promise<void> => {
   try {
     const mgr = getAgentSessionManager();
     const session = mgr.getSession(req.params.id as string);
 
-    if (!session) {
-      res.status(404).json({ error: 'Agent session not found' });
+    if (session) {
+      // Local agent — return directly
+      res.json({
+        agent: {
+          id: session.id,
+          config: session.config,
+          status: session.status,
+          cost: session.cost,
+          tokensIn: session.tokensIn,
+          tokensOut: session.tokensOut,
+          toolCalls: session.toolCalls,
+          createdAt: session.createdAt,
+          errorMessage: session.errorMessage,
+        },
+        buffer: session.outputBuffer.substring(session.outputBuffer.length - 50000), // last 50KB
+      });
       return;
     }
 
-    res.json({
-      agent: {
-        id: session.id,
-        config: session.config,
-        status: session.status,
-        cost: session.cost,
-        tokensIn: session.tokensIn,
-        tokensOut: session.tokensOut,
-        toolCalls: session.toolCalls,
-        createdAt: session.createdAt,
-        errorMessage: session.errorMessage,
-      },
-      buffer: session.outputBuffer.substring(session.outputBuffer.length - 50000), // last 50KB
-    });
+    // Not local — check if it's a remote agent in the DB
+    const agentId = req.params.id as string;
+    const machineId = req.query.machineId as string;
+
+    if (machineId) {
+      // Request buffer from remote spoke
+      try {
+        const { getWebSocketServer } = await import('../../tunnel/websocket-server.js');
+        const ws = getWebSocketServer();
+        ws.sendToMachine(machineId, {
+          type: 'command',
+          payload: { action: 'get_buffer', data: { agentId } },
+        });
+        // Buffer will arrive async via agent:buffer → mc:output WebSocket
+        res.json({
+          agent: { id: agentId, machineId, status: 'remote', source: 'aggregator' },
+          buffer: '',
+          bufferRequested: true,
+          message: 'Buffer requested from remote machine — output will stream via WebSocket',
+        });
+      } catch {
+        res.status(503).json({ error: 'WebSocket server not available' });
+      }
+      return;
+    }
+
+    // Try to find in DB (aggregator data)
+    try {
+      const dbAgents = getAllAgents();
+      const dbAgent = dbAgents.find(a => a.id === agentId);
+      if (dbAgent) {
+        res.json({
+          agent: {
+            id: dbAgent.id,
+            machineId: dbAgent.machine_id,
+            status: dbAgent.status,
+            type: dbAgent.type,
+            current_task: dbAgent.current_task,
+            source: 'aggregator',
+          },
+          buffer: '',
+          message: 'Remote agent — add ?machineId=X to request output buffer',
+        });
+        return;
+      }
+    } catch { /* ignore */ }
+
+    res.status(404).json({ error: 'Agent session not found' });
   } catch (error) {
     logger.error(`Failed to get agent: ${error}`);
     res.status(500).json({ error: 'Failed to get agent details' });
