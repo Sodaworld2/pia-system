@@ -486,6 +486,35 @@ function localMachineId(): string {
 }
 
 /**
+ * POST /api/mc/machines/:id/env
+ * Push environment variables to a remote machine's .env file
+ */
+router.post('/machines/:id/env', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const machineId = req.params.id as string;
+    const { vars } = req.body;
+
+    if (!vars || typeof vars !== 'object' || Object.keys(vars).length === 0) {
+      res.status(400).json({ error: 'vars object is required' });
+      return;
+    }
+
+    const { getWebSocketServer } = await import('../../tunnel/websocket-server.js');
+    const ws = getWebSocketServer();
+    const result = await ws.sendToMachineAsync(machineId, 'set_env', { vars });
+
+    if (result.success) {
+      res.json({ success: true, keys: result.keys, path: result.path });
+    } else {
+      res.status(400).json({ error: result.error || 'Failed to set env vars' });
+    }
+  } catch (error) {
+    logger.error(`Set env failed: ${error}`);
+    res.status(500).json({ error: `${(error as Error).message}` });
+  }
+});
+
+/**
  * GET /api/mc/agents/:id
  * Get agent details + output buffer
  * For remote agents, requests buffer from the spoke machine

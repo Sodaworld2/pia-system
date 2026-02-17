@@ -196,6 +196,10 @@ export class HubClient {
         this.handleSearchDirectory(command.data as Record<string, unknown>);
         break;
 
+      case 'set_env':
+        this.handleSetEnv(command.data as Record<string, unknown>);
+        break;
+
       default:
         logger.warn(`Unknown command: ${command.action}`);
     }
@@ -448,6 +452,56 @@ export class HubClient {
       logger.debug(`Searched directories: "${query}" from ${root} (${results.length} results)`);
     } catch (error) {
       this.send({ type: 'command:result', payload: { action: 'search_directory', requestId, success: false, error: `${error}` } });
+    }
+  }
+
+  private handleSetEnv(data: Record<string, unknown>): void {
+    const requestId = (data.requestId as string) || '';
+    try {
+      const vars = data.vars as Record<string, string>;
+      if (!vars || typeof vars !== 'object' || Object.keys(vars).length === 0) {
+        this.send({ type: 'command:result', payload: { action: 'set_env', requestId, success: false, error: 'vars object is required' } });
+        return;
+      }
+
+      // Find .env file relative to the PIA project root
+      const envPath = path.resolve(process.cwd(), '.env');
+      let existing = '';
+      if (existsSync(envPath)) {
+        existing = readFileSync(envPath, 'utf-8');
+      }
+
+      // Parse existing .env into lines
+      const lines = existing.split(/\r?\n/);
+      const updated: string[] = [];
+      const keysSet = new Set<string>();
+
+      for (const line of lines) {
+        const match = line.match(/^([A-Z_][A-Z0-9_]*)=/);
+        if (match && match[1] in vars) {
+          // Replace this line with new value
+          updated.push(`${match[1]}=${vars[match[1]]}`);
+          keysSet.add(match[1]);
+        } else {
+          updated.push(line);
+        }
+      }
+
+      // Append any new keys that weren't in the file
+      for (const [key, value] of Object.entries(vars)) {
+        if (!keysSet.has(key)) {
+          updated.push(`${key}=${value}`);
+        }
+      }
+
+      // Write back
+      writeFileSync(envPath, updated.join('\n'));
+      const keyNames = Object.keys(vars).map(k => k.replace(/^(ANTHROPIC_API_KEY)$/, '$1 (masked)'));
+      logger.info(`Updated .env: ${keyNames.join(', ')}`);
+
+      this.send({ type: 'command:result', payload: { action: 'set_env', requestId, success: true, keys: Object.keys(vars), path: envPath } });
+    } catch (error) {
+      this.send({ type: 'command:result', payload: { action: 'set_env', requestId, success: false, error: `${error}` } });
     }
   }
 
