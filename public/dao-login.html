@@ -207,14 +207,15 @@
 
   <script>
     // Firebase config
-    const firebaseConfig = {
-      apiKey: "REDACTED_FIREBASE_API_KEY",
-      authDomain: "REDACTED_PROJECT_ID.firebaseapp.com",
-      projectId: "REDACTED_PROJECT_ID",
-      storageBucket: "REDACTED_PROJECT_ID.firebasestorage.app",
-      messagingSenderId: "REDACTED_SENDER_ID",
-      appId: "1:REDACTED_SENDER_ID:web:3c59903847f02de24e4f3e",
-      measurementId: "REDACTED_MEASUREMENT_ID"
+    // Firebase config — set via window.FIREBASE_CONFIG or replace placeholders
+    const firebaseConfig = window.FIREBASE_CONFIG || {
+      apiKey: "REPLACE_WITH_FIREBASE_API_KEY",
+      authDomain: "REPLACE_WITH_PROJECT_ID.firebaseapp.com",
+      projectId: "REPLACE_WITH_PROJECT_ID",
+      storageBucket: "REPLACE_WITH_PROJECT_ID.firebasestorage.app",
+      messagingSenderId: "REPLACE_WITH_SENDER_ID",
+      appId: "REPLACE_WITH_APP_ID",
+      measurementId: "REPLACE_WITH_MEASUREMENT_ID"
     };
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();

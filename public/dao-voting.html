@@ -318,10 +318,11 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script>
-    firebase.initializeApp({
-      apiKey: "REDACTED_FIREBASE_API_KEY",
-      authDomain: "REDACTED_PROJECT_ID.firebaseapp.com",
-      projectId: "REDACTED_PROJECT_ID"
+    // Firebase config — set via window.FIREBASE_CONFIG or replace placeholders
+    firebase.initializeApp(window.FIREBASE_CONFIG || {
+      apiKey: "REPLACE_WITH_FIREBASE_API_KEY",
+      authDomain: "REPLACE_WITH_PROJECT_ID.firebaseapp.com",
+      projectId: "REPLACE_WITH_PROJECT_ID"
     });
     const auth = firebase.auth();
 
