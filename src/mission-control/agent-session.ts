@@ -403,10 +403,8 @@ export class AgentSessionManager extends EventEmitter {
       const cleanEnv = { ...process.env, ...getNodeSpawnEnv() };
       delete cleanEnv.CLAUDECODE;
       delete cleanEnv.CLAUDE_CODE_SESSION;
-      // Prevent "Auth conflict" crash: the subprocess inherits ANTHROPIC_API_KEY from .env
-      // but also detects the user's stored OAuth token (claude.ai login) on disk.
-      // Remove the API key so the subprocess uses only the OAuth token.
-      delete cleanEnv.ANTHROPIC_API_KEY;
+      // Keep ANTHROPIC_API_KEY — worker machines may only have API key auth (no OAuth).
+      // The subprocess needs this to authenticate with the Anthropic API.
       delete cleanEnv.CLAUDE_CODE_OAUTH_TOKEN;
       delete cleanEnv.CLAUDE_CODE_SESSION_ACCESS_TOKEN;
       delete cleanEnv.CLAUDE_CODE_ENTRYPOINT;
@@ -428,7 +426,8 @@ export class AgentSessionManager extends EventEmitter {
           const spawnEnv = { ...process.env, ...(config.env || {}), ...getNodeSpawnEnv() };
           delete spawnEnv.CLAUDECODE;
           delete spawnEnv.CLAUDE_CODE_SESSION;
-          delete spawnEnv.ANTHROPIC_API_KEY;
+          // Keep ANTHROPIC_API_KEY — worker machines may only have API key auth (no OAuth)
+          // delete spawnEnv.ANTHROPIC_API_KEY;
           delete spawnEnv.CLAUDE_CODE_OAUTH_TOKEN;
           delete spawnEnv.CLAUDE_CODE_SESSION_ACCESS_TOKEN;
           delete spawnEnv.CLAUDE_CODE_ENTRYPOINT;
@@ -437,11 +436,17 @@ export class AgentSessionManager extends EventEmitter {
           }
           // process.execPath is the Electron binary in packaged mode.
           // With ELECTRON_RUN_AS_NODE=1 (from getNodeSpawnEnv()), it acts as Node.js.
-          return spawn(process.execPath, config.args || [], {
-            cwd: (config.cwd || '').replace(/\\/g, '/'),
+          // Use our own stored cwd — the SDK strips backslashes from config.cwd on Windows
+          const spawnCwd = session.config.cwd || config.cwd || process.cwd();
+          const child = spawn(process.execPath, config.args || [], {
+            cwd: spawnCwd,
             env: spawnEnv,
             stdio: ['pipe', 'pipe', 'pipe'],
           });
+          child.on('error', (err: Error) => {
+            logger.error(`Child process error: ${err.message} (code: ${(err as any).code})`);
+          });
+          return child;
         },
         // Real-time streaming: get character-by-character output like the CLI terminal
         includePartialMessages: true,
