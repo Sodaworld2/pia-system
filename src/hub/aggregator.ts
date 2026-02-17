@@ -35,6 +35,7 @@ interface MachineConnection {
 
 export class HubAggregator {
   private connections: Map<string, MachineConnection> = new Map();
+  private clientToDbId: Map<string, string> = new Map(); // spoke's local ID → DB ID
   private checkInterval: NodeJS.Timeout | null = null;
 
   start(): void {
@@ -93,6 +94,12 @@ export class HubAggregator {
       connected: true,
     });
 
+    // Map client's local ID → DB ID so heartbeats resolve correctly
+    if (machine.id !== data.id) {
+      this.clientToDbId.set(data.id, machine.id);
+      logger.info(`Mapped client ID ${data.id} → DB ID ${machine.id}`);
+    }
+
     // Notify dashboard
     this.broadcastMachineUpdate(machine);
 
@@ -114,14 +121,17 @@ export class HubAggregator {
       gpuUsage?: number;
     };
   }): void {
-    const conn = this.connections.get(data.id);
+    // Resolve client ID → DB ID (they may differ if machine was matched by hostname)
+    const dbId = this.clientToDbId.get(data.id) || data.id;
+
+    const conn = this.connections.get(dbId);
     if (conn) {
       conn.lastSeen = Date.now();
       conn.connected = true;
     }
 
-    // Update machine in database
-    updateMachineHeartbeat(data.id);
+    // Update machine in database using the correct DB ID
+    updateMachineHeartbeat(dbId);
 
     // Update agents if provided
     if (data.agents) {
@@ -304,6 +314,11 @@ export class HubAggregator {
 
   isConnected(machineId: string): boolean {
     return this.connections.get(machineId)?.connected || false;
+  }
+
+  // Resolve a client-sent ID to the canonical DB ID
+  resolveDbId(clientId: string): string {
+    return this.clientToDbId.get(clientId) || clientId;
   }
 }
 

@@ -164,19 +164,14 @@ export class TunnelWebSocketServer {
         // Track machine WebSocket connection for targeted commands
         if (msg.type === 'machine:register' && msg.payload?.id) {
           this.machineClients.set(msg.payload.id, ws);
-          logger.info(`Machine ${msg.payload.id} (${msg.payload.name}) connection tracked (client ID)`);
-          // Also track by DB ID (may differ from client ID if machine was found by hostname)
-          this.handleHubMessage(msg.type, msg.payload).then(() => {
-            try {
-              const { getMachineByHostname } = require('../db/queries/machines.js');
-              if (msg.payload?.hostname) {
-                const dbMachine = getMachineByHostname(msg.payload.hostname);
-                if (dbMachine && dbMachine.id !== msg.payload.id) {
-                  this.machineClients.set(dbMachine.id, ws);
-                  logger.info(`Machine also tracked by DB ID: ${dbMachine.id}`);
-                }
-              }
-            } catch { /* ignore */ }
+          // Register with aggregator and get the canonical DB ID back
+          this.handleHubMessage(msg.type, msg.payload).then((dbId) => {
+            if (dbId && dbId !== msg.payload!.id) {
+              this.machineClients.set(dbId, ws);
+              logger.info(`Machine ${msg.payload!.name} tracked by client ID ${msg.payload!.id} and DB ID ${dbId}`);
+            } else {
+              logger.info(`Machine ${msg.payload!.id} (${msg.payload!.name}) connection tracked`);
+            }
           });
         } else {
           this.handleHubMessage(msg.type, msg.payload);
@@ -256,7 +251,7 @@ export class TunnelWebSocketServer {
     }
   }
 
-  private async handleHubMessage(type: string, payload: IncomingMessage['payload']): Promise<void> {
+  private async handleHubMessage(type: string, payload: IncomingMessage['payload']): Promise<string | void> {
     // Lazy import to avoid circular dependency
     try {
       const { getAggregator } = await import('../hub/aggregator.js');
@@ -265,12 +260,13 @@ export class TunnelWebSocketServer {
       switch (type) {
         case 'machine:register':
           if (payload?.id && payload?.name && payload?.hostname) {
-            aggregator.handleMachineRegister({
+            const machine = aggregator.handleMachineRegister({
               id: payload.id,
               name: payload.name,
               hostname: payload.hostname,
               capabilities: payload.capabilities,
             });
+            return machine.id; // Return the canonical DB ID
           }
           break;
 
