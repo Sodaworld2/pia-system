@@ -195,3 +195,69 @@ Zero PIA errors.
 No Electron-specific changes. Output streaming uses the same WebSocket channel the dashboard already connects to.
 
 ---
+
+## Machine 2 (soda-monster-hunter) Setup Instructions
+
+### Give this ENTIRE block to Claude on Machine 2:
+
+```
+You are setting up PIA on this machine (soda-monster-hunter). Run ALL of these steps in order.
+Every command must run in PowerShell as Administrator.
+
+STEP 1 — Open firewall for Tailscale network (so M1 hub can reach us):
+powershell -Command "New-NetFirewallRule -Name 'Allow-All-Tailscale' -DisplayName 'Allow All Tailscale' -Direction Inbound -RemoteAddress 100.64.0.0/10 -Action Allow"
+
+STEP 2 — Install and start OpenSSH Server (for remote access):
+powershell -Command "Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0; Start-Service sshd; Set-Service -Name sshd -StartupType Automatic"
+
+STEP 3 — Enable PowerShell Remoting:
+powershell -Command "Enable-PSRemoting -Force -SkipNetworkProfileCheck; Set-Item WSMan:\localhost\Client\TrustedHosts -Value '100.73.133.3,100.102.217.69' -Force"
+
+STEP 4 — Open firewall for PIA server ports:
+powershell -Command "New-NetFirewallRule -Name 'PIA-Server' -DisplayName 'PIA Server' -Direction Inbound -LocalPort 3000,3001 -Protocol TCP -Action Allow"
+
+STEP 5 — Clone PIA (the git history was rewritten, you need a fresh clone):
+If C:\Users\mic\Downloads\pia-system already exists, delete it:
+  rmdir /s /q "C:\Users\mic\Downloads\pia-system"
+Then clone fresh:
+  cd C:\Users\mic\Downloads
+  git clone https://github.com/Sodaworld2/pia-system.git
+  cd pia-system
+  npm install
+
+STEP 6 — Create .env file at C:\Users\mic\Downloads\pia-system\.env containing exactly:
+PIA_MODE=hub
+PIA_MACHINE_NAME=soda-monster-hunter
+PIA_HUB_URL=http://100.73.133.3:3000
+PIA_SECRET_TOKEN=pia-fleet-token-2024
+PORT=3000
+WS_PORT=3001
+
+STEP 7 — Start PIA:
+  cd C:\Users\mic\Downloads\pia-system
+  npm run dev
+
+STEP 8 — Verify connectivity (run this AFTER PIA starts):
+  curl http://100.73.133.3:3000/api/health
+
+If step 8 returns {"status":"ok"}, the hub can see you and you should appear in Mission Control.
+```
+
+### Machine 3 (soda-yeti) Setup Instructions
+
+Same as Machine 2, but change STEP 6 to:
+```
+PIA_MACHINE_NAME=soda-yeti
+```
+
+### Network Status (as of this session)
+| Machine | Tailscale | Ping | SSH | PIA | SMB |
+|---|---|---|---|---|---|
+| M1 Izzit7 | Active | N/A | N/A | Running | N/A |
+| M2 soda-monster-hunter | Active | Blocked | Blocked | Not running | Blocked |
+| M3 soda-yeti | Active | OK (36ms) | Blocked | Not running | Open |
+
+M2 has Windows firewall blocking ALL incoming. Steps 1-4 above fix this.
+M3 is reachable but needs SSH + PIA installed.
+
+---
