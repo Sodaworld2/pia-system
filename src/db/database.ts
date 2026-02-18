@@ -1,5 +1,5 @@
 import Database from 'better-sqlite3';
-import { existsSync, mkdirSync } from 'fs';
+import { existsSync, mkdirSync, stat } from 'fs';
 import { dirname } from 'path';
 import { config } from '../config.js';
 import { createLogger } from '../utils/logger.js';
@@ -7,6 +7,7 @@ import { createLogger } from '../utils/logger.js';
 const logger = createLogger('Database');
 
 let db: Database.Database | null = null;
+let walCheckpointInterval: NodeJS.Timeout | null = null;
 
 export function getDatabase(): Database.Database {
   if (!db) {
@@ -26,13 +27,24 @@ export function initDatabase(): Database.Database {
   }
 
   db = new Database(dbPath);
-  db.pragma('journal_mode = WAL');
+
+  // Performance pragmas — validated via Context7 / better-sqlite3 docs (Feb 2026)
+  db.pragma('journal_mode = WAL');           // Concurrent reads during writes
+  db.pragma('synchronous = NORMAL');         // Safe with WAL, big perf gain over FULL
+  db.pragma('cache_size = -64000');          // 64MB cache (negative = KB)
+  db.pragma('mmap_size = 268435456');        // 256MB memory-mapped I/O
+  db.pragma('busy_timeout = 5000');          // Wait 5s on lock instead of instant SQLITE_BUSY
   db.pragma('foreign_keys = ON');
+  db.pragma('temp_store = MEMORY');          // Temp tables in memory
 
   logger.info(`Database initialized at: ${dbPath}`);
 
   // Run migrations
   runMigrations(db);
+
+  // WAL checkpoint monitoring — prevent WAL file from growing unbounded
+  // (Context7 better-sqlite3 docs: checkpoint starvation prevention)
+  startWalCheckpointMonitor(dbPath);
 
   return db;
 }
@@ -720,10 +732,46 @@ function getMigrations(): Migration[] {
         CREATE INDEX IF NOT EXISTS idx_known_projects_last ON known_projects(last_worked_at);
       `,
     },
+    {
+      name: '042_session_resume_support',
+      sql: `
+        -- Add claude_session_id for SDK session resumption across server restarts
+        ALTER TABLE mc_agent_sessions ADD COLUMN claude_session_id TEXT;
+      `,
+    },
   ];
 }
 
+/** Periodic WAL checkpoint — prevents WAL file from growing unbounded (Context7 better-sqlite3 docs) */
+function startWalCheckpointMonitor(dbPath: string): void {
+  const walPath = dbPath + '-wal';
+  const WAL_MAX_SIZE = 100 * 1024 * 1024; // 100MB threshold
+
+  walCheckpointInterval = setInterval(() => {
+    stat(walPath, (err, stats) => {
+      if (err) {
+        if (err.code !== 'ENOENT') logger.warn(`WAL stat error: ${err.message}`);
+        return;
+      }
+      if (stats.size > WAL_MAX_SIZE) {
+        logger.info(`WAL file is ${(stats.size / 1024 / 1024).toFixed(1)}MB — running checkpoint`);
+        try {
+          db?.pragma('wal_checkpoint(RESTART)');
+        } catch (e) {
+          logger.warn(`WAL checkpoint failed: ${e}`);
+        }
+      }
+    });
+  }, 60000); // Check every 60 seconds
+
+  walCheckpointInterval.unref(); // Don't prevent process exit
+}
+
 export function closeDatabase(): void {
+  if (walCheckpointInterval) {
+    clearInterval(walCheckpointInterval);
+    walCheckpointInterval = null;
+  }
   if (db) {
     db.close();
     db = null;

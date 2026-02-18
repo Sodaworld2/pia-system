@@ -16,6 +16,7 @@ const logger = createLogger('BrowserAgent');
 
 // Resolve to locally installed @playwright/mcp — no npx, no PATH issues
 const PLAYWRIGHT_MCP_CLI = resolveFromAppRoot('node_modules/@playwright/mcp/cli.js');
+const PLAYWRIGHT_MCP_CONFIG = resolveFromAppRoot('playwright-mcp.config.json');
 
 const PLAYWRIGHT_MCP_SERVER = {
   name: 'playwright',
@@ -24,7 +25,7 @@ const PLAYWRIGHT_MCP_SERVER = {
   // 'node' may not be on PATH. getNodeBinary() returns process.execPath which
   // is the Electron binary (acts as Node.js with ELECTRON_RUN_AS_NODE=1 env var).
   command: getNodeBinary(),
-  args: [PLAYWRIGHT_MCP_CLI],
+  args: [PLAYWRIGHT_MCP_CLI, '--config', PLAYWRIGHT_MCP_CONFIG],
 };
 
 const BROWSER_SYSTEM_PROMPT = `You are a browser automation agent. You have access to a Playwright MCP server that lets you control a web browser.

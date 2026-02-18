@@ -1,0 +1,22 @@
+{
+  "browser": {
+    "browserName": "chromium",
+    "launchOptions": {
+      "headless": false,
+      "channel": "chrome"
+    },
+    "contextOptions": {
+      "viewport": { "width": 1280, "height": 720 }
+    }
+  },
+  "capabilities": ["core", "vision"],
+  "saveTrace": true,
+  "outputDir": "./data/playwright-output",
+  "network": {
+    "allowedOrigins": ["*"]
+  },
+  "timeouts": {
+    "action": 10000,
+    "navigation": 30000
+  }
+}

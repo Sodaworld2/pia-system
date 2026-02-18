@@ -9,7 +9,7 @@ import { createLogger } from '../../utils/logger.js';
 import { getAgentSessionManager } from '../../mission-control/agent-session.js';
 import { getPromptManager } from '../../mission-control/prompt-manager.js';
 import { getDatabase } from '../../db/database.js';
-import { getAllMachines } from '../../db/queries/machines.js';
+import { getAllMachines, deleteMachine, cleanupStaleMachines } from '../../db/queries/machines.js';
 import { getAllAgents, getAgentsByMachine } from '../../db/queries/agents.js';
 
 const router = Router();
@@ -144,7 +144,9 @@ router.post('/agents', async (req: Request, res: Response): Promise<void> => {
     });
   } catch (error) {
     logger.error(`Failed to spawn agent: ${error}`);
-    res.status(500).json({ error: 'Failed to spawn agent session' });
+    if (!res.headersSent) {
+      res.status(500).json({ error: `Failed to spawn agent: ${error}` });
+    }
   }
 });
 
@@ -810,6 +812,67 @@ router.delete('/templates/:id', (req: Request, res: Response) => {
   } catch (error) {
     logger.error(`Failed to delete template: ${error}`);
     res.status(500).json({ error: 'Failed to delete template' });
+  }
+});
+
+// ───── Machine Cleanup ─────
+
+/** DELETE /machines/:id — Remove a specific machine from the registry */
+router.delete('/machines/:id', (req: Request, res: Response) => {
+  try {
+    const machineId = String(req.params.id);
+    deleteMachine(machineId);
+    logger.info(`Machine ${machineId} deleted from registry`);
+    res.json({ success: true });
+  } catch (error) {
+    logger.error(`Failed to delete machine: ${error}`);
+    res.status(500).json({ error: 'Failed to delete machine' });
+  }
+});
+
+/** POST /machines/cleanup — Remove machines offline for more than N days (default 7) */
+router.post('/machines/cleanup', (req: Request, res: Response) => {
+  try {
+    const days = req.body.days || 7;
+    const deleted = cleanupStaleMachines(days);
+    logger.info(`Stale machine cleanup: removed ${deleted} machines offline > ${days} days`);
+    res.json({ success: true, deleted, days });
+  } catch (error) {
+    logger.error(`Failed to cleanup machines: ${error}`);
+    res.status(500).json({ error: 'Failed to cleanup machines' });
+  }
+});
+
+// ───── Session Resumption ─────
+
+/** POST /agents/:id/resume — Resume a previous agent session from database */
+router.post('/agents/:id/resume', (req: Request, res: Response) => {
+  try {
+    const sessionId = String(req.params.id);
+    const task = req.body.task || req.body.message;
+
+    if (!task) {
+      res.status(400).json({ error: 'task or message is required in request body' });
+      return;
+    }
+
+    const mgr = getAgentSessionManager();
+    const session = mgr.resumeSession(sessionId, task);
+
+    if (!session) {
+      res.status(404).json({ error: 'Session not found or cannot be resumed (no claude_session_id)' });
+      return;
+    }
+
+    res.json({
+      success: true,
+      sessionId: session.id,
+      status: session.status,
+      claudeSessionId: session.claudeSessionId,
+    });
+  } catch (error) {
+    logger.error(`Failed to resume session: ${error}`);
+    res.status(500).json({ error: 'Failed to resume session' });
   }
 });
 

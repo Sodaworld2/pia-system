@@ -12,6 +12,7 @@ interface Client {
   sessionId: string | null;
   authenticated: boolean;
   subscriptions: Set<string>;
+  isAlive: boolean;
 }
 
 interface IncomingMessage {
@@ -53,6 +54,14 @@ interface OutgoingMessage {
   sessionId?: string;
 }
 
+interface BufferedCommand {
+  msg: OutgoingMessage;
+  timestamp: number;
+}
+
+const COMMAND_BUFFER_MAX = 100;
+const COMMAND_BUFFER_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
 export class TunnelWebSocketServer {
   private wss: WebSocketServer;
   private clients: Map<WebSocket, Client> = new Map();
@@ -60,9 +69,13 @@ export class TunnelWebSocketServer {
   private machineClients: Map<string, WebSocket> = new Map(); // machineId → WebSocket
   private pendingRequests: Map<string, { resolve: (data: Record<string, unknown>) => void; timer: NodeJS.Timeout }> = new Map();
   private heartbeatInterval: NodeJS.Timeout | null = null;
+  private commandBuffer: Map<string, BufferedCommand[]> = new Map(); // machineId → buffered commands
 
   constructor(port: number) {
-    this.wss = new WebSocketServer({ port });
+    this.wss = new WebSocketServer({
+      port,
+      maxPayload: 1048576, // 1MB max message size — prevents OOM from oversized messages (Context7 ws docs)
+    });
     this.setupServer();
     this.startHeartbeat();
     logger.info(`WebSocket server started on port ${port}`);
@@ -75,8 +88,16 @@ export class TunnelWebSocketServer {
         sessionId: null,
         authenticated: false,
         subscriptions: new Set(),
+        isAlive: true,
       };
       this.clients.set(ws, client);
+
+      // Track pong responses for dead connection detection (Context7 ws pattern)
+      ws.on('pong', () => {
+        const c = this.clients.get(ws);
+        if (c) c.isAlive = true;
+      });
+
       logger.info(`Client connected (${this.clients.size} total)`);
 
       ws.on('message', (data: Buffer) => {
@@ -148,7 +169,8 @@ export class TunnelWebSocketServer {
         break;
 
       case 'pong':
-        // Response to our ping, connection is alive
+        // Application-level pong (from spoke hub-client). Also mark alive.
+        if (client) client.isAlive = true;
         break;
 
       // Machine/Agent messages from PIA Local services
@@ -170,9 +192,13 @@ export class TunnelWebSocketServer {
             if (dbId && dbId !== msg.payload!.id) {
               this.machineClients.set(dbId, ws);
               logger.info(`Machine ${msg.payload!.name} tracked by client ID ${msg.payload!.id} and DB ID ${dbId}`);
+              // Replay any buffered commands for this DB ID
+              this.replayBufferedCommands(dbId);
             } else {
               logger.info(`Machine ${msg.payload!.id} (${msg.payload!.name}) connection tracked`);
             }
+            // Replay any buffered commands for the client ID
+            this.replayBufferedCommands(msg.payload!.id as string);
           });
         } else {
           this.handleHubMessage(msg.type, msg.payload);
@@ -562,15 +588,51 @@ export class TunnelWebSocketServer {
     });
   }
 
-  // Send command to a specific machine by ID
+  // Send command to a specific machine by ID. Buffers if disconnected.
   sendToMachine(machineId: string, msg: OutgoingMessage): boolean {
     const ws = this.machineClients.get(machineId);
     if (ws && ws.readyState === WebSocket.OPEN) {
-      this.send(ws, msg);
+      const json = JSON.stringify(msg);
+      logger.debug(`sendToMachine ${machineId}: ${json.substring(0, 300)}`);
+      ws.send(json);
       return true;
     }
-    logger.warn(`Machine ${machineId} not connected — cannot send command`);
+    // Buffer command for replay on reconnect (Risk Analysis Fix B — retry buffer)
+    this.bufferCommand(machineId, msg);
+    logger.warn(`Machine ${machineId} not connected — command buffered for replay`);
     return false;
+  }
+
+  private bufferCommand(machineId: string, msg: OutgoingMessage): void {
+    if (!this.commandBuffer.has(machineId)) {
+      this.commandBuffer.set(machineId, []);
+    }
+    const buf = this.commandBuffer.get(machineId)!;
+    buf.push({ msg, timestamp: Date.now() });
+    // Cap buffer size
+    if (buf.length > COMMAND_BUFFER_MAX) {
+      buf.splice(0, buf.length - COMMAND_BUFFER_MAX);
+    }
+  }
+
+  private replayBufferedCommands(machineId: string): void {
+    const buf = this.commandBuffer.get(machineId);
+    if (!buf || buf.length === 0) return;
+
+    const now = Date.now();
+    // Filter out stale commands (older than TTL)
+    const fresh = buf.filter(c => (now - c.timestamp) < COMMAND_BUFFER_TTL_MS);
+    this.commandBuffer.delete(machineId);
+
+    if (fresh.length === 0) return;
+
+    logger.info(`Replaying ${fresh.length} buffered commands to machine ${machineId}`);
+    const ws = this.machineClients.get(machineId);
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      for (const cmd of fresh) {
+        ws.send(JSON.stringify(cmd.msg));
+      }
+    }
   }
 
   // Send command to a machine and wait for the response (with timeout)
@@ -625,14 +687,31 @@ export class TunnelWebSocketServer {
   }
 
   private startHeartbeat(): void {
+    // Ping/pong heartbeat per Context7 ws docs — detects silently broken connections
     this.heartbeatInterval = setInterval(() => {
-      for (const [ws, _client] of this.clients) {
-        if (ws.readyState === WebSocket.OPEN) {
-          // Check if connection is still alive
-          ws.ping();
-        } else {
+      for (const [ws, client] of this.clients) {
+        if (ws.readyState !== WebSocket.OPEN) {
           this.clients.delete(ws);
+          this.mcSubscribers.delete(ws);
+          continue;
         }
+        if (!client.isAlive) {
+          // No pong since last ping — connection is dead
+          logger.warn(`Terminating unresponsive client (was alive: false)`);
+          this.clients.delete(ws);
+          this.mcSubscribers.delete(ws);
+          // Clean up machine tracking
+          for (const [machineId, machineWs] of this.machineClients) {
+            if (machineWs === ws) {
+              this.machineClients.delete(machineId);
+              logger.info(`Machine ${machineId} removed (dead connection)`);
+            }
+          }
+          ws.terminate();
+          continue;
+        }
+        client.isAlive = false;
+        ws.ping();
       }
     }, 30000);
   }
@@ -652,6 +731,12 @@ export class TunnelWebSocketServer {
   close(): void {
     if (this.heartbeatInterval) {
       clearInterval(this.heartbeatInterval);
+    }
+    // Graceful shutdown: notify all clients before closing (Context7 ws docs — code 1001 = Going Away)
+    for (const [ws] of this.clients) {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.close(1001, 'Server shutting down');
+      }
     }
     this.wss.close();
     logger.info('WebSocket server closed');

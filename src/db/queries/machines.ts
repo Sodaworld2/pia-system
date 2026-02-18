@@ -117,3 +117,26 @@ export function getOfflineMachines(thresholdSeconds: number): Machine[] {
     capabilities: row.capabilities ? JSON.parse(row.capabilities as string) : null,
   })) as Machine[];
 }
+
+/** Delete machines that have been offline for more than `days` days. Returns count deleted. */
+export function cleanupStaleMachines(days: number = 7): number {
+  const db = getDatabase();
+  const cutoff = Math.floor(Date.now() / 1000) - (days * 86400);
+
+  // Only delete machines that are offline AND haven't been seen in `days` days
+  const result = db.prepare(`
+    DELETE FROM machines
+    WHERE status != 'online'
+    AND (last_seen IS NULL OR last_seen < ?)
+  `).run(cutoff);
+
+  // Also clean up their agents and projects
+  if (result.changes > 0) {
+    db.prepare(`DELETE FROM agents WHERE machine_id NOT IN (SELECT id FROM machines)`).run();
+    try {
+      db.prepare(`DELETE FROM known_projects WHERE machine_name NOT IN (SELECT name FROM machines)`).run();
+    } catch { /* known_projects table may not exist */ }
+  }
+
+  return result.changes;
+}

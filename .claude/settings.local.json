@@ -87,7 +87,15 @@
       "mcp__windows-mcp__MultiSelect",
       "mcp__windows-mcp__MultiEdit",
       "Bash($resp = curl -s http://100.102.217.69:3000/api/sessions/1CIVrvbZU3AJXBJBm7BiG -H \"X-Api-Token: pia-local-dev-token-2024\")",
-      "WebFetch(domain:context7.com)"
+      "WebFetch(domain:context7.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.anthropic.com)",
+      "WebFetch(domain:worlds-slowest.dev)",
+      "WebFetch(domain:mathiasbynens.be)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs",
+      "WebFetch(domain:ylianst.github.io)",
+      "WebFetch(domain:www.elevenforum.com)"
     ]
   },
   "hooks": {

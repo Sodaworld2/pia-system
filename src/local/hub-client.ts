@@ -35,8 +35,10 @@ export class HubClient {
   private machineId: string;
   private reconnectTimer: NodeJS.Timeout | null = null;
   private heartbeatTimer: NodeJS.Timeout | null = null;
+  private pingTimeout: NodeJS.Timeout | null = null;
   private agents: Map<string, AgentStatus> = new Map();
   private connected: boolean = false;
+  private reconnectAttempts: number = 0;
 
   constructor() {
     this.machineId = this.getOrCreateMachineId();
@@ -67,14 +69,23 @@ export class HubClient {
     logger.info(`Connecting to Hub: ${hubUrl}`);
 
     try {
-      this.ws = new WebSocket(hubUrl);
+      this.ws = new WebSocket(hubUrl, {
+        handshakeTimeout: 10000, // 10s handshake timeout (Context7 ws docs)
+      });
 
       this.ws.on('open', () => {
         logger.info('Connected to Hub');
         this.connected = true;
+        this.reconnectAttempts = 0; // Reset backoff on successful connection
         this.authenticate();
         this.register();
         this.startHeartbeat();
+        this.resetPingTimeout(); // Start client-side dead-hub detection
+      });
+
+      // Client-side ping timeout — detect dead hub (Context7 ws heartbeat pattern)
+      this.ws.on('ping', () => {
+        this.resetPingTimeout();
       });
 
       this.ws.on('message', (data) => {
@@ -90,6 +101,7 @@ export class HubClient {
         logger.warn('Disconnected from Hub');
         this.connected = false;
         this.stopHeartbeat();
+        this.clearPingTimeout();
         this.scheduleReconnect();
       });
 
@@ -579,15 +591,36 @@ export class HubClient {
     return Math.round((1 - totalIdle / totalTick) * 100);
   }
 
+  /** Client-side ping timeout — detect unresponsive hub (Context7 ws docs) */
+  private resetPingTimeout(): void {
+    this.clearPingTimeout();
+    // Hub pings every 30s; allow 31s (30s + 1s latency buffer) before declaring dead
+    this.pingTimeout = setTimeout(() => {
+      logger.warn('Hub unresponsive (no ping in 31s), terminating connection');
+      if (this.ws) this.ws.terminate();
+    }, 31000);
+  }
+
+  private clearPingTimeout(): void {
+    if (this.pingTimeout) {
+      clearTimeout(this.pingTimeout);
+      this.pingTimeout = null;
+    }
+  }
+
   private scheduleReconnect(): void {
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
     }
 
+    // Exponential backoff: 5s, 10s, 20s, 40s, capped at 60s
+    const delay = Math.min(5000 * Math.pow(2, this.reconnectAttempts), 60000);
+    this.reconnectAttempts++;
+
+    logger.info(`Reconnecting to Hub in ${(delay / 1000).toFixed(0)}s (attempt ${this.reconnectAttempts})...`);
     this.reconnectTimer = setTimeout(() => {
-      logger.info('Attempting to reconnect to Hub...');
       this.connect();
-    }, 5000);
+    }, delay);
   }
 
   private send(msg: HubMessage): void {
@@ -631,6 +664,7 @@ export class HubClient {
 
   disconnect(): void {
     this.stopHeartbeat();
+    this.clearPingTimeout();
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
     }

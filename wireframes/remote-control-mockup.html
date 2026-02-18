@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIA Remote Control — Interactive Wireframe</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #050508;
+    color: #c9d1d9;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    background: #0a0a10;
+    border-bottom: 1px solid #1a1a2a;
+    height: 44px;
+  }
+  .topbar-title { font-size: 14px; font-weight: 700; color: #9b4dca; }
+  .topbar-nav { display: flex; gap: 4px; }
+  .topbar-nav button {
+    padding: 5px 12px; border-radius: 4px; border: 1px solid #2a2a3e;
+    background: #0f0f18; color: #c9d1d9; font-size: 11px; cursor: pointer;
+    font-weight: 600; transition: all 0.15s;
+  }
+  .topbar-nav button:hover { border-color: #9b4dca; }
+  .topbar-nav button.active { background: #9b4dca; color: #fff; border-color: #9b4dca; }
+
+  /* ── MAIN LAYOUT ── */
+  .main {
+    display: flex;
+    height: calc(100vh - 44px);
+  }
+
+  /* ── MACHINE PANEL ── */
+  .machine-panel {
+    width: 320px;
+    background: #0a0a10;
+    border-right: 1px solid #1a1a2a;
+    overflow-y: auto;
+    flex-shrink: 0;
+    padding: 12px;
+  }
+  .panel-header {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px; color: #64748b; margin-bottom: 12px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .panel-header .count { color: #3fb950; }
+
+  /* ── MACHINE CARDS ── */
+  .machine-tile {
+    background: #0f0f18;
+    border: 1px solid #1a1a2a;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .machine-tile:hover { border-color: #2a2a4a; background: #121220; }
+  .machine-tile.selected { border-color: #9b4dca; background: #12121e; }
+
+  .machine-name {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 700; margin-bottom: 4px;
+  }
+
+  .power-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  }
+  .power-dot.online { background: #3fb950; box-shadow: 0 0 6px rgba(63,185,80,0.4); }
+  .power-dot.awake { background: #d29922; animation: pulse 2s infinite; }
+  .power-dot.off { background: #f85149; }
+  .power-dot.unknown { background: #484f58; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .machine-meta {
+    font-size: 11px; color: #64748b; margin-bottom: 6px;
+    display: flex; gap: 12px;
+  }
+
+  .machine-status {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.5px; margin-bottom: 8px;
+  }
+  .machine-status.online { color: #3fb950; }
+  .machine-status.awake { color: #d29922; }
+  .machine-status.off { color: #f85149; }
+  .machine-status.unknown { color: #484f58; }
+
+  .machine-agents {
+    display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px;
+  }
+  .agent-chip {
+    font-size: 9px; padding: 2px 6px; border-radius: 3px;
+    background: #1a1a2e; border: 1px solid #2a2a3e; color: #58a6ff;
+    font-weight: 600;
+  }
+
+  .machine-actions {
+    display: flex; gap: 6px; flex-wrap: wrap;
+  }
+
+  .action-btn {
+    font-size: 10px; padding: 4px 10px; border-radius: 4px;
+    border: 1px solid; cursor: pointer; font-weight: 700;
+    transition: all 0.15s; background: transparent;
+  }
+  .action-btn.wake {
+    border-color: #f85149; color: #f85149;
+  }
+  .action-btn.wake:hover { background: #f85149; color: #fff; }
+  .action-btn.start-pia {
+    border-color: #d29922; color: #d29922;
+  }
+  .action-btn.start-pia:hover { background: #d29922; color: #000; }
+  .action-btn.view {
+    border-color: #58a6ff; color: #58a6ff;
+  }
+  .action-btn.view:hover { background: #58a6ff; color: #000; }
+  .action-btn.rdp {
+    border-color: #bc8cff; color: #bc8cff;
+  }
+  .action-btn.rdp:hover { background: #bc8cff; color: #000; }
+  .action-btn.spawn {
+    border-color: #3fb950; color: #3fb950;
+  }
+  .action-btn.spawn:hover { background: #3fb950; color: #000; }
+  .action-btn.check {
+    border-color: #64748b; color: #64748b;
+  }
+  .action-btn.check:hover { background: #64748b; color: #000; }
+
+  .gear-btn {
+    position: absolute; top: 8px; right: 10px;
+    background: none; border: none; color: #484f58;
+    cursor: pointer; font-size: 16px; padding: 2px;
+    transition: color 0.2s; line-height: 1;
+  }
+  .gear-btn:hover { color: #9b4dca; }
+
+  .network-tooltip {
+    position: absolute; bottom: calc(100% + 6px); left: 12px;
+    background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 6px;
+    padding: 8px 12px; font-size: 10px; color: #c9d1d9;
+    white-space: nowrap; box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    display: none; z-index: 100;
+  }
+  .machine-tile:hover .network-tooltip { display: block; }
+
+  .bottom-actions {
+    margin-top: 12px; display: flex; gap: 6px;
+  }
+  .bottom-actions button {
+    flex: 1; padding: 8px; border-radius: 6px; border: 1px dashed #2a2a3e;
+    background: transparent; color: #64748b; font-size: 11px;
+    cursor: pointer; font-weight: 600; transition: all 0.15s;
+  }
+  .bottom-actions button:hover { border-color: #9b4dca; color: #9b4dca; }
+
+  /* ── CENTER PANEL ── */
+  .center-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── TERMINAL VIEW ── */
+  .terminal-view {
+    flex: 1; display: flex; flex-direction: column;
+    background: #050508;
+  }
+  .terminal-view.hidden { display: none; }
+
+  .terminal-header {
+    padding: 8px 16px; background: #0d0d18;
+    border-bottom: 1px solid #1a1a2a;
+    font-size: 12px; font-weight: 700; color: #64748b;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .terminal-content {
+    flex: 1; padding: 16px; overflow-y: auto;
+    font-family: 'Consolas', 'JetBrains Mono', monospace;
+    font-size: 12px; line-height: 1.6; color: #8b949e;
+  }
+  .terminal-content .prompt { color: #3fb950; }
+  .terminal-content .output { color: #c9d1d9; }
+  .terminal-content .tool { color: #d29922; }
+
+  .terminal-input {
+    padding: 8px 16px; background: #0d0d18;
+    border-top: 1px solid #1a1a2a;
+    display: flex; gap: 8px;
+  }
+  .terminal-input input {
+    flex: 1; background: #080810; border: 1px solid #2a2a3e;
+    border-radius: 4px; padding: 8px 12px; color: #c9d1d9;
+    font-family: 'Consolas', monospace; font-size: 12px; outline: none;
+  }
+  .terminal-input input:focus { border-color: #9b4dca; }
+  .terminal-input button {
+    padding: 8px 16px; border-radius: 4px; border: none;
+    background: #9b4dca; color: #fff; font-size: 11px;
+    cursor: pointer; font-weight: 700;
+  }
+
+  /* ── DESKTOP VIEWER ── */
+  .desktop-viewer {
+    flex: 1; display: none; flex-direction: column;
+    background: #050508;
+  }
+  .desktop-viewer.active { display: flex; }
+
+  .dv-toolbar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px; background: #0d0d18;
+    border-bottom: 1px solid #1a1a2a; flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+  .dv-toolbar-title {
+    font-size: 13px; font-weight: 700; color: #e2e8f0;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .dv-group {
+    display: flex; align-items: center; gap: 4px;
+    padding-left: 8px; border-left: 1px solid #1a1a2a;
+  }
+  .dv-group label { font-size: 10px; color: #64748b; }
+  .dv-group select, .dv-group input {
+    font-size: 10px; padding: 3px 6px; background: #0f0f18;
+    border: 1px solid #2a2a3e; color: #c9d1d9; border-radius: 4px;
+  }
+  .dv-btn {
+    font-size: 10px; padding: 4px 8px; border: 1px solid #2a2a3e;
+    border-radius: 4px; background: #0f0f18; color: #c9d1d9;
+    cursor: pointer; font-weight: 600; transition: all 0.15s;
+  }
+  .dv-btn:hover { border-color: #9b4dca; background: #1a1a2e; }
+  .dv-btn.close { color: #f85149; border-color: #f85149; }
+  .dv-btn.close:hover { background: #f85149; color: #fff; }
+
+  .dv-canvas {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    overflow: auto; position: relative; cursor: crosshair;
+    background: #020205;
+  }
+  .dv-canvas .screenshot {
+    max-width: 95%; max-height: 95%; border: 1px solid #1a1a2a;
+    border-radius: 4px; user-select: none; position: relative;
+    background: #0a0a14;
+    width: 90%; aspect-ratio: 16/9;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+  .dv-canvas .screenshot .fake-desktop {
+    width: 100%; height: 100%; position: relative;
+    background: linear-gradient(135deg, #0c3b6d 0%, #1a5490 50%, #0c3b6d 100%);
+  }
+  .fake-taskbar {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 40px; background: rgba(0,0,0,0.8);
+    display: flex; align-items: center; padding: 0 8px; gap: 8px;
+  }
+  .fake-taskbar .start { width: 24px; height: 24px; background: #0078d4; border-radius: 4px; }
+  .fake-taskbar .app { width: 32px; height: 28px; background: rgba(255,255,255,0.1); border-radius: 3px; }
+  .fake-taskbar .time { margin-left: auto; font-size: 10px; color: #ccc; }
+  .fake-icons {
+    position: absolute; top: 16px; left: 16px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .fake-icon {
+    width: 48px; text-align: center; font-size: 8px; color: #fff;
+  }
+  .fake-icon .ico { width: 32px; height: 32px; margin: 0 auto 4px;
+    background: rgba(255,255,255,0.2); border-radius: 4px; }
+  .fake-window {
+    position: absolute; top: 60px; left: 120px; right: 80px; bottom: 80px;
+    background: #1e1e1e; border-radius: 8px; overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  .fake-window-title {
+    height: 28px; background: #2d2d2d; display: flex;
+    align-items: center; padding: 0 8px; font-size: 9px; color: #ccc;
+  }
+  .fake-window-content {
+    padding: 8px; font-family: monospace; font-size: 8px; color: #4ec9b0;
+    line-height: 1.6;
+  }
+
+  .click-indicator {
+    position: absolute; width: 24px; height: 24px;
+    border: 2px solid #9b4dca; border-radius: 50%;
+    pointer-events: none; animation: clickPulse 0.8s ease-out forwards;
+    transform: translate(-50%, -50%);
+  }
+  @keyframes clickPulse {
+    0% { transform: translate(-50%, -50%) scale(0.3); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
+  }
+
+  .dv-input-bar {
+    display: flex; gap: 6px; padding: 8px 12px;
+    background: #0d0d18; border-top: 1px solid #1a1a2a; flex-shrink: 0;
+  }
+  .dv-input-bar input {
+    flex: 1; background: #080810; border: 1px solid #2a2a3e;
+    border-radius: 4px; padding: 6px 10px; color: #c9d1d9;
+    font-family: 'Consolas', monospace; font-size: 12px; outline: none;
+  }
+  .dv-input-bar input:focus { border-color: #9b4dca; }
+  .dv-key-btn {
+    padding: 4px 8px; border: 1px solid #2a2a3e; border-radius: 4px;
+    background: #0f0f18; color: #c9d1d9; font-size: 10px;
+    cursor: pointer; font-weight: 600; font-family: monospace;
+  }
+  .dv-key-btn:hover { border-color: #9b4dca; }
+
+  .dv-status {
+    display: flex; align-items: center; gap: 16px;
+    padding: 4px 12px; background: #0a0a10;
+    border-top: 1px solid #1a1a2a;
+    font-size: 10px; color: #64748b; flex-shrink: 0;
+  }
+  .dv-status .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    display: inline-block; margin-right: 4px;
+  }
+
+  /* ── RIGHT PANEL ── */
+  .right-panel {
+    width: 340px; background: #0a0a10;
+    border-left: 1px solid #1a1a2a;
+    overflow-y: auto; flex-shrink: 0; padding: 12px;
+  }
+
+  /* ── MODALS ── */
+  .modal-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7); z-index: 1000;
+    display: none; align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.visible { display: flex; }
+
+  .modal {
+    background: #0f0f18; border: 1px solid #2a2a3e;
+    border-radius: 12px; padding: 24px; max-width: 520px;
+    width: 90%; max-height: 85vh; overflow-y: auto;
+    box-shadow: 0 16px 64px rgba(0,0,0,0.5);
+  }
+  .modal h2 {
+    font-size: 16px; font-weight: 700; margin-bottom: 16px;
+    color: #e2e8f0;
+  }
+  .modal h2 span { color: #9b4dca; }
+
+  .settings-group {
+    background: #0a0a14; border: 1px solid #1a1a2a;
+    border-radius: 8px; padding: 12px; margin-bottom: 12px;
+  }
+  .settings-group-title {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px; color: #9b4dca; margin-bottom: 10px;
+  }
+  .settings-group label {
+    display: block; font-size: 11px; color: #8b949e;
+    margin-bottom: 4px; margin-top: 8px;
+  }
+  .settings-group label:first-of-type { margin-top: 0; }
+  .settings-group input, .settings-group select {
+    width: 100%; padding: 7px 10px; background: #080810;
+    border: 1px solid #2a2a3e; border-radius: 4px;
+    color: #c9d1d9; font-size: 12px; outline: none;
+  }
+  .settings-group input:focus, .settings-group select:focus {
+    border-color: #9b4dca;
+  }
+  .settings-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  }
+  .settings-hint {
+    font-size: 10px; color: #484f58; margin-top: 4px; line-height: 1.4;
+  }
+
+  .modal-actions {
+    display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;
+  }
+  .btn-cancel {
+    padding: 8px 16px; border-radius: 6px; border: 1px solid #2a2a3e;
+    background: transparent; color: #64748b; cursor: pointer;
+    font-size: 12px; font-weight: 600;
+  }
+  .btn-cancel:hover { border-color: #484f58; color: #c9d1d9; }
+  .btn-primary {
+    padding: 8px 20px; border-radius: 6px; border: none;
+    background: #9b4dca; color: #fff; cursor: pointer;
+    font-size: 12px; font-weight: 700;
+  }
+  .btn-primary:hover { background: #b06de0; }
+  .btn-test {
+    padding: 6px 12px; border-radius: 4px; border: 1px solid #2a2a3e;
+    background: #1a1a2e; color: #58a6ff; cursor: pointer;
+    font-size: 11px; font-weight: 600;
+  }
+  .btn-test:hover { background: #58a6ff; color: #000; }
+  .btn-test.success { background: #0d2818; color: #3fb950; border-color: #1a3a2d; }
+
+  /* ── TOAST NOTIFICATIONS ── */
+  .toast-container {
+    position: fixed; bottom: 16px; right: 16px; z-index: 2000;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .toast {
+    background: #0f0f18; border: 1px solid #2a2a3e; border-radius: 8px;
+    padding: 12px 16px; min-width: 300px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    animation: slideIn 0.3s ease-out;
+  }
+  .toast.power { border-color: #d29922; }
+  .toast.success { border-color: #3fb950; }
+  .toast.error { border-color: #f85149; }
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  .toast-title { font-size: 12px; font-weight: 700; margin-bottom: 6px; }
+  .power-steps { display: flex; flex-direction: column; gap: 4px; }
+  .power-step {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; color: #64748b;
+  }
+  .power-step.done { color: #3fb950; }
+  .power-step.active { color: #d29922; font-weight: 600; }
+  .power-step.error { color: #f85149; }
+  .power-step .step-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #484f58; flex-shrink: 0;
+  }
+  .power-step.done .step-dot { background: #3fb950; }
+  .power-step.active .step-dot { background: #d29922; animation: pulse 1s infinite; }
+  .power-step.error .step-dot { background: #f85149; }
+
+  /* ── DISCOVERY MODAL ── */
+  .discovery-list { margin-top: 12px; }
+  .discovery-section { margin-bottom: 12px; }
+  .discovery-section-title {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    color: #64748b; margin-bottom: 6px; letter-spacing: 0.5px;
+  }
+  .discovery-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 10px; background: #0a0a14; border: 1px solid #1a1a2a;
+    border-radius: 6px; margin-bottom: 4px; font-size: 12px;
+  }
+  .discovery-item .peer-info { display: flex; align-items: center; gap: 8px; }
+  .discovery-item .peer-ip { color: #64748b; font-size: 11px; }
+  .discovery-item .peer-status { font-size: 10px; font-weight: 600; }
+  .discovery-item .peer-status.online { color: #3fb950; }
+  .discovery-item .peer-status.offline { color: #f85149; }
+  .btn-add {
+    padding: 3px 10px; border-radius: 4px; border: 1px solid #3fb950;
+    background: transparent; color: #3fb950; cursor: pointer;
+    font-size: 10px; font-weight: 700;
+  }
+  .btn-add:hover { background: #3fb950; color: #000; }
+  .btn-configured {
+    padding: 3px 10px; font-size: 10px; color: #64748b;
+    border: none; background: none;
+  }
+
+  /* ── FLEET VIEW (compact) ── */
+  .fleet-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;
+    margin-bottom: 12px;
+  }
+  .fleet-tile {
+    aspect-ratio: 1; border-radius: 6px; display: flex;
+    align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; cursor: pointer;
+    border: 1px solid #1a1a2a; transition: all 0.15s;
+    background: #0f0f18; flex-direction: column; gap: 2px;
+  }
+  .fleet-tile:hover { border-color: #9b4dca; transform: scale(1.05); }
+  .fleet-tile .fleet-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+  }
+  .fleet-tile .fleet-name { font-size: 8px; color: #64748b; }
+
+  .network-label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px; color: #484f58; margin-bottom: 6px;
+    margin-top: 12px;
+  }
+  .network-label:first-child { margin-top: 0; }
+
+  /* ── VIEW TOGGLE ── */
+  .view-toggle {
+    display: flex; gap: 4px; margin-bottom: 12px;
+  }
+  .view-toggle button {
+    flex: 1; padding: 6px; border-radius: 4px; border: 1px solid #2a2a3e;
+    background: #0f0f18; color: #64748b; font-size: 10px;
+    cursor: pointer; font-weight: 600;
+  }
+  .view-toggle button.active { background: #9b4dca; color: #fff; border-color: #9b4dca; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-title">PIA Mission Control</div>
+  <div class="topbar-nav">
+    <button class="active">Agents</button>
+    <button>Machines</button>
+    <button>Files</button>
+    <button onclick="showDiscovery()">Power</button>
+  </div>
+  <div style="font-size:11px; color:#64748b;">mic@hub-m1 | <span style="color:#3fb950;">Connected</span></div>
+</div>
+
+<!-- MAIN 3-COLUMN LAYOUT -->
+<div class="main">
+  <!-- LEFT: MACHINE PANEL -->
+  <div class="machine-panel" id="machinePanel">
+    <div class="panel-header">
+      Machines <span class="count" id="machineCount">3 online / 6 total</span>
+    </div>
+
+    <div class="view-toggle">
+      <button class="active" onclick="showCardView()">Cards</button>
+      <button onclick="showFleetView()">Fleet</button>
+    </div>
+
+    <!-- CARD VIEW -->
+    <div id="cardView">
+      <!-- Machine 1: ONLINE -->
+      <div class="machine-tile selected" onclick="selectMachine(this, 'terminal')">
+        <button class="gear-btn" onclick="event.stopPropagation(); showSettings('Hub (M1)')" title="Settings">&#9881;</button>
+        <div class="network-tooltip">
+          Tailscale: 100.64.0.1<br>
+          LAN: 192.168.1.10<br>
+          MAC: AA:BB:CC:11:22:33<br>
+          Last check: just now
+        </div>
+        <div class="machine-name">
+          <div class="power-dot online"></div>
+          Hub (M1)
+        </div>
+        <div class="machine-meta">
+          <span>100.64.0.1</span>
+          <span>2 agents</span>
+        </div>
+        <div class="machine-status online">PIA Running</div>
+        <div class="machine-agents">
+          <span class="agent-chip">agent-abc</span>
+          <span class="agent-chip">agent-def</span>
+        </div>
+        <div class="machine-actions">
+          <button class="action-btn spawn" onclick="event.stopPropagation();">Spawn</button>
+          <button class="action-btn view" onclick="event.stopPropagation(); showDesktopViewer('Hub (M1)')">View</button>
+          <button class="action-btn rdp" onclick="event.stopPropagation(); launchRDP()">RDP</button>
+        </div>
+      </div>
+
+      <!-- Machine 2: OFF -->
+      <div class="machine-tile" onclick="selectMachine(this, 'terminal')">
+        <button class="gear-btn" onclick="event.stopPropagation(); showSettings('Studio-PC')" title="Settings">&#9881;</button>
+        <div class="network-tooltip">
+          Tailscale: 100.64.0.3<br>
+          LAN: 192.168.1.50<br>
+          MAC: DD:EE:FF:44:55:66<br>
+          Last check: 30s ago
+        </div>
+        <div class="machine-name">
+          <div class="power-dot off"></div>
+          Studio-PC
+        </div>
+        <div class="machine-meta">
+          <span>100.64.0.3</span>
+          <span>Last seen: 2h ago</span>
+        </div>
+        <div class="machine-status off">OFF</div>
+        <div class="machine-actions">
+          <button class="action-btn wake" onclick="event.stopPropagation(); simulateWake()">Wake</button>
+        </div>
+      </div>
+
+      <!-- Machine 3: AWAKE (no PIA) -->
+      <div class="machine-tile" onclick="selectMachine(this, 'terminal')">
+        <button class="gear-btn" onclick="event.stopPropagation(); showSettings('Render-1')" title="Settings">&#9881;</button>
+        <div class="network-tooltip">
+          Tailscale: 100.64.0.5<br>
+          LAN: 192.168.1.51<br>
+          MAC: 11:22:33:AA:BB:CC<br>
+          Last check: 15s ago
+        </div>
+        <div class="machine-name">
+          <div class="power-dot awake"></div>
+          Render-1
+        </div>
+        <div class="machine-meta">
+          <span>100.64.0.5</span>
+          <span>Ping: 12ms</span>
+        </div>
+        <div class="machine-status awake">Awake (no PIA)</div>
+        <div class="machine-actions">
+          <button class="action-btn start-pia" onclick="event.stopPropagation(); simulateBootstrap()">Start PIA</button>
+          <button class="action-btn rdp" onclick="event.stopPropagation(); launchRDP()">RDP</button>
+        </div>
+      </div>
+
+      <!-- Machine 4: ONLINE -->
+      <div class="machine-tile" onclick="selectMachine(this, 'terminal')">
+        <button class="gear-btn" onclick="event.stopPropagation(); showSettings('Render-2')" title="Settings">&#9881;</button>
+        <div class="machine-name">
+          <div class="power-dot online"></div>
+          Render-2
+        </div>
+        <div class="machine-meta">
+          <span>100.64.0.6</span>
+          <span>1 agent</span>
+        </div>
+        <div class="machine-status online">PIA Running</div>
+        <div class="machine-agents">
+          <span class="agent-chip">agent-xyz</span>
+        </div>
+        <div class="machine-actions">
+          <button class="action-btn spawn" onclick="event.stopPropagation();">Spawn</button>
+          <button class="action-btn view" onclick="event.stopPropagation(); showDesktopViewer('Render-2')">View</button>
+          <button class="action-btn rdp" onclick="event.stopPropagation(); launchRDP()">RDP</button>
+        </div>
+      </div>
+
+      <!-- Machine 5: UNKNOWN -->
+      <div class="machine-tile" onclick="selectMachine(this, 'terminal')">
+        <button class="gear-btn" onclick="event.stopPropagation(); showSettings('New-Machine')" title="Settings">&#9881;</button>
+        <div class="machine-name">
+          <div class="power-dot unknown"></div>
+          New-Machine
+        </div>
+        <div class="machine-meta">
+          <span>(no IP configured)</span>
+        </div>
+        <div class="machine-status unknown">Unknown</div>
+        <div class="machine-actions">
+          <button class="action-btn check" onclick="event.stopPropagation();">Check</button>
+        </div>
+      </div>
+
+      <!-- Machine 6: OFF -->
+      <div class="machine-tile" onclick="selectMachine(this, 'terminal')">
+        <button class="gear-btn" onclick="event.stopPropagation(); showSettings('Render-3')" title="Settings">&#9881;</button>
+        <div class="machine-name">
+          <div class="power-dot off"></div>
+          Render-3
+        </div>
+        <div class="machine-meta">
+          <span>100.64.0.8</span>
+          <span>Last seen: 5h ago</span>
+        </div>
+        <div class="machine-status off">OFF</div>
+        <div class="machine-actions">
+          <button class="action-btn wake" onclick="event.stopPropagation(); simulateWake()">Wake</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FLEET VIEW (hidden by default) -->
+    <div id="fleetView" style="display:none;">
+      <div class="network-label">Studio LAN (192.168.1.x)</div>
+      <div class="fleet-grid">
+        <div class="fleet-tile" onclick="selectMachine(null,'terminal')" title="Hub (M1)"><div class="fleet-dot" style="background:#3fb950;"></div><div class="fleet-name">Hub</div></div>
+        <div class="fleet-tile" onclick="selectMachine(null,'terminal')" title="Studio-PC"><div class="fleet-dot" style="background:#f85149;"></div><div class="fleet-name">Studio</div></div>
+        <div class="fleet-tile" onclick="selectMachine(null,'terminal')" title="Render-1"><div class="fleet-dot" style="background:#d29922;"></div><div class="fleet-name">R-1</div></div>
+        <div class="fleet-tile" onclick="selectMachine(null,'terminal')" title="Render-2"><div class="fleet-dot" style="background:#3fb950;"></div><div class="fleet-name">R-2</div></div>
+        <div class="fleet-tile" onclick="selectMachine(null,'terminal')" title="Render-3"><div class="fleet-dot" style="background:#f85149;"></div><div class="fleet-name">R-3</div></div>
+      </div>
+      <div class="network-label">Remote (Tailscale only)</div>
+      <div class="fleet-grid">
+        <div class="fleet-tile"><div class="fleet-dot" style="background:#3fb950;"></div><div class="fleet-name">R-6</div></div>
+        <div class="fleet-tile"><div class="fleet-dot" style="background:#3fb950;"></div><div class="fleet-name">R-7</div></div>
+        <div class="fleet-tile"><div class="fleet-dot" style="background:#f85149;"></div><div class="fleet-name">R-8</div></div>
+        <div class="fleet-tile"><div class="fleet-dot" style="background:#484f58;"></div><div class="fleet-name">New</div></div>
+        <div class="fleet-tile"><div class="fleet-dot" style="background:#3fb950;"></div><div class="fleet-name">R-10</div></div>
+      </div>
+    </div>
+
+    <div class="bottom-actions">
+      <button onclick="simulateWakeAll()">Wake All</button>
+      <button onclick="showDiscovery()">Discover</button>
+    </div>
+  </div>
+
+  <!-- CENTER PANEL -->
+  <div class="center-panel">
+    <!-- Terminal View -->
+    <div class="terminal-view" id="terminalView">
+      <div class="terminal-header">
+        <div class="power-dot online" style="width:6px;height:6px;"></div>
+        agent-abc on Hub (M1) | auto mode
+      </div>
+      <div class="terminal-content">
+        <div class="prompt">> Reading src/config.ts...</div>
+        <div class="output">Found 42 configuration options.</div>
+        <div class="tool">[Tool: Read] src/config.ts (125 lines)</div>
+        <div class="output">&nbsp;</div>
+        <div class="prompt">> Analyzing the power management configuration...</div>
+        <div class="output">I'll add the new power management settings to the config file.</div>
+        <div class="tool">[Tool: Edit] src/config.ts line 89-95</div>
+        <div class="output">Added power.enabled, power.checkIntervalMs, power.sshTimeout</div>
+        <div class="output">&nbsp;</div>
+        <div class="prompt">> Running TypeScript check...</div>
+        <div class="tool">[Tool: Bash] npx tsc --noEmit --skipLibCheck</div>
+        <div style="color:#3fb950;">No errors found.</div>
+      </div>
+      <div class="terminal-input">
+        <input type="text" placeholder="Send a message to the agent...">
+        <button>Send</button>
+      </div>
+    </div>
+
+    <!-- Desktop Viewer (hidden by default) -->
+    <div class="desktop-viewer" id="desktopViewer">
+      <div class="dv-toolbar">
+        <div class="dv-toolbar-title">
+          <div class="power-dot online" style="width:8px;height:8px;"></div>
+          <span id="dvName">Render-2</span>
+          <span style="color:#64748b;font-size:10px;">1920x1080</span>
+        </div>
+        <div class="dv-group">
+          <button class="dv-btn" onclick="flashRefresh()">Refresh</button>
+          <label>Every</label>
+          <select>
+            <option>Manual</option>
+            <option>1s</option>
+            <option selected>2s</option>
+            <option>5s</option>
+          </select>
+        </div>
+        <div class="dv-group">
+          <button class="dv-btn">-</button>
+          <span style="font-size:10px;color:#64748b;min-width:32px;text-align:center;">100%</span>
+          <button class="dv-btn">+</button>
+          <button class="dv-btn">Fit</button>
+        </div>
+        <div class="dv-group">
+          <label>Quality</label>
+          <select>
+            <option>Low</option>
+            <option selected>Medium</option>
+            <option>High</option>
+          </select>
+        </div>
+        <div style="margin-left:auto;">
+          <button class="dv-btn close" onclick="hideDesktopViewer()">Close</button>
+        </div>
+      </div>
+
+      <div class="dv-canvas" id="dvCanvas" onclick="handleCanvasClick(event)">
+        <div class="screenshot">
+          <div class="fake-desktop">
+            <div class="fake-icons">
+              <div class="fake-icon"><div class="ico"></div>PIA</div>
+              <div class="fake-icon"><div class="ico"></div>VS Code</div>
+              <div class="fake-icon"><div class="ico"></div>Chrome</div>
+            </div>
+            <div class="fake-window">
+              <div class="fake-window-title">VS Code - pia-system</div>
+              <div class="fake-window-content">
+                import { createServer } from 'http';<br>
+                import express from 'express';<br>
+                <br>
+                const app = express();<br>
+                const server = createServer(app);<br>
+                <br>
+                // Remote machine's VS Code<br>
+                // You're seeing this through<br>
+                // the desktop viewer!
+              </div>
+            </div>
+            <div class="fake-taskbar">
+              <div class="start"></div>
+              <div class="app"></div>
+              <div class="app"></div>
+              <div class="app"></div>
+              <div class="time">12:34 PM</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dv-input-bar">
+        <input type="text" placeholder="Type here to send keystrokes to remote machine..." id="dvInput">
+        <button class="dv-btn" onclick="simulateType()">Send</button>
+        <button class="dv-key-btn">Enter</button>
+        <button class="dv-key-btn">Tab</button>
+        <button class="dv-key-btn">Esc</button>
+        <button class="dv-key-btn">Ctrl+C</button>
+      </div>
+
+      <div class="dv-status">
+        <span><span class="dot" style="background:#3fb950;"></span> Connected</span>
+        <span>Latency: 145ms</span>
+        <span>Last refresh: 12:34:56</span>
+        <span>Size: 85KB</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: PROMPTS PANEL -->
+  <div class="right-panel">
+    <div class="panel-header">Prompts & Approvals</div>
+    <div style="background:#0f0f18;border:1px solid #1a1a2a;border-radius:8px;padding:12px;margin-bottom:8px;">
+      <div style="font-size:11px;font-weight:700;margin-bottom:6px;color:#d29922;">agent-abc needs approval</div>
+      <div style="font-size:11px;color:#8b949e;margin-bottom:8px;">
+        "May I edit <code style="color:#58a6ff;">src/power/wake-on-lan.ts</code>?"
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button style="flex:1;padding:6px;border-radius:4px;border:none;background:#3fb950;color:#000;font-size:11px;font-weight:700;cursor:pointer;">Approve</button>
+        <button style="flex:1;padding:6px;border-radius:4px;border:1px solid #f85149;background:transparent;color:#f85149;font-size:11px;font-weight:700;cursor:pointer;">Deny</button>
+      </div>
+    </div>
+    <div style="margin-top:16px;">
+      <div class="panel-header">Cost Tracker</div>
+      <div style="background:#0f0f18;border:1px solid #1a1a2a;border-radius:8px;padding:12px;">
+        <div style="font-size:20px;font-weight:700;color:#e2e8f0;">$2.45</div>
+        <div style="font-size:10px;color:#64748b;margin-top:4px;">145k tokens in / 23k out</div>
+        <div style="font-size:10px;color:#64748b;">3 active sessions</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MACHINE SETTINGS MODAL -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <h2>Machine Settings: <span id="settingsName">Studio-PC</span></h2>
+
+    <div class="settings-group">
+      <div class="settings-group-title">Network</div>
+      <label>MAC Address (for Wake-on-LAN)</label>
+      <input type="text" placeholder="AA:BB:CC:DD:EE:FF" value="DD:EE:FF:44:55:66">
+
+      <div class="settings-row" style="margin-top:8px;">
+        <div>
+          <label>Tailscale IP</label>
+          <input type="text" placeholder="100.x.x.x" value="100.64.0.3">
+        </div>
+        <div>
+          <label>LAN IP</label>
+          <input type="text" placeholder="192.168.x.x" value="192.168.1.50">
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <div class="settings-group-title">SSH</div>
+      <div class="settings-row">
+        <div>
+          <label>SSH User</label>
+          <input type="text" placeholder="mic" value="mic">
+        </div>
+        <div>
+          <label>SSH Port</label>
+          <input type="number" value="22">
+        </div>
+      </div>
+      <label>SSH Method</label>
+      <select>
+        <option selected>Tailscale SSH (recommended, no keys needed)</option>
+        <option>SSH Key</option>
+        <option>Password</option>
+      </select>
+    </div>
+
+    <div class="settings-group">
+      <div class="settings-group-title">Wake-on-LAN</div>
+      <label>WoL Proxy Machine</label>
+      <select>
+        <option selected>(direct - send from this machine)</option>
+        <option>Hub (M1) - 192.168.1.10</option>
+        <option>Render-2 - 192.168.1.52</option>
+      </select>
+      <div class="settings-hint">
+        If the hub is on a different network, pick a machine on the SAME network as this target to relay the wake-up signal.
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <div class="settings-group-title">PIA</div>
+      <label>PIA Install Path</label>
+      <input type="text" value="C:\Users\mic\Downloads\pia-system">
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button class="btn-test" id="testSshBtn" onclick="simulateTestSsh()">Test SSH</button>
+      <button class="btn-test">Auto-Discover</button>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="hideSettings()">Cancel</button>
+      <button class="btn-primary" onclick="hideSettings()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- DISCOVERY MODAL -->
+<div class="modal-overlay" id="discoveryModal">
+  <div class="modal" style="max-width:560px;">
+    <h2>Tailscale Network Discovery</h2>
+    <div style="font-size:12px;color:#8b949e;margin-bottom:12px;">
+      Found <strong style="color:#e2e8f0;">7</strong> peers on your tailnet
+    </div>
+
+    <div class="discovery-section">
+      <div class="discovery-section-title">Already registered in PIA</div>
+      <div class="discovery-item">
+        <div class="peer-info">
+          <div class="power-dot online" style="width:8px;height:8px;"></div>
+          <span>Hub (M1)</span>
+          <span class="peer-ip">100.64.0.1</span>
+        </div>
+        <span class="peer-status online">online</span>
+        <button class="btn-configured" disabled>configured</button>
+      </div>
+      <div class="discovery-item">
+        <div class="peer-info">
+          <div class="power-dot off" style="width:8px;height:8px;"></div>
+          <span>Studio-PC</span>
+          <span class="peer-ip">100.64.0.3</span>
+        </div>
+        <span class="peer-status offline">offline</span>
+        <button class="btn-configured" disabled>configured</button>
+      </div>
+      <div class="discovery-item">
+        <div class="peer-info">
+          <div class="power-dot online" style="width:8px;height:8px;"></div>
+          <span>Render-2</span>
+          <span class="peer-ip">100.64.0.6</span>
+        </div>
+        <span class="peer-status online">online</span>
+        <button class="btn-configured" disabled>configured</button>
+      </div>
+    </div>
+
+    <div class="discovery-section">
+      <div class="discovery-section-title">New — not yet in PIA</div>
+      <div class="discovery-item">
+        <div class="peer-info">
+          <div class="power-dot online" style="width:8px;height:8px;"></div>
+          <span>render-node-4</span>
+          <span class="peer-ip">100.64.0.9</span>
+        </div>
+        <span class="peer-status online">online</span>
+        <button class="btn-add">+ Add</button>
+      </div>
+      <div class="discovery-item">
+        <div class="peer-info">
+          <div class="power-dot off" style="width:8px;height:8px;"></div>
+          <span>render-node-5</span>
+          <span class="peer-ip">100.64.0.10</span>
+        </div>
+        <span class="peer-status offline">offline</span>
+        <button class="btn-add">+ Add</button>
+      </div>
+      <div class="discovery-item">
+        <div class="peer-info">
+          <div class="power-dot online" style="width:8px;height:8px;"></div>
+          <span>mic-laptop</span>
+          <span class="peer-ip">100.64.0.12</span>
+        </div>
+        <span class="peer-status online">online</span>
+        <button class="btn-add">+ Add</button>
+      </div>
+      <div class="discovery-item">
+        <div class="peer-info">
+          <div class="power-dot online" style="width:8px;height:8px;"></div>
+          <span>studio-nas</span>
+          <span class="peer-ip">100.64.0.15</span>
+        </div>
+        <span class="peer-status online">online</span>
+        <button class="btn-add">+ Add</button>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="hideDiscovery()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+  // ── MACHINE SELECTION ──
+  function selectMachine(el, view) {
+    document.querySelectorAll('.machine-tile').forEach(t => t.classList.remove('selected'));
+    if (el) el.classList.add('selected');
+  }
+
+  // ── VIEW TOGGLES ──
+  function showCardView() {
+    document.getElementById('cardView').style.display = 'block';
+    document.getElementById('fleetView').style.display = 'none';
+    document.querySelectorAll('.view-toggle button').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+  }
+  function showFleetView() {
+    document.getElementById('cardView').style.display = 'none';
+    document.getElementById('fleetView').style.display = 'block';
+    document.querySelectorAll('.view-toggle button').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+  }
+
+  // ── DESKTOP VIEWER ──
+  function showDesktopViewer(name) {
+    document.getElementById('dvName').textContent = name;
+    document.getElementById('terminalView').classList.add('hidden');
+    document.getElementById('desktopViewer').classList.add('active');
+  }
+  function hideDesktopViewer() {
+    document.getElementById('desktopViewer').classList.remove('active');
+    document.getElementById('terminalView').classList.remove('hidden');
+  }
+  function handleCanvasClick(e) {
+    const canvas = document.getElementById('dvCanvas');
+    const indicator = document.createElement('div');
+    indicator.className = 'click-indicator';
+    indicator.style.left = (e.clientX - canvas.getBoundingClientRect().left) + 'px';
+    indicator.style.top = (e.clientY - canvas.getBoundingClientRect().top) + 'px';
+    canvas.appendChild(indicator);
+    setTimeout(() => indicator.remove(), 800);
+  }
+  function flashRefresh() {
+    const canvas = document.querySelector('.screenshot');
+    canvas.style.opacity = '0.5';
+    setTimeout(() => canvas.style.opacity = '1', 200);
+  }
+  function simulateType() {
+    const input = document.getElementById('dvInput');
+    if (input.value) {
+      showSimpleToast('Sent: "' + input.value + '" to remote machine');
+      input.value = '';
+    }
+  }
+
+  // ── SETTINGS MODAL ──
+  function showSettings(name) {
+    document.getElementById('settingsName').textContent = name;
+    document.getElementById('settingsModal').classList.add('visible');
+  }
+  function hideSettings() {
+    document.getElementById('settingsModal').classList.remove('visible');
+  }
+  function simulateTestSsh() {
+    const btn = document.getElementById('testSshBtn');
+    btn.textContent = 'Testing...';
+    btn.style.color = '#d29922';
+    setTimeout(() => {
+      btn.textContent = 'SSH OK!';
+      btn.classList.add('success');
+      setTimeout(() => {
+        btn.textContent = 'Test SSH';
+        btn.classList.remove('success');
+        btn.style.color = '';
+      }, 2000);
+    }, 1500);
+  }
+
+  // ── DISCOVERY MODAL ──
+  function showDiscovery() {
+    document.getElementById('discoveryModal').classList.add('visible');
+  }
+  function hideDiscovery() {
+    document.getElementById('discoveryModal').classList.remove('visible');
+  }
+
+  // ── RDP ──
+  function launchRDP() {
+    showSimpleToast('Downloading Studio-PC.rdp... Opens Windows Remote Desktop');
+  }
+
+  // ── POWER ACTIONS ──
+  function simulateWake() {
+    showPowerToast('Waking Studio-PC...', [
+      { label: 'Sending Wake-on-LAN packet', status: 'active' },
+      { label: 'Waiting for machine to boot', status: 'pending' },
+      { label: 'Probing for response', status: 'pending' },
+    ], 'wake');
+  }
+
+  function simulateBootstrap() {
+    showPowerToast('Starting PIA on Render-1...', [
+      { label: 'SSH connecting', status: 'active' },
+      { label: 'Starting PIA service', status: 'pending' },
+      { label: 'Waiting for PIA to connect', status: 'pending' },
+    ], 'bootstrap');
+  }
+
+  function simulateWakeAll() {
+    showPowerToast('Waking all machines...', [
+      { label: 'Studio-PC: sending WoL', status: 'active' },
+      { label: 'Render-3: sending WoL', status: 'active' },
+      { label: 'Waiting for machines to boot', status: 'pending' },
+      { label: 'Starting PIA on all', status: 'pending' },
+    ], 'wakeAll');
+  }
+
+  function showPowerToast(title, steps, type) {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = 'toast power';
+    toast.innerHTML = `
+      <div class="toast-title">${title}</div>
+      <div class="power-steps">
+        ${steps.map((s, i) => `
+          <div class="power-step ${s.status}" id="step-${type}-${i}">
+            <div class="step-dot"></div>
+            <span>${s.label}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    container.appendChild(toast);
+
+    // Simulate progress
+    let step = 0;
+    const interval = setInterval(() => {
+      const current = document.getElementById(`step-${type}-${step}`);
+      if (current) {
+        current.className = 'power-step done';
+      }
+      step++;
+      const next = document.getElementById(`step-${type}-${step}`);
+      if (next) {
+        next.className = 'power-step active';
+      } else {
+        clearInterval(interval);
+        toast.className = 'toast success';
+        toast.querySelector('.toast-title').textContent = title.replace('...', '') + ' — Done!';
+        setTimeout(() => toast.remove(), 3000);
+      }
+    }, 2000);
+  }
+
+  function showSimpleToast(msg) {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerHTML = `<div style="font-size:12px;">${msg}</div>`;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
+
+  // Close modals on overlay click
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        overlay.classList.remove('visible');
+      }
+    });
+  });
+</script>
+</body>
+</html>

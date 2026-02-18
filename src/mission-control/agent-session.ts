@@ -684,9 +684,18 @@ export class AgentSessionManager extends EventEmitter {
         this.emit('output', { sessionId: session.id, data: costText });
         pm.addJournalEntry(session.id, 'cost', costText);
 
+        // Log stop reason for visibility (Context7 claude-agent-sdk docs)
+        const subtype = (resultMsg as any).subtype as string | undefined;
+        if (subtype && subtype !== 'success') {
+          const stopReason = (resultMsg as any).stop_reason as string | undefined;
+          const reasonText = `\n[Stop] Reason: ${subtype}${stopReason ? ` (stop_reason: ${stopReason})` : ''}`;
+          this.emit('output', { sessionId: session.id, data: reasonText });
+          pm.addJournalEntry(session.id, 'output', reasonText);
+        }
+
         if (resultMsg.is_error) {
           const errorMsg = resultMsg as any;
-          session.errorMessage = errorMsg.errors?.join('; ') || resultMsg.subtype;
+          session.errorMessage = errorMsg.errors?.join('; ') || subtype;
         }
 
         this.persistSession(session);
@@ -1023,6 +1032,22 @@ export class AgentSessionManager extends EventEmitter {
     const session = this.sessions.get(sessionId);
     if (session) {
       session.config.approvalMode = mode;
+
+      // Wire SDK permission mode change mid-session (Context7 claude-agent-sdk docs)
+      const sdkQuery = this.sdkQueries.get(sessionId);
+      if (sdkQuery) {
+        const sdkMode = (() => {
+          switch (mode) {
+            case 'plan': return 'plan' as const;
+            case 'manual': return 'acceptEdits' as const;
+            default: return 'bypassPermissions' as const;  // auto + yolo
+          }
+        })();
+        sdkQuery.setPermissionMode(sdkMode).catch((err: Error) => {
+          logger.warn(`Failed to set SDK permission mode for ${sessionId}: ${err.message}`);
+        });
+      }
+
       const pm = getPromptManager();
       pm.addJournalEntry(sessionId, 'output', `Approval mode changed to: ${mode}`);
       this.emit('status', { sessionId, approvalMode: mode });
@@ -1075,6 +1100,49 @@ export class AgentSessionManager extends EventEmitter {
 
   getJournal(sessionId: string): JournalEntry[] {
     return getPromptManager().getJournal(sessionId);
+  }
+
+  /** Persist all agent output buffers to SQLite on shutdown (Risk Analysis Fix B) */
+  persistAllOutputBuffers(): void {
+    const sessions = this.getAllSessions();
+    if (sessions.length === 0) return;
+
+    try {
+      const db = getDatabase();
+      const stmt = db.prepare(`
+        INSERT OR REPLACE INTO agent_output_snapshots (session_id, status, output_buffer, cost_usd, tokens_in, tokens_out, saved_at)
+        VALUES (?, ?, ?, ?, ?, ?, unixepoch())
+      `);
+
+      // Ensure table exists
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS agent_output_snapshots (
+          session_id TEXT PRIMARY KEY,
+          status TEXT NOT NULL,
+          output_buffer TEXT,
+          cost_usd REAL DEFAULT 0,
+          tokens_in INTEGER DEFAULT 0,
+          tokens_out INTEGER DEFAULT 0,
+          saved_at INTEGER DEFAULT (unixepoch())
+        )
+      `);
+
+      const txn = db.transaction(() => {
+        for (const s of sessions) {
+          if (s.outputBuffer.length > 0) {
+            // Only save last 100KB per session to keep DB lean
+            const truncated = s.outputBuffer.length > 102400
+              ? s.outputBuffer.slice(-102400) : s.outputBuffer;
+            stmt.run(s.id, s.status, truncated, s.cost, s.tokensIn, s.tokensOut);
+          }
+        }
+      });
+      txn();
+
+      logger.info(`Persisted output buffers for ${sessions.length} agent sessions`);
+    } catch (err) {
+      logger.error(`Failed to persist agent output buffers: ${err}`);
+    }
   }
 
   /** Kill ALL active sessions — called on server shutdown to prevent orphan Claude processes */
@@ -1151,16 +1219,85 @@ export class AgentSessionManager extends EventEmitter {
       db.prepare(`
         UPDATE mc_agent_sessions
         SET cost_usd = ?, tokens_in = ?, tokens_out = ?, tool_calls = ?,
-            error_message = ?, status = ?,
+            error_message = ?, status = ?, claude_session_id = ?,
             completed_at = CASE WHEN ? IN ('done', 'error') THEN unixepoch() ELSE completed_at END
         WHERE id = ?
       `).run(
         session.cost, session.tokensIn, session.tokensOut, session.toolCalls,
-        session.errorMessage || null, session.status,
+        session.errorMessage || null, session.status, session.claudeSessionId || null,
         session.status, session.id,
       );
     } catch (err) {
       logger.error(`Failed to persist session: ${err}`);
+    }
+  }
+
+  /**
+   * Resume a previously completed/idle session from database.
+   * Restores the session into memory with its claude_session_id so the SDK
+   * can continue the conversation where it left off.
+   */
+  resumeSession(sessionId: string, newTask: string): AgentSession | null {
+    // Already in memory?
+    const existing = this.sessions.get(sessionId);
+    if (existing) {
+      // Just send a follow-up
+      this.respond(sessionId, newTask);
+      return existing;
+    }
+
+    // Load from database
+    try {
+      const db = getDatabase();
+      const row = db.prepare(`
+        SELECT id, machine_id, mode, task, cwd, approval_mode, model, status,
+               cost_usd, tokens_in, tokens_out, tool_calls, error_message,
+               claude_session_id, created_at
+        FROM mc_agent_sessions WHERE id = ?
+      `).get(sessionId) as Record<string, unknown> | undefined;
+
+      if (!row) {
+        logger.warn(`resumeSession: session ${sessionId} not found in database`);
+        return null;
+      }
+
+      if (!row.claude_session_id) {
+        logger.warn(`resumeSession: session ${sessionId} has no claude_session_id — cannot resume`);
+        return null;
+      }
+
+      // Reconstruct the session in memory
+      const session: AgentSession = {
+        id: row.id as string,
+        config: {
+          machineId: row.machine_id as string,
+          mode: row.mode as 'api' | 'pty' | 'sdk',
+          task: newTask,
+          cwd: row.cwd as string,
+          approvalMode: (row.approval_mode as 'manual' | 'auto' | 'yolo' | 'plan') || 'auto',
+          model: row.model as string,
+        },
+        status: 'starting',
+        createdAt: row.created_at as number,
+        cost: (row.cost_usd as number) || 0,
+        tokensIn: (row.tokens_in as number) || 0,
+        tokensOut: (row.tokens_out as number) || 0,
+        toolCalls: (row.tool_calls as number) || 0,
+        outputBuffer: '',
+        claudeSessionId: row.claude_session_id as string,
+        restartCount: 0,
+      };
+
+      this.sessions.set(session.id, session);
+      logger.info(`Resuming session ${sessionId} with claude_session_id: ${session.claudeSessionId}`);
+
+      // Run the SDK with resume
+      this.runSdkMode(session);
+
+      return session;
+    } catch (err) {
+      logger.error(`Failed to resume session: ${err}`);
+      return null;
     }
   }
 }

@@ -298,8 +298,8 @@ export function createServer(): Express {
 
   // Error handling
   app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-    logger.error(`Unhandled error: ${err.message}`);
-    res.status(500).json({ error: 'Internal server error' });
+    logger.error(`Unhandled error: ${err.message}\n${err.stack}`);
+    res.status(500).json({ error: 'Internal server error', detail: err.message });
   });
 
   return app;

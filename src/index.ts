@@ -140,35 +140,43 @@ async function startLocal(): Promise<void> {
   await startLocalService();
 }
 
-function shutdown(): void {
+async function shutdown(): Promise<void> {
   logger.info('');
   logger.info('Shutting down PIA...');
 
-  // Stop background services
+  // Persist agent output buffers before killing anything (Risk Analysis Fix B)
   try {
-    const { getHeartbeatService } = require('./orchestrator/heartbeat.js');
+    const { getAgentSessionManager } = await import('./mission-control/agent-session.js');
+    const mgr = getAgentSessionManager();
+    mgr.persistAllOutputBuffers();
+    logger.info('Agent output buffers persisted');
+  } catch { /* may not be initialized */ }
+
+  // Stop background services — use dynamic import() (ESM fix, same as websocket-server.ts)
+  try {
+    const { getHeartbeatService } = await import('./orchestrator/heartbeat.js');
     getHeartbeatService().stop();
   } catch { /* may not be initialized */ }
 
   try {
-    const { getExecutionEngine } = require('./orchestrator/execution-engine.js');
+    const { getExecutionEngine } = await import('./orchestrator/execution-engine.js');
     getExecutionEngine().stop();
   } catch { /* may not be initialized */ }
 
   try {
-    const { getDoctor } = require('./agents/doctor.js');
+    const { getDoctor } = await import('./agents/doctor.js');
     getDoctor().stop();
   } catch { /* may not be initialized */ }
 
   // Stop The Cortex
   try {
-    const { shutdownCortex } = require('./cortex/index.js');
+    const { shutdownCortex } = await import('./cortex/index.js');
     shutdownCortex();
   } catch { /* may not be initialized */ }
 
   // Stop Network Sentinel
   try {
-    const { getNetworkSentinel } = require('./security/network-sentinel.js');
+    const { getNetworkSentinel } = await import('./security/network-sentinel.js');
     getNetworkSentinel().stop();
   } catch { /* may not be initialized */ }
 
@@ -182,7 +190,7 @@ function shutdown(): void {
 
   // Stop Browser Controller (prevent orphan Chromium processes)
   try {
-    const { getBrowserController } = require('./browser-controller/controller.js');
+    const { getBrowserController } = await import('./browser-controller/controller.js');
     const bc = getBrowserController();
     if (bc.getState().status !== 'stopped') {
       bc.stop();
@@ -192,11 +200,9 @@ function shutdown(): void {
   // Disconnect from Hub if in local mode
   if (config.mode === 'local') {
     try {
-      const { getHubClient } = require('./local/hub-client.js');
+      const { getHubClient } = await import('./local/hub-client.js');
       getHubClient().disconnect();
-    } catch {
-      // Hub client may not be initialized
-    }
+    } catch { /* may not be initialized */ }
   }
 
   logger.info('Goodbye!');
