@@ -739,6 +739,13 @@ function getMigrations(): Migration[] {
         ALTER TABLE mc_agent_sessions ADD COLUMN claude_session_id TEXT;
       `,
     },
+    {
+      name: '043_machine_power_state',
+      sql: `
+        -- Power state tracking for remote machine control (WOL + SSH bootstrap)
+        ALTER TABLE machines ADD COLUMN power_state TEXT DEFAULT 'unknown';
+      `,
+    },
   ];
 }
 

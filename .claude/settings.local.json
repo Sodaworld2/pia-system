@@ -95,7 +95,8 @@
       "mcp__context7__resolve-library-id",
       "mcp__context7__query-docs",
       "WebFetch(domain:ylianst.github.io)",
-      "WebFetch(domain:www.elevenforum.com)"
+      "WebFetch(domain:www.elevenforum.com)",
+      "WebFetch(domain:sodalabs-ai.web.app)"
     ]
   },
   "hooks": {

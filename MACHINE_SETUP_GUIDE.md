@@ -269,11 +269,11 @@ Workers send heartbeats every 30 seconds. If a machine goes offline:
 
 ## Machine IDs (Current Fleet)
 
-| Machine | DB ID | Hostname |
-|---|---|---|
-| M1 — Izzit7 (Hub) | adFxRSyo1ZCh9MFqbgWiW | Izzit7 |
-| M2 — soda-monster-hunter | CPRCCmmvcH6PHSTyURmSK | soda-monster-hunter |
-| M3 — soda-yeti | qyofMpK5niIQ_6wo3nnvT | soda-yeti |
+| Machine | DB ID | Hostname | MAC Address | Tailscale IP | User |
+|---|---|---|---|---|---|
+| M1 — Izzit7 (Hub) | adFxRSyo1ZCh9MFqbgWiW | Izzit7 | TBD | 100.73.133.3 | mic |
+| M2 — soda-monster-hunter | CPRCCmmvcH6PHSTyURmSK | soda-monster-hunter | A0-9F-7A-5D-DF-A4 | 100.127.165.12 | User |
+| M3 — soda-yeti | qyofMpK5niIQ_6wo3nnvT | soda-yeti | TBD | 100.102.217.69 | mic |
 
 ---
 

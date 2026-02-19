@@ -6,11 +6,15 @@ import {
   createMachine,
   updateMachineStatus,
   updateMachineHeartbeat,
+  updateMachinePowerState,
+  updateMachineCapabilities,
   deleteMachine,
   MachineInput,
 } from '../../db/queries/machines.js';
 import { getAgentsByMachine } from '../../db/queries/agents.js';
 import { createLogger } from '../../utils/logger.js';
+import { PowerManager, getPowerState, getMachineConfig } from '../../services/power-manager.js';
+import { getWebSocketServer } from '../../tunnel/websocket-server.js';
 
 const router = Router();
 const logger = createLogger('MachinesAPI');
@@ -106,7 +110,7 @@ router.post('/:id/heartbeat', (req: Request, res: Response) => {
   }
 });
 
-// PATCH /api/machines/:id - Update machine
+// PATCH /api/machines/:id - Update machine (status + capabilities merge)
 router.patch('/:id', (req: Request, res: Response) => {
   try {
     const machine = getMachineById(req.params.id as string);
@@ -115,9 +119,12 @@ router.patch('/:id', (req: Request, res: Response) => {
       return;
     }
 
-    const { status } = req.body;
+    const { status, capabilities } = req.body;
     if (status) {
       updateMachineStatus(machine.id, status);
+    }
+    if (capabilities && typeof capabilities === 'object') {
+      updateMachineCapabilities(machine.id, capabilities);
     }
 
     const updated = getMachineById(machine.id);
@@ -125,6 +132,106 @@ router.patch('/:id', (req: Request, res: Response) => {
   } catch (error) {
     logger.error(`Failed to update machine: ${error}`);
     res.status(500).json({ error: 'Failed to update machine' });
+  }
+});
+
+// GET /api/machines/:id/power-state - Probe current power state
+router.get('/:id/power-state', async (req: Request, res: Response) => {
+  try {
+    const machine = getMachineById(req.params.id as string);
+    if (!machine) {
+      res.status(404).json({ error: 'Machine not found' });
+      return;
+    }
+
+    const config = getMachineConfig(machine.capabilities);
+    if (!config) {
+      res.status(400).json({ error: 'Machine has no tailscaleIp configured. Save settings first.' });
+      return;
+    }
+
+    const state = await getPowerState(config.tailscaleIp);
+    updateMachinePowerState(machine.id, state);
+
+    res.json({ machineId: machine.id, powerState: state });
+  } catch (error) {
+    logger.error(`Failed to get power state: ${error}`);
+    res.status(500).json({ error: 'Failed to get power state' });
+  }
+});
+
+// POST /api/machines/:id/wake - Send WOL magic packet and poll for awake
+router.post('/:id/wake', async (req: Request, res: Response) => {
+  try {
+    const machine = getMachineById(req.params.id as string);
+    if (!machine) {
+      res.status(404).json({ error: 'Machine not found' });
+      return;
+    }
+
+    const config = getMachineConfig(machine.capabilities);
+    if (!config || !config.macAddress) {
+      res.status(400).json({ error: 'Machine has no MAC address configured. Save settings first.' });
+      return;
+    }
+
+    // Broadcast power events to dashboard via WebSocket
+    let ws: ReturnType<typeof getWebSocketServer> | null = null;
+    try { ws = getWebSocketServer(); } catch { /* not available */ }
+
+    const pm = new PowerManager((event) => {
+      updateMachinePowerState(machine.id, event.state);
+      if (ws) {
+        ws.broadcastMc({ type: 'mc:power_event', payload: event });
+      }
+    });
+
+    // Run wake in background — respond immediately
+    res.json({ status: 'waking', machineId: machine.id, message: 'Wake-on-LAN started. Watch WebSocket for progress.' });
+
+    pm.wake(machine.id, machine.name, config).catch((err) => {
+      logger.error(`Wake failed for ${machine.name}: ${err}`);
+    });
+  } catch (error) {
+    logger.error(`Failed to wake machine: ${error}`);
+    res.status(500).json({ error: 'Failed to wake machine' });
+  }
+});
+
+// POST /api/machines/:id/bootstrap - SSH into machine and start PIA
+router.post('/:id/bootstrap', async (req: Request, res: Response) => {
+  try {
+    const machine = getMachineById(req.params.id as string);
+    if (!machine) {
+      res.status(404).json({ error: 'Machine not found' });
+      return;
+    }
+
+    const config = getMachineConfig(machine.capabilities);
+    if (!config) {
+      res.status(400).json({ error: 'Machine has no SSH config. Save settings first.' });
+      return;
+    }
+
+    let ws: ReturnType<typeof getWebSocketServer> | null = null;
+    try { ws = getWebSocketServer(); } catch { /* not available */ }
+
+    const pm = new PowerManager((event) => {
+      updateMachinePowerState(machine.id, event.state);
+      if (ws) {
+        ws.broadcastMc({ type: 'mc:power_event', payload: event });
+      }
+    });
+
+    // Run bootstrap in background — respond immediately
+    res.json({ status: 'bootstrapping', machineId: machine.id, message: 'SSH bootstrap started. Watch WebSocket for progress.' });
+
+    pm.bootstrap(machine.id, machine.name, config).catch((err) => {
+      logger.error(`Bootstrap failed for ${machine.name}: ${err}`);
+    });
+  } catch (error) {
+    logger.error(`Failed to bootstrap machine: ${error}`);
+    res.status(500).json({ error: 'Failed to bootstrap machine' });
   }
 });
 

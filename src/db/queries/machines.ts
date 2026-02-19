@@ -118,6 +118,24 @@ export function getOfflineMachines(thresholdSeconds: number): Machine[] {
   })) as Machine[];
 }
 
+export function updateMachinePowerState(id: string, powerState: string): void {
+  const db = getDatabase();
+  db.prepare(`
+    UPDATE machines SET power_state = ? WHERE id = ?
+  `).run(powerState, id);
+}
+
+export function updateMachineCapabilities(id: string, newCaps: Record<string, unknown>): void {
+  const db = getDatabase();
+  const machine = getMachineById(id);
+  if (!machine) return;
+
+  const merged = { ...(machine.capabilities || {}), ...newCaps };
+  db.prepare(`
+    UPDATE machines SET capabilities = ? WHERE id = ?
+  `).run(JSON.stringify(merged), id);
+}
+
 /** Delete machines that have been offline for more than `days` days. Returns count deleted. */
 export function cleanupStaleMachines(days: number = 7): number {
   const db = getDatabase();

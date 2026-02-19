@@ -48,7 +48,7 @@ interface IncomingMessage {
 
 interface OutgoingMessage {
   type: 'auth' | 'output' | 'buffer' | 'exit' | 'error' | 'pong' | 'agent:update' | 'alert' | 'machine:update' | 'command' | 'relay:message' | 'relay:registered' |
-        'mc:prompt' | 'mc:output' | 'mc:status' | 'mc:journal' | 'mc:agent_spawned' | 'mc:agent_killed' | 'mc:browser_status';
+        'mc:prompt' | 'mc:output' | 'mc:status' | 'mc:journal' | 'mc:agent_spawned' | 'mc:agent_killed' | 'mc:browser_status' | 'mc:power_event';
   success?: boolean;
   payload?: unknown;
   sessionId?: string;

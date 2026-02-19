@@ -10,6 +10,7 @@ import {
   getMachineByHostname,
   updateMachineHeartbeat,
   updateMachineStatus,
+  updateMachinePowerState,
   Machine,
 } from '../db/queries/machines.js';
 import {
@@ -124,12 +125,13 @@ export class HubAggregator {
       logger.info(`New machine registered: ${machine.name}`);
     }
 
-    // Track connection
+    // Track connection and update power state
     this.connections.set(machine.id, {
       machineId: machine.id,
       lastSeen: Date.now(),
       connected: true,
     });
+    updateMachinePowerState(machine.id, 'online');
 
     // Map client's local ID → DB ID so heartbeats resolve correctly
     if (machine.id !== data.id) {
@@ -327,6 +329,7 @@ export class HubAggregator {
 
           // Update database
           updateMachineStatus(machineId, 'offline');
+          updateMachinePowerState(machineId, 'unknown');
 
           // Create alert
           const machine = getMachineById(machineId);

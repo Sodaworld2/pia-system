@@ -1,5 +1,11 @@
 # PIA System — Project Intelligence Agent
 
+## Who Am I?
+
+**READ `MACHINE_IDENTITY.local.md` FIRST** — it tells you which machine you are, your role (hub or worker), and what you're allowed to do. Every machine has a different copy of this file. It is `.gitignore`'d — never commit it.
+
+If that file doesn't exist, create it by checking your hostname (`hostname` command) and matching against the fleet table in `PIA_ARCHITECTURE.md`.
+
 ## What This Is
 
 Multi-machine AI agent orchestration system. Express + TypeScript + SQLite + Claude Agent SDK.
@@ -118,6 +124,67 @@ See `ELECTRON_APP_ANALYSIS.md` for the full technical analysis. Key decisions:
 - **Both modes**: CLI (`npm run dev`) + Desktop (`electron`) from same codebase
 
 The Express server, API routes, and WebSocket events are the **contract** between backend and frontend. Keep them stable and documented.
+
+## Knowledge Base & File Index Maintenance
+
+**Three files form the project's living documentation. Keep them updated.**
+
+| File | What It Is | When to Update |
+|------|-----------|----------------|
+| `FILE_INDEX.md` | Index of every `.md` and `.html` file | When you CREATE or DELETE any `.md` or `.html` file |
+| `PIA_KNOWLEDGE_BASE.md` | Master knowledge base (terminology, ideas, spec, capabilities, to-do) | When you add new features, make architectural decisions, or change capabilities |
+| `public/pia-book.html` | Visual HTML version of the knowledge base (served at `/pia-book.html`) | When significant changes are made to the knowledge base |
+
+### How to Update FILE_INDEX.md
+
+When you create a new `.md` or `.html` file:
+1. Open `FILE_INDEX.md`
+2. Add the file to the correct category table
+3. Include: file path, one-line purpose
+
+When you delete a file, remove its entry.
+
+### How to Update PIA_KNOWLEDGE_BASE.md
+
+When you make changes that affect the project's knowledge:
+- **New terminology?** Add to Section 1 (Terminology)
+- **New decision or idea?** Add to Section 2 (Ideas Discussed)
+- **New API endpoint, migration, or subsystem?** Update Section 3 (System Specification)
+- **New working feature?** Add to Section 4 (Current Capabilities)
+- **Completed a to-do item?** Move it from Section 5 (Still To Do) to Section 4
+
+### Knowledge Organization Template
+
+This is the standard template for organizing project knowledge. Use this pattern when consolidating documentation for any project:
+
+```markdown
+# [Project] — Master Knowledge Base
+
+## 1. Terminology
+Plain-English definitions. No jargon without explanation.
+| Term | What It Means |
+
+## 2. Ideas Discussed
+Settled decisions (with reasoning) + Future ideas (with status)
+
+## 3. System Specification
+Architecture, stack, source files, API reference, config, libraries
+
+## 4. Current Capabilities
+What actually works today (Working vs Partial)
+
+## 5. Still To Do
+Ordered by priority: High / Medium / Lower
+
+## 6. Session Timeline
+Chronological record of every work session
+
+## 7. Key Libraries
+Dependencies with purpose and version
+
+## 8. Configuration Reference
+Every env variable with default and purpose
+```
 
 ## Do Not
 

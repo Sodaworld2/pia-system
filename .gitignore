@@ -53,3 +53,6 @@ firebase-service-account.json
 **/*firebase-adminsdk*.json
 **/.playwright-mcp/*.json
 first-run-*.png
+
+# Machine identity (local per-machine, never shared)
+MACHINE_IDENTITY.local.md

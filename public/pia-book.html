@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIA System — The Book</title>
+<style>
+  :root {
+    --bg: #050508;
+    --panel: #0a0a10;
+    --card: #0f0f18;
+    --border: #1e1e30;
+    --text: #e0e0e8;
+    --muted: #8888aa;
+    --purple: #9b4dca;
+    --purple-light: #bc8cff;
+    --green: #3fb950;
+    --orange: #d29922;
+    --blue: #58a6ff;
+    --red: #f85149;
+    --cyan: #39d2c0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* ── Navigation ── */
+  .book-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 260px;
+    height: 100vh;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    z-index: 100;
+    padding: 20px 0;
+  }
+
+  .book-nav h1 {
+    font-size: 16px;
+    color: var(--purple-light);
+    padding: 0 20px 15px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .book-nav .subtitle {
+    font-size: 11px;
+    color: var(--muted);
+    padding: 0 20px;
+    margin-top: -10px;
+    margin-bottom: 15px;
+  }
+
+  .nav-section {
+    padding: 8px 20px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    margin-top: 10px;
+  }
+
+  .nav-link {
+    display: block;
+    padding: 6px 20px 6px 28px;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 13px;
+    border-left: 3px solid transparent;
+    transition: all 0.15s;
+  }
+
+  .nav-link:hover, .nav-link.active {
+    background: rgba(155, 77, 202, 0.1);
+    border-left-color: var(--purple);
+    color: var(--purple-light);
+  }
+
+  .nav-link .badge {
+    float: right;
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 8px;
+    background: var(--card);
+    color: var(--muted);
+  }
+
+  /* ── Main Content ── */
+  .book-content {
+    margin-left: 260px;
+    padding: 40px 60px;
+    max-width: 1000px;
+  }
+
+  .chapter {
+    margin-bottom: 60px;
+    scroll-margin-top: 20px;
+  }
+
+  .chapter-number {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--purple);
+    margin-bottom: 6px;
+  }
+
+  .chapter h2 {
+    font-size: 28px;
+    color: var(--text);
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+
+  .chapter-intro {
+    color: var(--muted);
+    font-size: 15px;
+    margin-bottom: 30px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 20px;
+  }
+
+  h3 {
+    font-size: 18px;
+    color: var(--purple-light);
+    margin: 30px 0 12px;
+  }
+
+  h4 {
+    font-size: 14px;
+    color: var(--cyan);
+    margin: 20px 0 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  p { margin-bottom: 12px; font-size: 14px; }
+
+  /* ── Cards ── */
+  .term-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .term-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    transition: border-color 0.2s;
+  }
+
+  .term-card:hover {
+    border-color: var(--purple);
+  }
+
+  .term-card .term-name {
+    font-weight: 600;
+    color: var(--purple-light);
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+
+  .term-card .term-def {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* ── Tables ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 20px;
+    font-size: 13px;
+  }
+
+  th {
+    text-align: left;
+    padding: 8px 12px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--purple-light);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  td {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  tr:hover td {
+    background: rgba(155, 77, 202, 0.05);
+  }
+
+  /* ── Code ── */
+  code {
+    font-family: 'JetBrains Mono', 'Cascadia Code', monospace;
+    background: var(--card);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: var(--cyan);
+  }
+
+  pre {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    overflow-x: auto;
+    margin: 12px 0 20px;
+    font-family: 'JetBrains Mono', 'Cascadia Code', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text);
+  }
+
+  /* ── Status Badges ── */
+  .status {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .status.done { background: rgba(63, 185, 80, 0.15); color: var(--green); }
+  .status.working { background: rgba(210, 153, 34, 0.15); color: var(--orange); }
+  .status.planned { background: rgba(88, 166, 255, 0.15); color: var(--blue); }
+  .status.idea { background: rgba(155, 77, 202, 0.15); color: var(--purple-light); }
+  .status.blocked { background: rgba(248, 81, 73, 0.15); color: var(--red); }
+
+  /* ── Architecture Diagram ── */
+  .arch-diagram {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 30px;
+    margin: 20px 0;
+    text-align: center;
+  }
+
+  .arch-diagram .machine {
+    display: inline-block;
+    background: var(--panel);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin: 10px;
+    min-width: 180px;
+    vertical-align: top;
+    text-align: left;
+  }
+
+  .arch-diagram .machine.hub {
+    border-color: var(--purple);
+    box-shadow: 0 0 20px rgba(155, 77, 202, 0.2);
+  }
+
+  .arch-diagram .machine.worker {
+    border-color: var(--cyan);
+  }
+
+  .arch-diagram .machine h5 {
+    font-size: 13px;
+    color: var(--purple-light);
+    margin-bottom: 6px;
+  }
+
+  .arch-diagram .machine .detail {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  .arch-diagram .connector {
+    display: block;
+    color: var(--muted);
+    font-size: 12px;
+    margin: 6px 0;
+  }
+
+  /* ── Timeline ── */
+  .timeline {
+    position: relative;
+    padding-left: 30px;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--border);
+  }
+
+  .timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -26px;
+    top: 16px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--purple);
+    border: 2px solid var(--bg);
+  }
+
+  .timeline-item .date {
+    font-size: 11px;
+    color: var(--purple);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+
+  .timeline-item .title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .timeline-item .desc {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* ── File Index ── */
+  .file-group {
+    margin-bottom: 20px;
+  }
+
+  .file-group h4 {
+    margin-bottom: 8px;
+  }
+
+  .file-entry {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 12px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin-bottom: 4px;
+    font-size: 12px;
+  }
+
+  .file-entry .path {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--cyan);
+  }
+
+  .file-entry .purpose {
+    color: var(--muted);
+    text-align: right;
+    max-width: 50%;
+  }
+
+  /* ── Idea Cards ── */
+  .idea-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+
+  .idea-card .idea-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .idea-card .idea-title {
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .idea-card .idea-desc {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  /* ── Stats Bar ── */
+  .stats-bar {
+    display: flex;
+    gap: 20px;
+    padding: 16px 20px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    text-align: center;
+    min-width: 80px;
+  }
+
+  .stat .num {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--purple-light);
+  }
+
+  .stat .label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 900px) {
+    .book-nav { display: none; }
+    .book-content { margin-left: 0; padding: 20px; }
+    .term-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ── Search ── */
+  .search-box {
+    padding: 8px 12px;
+    margin: 0 20px 15px;
+    width: calc(100% - 40px);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 13px;
+    outline: none;
+  }
+
+  .search-box:focus {
+    border-color: var(--purple);
+  }
+
+  .search-box::placeholder {
+    color: var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Navigation ── -->
+<nav class="book-nav">
+  <h1>PIA System</h1>
+  <p class="subtitle">The Book &mdash; v1.0</p>
+  <input type="text" class="search-box" placeholder="Search..." id="searchBox" oninput="filterContent(this.value)">
+
+  <div class="nav-section">Overview</div>
+  <a class="nav-link" href="#overview">What Is PIA? <span class="badge">Start</span></a>
+  <a class="nav-link" href="#stats">System Stats</a>
+
+  <div class="nav-section">Chapter 1</div>
+  <a class="nav-link" href="#terminology">Terminology</a>
+
+  <div class="nav-section">Chapter 2</div>
+  <a class="nav-link" href="#architecture">Architecture</a>
+  <a class="nav-link" href="#fleet">Fleet Machines</a>
+
+  <div class="nav-section">Chapter 3</div>
+  <a class="nav-link" href="#capabilities">What Works Now</a>
+
+  <div class="nav-section">Chapter 4</div>
+  <a class="nav-link" href="#ideas">Ideas &amp; Decisions</a>
+  <a class="nav-link" href="#principles">Design Principles</a>
+
+  <div class="nav-section">Chapter 5</div>
+  <a class="nav-link" href="#specification">System Spec</a>
+  <a class="nav-link" href="#api">API Reference</a>
+  <a class="nav-link" href="#config">Configuration</a>
+  <a class="nav-link" href="#libraries">Libraries</a>
+
+  <div class="nav-section">Chapter 6</div>
+  <a class="nav-link" href="#todo">Still To Do</a>
+
+  <div class="nav-section">Chapter 7</div>
+  <a class="nav-link" href="#timeline">Session Timeline</a>
+
+  <div class="nav-section">Chapter 8</div>
+  <a class="nav-link" href="#fileindex">File Index</a>
+</nav>
+
+<!-- ── Content ── -->
+<main class="book-content">
+
+  <!-- Overview -->
+  <section class="chapter" id="overview">
+    <div class="chapter-number">Overview</div>
+    <h2>What Is PIA?</h2>
+    <p class="chapter-intro">PIA (Project Intelligence Agent) is a multi-machine AI agent orchestration system. It lets you spawn, control, and monitor AI agents across multiple computers from a single dashboard. Built with Express + TypeScript + SQLite + Claude Agent SDK.</p>
+    <p>Think of it as mission control for AI agents. You sit at one computer, open the dashboard, and you can tell any machine in your fleet to run an AI agent that reads code, writes files, browses the web, or executes commands &mdash; and you watch it all happen in real-time.</p>
+    <p>The system uses a <strong>hub/spoke architecture</strong>: one machine is the hub (runs the dashboard and coordinates everything), and the other machines are workers that connect to it and do the actual work.</p>
+  </section>
+
+  <!-- Stats -->
+  <section class="chapter" id="stats">
+    <div class="stats-bar">
+      <div class="stat"><div class="num">3</div><div class="label">Machines</div></div>
+      <div class="stat"><div class="num">56</div><div class="label">CPU Threads</div></div>
+      <div class="stat"><div class="num">160</div><div class="label">GB RAM</div></div>
+      <div class="stat"><div class="num">42</div><div class="label">DB Migrations</div></div>
+      <div class="stat"><div class="num">80+</div><div class="label">.md Files</div></div>
+      <div class="stat"><div class="num">40+</div><div class="label">.html Files</div></div>
+      <div class="stat"><div class="num">60+</div><div class="label">API Endpoints</div></div>
+      <div class="stat"><div class="num">10</div><div class="label">Journals</div></div>
+    </div>
+  </section>
+
+  <!-- Chapter 1: Terminology -->
+  <section class="chapter" id="terminology">
+    <div class="chapter-number">Chapter 1</div>
+    <h2>Terminology</h2>
+    <p class="chapter-intro">Plain-English definitions of every PIA-specific term. No jargon without explanation.</p>
+
+    <h3>Core Concepts</h3>
+    <div class="term-grid">
+      <div class="term-card"><div class="term-name">PIA</div><div class="term-def">Project Intelligence Agent &mdash; a system that controls AI agents across multiple computers from one dashboard.</div></div>
+      <div class="term-card"><div class="term-name">Hub</div><div class="term-def">The central machine that runs the dashboard, database, and coordinates all workers. There is only ONE hub (currently Izzit7).</div></div>
+      <div class="term-card"><div class="term-name">Worker / Spoke</div><div class="term-def">A machine that connects to the hub, takes commands, and spawns agents locally. Runs with PIA_MODE=local.</div></div>
+      <div class="term-card"><div class="term-name">The Cortex</div><div class="term-def">PIA's fleet intelligence brain. Collects telemetry from all machines, analyzes patterns, generates insights and alerts.</div></div>
+      <div class="term-card"><div class="term-name">Mission Control</div><div class="term-def">The main web dashboard at /mission-control.html where you see agents, machines, terminals, and costs.</div></div>
+      <div class="term-card"><div class="term-name">Agent Session</div><div class="term-def">A running AI agent instance. Can be SDK mode (Claude SDK), PTY mode (terminal), or API mode (direct API).</div></div>
+      <div class="term-card"><div class="term-name">Soul</div><div class="term-def">A persistent AI personality with its own name, role, memories, goals, and relationships. Survives across sessions.</div></div>
+      <div class="term-card"><div class="term-name">Approval Mode</div><div class="term-def">How tools are permitted: Manual (human approves all), Auto (safe auto-approved), Yolo (all auto-approved), Plan (read-only).</div></div>
+    </div>
+
+    <h3>Architecture Terms</h3>
+    <div class="term-grid">
+      <div class="term-card"><div class="term-name">Aggregator</div><div class="term-def">Hub component that receives machine registrations, heartbeats, and agent updates. Stores in SQLite.</div></div>
+      <div class="term-card"><div class="term-name">Hub Client</div><div class="term-def">Worker-side component that connects to hub via WebSocket, sends heartbeats, handles commands.</div></div>
+      <div class="term-card"><div class="term-name">PTY Wrapper</div><div class="term-def">Pseudo-terminal wrapper using node-pty. Spawns CLI processes and streams output over WebSocket.</div></div>
+      <div class="term-card"><div class="term-name">MCP</div><div class="term-def">Model Context Protocol &mdash; standard for connecting AI models to external tools (Playwright, Context7, etc).</div></div>
+      <div class="term-card"><div class="term-name">Tailscale</div><div class="term-def">Mesh VPN connecting all machines. WireGuard encryption, stable 100.x.x.x IPs, works through firewalls.</div></div>
+      <div class="term-card"><div class="term-name">Heartbeat</div><div class="term-def">A "still alive" signal every 30s from workers to hub. 3 missed = marked offline (90s).</div></div>
+      <div class="term-card"><div class="term-name">Electron Paths</div><div class="term-def">Centralized path resolution module. Returns correct paths whether running as CLI or packaged Electron app.</div></div>
+      <div class="term-card"><div class="term-name">Permission Layers</div><div class="term-def">6 layers a tool call passes through: disallowedTools, permissionMode, settingSources, canUseTool, PromptManager, hooks.</div></div>
+    </div>
+
+    <h3>Communication Terms</h3>
+    <div class="term-grid">
+      <div class="term-card"><div class="term-name">Cross-Machine Relay</div><div class="term-def">Routes messages between machines via WebSocket, Tailscale, ngrok, Discord, or REST API.</div></div>
+      <div class="term-card"><div class="term-name">MQTT Broker</div><div class="term-def">Built-in pub/sub message broker with topic hierarchy (pia/machine/event). For telemetry streaming.</div></div>
+      <div class="term-card"><div class="term-name">Machine Message Board</div><div class="term-def">Persistent machine-to-machine messaging backed by SQLite. Survives restarts.</div></div>
+      <div class="term-card"><div class="term-name">Agent Bus</div><div class="term-def">Inter-agent messaging for agents to communicate with each other within PIA.</div></div>
+    </div>
+
+    <h3>Agent Personalities</h3>
+    <div class="term-grid">
+      <div class="term-card"><div class="term-name">Fisher2050</div><div class="term-def">Pre-built Soul &mdash; Project Manager. Organized, proactive, follows up, uses confidence percentages.</div></div>
+      <div class="term-card"><div class="term-name">Ziggi</div><div class="term-def">Pre-built Soul &mdash; Code Quality Engineer. Meticulous, rates code 1-10, detects "architecture smell".</div></div>
+      <div class="term-card"><div class="term-name">Eliyahu</div><div class="term-def">Pre-built Soul &mdash; Curious Analyst. "I noticed something..." pattern, keeps a Decision Log.</div></div>
+    </div>
+  </section>
+
+  <!-- Chapter 2: Architecture -->
+  <section class="chapter" id="architecture">
+    <div class="chapter-number">Chapter 2</div>
+    <h2>Architecture</h2>
+    <p class="chapter-intro">How the pieces fit together. One hub, multiple workers, all connected via Tailscale.</p>
+
+    <div class="arch-diagram">
+      <div class="machine hub">
+        <h5>HUB &mdash; Izzit7 (M1)</h5>
+        <div class="detail">
+          PIA_MODE=hub<br>
+          API server :3000<br>
+          WebSocket :3001<br>
+          Aggregator (SQLite)<br>
+          Dashboard HTML<br>
+          The Cortex
+        </div>
+      </div>
+      <span class="connector">&larr; WebSocket &rarr;</span>
+      <div class="machine worker">
+        <h5>WORKER &mdash; soda-monster-hunter (M2)</h5>
+        <div class="detail">
+          PIA_MODE=local<br>
+          HubClient connection<br>
+          Local agent spawning<br>
+          Reports to hub
+        </div>
+      </div>
+      <div class="machine worker">
+        <h5>WORKER &mdash; SODA-YETI (M3)</h5>
+        <div class="detail">
+          PIA_MODE=local<br>
+          HubClient connection<br>
+          Local agent spawning<br>
+          Reports to hub
+        </div>
+      </div>
+    </div>
+
+    <h3 id="fleet">Fleet Machines</h3>
+    <table>
+      <tr><th>Machine</th><th>Hostname</th><th>Role</th><th>CPU</th><th>RAM</th><th>Tailscale IP</th></tr>
+      <tr><td>M1</td><td>Izzit7</td><td><span class="status done">Hub</span></td><td>i9-12900H (20T)</td><td>64 GB</td><td>100.73.133.3</td></tr>
+      <tr><td>M2</td><td>soda-monster-hunter</td><td><span class="status working">Worker</span></td><td>Intel Ultra 7 265K (20T)</td><td>64 GB</td><td>100.127.165.12</td></tr>
+      <tr><td>M3</td><td>SODA-YETI</td><td><span class="status working">Worker</span></td><td>Ryzen 7 7700X (16T)</td><td>32 GB</td><td>100.102.217.69</td></tr>
+      <tr><td colspan="3"><strong>TOTAL</strong></td><td><strong>56 threads</strong></td><td><strong>160 GB</strong></td><td></td></tr>
+    </table>
+
+    <h3>Spawn Flow</h3>
+    <pre>POST /api/mc/agents { machineId, mode, task, cwd, approvalMode }
+  &rarr; If machineId is local: AgentSessionManager.spawn() locally
+  &rarr; If machineId is remote: WebSocket command to worker
+      &rarr; Worker calls AgentSessionManager.spawn() locally
+      &rarr; Worker registers agent with hub (agent:register)
+      &rarr; Worker streams output back (agent:output)
+      &rarr; Hub relays to dashboard (mc:output)</pre>
+  </section>
+
+  <!-- Chapter 3: Capabilities -->
+  <section class="chapter" id="capabilities">
+    <div class="chapter-number">Chapter 3</div>
+    <h2>What Works Now</h2>
+    <p class="chapter-intro">Everything PIA can actually do today.</p>
+
+    <table>
+      <tr><th>Capability</th><th>Status</th><th>How</th></tr>
+      <tr><td>Spawn AI agents from dashboard</td><td><span class="status done">Working</span></td><td>POST to API, choose SDK/PTY/API mode</td></tr>
+      <tr><td>Real-time agent output streaming</td><td><span class="status done">Working</span></td><td>WebSocket relay to dashboard terminal</td></tr>
+      <tr><td>Multi-machine fleet</td><td><span class="status done">Working</span></td><td>Hub + 2 workers via Tailscale</td></tr>
+      <tr><td>Remote agent spawning</td><td><span class="status done">Working</span></td><td>Hub forwards to worker via WebSocket</td></tr>
+      <tr><td>Remote browser control</td><td><span class="status done">Working</span></td><td>Playwright MCP on remote workers</td></tr>
+      <tr><td>Project picker per machine</td><td><span class="status done">Working</span></td><td>Auto-scans git repos on each machine</td></tr>
+      <tr><td>6-layer permission system</td><td><span class="status done">Working</span></td><td>Auto/manual/yolo/plan modes</td></tr>
+      <tr><td>Agent Souls (personalities)</td><td><span class="status done">Working</span></td><td>Persistent memories, goals, relationships</td></tr>
+      <tr><td>Machine message board</td><td><span class="status done">Working</span></td><td>SQLite-backed cross-machine messaging</td></tr>
+      <tr><td>The Cortex (fleet intelligence)</td><td><span class="status done">Working</span></td><td>Telemetry, insights, alerts via API</td></tr>
+      <tr><td>Cost tracking</td><td><span class="status done">Working</span></td><td>Per-agent token and dollar tracking</td></tr>
+      <tr><td>Electron desktop app</td><td><span class="status done">Working</span></td><td>Phase 1-3 complete</td></tr>
+      <tr><td>Browser automation (Gemini)</td><td><span class="status done">Working</span></td><td>Playwright + Gemini Vision</td></tr>
+      <tr><td>WebSocket resilience</td><td><span class="status done">Working</span></td><td>Heartbeat, retry buffer, backoff</td></tr>
+      <tr><td>WhatsApp integration</td><td><span class="status working">Partial</span></td><td>Baileys library, not fully tested</td></tr>
+      <tr><td>Discord bot</td><td><span class="status working">Partial</span></td><td>Code exists, not actively used</td></tr>
+      <tr><td>MQTT broker</td><td><span class="status working">Partial</span></td><td>Code exists, not wired to Cortex</td></tr>
+      <tr><td>Fleet Dashboard mockup</td><td><span class="status working">Partial</span></td><td>HTML exists, not wired to data</td></tr>
+    </table>
+  </section>
+
+  <!-- Chapter 4: Ideas & Decisions -->
+  <section class="chapter" id="ideas">
+    <div class="chapter-number">Chapter 4</div>
+    <h2>Ideas &amp; Decisions</h2>
+    <p class="chapter-intro">Everything discussed, debated, and decided across all sessions.</p>
+
+    <h3>Settled Decisions</h3>
+    <div class="idea-card">
+      <div class="idea-header"><span class="idea-title">Hub/Spoke over Peer-to-Peer</span><span class="status done">Decided</span></div>
+      <div class="idea-desc">One hub coordinates, workers connect. Every major orchestration platform (K8s, Docker Swarm, Consul) uses this pattern. P2P needs consensus protocols &mdash; months of work for 3 machines.</div>
+    </div>
+    <div class="idea-card">
+      <div class="idea-header"><span class="idea-title">Tailscale for Networking</span><span class="status done">Decided</span></div>
+      <div class="idea-desc">Free, 5-min setup, WireGuard encryption, stable IPs, NAT traversal. Beat ngrok ($8-20/mo), SSH tunnels (fragile), mTLS (overkill), and raw WireGuard (too manual).</div>
+    </div>
+    <div class="idea-card">
+      <div class="idea-header"><span class="idea-title">Electron for Desktop App</span><span class="status done">Decided</span></div>
+      <div class="idea-desc">PIA needs Node.js, node-pty (C++ addon), better-sqlite3 (C++ addon). Only Electron can run all of these. Tauri can't do native Node.js modules.</div>
+    </div>
+    <div class="idea-card">
+      <div class="idea-header"><span class="idea-title">React + shadcn/ui for New UI</span><span class="status done">Decided</span></div>
+      <div class="idea-desc">Progressive migration &mdash; keep old HTML dashboard alongside new React. Slack, Discord, Figma all use React + Electron. shadcn/ui: 83K GitHub stars.</div>
+    </div>
+    <div class="idea-card">
+      <div class="idea-header"><span class="idea-title">Baileys over whatsapp-web.js</span><span class="status done">Decided</span></div>
+      <div class="idea-desc">No Chrome/Puppeteer (200MB savings), native TypeScript, pure WebSocket (2MB), pairing code auth option.</div>
+    </div>
+    <div class="idea-card">
+      <div class="idea-header"><span class="idea-title">SQLite (not PostgreSQL)</span><span class="status done">Decided</span></div>
+      <div class="idea-desc">SQLite handles 100K writes/sec; PIA does ~10/sec. WAL mode + daily backups is enough. PostgreSQL is for 50+ machine fleets.</div>
+    </div>
+
+    <h3>Future Ideas</h3>
+    <div class="idea-card">
+      <div class="idea-header"><span class="idea-title">Hub Failover</span><span class="status planned">Planned</span></div>
+      <div class="idea-desc">If hub dies, a worker auto-promotes. Priority list in config. Worker detects hub down after 3 missed heartbeats (90s). Effort: 1-2 weeks.</div>
+    </div>
+    <div class="idea-card">
+      <div class="idea-header"><span class="idea-title">Vision Pro Spatial View</span><span class="status idea">Idea</span></div>
+      <div class="idea-desc">Visualize machines as floating 3D panels in Apple Vision Pro. WebXR first (works with existing HTML), native visionOS later.</div>
+    </div>
+    <div class="idea-card">
+      <div class="idea-header"><span class="idea-title">Self-Update Fleet Command</span><span class="status planned">Planned</span></div>
+      <div class="idea-desc">pia update --fleet &mdash; git pull + npm install + restart on all machines. Needs rollback mechanism.</div>
+    </div>
+    <div class="idea-card">
+      <div class="idea-header"><span class="idea-title">HTTP Fallback for WebSocket</span><span class="status planned">Planned</span></div>
+      <div class="idea-desc">If WS drops, hub sends commands via HTTP to worker's port 3000. Workers already have Express running. Lowest-effort resilience improvement.</div>
+    </div>
+    <div class="idea-card">
+      <div class="idea-header"><span class="idea-title">Apache Guacamole Integration</span><span class="status idea">Idea</span></div>
+      <div class="idea-desc">Browser-based remote desktop embedded in PIA dashboard. RDP/VNC/SSH from the browser. Complex setup (Docker).</div>
+    </div>
+
+    <h3 id="principles">Design Principles</h3>
+    <div class="idea-card">
+      <div class="idea-header"><span class="idea-title">The Brain Gets Fat, Not the Repo</span></div>
+      <div class="idea-desc">Git repos stay lean (code only). Telemetry and memories live in local SQLite (gitignored). Hot data: 24h full detail. Warm: 30 days summarized. Cold: compressed. Like human memory &mdash; patterns, not raw data.</div>
+    </div>
+    <div class="idea-card">
+      <div class="idea-header"><span class="idea-title">Surface-Agnostic Data</span></div>
+      <div class="idea-desc">Same JSON API powers every viewer: browser, Vision Pro, tablet, WhatsApp, terminal. The Cortex produces data; renderers consume it.</div>
+    </div>
+    <div class="idea-card">
+      <div class="idea-header"><span class="idea-title">Workers Are Autonomous</span></div>
+      <div class="idea-desc">If hub dies, workers keep running existing agents. They just can't get new commands until hub returns or failover kicks in.</div>
+    </div>
+    <div class="idea-card">
+      <div class="idea-header"><span class="idea-title">Same Codebase, Different Config</span></div>
+      <div class="idea-desc">All machines run the exact same code (same git repo). The only difference is the .env file (PIA_MODE, machine name, hub URL).</div>
+    </div>
+  </section>
+
+  <!-- Chapter 5: Specification -->
+  <section class="chapter" id="specification">
+    <div class="chapter-number">Chapter 5</div>
+    <h2>System Specification</h2>
+    <p class="chapter-intro">Technical details &mdash; the stack, the files, the API, the config.</p>
+
+    <h3>Stack</h3>
+    <table>
+      <tr><th>Component</th><th>Technology</th><th>Notes</th></tr>
+      <tr><td>Runtime</td><td>Node.js (ESM)</td><td>"type": "module" in package.json</td></tr>
+      <tr><td>Language</td><td>TypeScript</td><td>Compiled via tsx (dev) or tsc (build)</td></tr>
+      <tr><td>HTTP Server</td><td>Express 4.x</td><td>Port 3000, helmet, rate limiting</td></tr>
+      <tr><td>WebSocket</td><td>ws</td><td>Port 3001, heartbeat, 1MB max payload</td></tr>
+      <tr><td>Database</td><td>better-sqlite3</td><td>WAL mode, 42 migrations, 5 performance pragmas</td></tr>
+      <tr><td>AI Agent</td><td>@anthropic-ai/claude-agent-sdk</td><td>query(), stream_event, setPermissionMode()</td></tr>
+      <tr><td>Terminal</td><td>node-pty</td><td>C++ addon, PTY sessions for CLI agents</td></tr>
+      <tr><td>Desktop</td><td>Electron</td><td>electron-builder + NSIS packaging</td></tr>
+      <tr><td>VPN</td><td>Tailscale</td><td>WireGuard encryption, 100.x.x.x mesh</td></tr>
+    </table>
+
+    <h3>Core Source Files</h3>
+    <table>
+      <tr><th>File</th><th>Purpose</th></tr>
+      <tr><td><code>src/mission-control/agent-session.ts</code></td><td>Spawns SDK/PTY/API agents, tool approval, streaming</td></tr>
+      <tr><td><code>src/mission-control/prompt-manager.ts</code></td><td>Auto-approval rules, prompt queue</td></tr>
+      <tr><td><code>src/api/routes/mission-control.ts</code></td><td>REST API: spawn, list, kill, respond, templates</td></tr>
+      <tr><td><code>src/tunnel/websocket-server.ts</code></td><td>Hub WebSocket: machine tracking, output relay</td></tr>
+      <tr><td><code>src/local/hub-client.ts</code></td><td>Worker: connects to hub, handles commands</td></tr>
+      <tr><td><code>src/hub/aggregator.ts</code></td><td>Machine registry, heartbeat, project scanning</td></tr>
+      <tr><td><code>src/config.ts</code></td><td>All configuration and env vars</td></tr>
+      <tr><td><code>src/db/database.ts</code></td><td>SQLite init, migrations, WAL, pragmas</td></tr>
+      <tr><td><code>src/index.ts</code></td><td>Entry point: hub or worker mode</td></tr>
+      <tr><td><code>public/mission-control.html</code></td><td>Dashboard SPA (~3000 lines)</td></tr>
+    </table>
+
+    <h3 id="api">API Reference</h3>
+    <p>See <code>PIA_KNOWLEDGE_BASE.md</code> Section 3 for the complete API reference with 60+ endpoints across agent management, machine management, Cortex, browser controller, communication, and settings.</p>
+
+    <h3 id="config">Configuration</h3>
+    <table>
+      <tr><th>Env Variable</th><th>Default</th><th>Purpose</th></tr>
+      <tr><td><code>PIA_MODE</code></td><td>hub</td><td>Machine role: hub or local</td></tr>
+      <tr><td><code>PIA_MACHINE_NAME</code></td><td>hostname</td><td>Human-readable machine name</td></tr>
+      <tr><td><code>PIA_HUB_URL</code></td><td>http://localhost:3000</td><td>Hub URL (for workers)</td></tr>
+      <tr><td><code>PIA_SECRET_TOKEN</code></td><td>dev-token-change-in-production</td><td>Auth token (must match all machines)</td></tr>
+      <tr><td><code>PORT</code></td><td>3000</td><td>HTTP API port</td></tr>
+      <tr><td><code>WS_PORT</code></td><td>3001</td><td>WebSocket port</td></tr>
+      <tr><td><code>PIA_PROJECT_ROOTS</code></td><td>(empty)</td><td>Extra dirs to scan for git repos</td></tr>
+      <tr><td><code>ANTHROPIC_API_KEY</code></td><td>&mdash;</td><td>Claude API key</td></tr>
+      <tr><td><code>GEMINI_API_KEY</code></td><td>&mdash;</td><td>Gemini API key (browser vision)</td></tr>
+    </table>
+
+    <h3 id="libraries">Key Libraries</h3>
+    <table>
+      <tr><th>Library</th><th>Purpose</th></tr>
+      <tr><td><code>@anthropic-ai/claude-agent-sdk</code></td><td>AI agent spawning (query, stream, permissions)</td></tr>
+      <tr><td><code>better-sqlite3</code></td><td>SQLite database (WAL, migrations)</td></tr>
+      <tr><td><code>express</code></td><td>HTTP API server</td></tr>
+      <tr><td><code>ws</code></td><td>WebSocket server + client</td></tr>
+      <tr><td><code>node-pty</code></td><td>PTY terminal sessions (C++ addon)</td></tr>
+      <tr><td><code>tsx</code></td><td>TypeScript execution + watch mode</td></tr>
+      <tr><td><code>nanoid</code></td><td>ID generation</td></tr>
+      <tr><td><code>@whiskeysockets/baileys</code></td><td>WhatsApp (pure WebSocket)</td></tr>
+      <tr><td><code>playwright</code></td><td>Browser automation</td></tr>
+      <tr><td><code>electron</code></td><td>Desktop app shell</td></tr>
+      <tr><td><code>electron-builder</code></td><td>Packaging (NSIS + portable)</td></tr>
+    </table>
+  </section>
+
+  <!-- Chapter 6: To Do -->
+  <section class="chapter" id="todo">
+    <div class="chapter-number">Chapter 6</div>
+    <h2>Still To Do</h2>
+    <p class="chapter-intro">Everything that's planned but not yet built, ordered by priority.</p>
+
+    <h3>High Priority</h3>
+    <table>
+      <tr><th>#</th><th>Task</th><th>Effort</th><th>Notes</th></tr>
+      <tr><td>1</td><td>Commit + push uncommitted work</td><td>10 min</td><td>Multiple sessions sitting uncommitted</td></tr>
+      <tr><td>2</td><td>/api/system/update endpoint</td><td>1 day</td><td>Remote git pull + restart across fleet</td></tr>
+      <tr><td>3</td><td>Version mismatch detection</td><td>1 hour</td><td>Show git SHA warnings on dashboard</td></tr>
+      <tr><td>4</td><td>Hub failover</td><td>1-2 weeks</td><td>Auto-promote worker if hub dies</td></tr>
+      <tr><td>5</td><td>Wire Autonomous Worker cross-machine</td><td>2-3 days</td><td>Already built, needs triggering</td></tr>
+    </table>
+
+    <h3>Medium Priority</h3>
+    <table>
+      <tr><th>#</th><th>Task</th><th>Effort</th><th>Notes</th></tr>
+      <tr><td>6</td><td>React + shadcn/ui dashboard</td><td>2-3 weeks</td><td>Progressive migration</td></tr>
+      <tr><td>7</td><td>Electron Phase 4 (hardening)</td><td>2 days</td><td>Log rotation, native modules</td></tr>
+      <tr><td>8</td><td>Wire MQTT to Cortex</td><td>3 days</td><td>Replace REST polling with pub/sub</td></tr>
+      <tr><td>9</td><td>Fleet Dashboard</td><td>3 days</td><td>Wire mockup to real data</td></tr>
+      <tr><td>10</td><td>HTTP fallback for WebSocket</td><td>1-2 days</td><td>Commands via HTTP when WS down</td></tr>
+    </table>
+
+    <h3>Lower Priority</h3>
+    <table>
+      <tr><th>#</th><th>Task</th><th>Effort</th><th>Notes</th></tr>
+      <tr><td>11</td><td>DAO separation</td><td>When ready</td><td>Move to DAOV1 repo</td></tr>
+      <tr><td>12</td><td>Rotate Anthropic API key</td><td>10 min</td><td>Old key was exposed</td></tr>
+      <tr><td>13</td><td>PM2 process manager</td><td>15 min</td><td>Auto-restart on crash</td></tr>
+      <tr><td>14</td><td>Vision Pro spatial view</td><td>Research done</td><td>WebXR first, visionOS later</td></tr>
+      <tr><td>15</td><td>Onboarding wizard</td><td>After failover</td><td>Easy machine join flow</td></tr>
+    </table>
+  </section>
+
+  <!-- Chapter 7: Timeline -->
+  <section class="chapter" id="timeline">
+    <div class="chapter-number">Chapter 7</div>
+    <h2>Session Timeline</h2>
+    <p class="chapter-intro">A chronological record of every major work session.</p>
+
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="date">Feb 11, 2026</div>
+        <div class="title">SodaWorld v2 Research + Master Planning</div>
+        <div class="desc">Context7 library research (6 libs). 7 parallel AI exploration agents. Architecture defined: Two Brains, Cost Waterfall, 5 AI Personas. 3,000+ lines of documentation.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="date">Feb 13, 2026</div>
+        <div class="title">Agent Souls + Fisher2050</div>
+        <div class="desc">Built the Soul Engine, Memory Manager, 3 personality definitions (Fisher2050, Ziggi, Eliyahu), 15 API endpoints, autonomous worker integration.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="date">Feb 14, 2026</div>
+        <div class="title">Mission Control Wired to Backend</div>
+        <div class="desc">Dashboard connected to real APIs + WebSocket. PTY mode fixed. 5 bugs found and fixed (token mismatch, rate limiter, output fetch).</div>
+      </div>
+      <div class="timeline-item">
+        <div class="date">Feb 15, 2026</div>
+        <div class="title">DAO Admin Dashboard Plan</div>
+        <div class="desc">Planned 6-tab DAO dashboard. Multi-machine agent control wireframed. Full codebase mapping completed.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="date">Feb 16, 2026 (AM)</div>
+        <div class="title">Permission System Deep Dive</div>
+        <div class="desc">Discovered 6-layer permission system. Root cause of agent failures: SDK permissionMode blocks internally. Fix: map to acceptEdits/bypassPermissions.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="date">Feb 16, 2026 (PM)</div>
+        <div class="title">Multi-Machine Fleet + Cortex</div>
+        <div class="desc">Tailscale networking. Machine Message Board. WhatsApp bot. Fleet deployment. "The Cortex" concept &mdash; discovered 80% already exists in codebase.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="date">Feb 16, 2026 (Eve)</div>
+        <div class="title">All 3 Machines Online</div>
+        <div class="desc">Izzit7 (Hub) + soda-monster-hunter + SODA-YETI all connected. ESM require() bug fixed. Cortex Phase 1 built (5 files, 10 endpoints). Electron Phase 1-3.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="date">Feb 17, 2026</div>
+        <div class="title">Security + Remote Spawning + Context7 Sprint</div>
+        <div class="desc">Firebase credential exposure remediated. Remote agent spawning built. Project registry. Playwright MCP remote control. Library audit (8 libs). WebSocket hardening. Session resumption.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="date">Feb 19, 2026</div>
+        <div class="title">Knowledge Base + Book Created</div>
+        <div class="desc">This document! Consolidated all project knowledge into PIA_KNOWLEDGE_BASE.md, FILE_INDEX.md, and this HTML book.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Chapter 8: File Index -->
+  <section class="chapter" id="fileindex">
+    <div class="chapter-number">Chapter 8</div>
+    <h2>File Index</h2>
+    <p class="chapter-intro">Every .md and .html file in the repository (excluding node_modules). See <code>FILE_INDEX.md</code> for the full version.</p>
+
+    <h4>Architecture &amp; Design</h4>
+    <div class="file-group">
+      <div class="file-entry"><span class="path">PIA_ARCHITECTURE.md</span><span class="purpose">Single source of truth &mdash; hub/spoke design</span></div>
+      <div class="file-entry"><span class="path">ELECTRON_APP_ANALYSIS.md</span><span class="purpose">Full Electron technical analysis</span></div>
+      <div class="file-entry"><span class="path">FULL_FEATURE_SPEC.md</span><span class="purpose">Complete feature specification</span></div>
+    </div>
+
+    <h4>Knowledge &amp; Docs</h4>
+    <div class="file-group">
+      <div class="file-entry"><span class="path">CLAUDE.md</span><span class="purpose">AI agent instructions &amp; rules</span></div>
+      <div class="file-entry"><span class="path">PIA_KNOWLEDGE_BASE.md</span><span class="purpose">Master knowledge base</span></div>
+      <div class="file-entry"><span class="path">FILE_INDEX.md</span><span class="purpose">This index</span></div>
+      <div class="file-entry"><span class="path">README.md</span><span class="purpose">Repository README</span></div>
+    </div>
+
+    <h4>Session Journals (10 files)</h4>
+    <div class="file-group">
+      <div class="file-entry"><span class="path">SESSION_JOURNAL_2026-02-17.md</span><span class="purpose">Security, remote spawn, Context7 sprint</span></div>
+      <div class="file-entry"><span class="path">SESSION_JOURNAL_2026-02-16.md</span><span class="purpose">Permissions, fleet, Electron, Cortex</span></div>
+      <div class="file-entry"><span class="path">SESSION_JOURNAL_2026-02-16_claude_code.md</span><span class="purpose">Machine linking, all 3 online</span></div>
+      <div class="file-entry"><span class="path">SESSION_JOURNAL_2026-02-15.md</span><span class="purpose">DAO Admin plan</span></div>
+      <div class="file-entry"><span class="path">SESSION_JOURNAL_2026-02-14.md</span><span class="purpose">Mission Control wiring</span></div>
+      <div class="file-entry"><span class="path">SESSION_JOURNAL_2026-02-13.md</span><span class="purpose">Agent Souls build</span></div>
+      <div class="file-entry"><span class="path">SESSION_JOURNAL_FETCHED.md</span><span class="purpose">SodaWorld v2 research</span></div>
+    </div>
+
+    <h4>Agent Prompts (10 files)</h4>
+    <div class="file-group">
+      <div class="file-entry"><span class="path">AGENT_PROMPT_CORTEX_AI_BRAIN.md</span><span class="purpose">Cortex design exploration</span></div>
+      <div class="file-entry"><span class="path">AGENT_PROMPT_DEPLOY_FLEET.md</span><span class="purpose">Fleet deployment task</span></div>
+      <div class="file-entry"><span class="path">AGENT_PROMPT_ELECTRON_APP_EXPLORATION.md</span><span class="purpose">Electron exploration</span></div>
+      <div class="file-entry"><span class="path">AGENT_PROMPT_VISION_PRO_EXPLORATION.md</span><span class="purpose">Vision Pro research</span></div>
+      <div class="file-entry"><span class="path">AGENT_PROMPT_DAO_SEPARATION.md</span><span class="purpose">DAO separation</span></div>
+    </div>
+
+    <h4>HTML Dashboards (26 pages served at :3000)</h4>
+    <div class="file-group">
+      <div class="file-entry"><span class="path">public/mission-control.html</span><span class="purpose">Main dashboard (~3000 lines)</span></div>
+      <div class="file-entry"><span class="path">public/pia-book.html</span><span class="purpose">This book</span></div>
+      <div class="file-entry"><span class="path">public/visor.html</span><span class="purpose">Visor panel</span></div>
+      <div class="file-entry"><span class="path">public/settings.html</span><span class="purpose">Settings page</span></div>
+      <div class="file-entry"><span class="path">public/first-run.html</span><span class="purpose">First-run wizard</span></div>
+      <div class="file-entry"><span class="path">public/guide.html</span><span class="purpose">PIA guide</span></div>
+      <div class="file-entry"><span class="path">public/knowledge.html</span><span class="purpose">Knowledge page</span></div>
+      <div class="file-entry"><span class="path">public/terminology.html</span><span class="purpose">Terminology page</span></div>
+    </div>
+
+    <h4>Research (6 files)</h4>
+    <div class="file-group">
+      <div class="file-entry"><span class="path">AI_AGENT_FRAMEWORKS_RESEARCH_2025_2026.md</span><span class="purpose">Competitive landscape</span></div>
+      <div class="file-entry"><span class="path">research/MULTI-MACHINE-COMPETITIVE-ANALYSIS.md</span><span class="purpose">Multi-machine comparison</span></div>
+      <div class="file-entry"><span class="path">data/context7-libs-audit.md</span><span class="purpose">Library audit (8 libs)</span></div>
+    </div>
+
+    <h4>Root HTML Mockups (7 files)</h4>
+    <div class="file-group">
+      <div class="file-entry"><span class="path">FLEET_DASHBOARD_MOCKUP.html</span><span class="purpose">Fleet dashboard mockup</span></div>
+      <div class="file-entry"><span class="path">MASTER_DASHBOARD.html</span><span class="purpose">Master dashboard mockup</span></div>
+      <div class="file-entry"><span class="path">DEVELOPMENT_ROADMAP.html</span><span class="purpose">Roadmap visualization</span></div>
+      <div class="file-entry"><span class="path">STORYBOARD.html</span><span class="purpose">Storyboard</span></div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  // ── Active nav link tracking ──
+  const navLinks = document.querySelectorAll('.nav-link');
+  const chapters = document.querySelectorAll('.chapter');
+
+  function updateActiveNav() {
+    let current = '';
+    chapters.forEach(ch => {
+      if (ch.getBoundingClientRect().top < 100) current = ch.id;
+    });
+    navLinks.forEach(link => {
+      link.classList.toggle('active', link.getAttribute('href') === '#' + current);
+    });
+  }
+
+  window.addEventListener('scroll', updateActiveNav);
+  updateActiveNav();
+
+  // ── Search ──
+  function filterContent(query) {
+    const q = query.toLowerCase().trim();
+    const cards = document.querySelectorAll('.term-card, .idea-card, .file-entry, .timeline-item');
+    cards.forEach(card => {
+      card.style.display = !q || card.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+    const rows = document.querySelectorAll('tbody tr, table tr:not(:first-child)');
+    rows.forEach(row => {
+      if (row.querySelector('th')) return;
+      row.style.display = !q || row.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+  }
+</script>
+
+</body>
+</html>

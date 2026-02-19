@@ -1079,6 +1079,40 @@
       color: #64748b;
     }
 
+    /* ── Power State ── */
+    .power-dot {
+      width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px;
+    }
+    .power-dot.off { background: #f85149; }
+    .power-dot.awake { background: #d29922; animation: pulse 1.5s infinite; }
+    .power-dot.online { background: #3fb950; }
+    .power-dot.unknown { background: #484f58; }
+
+    .power-actions { display: flex; gap: 4px; margin-top: 6px; }
+    .power-actions button {
+      font-size: 10px; padding: 2px 8px; border-radius: 4px; cursor: pointer;
+      border: 1px solid #2a2a3e; background: #1a1a2e; color: #c9d1d9;
+    }
+    .power-actions button:hover { border-color: #9b4dca; color: #bc8cff; }
+    .power-actions button.wake-btn { border-color: #d29922; color: #d29922; }
+    .power-actions button.wake-btn:hover { background: #d2992220; }
+    .power-actions button.boot-btn { border-color: #3fb950; color: #3fb950; }
+    .power-actions button.boot-btn:hover { background: #3fb95020; }
+    .power-actions button.gear-btn { border-color: #484f58; font-size: 12px; padding: 2px 6px; }
+
+    .power-progress-toast {
+      position: fixed; bottom: 20px; right: 20px; z-index: 300;
+      background: #12121e; border: 1px solid #2a2a3e; border-radius: 10px;
+      padding: 16px 20px; min-width: 300px; max-width: 400px;
+      display: none; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+    .power-progress-toast.visible { display: block; }
+    .power-progress-toast .ppt-title { font-size: 13px; font-weight: 600; color: #e6edf3; margin-bottom: 8px; }
+    .power-progress-toast .ppt-message { font-size: 12px; color: #8b949e; margin-bottom: 8px; }
+    .power-progress-toast .ppt-bar { height: 4px; background: #1a1a2e; border-radius: 2px; overflow: hidden; }
+    .power-progress-toast .ppt-bar-fill { height: 100%; background: linear-gradient(90deg, #9b4dca, #bc8cff); transition: width 0.5s; }
+    .power-progress-toast .ppt-close { position: absolute; top: 8px; right: 12px; cursor: pointer; color: #484f58; font-size: 14px; }
+
     /* ── Responsive ── */
     @media (max-width: 1200px) {
       .machine-panel { width: 260px; }
@@ -1466,6 +1500,42 @@
     </div>
   </div>
 
+  <!-- Machine Settings Modal -->
+  <div class="modal-overlay" id="machineSettingsModal">
+    <div class="modal" style="max-width:440px;">
+      <h2>Machine Settings</h2>
+      <input type="hidden" id="msettMachineId">
+
+      <label>MAC Address (for Wake-on-LAN)</label>
+      <input type="text" id="msettMac" placeholder="AA-BB-CC-DD-EE-FF">
+
+      <label>Tailscale IP</label>
+      <input type="text" id="msettTailscaleIp" placeholder="100.x.x.x">
+
+      <label>SSH User</label>
+      <input type="text" id="msettSshUser" placeholder="User">
+
+      <label>SSH Port</label>
+      <input type="number" id="msettSshPort" value="22">
+
+      <label>PIA Install Path</label>
+      <input type="text" id="msettPiaPath" placeholder="C:\Users\User\Downloads\pia-system">
+
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeMachineSettings()">Cancel</button>
+        <button class="btn purple" onclick="saveMachineSettings()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Power Progress Toast -->
+  <div class="power-progress-toast" id="powerProgressToast">
+    <span class="ppt-close" onclick="closePowerToast()">&times;</span>
+    <div class="ppt-title" id="pptTitle">Waking machine...</div>
+    <div class="ppt-message" id="pptMessage">Sending magic packet...</div>
+    <div class="ppt-bar"><div class="ppt-bar-fill" id="pptBarFill" style="width:0%"></div></div>
+  </div>
+
   <div class="toast-container" id="toastContainer"></div>
 
 <script>
@@ -1519,6 +1589,7 @@ async function fetchMachines() {
       status: m.status || 'online',
       mode: 'manual',
       capabilities: m.capabilities || {},
+      powerState: m.power_state || (m.status === 'online' ? 'online' : 'unknown'),
     }));
   } catch (e) {
     // If no machines registered, show local machine
@@ -1812,6 +1883,19 @@ function handleWsMessage(msg) {
         updateUnreadBadge();
       }
       break;
+    case 'mc:power_event': {
+      const pe = msg.payload;
+      if (!pe) break;
+      // Update machine power state in local state
+      const pm = machines.find(m => m.id === pe.machineId);
+      if (pm) {
+        pm.powerState = pe.state;
+        renderMachines();
+      }
+      // Update progress toast
+      showPowerProgress(pe);
+      break;
+    }
   }
 }
 
@@ -1864,12 +1948,17 @@ function renderMachines() {
     const mAgents = getAgentsForMachine(m.id);
     const hasPrompt = mAgents.some(a => a.status === 'waiting');
     const isSelected = selectedMachine === m.id;
+    const ps = m.powerState || (m.status === 'online' ? 'online' : 'unknown');
+    const hasMac = m.capabilities && m.capabilities.macAddress;
+    const isOff = m.status !== 'online' && (ps === 'off' || ps === 'unknown');
+    const isAwake = m.status !== 'online' && ps === 'awake';
     return `
       <div class="machine-tile ${isSelected ? 'selected' : ''} ${hasPrompt ? 'has-prompt' : ''}"
            onclick="selectMachine('${esc(m.id)}')">
         <div class="machine-name">
           <div class="machine-status-dot ${m.status === 'online' ? (mAgents.some(a => a.status === 'working') ? 'busy' : 'online') : m.status}"></div>
           ${esc(m.name)}
+          <span class="power-dot ${ps}" title="Power: ${ps}" style="margin-left:auto;"></span>
         </div>
         <div class="machine-meta">
           <span class="machine-ip">${esc(m.ip)}</span>
@@ -1882,6 +1971,11 @@ function renderMachines() {
         ` : ''}
         <div class="machine-mode">
           <span class="mode-indicator ${m.mode}">${m.mode}</span>
+        </div>
+        <div class="power-actions" onclick="event.stopPropagation()">
+          ${isOff && hasMac ? `<button class="wake-btn" onclick="wakeMachine('${esc(m.id)}')">Wake</button>` : ''}
+          ${isAwake ? `<button class="boot-btn" onclick="bootstrapMachine('${esc(m.id)}')">Start PIA</button>` : ''}
+          <button class="gear-btn" onclick="openMachineSettings('${esc(m.id)}')">&#9881;</button>
         </div>
       </div>
     `;
@@ -3184,6 +3278,103 @@ function showToast(text) {
   container.appendChild(toast);
   setTimeout(() => toast.remove(), 4000);
 }
+
+// ── POWER MANAGEMENT ──
+
+async function wakeMachine(machineId) {
+  try {
+    showToast('Sending Wake-on-LAN...');
+    await api(`/api/machines/${encodeURIComponent(machineId)}/wake`, { method: 'POST' });
+  } catch (err) {
+    showToast('Wake failed: ' + (err.message || err));
+  }
+}
+
+async function bootstrapMachine(machineId) {
+  try {
+    showToast('Starting PIA via SSH...');
+    await api(`/api/machines/${encodeURIComponent(machineId)}/bootstrap`, { method: 'POST' });
+  } catch (err) {
+    showToast('Bootstrap failed: ' + (err.message || err));
+  }
+}
+
+function showPowerProgress(event) {
+  const toast = document.getElementById('powerProgressToast');
+  document.getElementById('pptTitle').textContent = event.machineName + ' — ' + event.step.replace(/_/g, ' ');
+  document.getElementById('pptMessage').textContent = event.message;
+  document.getElementById('pptBarFill').style.width = event.progress + '%';
+  toast.classList.add('visible');
+
+  // Auto-hide on completion or error
+  if (event.progress >= 100 || event.error) {
+    setTimeout(() => toast.classList.remove('visible'), 5000);
+  }
+}
+
+function closePowerToast() {
+  document.getElementById('powerProgressToast').classList.remove('visible');
+}
+
+function openMachineSettings(machineId) {
+  const m = machines.find(mm => mm.id === machineId);
+  if (!m) return;
+  const caps = m.capabilities || {};
+  document.getElementById('msettMachineId').value = machineId;
+  document.getElementById('msettMac').value = caps.macAddress || '';
+  document.getElementById('msettTailscaleIp').value = caps.tailscaleIp || m.ip || '';
+  document.getElementById('msettSshUser').value = caps.sshUser || '';
+  document.getElementById('msettSshPort').value = caps.sshPort || 22;
+  document.getElementById('msettPiaPath').value = caps.piaPath || '';
+  document.getElementById('machineSettingsModal').classList.add('visible');
+}
+
+function closeMachineSettings() {
+  document.getElementById('machineSettingsModal').classList.remove('visible');
+}
+
+async function saveMachineSettings() {
+  const machineId = document.getElementById('msettMachineId').value;
+  const capabilities = {
+    macAddress: document.getElementById('msettMac').value.trim(),
+    tailscaleIp: document.getElementById('msettTailscaleIp').value.trim(),
+    sshUser: document.getElementById('msettSshUser').value.trim(),
+    sshPort: parseInt(document.getElementById('msettSshPort').value) || 22,
+    piaPath: document.getElementById('msettPiaPath').value.trim(),
+  };
+  try {
+    const updated = await api(`/api/machines/${encodeURIComponent(machineId)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ capabilities }),
+    });
+    // Update local state
+    const idx = machines.findIndex(m => m.id === machineId);
+    if (idx >= 0) {
+      machines[idx] = { ...machines[idx], ...updated, capabilities: { ...(machines[idx].capabilities || {}), ...capabilities } };
+    }
+    closeMachineSettings();
+    renderMachines();
+    showToast('Machine settings saved');
+  } catch (err) {
+    showToast('Save failed: ' + (err.message || err));
+  }
+}
+
+// Periodically check power state for offline machines
+setInterval(async () => {
+  for (const m of machines) {
+    if (m.status !== 'online' && m.capabilities && m.capabilities.tailscaleIp) {
+      try {
+        const result = await api(`/api/machines/${encodeURIComponent(m.id)}/power-state`);
+        if (result.powerState && result.powerState !== m.powerState) {
+          m.powerState = result.powerState;
+          renderMachines();
+        }
+      } catch { /* ignore */ }
+    }
+  }
+}, 30000);
 
 // ── KEYBOARD SHORTCUTS ──
 document.addEventListener('keydown', (e) => {
