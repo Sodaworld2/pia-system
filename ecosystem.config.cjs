@@ -4,7 +4,7 @@ module.exports = {
     script: 'src/index.ts',
     interpreter: 'node',
     interpreter_args: '--import tsx/esm',
-    cwd: 'C:\Users\mic\Downloads\pia-system',
+    cwd: __dirname,
     env: {
       NODE_ENV: 'production',
       PIA_MODE: 'hub'
