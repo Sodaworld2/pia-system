@@ -121,6 +121,21 @@ export class FisherService {
         } catch (err) {
           logger.error(`[FisherService] Memory summarization failed: ${err}`);
         }
+
+        // TTL cleanup: expire agent_messages past their expires_at
+        try {
+          const { getDatabase } = await import('../db/database.js');
+          const db = getDatabase();
+          const now = Math.floor(Date.now() / 1000);
+          const deleted = db.prepare(
+            'DELETE FROM agent_messages WHERE expires_at IS NOT NULL AND expires_at < ?',
+          ).run(now);
+          if (deleted.changes > 0) {
+            logger.info(`[FisherService] TTL cleanup: deleted ${deleted.changes} expired agent_messages`);
+          }
+        } catch (err) {
+          logger.error(`[FisherService] TTL cleanup failed: ${err}`);
+        }
       },
       { timezone: this.config.timezone },
     );
