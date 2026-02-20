@@ -55,6 +55,24 @@ If nvm is not installed, download Node v22 LTS from https://nodejs.org and insta
 - See live terminal output just like M1
 - M1 can also still control your machine remotely
 
+## Verify it's working — paste this into Claude Code after restart
+
+Once PIA is running, paste this prompt into Claude Code on this machine to confirm everything is healthy:
+
+```
+You are running on M2 (SODA-MONSTER-HUNTER). PIA was just updated — you now have your own full dashboard. Please verify the following:
+
+1. Run `hostname` — confirm this is SODA-MONSTER-HUNTER
+2. Run `node --version` — confirm it's v22.x.x (not v24)
+3. Check `curl -s http://localhost:3000/api/mc/machines` — confirm the server is running and this machine shows as online
+4. Check `curl -s http://localhost:3000/api/mc/agents` — list any local agents
+5. Open http://localhost:3000 in a browser and confirm the Mission Control dashboard loads
+6. Spawn a test agent: go to the dashboard, click "+ Spawn", pick any project, and give it the task: "Run hostname and node --version and report back."
+7. Confirm you can see the agent's terminal output live in the dashboard
+
+Report what you find for each step. If anything fails, read the PIA server log output (npm run dev terminal) and share any error messages.
+```
+
 ---
 
 **Delete this file after completing these steps.**
