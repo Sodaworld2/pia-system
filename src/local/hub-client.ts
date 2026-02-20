@@ -9,6 +9,7 @@ import { createLogger } from '../utils/logger.js';
 import { hostname, platform, cpus, totalmem, freemem } from 'os';
 import { nanoid } from 'nanoid';
 import { existsSync, readFileSync, writeFileSync, readdirSync, statSync } from 'fs';
+import { exec } from 'child_process';
 import * as path from 'path';
 import { getMachineIdPath } from '../electron-paths.js';
 import { scanGitRepos, KnownProject } from '../utils/project-scanner.js';
@@ -553,7 +554,7 @@ export class HubClient {
     }
   }
 
-  private handleDiagnose(data: Record<string, unknown>): void {
+  private async handleDiagnose(data: Record<string, unknown>): Promise<void> {
     const requestId = (data?.requestId as string) || '';
     try {
       const hasApiKey = !!process.env.ANTHROPIC_API_KEY;
@@ -569,14 +570,14 @@ export class HubClient {
       // Check if SDK is importable
       let sdkAvailable = false;
       try {
-        require.resolve('@anthropic-ai/claude-agent-sdk');
+        await import('@anthropic-ai/claude-agent-sdk');
         sdkAvailable = true;
       } catch { sdkAvailable = false; }
 
       // Check if database is initialized
       let dbOk = false;
       try {
-        const { getDatabase } = require('../db/database.js');
+        const { getDatabase } = await import('../db/database.js');
         getDatabase();
         dbOk = true;
       } catch { dbOk = false; }
@@ -585,7 +586,7 @@ export class HubClient {
         action: 'diagnose',
         requestId,
         success: true,
-        hostname: process.env.COMPUTERNAME || require('os').hostname(),
+        hostname: process.env.COMPUTERNAME || hostname(),
         cwd: process.cwd(),
         nodeVersion: process.version,
         hasApiKey,
@@ -618,8 +619,7 @@ export class HubClient {
 
     logger.info(`run_shell: ${command.substring(0, 200)}`);
 
-    const { exec } = require('child_process');
-    const child = exec(command, { timeout: timeoutMs, maxBuffer: 1024 * 1024, cwd: data?.cwd as string || process.cwd() },
+    exec(command, { timeout: timeoutMs, maxBuffer: 1024 * 1024, cwd: data?.cwd as string || process.cwd() },
       (error: Error | null, stdout: string, stderr: string) => {
         this.send({
           type: 'command:result',
