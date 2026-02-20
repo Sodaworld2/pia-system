@@ -100,6 +100,12 @@ async function startHub(): Promise<void> {
   fisherService.start();
   logger.info('FisherService started');
 
+  // Start Calendar Spawn Service (fires agents from calendar_events table every minute)
+  logger.info('Starting Calendar Spawn Service...');
+  const { getCalendarSpawnService } = await import('./services/calendar-spawn.js');
+  getCalendarSpawnService().start();
+  logger.info('CalendarSpawnService started');
+
   // Start The Cortex — Fleet Intelligence Brain
   logger.info('Starting The Cortex...');
   const { initCortex } = await import('./cortex/index.js');
@@ -199,6 +205,12 @@ async function shutdown(): Promise<void> {
   try {
     const { getFisherService } = await import('./services/fisher-service.js');
     getFisherService().stop();
+  } catch { /* may not be initialized */ }
+
+  // Stop Calendar Spawn Service
+  try {
+    const { getCalendarSpawnService } = await import('./services/calendar-spawn.js');
+    getCalendarSpawnService().stop();
   } catch { /* may not be initialized */ }
 
   // Stop The Cortex

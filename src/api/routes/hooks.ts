@@ -21,33 +21,6 @@ interface HookEvent {
   created_at: number;
 }
 
-// Ensure hook_events table exists
-function ensureTable(): void {
-  try {
-    const db = getDatabase();
-    db.exec(`
-      CREATE TABLE IF NOT EXISTS hook_events (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        session_id TEXT NOT NULL,
-        event_type TEXT NOT NULL,
-        tool_name TEXT,
-        tool_input TEXT,
-        tool_response TEXT,
-        status TEXT,
-        message TEXT,
-        created_at INTEGER DEFAULT (unixepoch())
-      );
-      CREATE INDEX IF NOT EXISTS idx_hook_events_session ON hook_events(session_id);
-      CREATE INDEX IF NOT EXISTS idx_hook_events_type ON hook_events(event_type);
-      CREATE INDEX IF NOT EXISTS idx_hook_events_created ON hook_events(created_at);
-    `);
-  } catch (err) {
-    logger.error(`Failed to create hook_events table: ${err}`);
-  }
-}
-
-// Initialize table on import
-ensureTable();
 
 // POST /api/hooks/events - Receive hook event from Claude Code
 router.post('/events', (req: Request, res: Response) => {

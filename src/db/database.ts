@@ -746,6 +746,96 @@ function getMigrations(): Migration[] {
         ALTER TABLE machines ADD COLUMN power_state TEXT DEFAULT 'unknown';
       `,
     },
+    {
+      name: '044_hook_events',
+      sql: `
+        CREATE TABLE IF NOT EXISTS hook_events (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          session_id TEXT NOT NULL,
+          event_type TEXT NOT NULL,
+          tool_name TEXT,
+          tool_input TEXT,
+          tool_response TEXT,
+          status TEXT,
+          message TEXT,
+          created_at INTEGER DEFAULT (unixepoch())
+        );
+        CREATE INDEX IF NOT EXISTS idx_hook_events_session ON hook_events(session_id);
+        CREATE INDEX IF NOT EXISTS idx_hook_events_type ON hook_events(event_type);
+        CREATE INDEX IF NOT EXISTS idx_hook_events_created ON hook_events(created_at);
+      `,
+    },
+    {
+      name: '045_calendar_events',
+      sql: `
+        CREATE TABLE IF NOT EXISTS calendar_events (
+          id TEXT PRIMARY KEY,
+          agent TEXT NOT NULL,
+          task TEXT NOT NULL,
+          context_json TEXT DEFAULT '{}',
+          scheduled_at INTEGER NOT NULL,
+          status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'running', 'completed', 'failed', 'cancelled')),
+          machine_id TEXT REFERENCES machines(id) ON DELETE SET NULL,
+          created_by TEXT DEFAULT 'fisher2050',
+          soul_id TEXT REFERENCES souls(id) ON DELETE SET NULL,
+          created_at INTEGER DEFAULT (unixepoch()),
+          started_at INTEGER,
+          completed_at INTEGER
+        );
+        CREATE INDEX IF NOT EXISTS idx_cal_agent ON calendar_events(agent);
+        CREATE INDEX IF NOT EXISTS idx_cal_status ON calendar_events(status);
+        CREATE INDEX IF NOT EXISTS idx_cal_scheduled ON calendar_events(scheduled_at);
+      `,
+    },
+    {
+      name: '046_agent_messages',
+      sql: `
+        CREATE TABLE IF NOT EXISTS agent_messages (
+          id TEXT PRIMARY KEY,
+          to_agent TEXT NOT NULL,
+          from_agent TEXT NOT NULL,
+          subject TEXT,
+          body TEXT NOT NULL,
+          metadata TEXT DEFAULT '{}',
+          read INTEGER DEFAULT 0,
+          expires_at INTEGER,
+          created_at INTEGER DEFAULT (unixepoch())
+        );
+        CREATE INDEX IF NOT EXISTS idx_agentmsg_to ON agent_messages(to_agent);
+        CREATE INDEX IF NOT EXISTS idx_agentmsg_read ON agent_messages(read);
+        CREATE INDEX IF NOT EXISTS idx_agentmsg_expires ON agent_messages(expires_at);
+      `,
+    },
+    {
+      name: '047_agent_records',
+      sql: `
+        CREATE TABLE IF NOT EXISTS agent_records (
+          id TEXT PRIMARY KEY,
+          session_id TEXT,
+          agent TEXT NOT NULL,
+          project TEXT,
+          machine TEXT,
+          started_at INTEGER,
+          ended_at INTEGER,
+          duration_seconds INTEGER,
+          cost_usd REAL DEFAULT 0,
+          tokens_in INTEGER DEFAULT 0,
+          tokens_out INTEGER DEFAULT 0,
+          summary TEXT,
+          produced_files TEXT DEFAULT '[]',
+          consumed_files TEXT DEFAULT '[]',
+          quality_score INTEGER,
+          quality_verdict TEXT,
+          filed_by TEXT DEFAULT 'tim_buc',
+          metadata TEXT DEFAULT '{}',
+          created_at INTEGER DEFAULT (unixepoch())
+        );
+        CREATE INDEX IF NOT EXISTS idx_records_agent ON agent_records(agent);
+        CREATE INDEX IF NOT EXISTS idx_records_project ON agent_records(project);
+        CREATE INDEX IF NOT EXISTS idx_records_created ON agent_records(created_at);
+        CREATE INDEX IF NOT EXISTS idx_records_session ON agent_records(session_id);
+      `,
+    },
   ];
 }
 

@@ -17,7 +17,12 @@
     "desktop:build": "npm run build && electron electron-main.cjs",
     "electron:dev": "npm run build && electron .",
     "electron:build": "npm run build && electron-builder --win",
-    "electron:build:portable": "npm run build && electron-builder --win portable"
+    "electron:build:portable": "npm run build && electron-builder --win portable",
+    "pm2:start": "pm2 start ecosystem.config.cjs",
+    "pm2:stop": "pm2 stop pia-hub",
+    "pm2:restart": "pm2 restart pia-hub",
+    "pm2:logs": "pm2 logs pia-hub",
+    "pm2:status": "pm2 status"
   },
   "keywords": [
     "ai",

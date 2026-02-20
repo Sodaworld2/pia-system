@@ -2118,3 +2118,161 @@ The React UI port of mission-control.html will need to expose: `GET /api/souls` 
 
 ### Desktop App Impact
 Fisher status panel should be a widget in the React sidebar. The two API routes are stable and ready to consume. The `lastRun` map is in-memory (resets on restart) — a future improvement would be persisting run times to SQLite.
+
+---
+
+## Session 31: PM2 Process Manager Setup
+
+### Changes
+- **New dep**: `pm2@6.0.14` (global install, pure JS, no native code) — process manager with auto-restart
+- **New dep**: `pm2-windows-startup` (global install) — Windows registry boot entry for PM2
+- **New file**: `ecosystem.config.cjs` — PM2 app config (script, interpreter tsx/esm, autorestart, log paths)
+- **New file**: `pm2-start.sh` — helper script to switch from `npm run dev` to PM2 in one command
+- **New dir**: `logs/` — PM2 log output directory (pia-hub-out.log, pia-hub-err.log)
+- **New scripts in package.json**: `pm2:start`, `pm2:stop`, `pm2:restart`, `pm2:logs`, `pm2:status`
+- **Windows auto-start**: `pm2-startup install` — added PM2 to Windows registry startup
+
+### Files Changed
+| File | Change |
+|---|---|
+| `ecosystem.config.cjs` | **NEW** — PM2 app config for pia-hub process |
+| `pm2-start.sh` | **NEW** — one-command switch from dev to PM2 |
+| `logs/` | **NEW** — PM2 log directory |
+| `package.json` | Added 5 `pm2:*` npm scripts |
+
+### How to Switch from npm run dev to PM2
+```bash
+bash pm2-start.sh
+# or manually:
+pm2 start ecosystem.config.cjs
+pm2 save
+```
+
+### Desktop App Impact
+PM2 is a server-side concern only — no impact on Electron packaging. The Electron app starts its own embedded Express server independently of PM2.
+
+## Session 32: DB Migrations 044-047 + Calendar Spawn Service
+
+### Changes
+- **Migration 044**: `hook_events` table — proper DB table for Claude Code hook events; removes boot-time `ensureTable()` dynamic creation that failed before DB was ready
+- **Migration 045**: `calendar_events` table — local calendar for Fisher2050 scheduling (replaces Google Calendar for v1.0); tracks agent, task, context, scheduled_at, status, machine_id, soul_id
+- **Migration 046**: `agent_messages` table — async inbox for inter-agent messaging; persistent with TTL support via `expires_at`
+- **Migration 047**: `agent_records` table — Tim Buc's Records DB; stores session summaries with cost, tokens, quality scores, produced/consumed files
+- **Bug fix**: Removed top-level `ensureTable()` call + function from `src/api/routes/hooks.ts` — was crashing at module import before DB initialized; migration 044 now owns the table
+- **New service**: `src/services/calendar-spawn.ts` — `CalendarSpawnService` class; cron every minute, queries `calendar_events` WHERE status='pending' AND scheduled_at <= now, spawns via `getAgentSessionManager().spawn()`, double-spawn protected by immediate status flip to 'running'
+- **New export**: `getCalendarSpawnService()` — singleton accessor matching PIA service pattern
+- **Wired**: `CalendarSpawnService` started after FisherService in `src/index.ts`; stop wired into graceful shutdown handler
+
+### Files Changed
+| File | Change |
+|---|---|
+| `src/db/database.ts` | Added migrations 044–047 (hook_events, calendar_events, agent_messages, agent_records) |
+| `src/api/routes/hooks.ts` | Removed `ensureTable()` function and top-level call — migration 044 owns the table now |
+| `src/services/calendar-spawn.ts` | **NEW** — CalendarSpawnService: per-minute cron, spawns due calendar events |
+| `src/index.ts` | Wired CalendarSpawnService start + stop |
+
+### Desktop App Impact
+Four new DB tables and a new service — no native deps added. React UI will need a calendar events panel to surface Fisher2050's schedule. `agent_records` and `agent_messages` tables are the backbone for Tim Buc and the agent inbox — both need API routes (next session).
+
+## Session 32: MCP Install + PM2 + V1 DB Foundations
+
+### What Happened
+Boot-up session after restart. Server was down, restarted it. Read last journal, triaged state, then executed a batch of V1 foundation work in parallel agents.
+
+### Changes
+
+- **Bug fix**: Deleted stale orphaned task `ckIyDhRJoDdKV1fd_0Bji` from SQLite — was causing `FOREIGN KEY constraint failed` error on every boot in ExecutionEngine
+- **Bug fix**: `src/api/routes/hooks.ts` — removed `ensureTable()` and its top-level call; was crashing at module import before DB was ready. Migration 044 owns the table now.
+- **Migration 044**: `hook_events` — proper table for Claude Code hook events (was buffering in RAM only, lost on restart)
+- **Migration 045**: `calendar_events` — Fisher2050's local scheduling table (agent, task, context_json, scheduled_at, status, machine_id, soul_id). This is the V1 calendar — no Google OAuth needed.
+- **Migration 046**: `agent_messages` — async inter-agent inbox with TTL support (expires_at column). Replaces fire-and-forget messaging.
+- **Migration 047**: `agent_records` — Tim Buc's Records DB. Stores per-session summaries: cost, tokens, quality_score, produced_files, consumed_files, filed_by.
+- **New file**: `src/services/calendar-spawn.ts` — CalendarSpawnService. Runs every minute, finds pending calendar_events that are due, spawns the right agent via AgentSessionManager, marks event running (double-spawn protection) → completed or failed.
+- **Wired**: CalendarSpawnService started in `src/index.ts` after FisherService. Shutdown handler included.
+- **New file**: `ecosystem.config.cjs` — PM2 config. Name: `pia-hub`, autorestart, 3s delay, 10 max restarts, logs to `./logs/`
+- **New file**: `pm2-start.sh` — one-command switch from `npm run dev` → PM2 production mode
+- **New dir**: `logs/` — PM2 log output directory
+- **Updated**: `package.json` — added `pm2:start`, `pm2:stop`, `pm2:restart`, `pm2:logs`, `pm2:status` scripts
+- **Updated**: `.mcp.json` — added `firebase` MCP (`firebase-tools experimental:mcp`) and `playwright` MCP (`@playwright/mcp@latest`). Firebase needs `FIREBASE_PROJECT_ID` env var set before it will work.
+- **All 17 migrations now applied** to live DB including new 044–047.
+
+### Files Changed
+| File | Change |
+|---|---|
+| `src/db/database.ts` | Migrations 044–047 added |
+| `src/api/routes/hooks.ts` | Removed broken ensureTable() boot call |
+| `src/services/calendar-spawn.ts` | **NEW** — CalendarSpawnService |
+| `src/index.ts` | Wired CalendarSpawnService |
+| `ecosystem.config.cjs` | **NEW** — PM2 config |
+| `pm2-start.sh` | **NEW** — PM2 start helper |
+| `logs/` | **NEW** — PM2 log directory |
+| `package.json` | Added pm2:* scripts |
+| `.mcp.json` | Added firebase + playwright MCP servers |
+
+### What The NEXT Agent MUST Do (V1 Minimum Spec — in order)
+
+**#1 — ANTHROPIC_API_KEY (0 code, highest impact)**
+Add to `.env`: `ANTHROPIC_API_KEY=sk-ant-...`
+Without this: FisherService crons fire but do nothing. No agents can think. Everything else is blocked.
+
+**#2 — Tim Buc wiring (1-2 days)**
+Tim Buc needs to fire automatically when any SDK agent session ends.
+- Hook: in `src/mission-control/agent-session.ts`, when a session status flips to `completed` or `failed`, emit an event on AgentBus (`session:ended`, payload: session metadata)
+- FisherService (or a new TimBucService) listens for `session:ended`, spawns Tim Buc soul via AgentSessionManager with context: raw session log path, cost, agent name, project
+- Tim Buc reads the log, writes a row to `agent_records` table (migration 047 — already exists)
+- Soul file: `src/souls/personalities/tim-buc.json` (already exists)
+
+**#3 — Eliyahu 6am email (1-2 days)**
+Eliyahu already has a cron job in FisherService (6am Asia/Jerusalem). Needs to actually DO something:
+- FisherService `runEliyahu()` → spawns Eliyahu soul with prompt: "Read the last 24h of agent_records, find the 3 most important things for Mic today, send email to mic@sodalabs.ai via SendGrid"
+- Requires: SendGrid API key in `.env` as `SENDGRID_API_KEY`, email sender domain configured
+- Soul file: `src/souls/personalities/eliyahu.json` (already exists)
+
+**#4 — Email outbound service (1 day)**
+Create `src/services/email-service.ts` — thin wrapper around SendGrid (or Mailgun).
+Reuse from `Downloads/sodalabs/` — that repo has full Resend+SendGrid with 7 templates already built. Copy the pattern.
+Env vars needed: `SENDGRID_API_KEY`, `EMAIL_FROM=fisher2050@sodalabs.ai`
+
+**#5 — Fisher2050 email inbound (1 day)**
+Goal: email to fisher2050@sodalabs.ai → creates calendar_events row.
+- Set up Mailgun (or Cloudflare Email Worker) inbound routing → webhook → `POST /api/webhooks/email`
+- Route already exists? Check `src/api/routes/` for webhooks. If not, create it.
+- Webhook handler: parse email body, extract goal text, call `getCalendarSpawnService().scheduleAgent('Farcake', goalText, scheduledAt)`
+- Env vars: `MAILGUN_API_KEY`, `MAILGUN_DOMAIN`
+
+**#6 — agent_messages TTL cleanup (1 hour)**
+Add to FisherService weekly cron (or the 3am Sunday prune):
+```typescript
+getDatabase().prepare('DELETE FROM agent_messages WHERE expires_at IS NOT NULL AND expires_at < ?').run(Math.floor(Date.now()/1000));
+```
+
+**#7 — PM2 go-live (15 min)**
+When ready to stop using `npm run dev`:
+```bash
+bash pm2-start.sh
+pm2 save
+pm2-startup install  # already done, Windows registry entry exists
+```
+
+**#8 — 5-day soak test**
+Run the full loop 5 consecutive business days unattended. Fix what breaks. This is the final V1 gate.
+
+### V1 Completion Status
+| Item | Status |
+|---|---|
+| Fisher2050 in main process | ✅ DONE |
+| Owl/task persistence | ✅ DONE (tasks table) |
+| PM2 | ✅ DONE (ecosystem.config.cjs) |
+| DB migrations (all tables) | ✅ DONE (17 migrations) |
+| CalendarSpawnService | ✅ DONE |
+| Soul system (12 souls) | ✅ DONE |
+| ANTHROPIC_API_KEY | ⚠️ NEEDS USER ACTION |
+| Tim Buc wiring | 🔴 NOT BUILT |
+| Eliyahu email | 🔴 NOT BUILT |
+| Email outbound service | 🔴 NOT BUILT |
+| Email inbound (fisher2050@) | 🔴 NOT BUILT |
+| agent_messages TTL cleanup | 🟡 TABLE EXISTS, cron missing |
+| 5-day soak test | 🔴 NOT STARTED |
+
+### Desktop App Impact
+No native deps added. New tables (calendar_events, agent_records, agent_messages) need API routes and React widgets. PM2 production mode changes how the process is managed — Electron packaging needs to account for PM2 or use its own process manager.
