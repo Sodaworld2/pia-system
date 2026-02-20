@@ -1124,6 +1124,24 @@
     @media (max-width: 700px) {
       .machine-panel { display: none; }
     }
+
+    /* ── Context Bar (Change 2) ── */
+    .ctx-bar { height: 3px; border-radius: 2px; margin-top: 6px; background: #1e1e30; overflow: hidden; }
+    .ctx-bar-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
+    .ctx-bar-fill.ctx-low { background: #3fb950; }
+    .ctx-bar-fill.ctx-med { background: #f59e0b; }
+    .ctx-bar-fill.ctx-high { background: #ef4444; }
+    .ctx-label { font-size: 10px; color: #64748b; margin-top: 2px; }
+
+    /* ── Branch Badge (Change 6) ── */
+    .branch-badge { font-size: 9px; padding: 1px 6px; border-radius: 8px; background: #1c2333; color: #58a6ff; font-weight: 600; white-space: nowrap; }
+
+    /* ── Kill buttons in stats bar (Change 4) ── */
+    .kill-btn { font-size: 10px; padding: 2px 10px; border-radius: 4px; cursor: pointer; border: 1px solid; font-weight: 700; transition: all 0.15s; }
+    .kill-btn:hover { filter: brightness(1.3); }
+    .kill-btn.kill-all { border-color: #f85149; color: #f85149; background: #2a0f0f; }
+    .kill-btn.kill-done { border-color: #484f58; color: #8b949e; background: #1a1a2e; }
+    .kill-btn.kill-errors { border-color: #d29922; color: #d29922; background: #2a1f0f; }
   </style>
 </head>
 <body>
@@ -1311,6 +1329,12 @@
       <select id="spawnTemplate" onchange="applyTemplate()" style="margin-bottom:6px;">
         <option value="">— No template (manual config) —</option>
       </select>
+
+      <label>Soul (optional personality)</label>
+      <select id="soul-select" style="margin-bottom:4px;" onchange="onSoulSelect()">
+        <option value="">No soul (vanilla)</option>
+      </select>
+      <div id="soul-preview" style="font-size:11px; color: #64748b; margin-top:4px; margin-bottom:8px;"></div>
 
       <label>Project</label>
       <select id="spawnProject" onchange="onProjectSelect()" style="margin-bottom:6px;">
@@ -1559,6 +1583,8 @@ let activeAgentTab = 'terminal';
 let currentView = 'single';
 let ws = null;
 let wsConnected = false;
+let souls = [];           // from /api/souls (Change 1)
+let currentBranch = 'unknown'; // from .git/HEAD (Change 6)
 
 // ── API HELPERS ──
 async function api(path, opts = {}) {
@@ -1618,6 +1644,13 @@ async function fetchAgents() {
       toolCalls: a.toolCalls || 0,
       createdAt: a.createdAt || Date.now(),
       errorMessage: a.errorMessage,
+      soulId: a.soulId || null,
+      contextUsed: a.contextUsed || a.context_used || 0,
+      contextWindow: a.contextWindow || a.context_window || 0,
+      model: a.model || '',
+      hasAllowlist: a.hasAllowlist || false,
+      hasNetworkPolicy: a.hasNetworkPolicy || false,
+      restartCount: a.restartCount || 0,
     }));
   } catch (e) {
     console.error('Failed to fetch agents:', e);
@@ -1941,6 +1974,11 @@ function renderStats() {
     <div class="stat"><span class="stat-value" style="color:#c9d1d9;">${idle}</span><span class="stat-label">Idle</span></div>
     <div class="stat"><span class="stat-value green">${done}</span><span class="stat-label">Done</span></div>
     <div class="stat"><span class="stat-value red">${errors}</span><span class="stat-label">Errors</span></div>
+    <div class="stat" style="gap:6px;align-items:center;">
+      <button class="kill-btn kill-all" onclick="killAll()" title="Kill all agents">Kill All</button>
+      <button class="kill-btn kill-done" onclick="killDone()" title="Kill completed/idle agents">Kill Done</button>
+      <button class="kill-btn kill-errors" onclick="killErrors()" title="Kill error agents">Kill Errors</button>
+    </div>
     <div class="stat" style="margin-left:auto;"><span class="stat-label">Cost</span><span class="stat-value green" style="font-size:14px;">$${totalCost.toFixed(2)}</span></div>
     <div class="stat"><span class="stat-label">Tokens</span><span class="stat-value" style="font-size:14px;color:#bc8cff;">${totalTokens > 1000 ? (totalTokens/1000).toFixed(0) + 'K' : totalTokens}</span></div>
   `;
@@ -2353,6 +2391,8 @@ async function spawnAgent() {
   const networkPolicy = (ecosystems.length || allowedDomains || blockedDomains)
     ? { ecosystems, allowedDomains, blockedDomains } : undefined;
 
+  const soulId = document.getElementById('soul-select').value || undefined;
+
   if (!cwd) { showToast('Please enter a working directory'); return; }
 
   closeSpawnModal();
@@ -2364,7 +2404,8 @@ async function spawnAgent() {
       body: { machineId, mode, task, cwd, approvalMode, model, maxBudget,
               effort, systemPrompt, maxTurns, disallowedTools, allowedTools,
               additionalDirectories, networkPolicy, mcpServers,
-              enableCheckpointing, loadProjectSettings, autoRestart, fallbackModel },
+              enableCheckpointing, loadProjectSettings, autoRestart, fallbackModel,
+              soulId },
     });
 
     showToast(`Agent spawned: ${data.id?.substring(0, 8)}`);
@@ -2685,11 +2726,123 @@ function updateUnreadBadge() {
 // ── MODAL ──
 let loadedTemplates = [];
 
+// ── SOULS (Change 1 & 3) ──
+async function fetchSouls() {
+  try {
+    const data = await api('/api/souls');
+    souls = Array.isArray(data) ? data : (data.souls || []);
+  } catch (e) {
+    souls = [];
+  }
+}
+
+function formatSoulId(soulId) {
+  if (!soulId) return '';
+  // "fisher2050" -> "Fisher2050", "tim_buc" -> "Tim Buc"
+  return soulId.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function getSoulName(soulId) {
+  if (!soulId) return '';
+  const soul = souls.find(s => s.id === soulId);
+  return soul ? soul.name : formatSoulId(soulId);
+}
+
+function onSoulSelect() {
+  const soulId = document.getElementById('soul-select').value;
+  const preview = document.getElementById('soul-preview');
+  if (!soulId) {
+    preview.textContent = '';
+    return;
+  }
+  const soul = souls.find(s => s.id === soulId);
+  if (soul) {
+    preview.textContent = (soul.role ? soul.role : '') + (soul.personality ? ' — ' + soul.personality.substring(0, 80) : '');
+  } else {
+    preview.textContent = soulId;
+  }
+}
+
+// ── GIT BRANCH (Change 6) ──
+async function fetchGitBranch() {
+  try {
+    const data = await api('/api/files/read?path=.git/HEAD');
+    const content = (data.content || data || '').toString().trim();
+    // "ref: refs/heads/master" -> "master"
+    const match = content.match(/^ref:\s*refs\/heads\/(.+)$/);
+    if (match) {
+      currentBranch = match[1].trim();
+    } else if (content.length === 40) {
+      // Detached HEAD — show short hash
+      currentBranch = content.substring(0, 7);
+    }
+  } catch (e) {
+    currentBranch = 'unknown';
+  }
+}
+
+// ── KILL ALL / KILL DONE / KILL ERRORS (Change 4) ──
+async function killAll() {
+  if (!agents.length) { showToast('No agents to kill'); return; }
+  if (!confirm(`Kill all ${agents.length} agent(s)?`)) return;
+  let killed = 0;
+  for (const a of [...agents]) {
+    try {
+      await api(`/api/mc/agents/${a.id}`, { method: 'DELETE' });
+      killed++;
+    } catch (e) { /* ignore individual failures */ }
+  }
+  showToast(`Killed ${killed} agent(s)`);
+  await fetchAgents();
+  selectedAgent = null;
+  renderAll();
+}
+
+async function killDone() {
+  const targets = agents.filter(a => a.status === 'done' || a.status === 'idle' || a.status === 'completed');
+  if (!targets.length) { showToast('No completed/idle agents'); return; }
+  let killed = 0;
+  for (const a of targets) {
+    try {
+      await api(`/api/mc/agents/${a.id}`, { method: 'DELETE' });
+      killed++;
+    } catch (e) { /* ignore */ }
+  }
+  showToast(`Killed ${killed} done agent(s)`);
+  await fetchAgents();
+  if (selectedAgent && !agents.find(a => a.id === selectedAgent)) selectedAgent = null;
+  renderAll();
+}
+
+async function killErrors() {
+  const targets = agents.filter(a => a.status === 'error' || a.status === 'failed');
+  if (!targets.length) { showToast('No error agents'); return; }
+  let killed = 0;
+  for (const a of targets) {
+    try {
+      await api(`/api/mc/agents/${a.id}`, { method: 'DELETE' });
+      killed++;
+    } catch (e) { /* ignore */ }
+  }
+  showToast(`Killed ${killed} error agent(s)`);
+  await fetchAgents();
+  if (selectedAgent && !agents.find(a => a.id === selectedAgent)) selectedAgent = null;
+  renderAll();
+}
+
 async function openSpawnModal() {
   document.getElementById('spawnModal').classList.add('visible');
   if (selectedMachine) {
     document.getElementById('spawnMachine').value = selectedMachine;
   }
+  // Populate soul dropdown (Change 1)
+  await fetchSouls();
+  const soulSel = document.getElementById('soul-select');
+  soulSel.innerHTML = '<option value="">No soul (vanilla)</option>';
+  for (const s of souls) {
+    soulSel.innerHTML += `<option value="${esc(s.id)}">${esc(s.name || s.id)}${s.role ? ' — ' + esc(s.role) : ''}</option>`;
+  }
+  document.getElementById('soul-preview').textContent = '';
   // Load templates
   try {
     const data = await api('/api/mc/templates');
@@ -3174,15 +3327,30 @@ function renderGridView() {
     const lines = (outputBuffers[a.id] || []).slice(-20);
     const elapsed = a.createdAt ? Math.floor((Date.now() - a.createdAt) / 60000) : 0;
     const folderName = (a.cwd || a.config?.cwd || '').split(/[\\/]/).filter(Boolean).pop() || 'unknown';
+    // Change 3: soul name display
+    const soulName = a.soulId ? getSoulName(a.soulId) : null;
+    const titleText = soulName ? soulName : folderName;
+    const subtitleText = soulName ? `<span style="font-size:9px;color:#64748b;margin-left:4px;">${esc(folderName)}</span>` : '';
+    // Change 2: context bar
+    const ctxUsed = a.contextUsed || 0;
+    const ctxWin = a.contextWindow || 0;
+    const ctxPct = ctxWin > 0 ? Math.min(100, Math.round((ctxUsed / ctxWin) * 100)) : 0;
+    const ctxClass = ctxPct >= 90 ? 'ctx-high' : ctxPct >= 70 ? 'ctx-med' : 'ctx-low';
+    const ctxBarHtml = ctxPct > 0 ? `
+      <div class="ctx-bar"><div class="ctx-bar-fill ${ctxClass}" style="width:${ctxPct}%"></div></div>
+      <div class="ctx-label">${ctxPct}% ctx</div>` : '';
+    // Change 6: branch badge
+    const branchHtml = currentBranch !== 'unknown' ? `<span class="branch-badge">&#8903; ${esc(currentBranch)}</span>` : '';
     return `
       <div class="grid-tile ${a.status === 'waiting' ? 'waiting' : ''} ${selectedAgent === a.id ? 'selected' : ''}"
            onclick="gridTileClick('${esc(a.id)}')">
         <div class="grid-tile-header">
           <div class="grid-tile-title">
             <div class="dot ${a.status}"></div>
-            <span title="${esc(a.cwd || '')}">${esc(folderName)}</span>
+            <span title="${esc(a.cwd || '')}">${esc(titleText)}${subtitleText}</span>
           </div>
           <div class="grid-tile-badges">
+            ${branchHtml}
             <span class="badge mode-${a.mode[0]}">${a.mode}</span>
             <span class="badge cost">$${(a.cost || 0).toFixed(2)}</span>
           </div>
@@ -3190,6 +3358,7 @@ function renderGridView() {
         <div class="grid-tile-body" id="gridBody-${esc(a.id)}">
           ${a.task ? `<div class="gl system" style="color:#64748b;margin-bottom:4px;">${esc(a.task.substring(0, 100))}</div>` : ''}
           ${lines.map(l => `<div class="gl ${l.type}">${l.type === 'tool' ? '<span style="color:#bc8cff;">' + esc(l.text) + '</span>' : esc(l.text)}</div>`).join('')}
+          ${ctxBarHtml}
         </div>
         <div class="grid-tile-input" onclick="event.stopPropagation()">
           <input type="text" id="gridInput-${esc(a.id)}" placeholder="Message..." onkeydown="if(event.key==='Enter')gridSend('${esc(a.id)}')">
@@ -3462,8 +3631,8 @@ async function init() {
   // Connect WebSocket
   connectWebSocket();
 
-  // Fetch initial data
-  await Promise.all([fetchMachines(), fetchAgents(), fetchPrompts()]);
+  // Fetch initial data (including git branch and souls)
+  await Promise.all([fetchMachines(), fetchAgents(), fetchPrompts(), fetchGitBranch(), fetchSouls()]);
   renderAll();
 
   // Check browser controller status

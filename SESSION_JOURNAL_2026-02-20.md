@@ -1796,6 +1796,171 @@ No code changes this session. Cross-pollination opportunities identified will re
 
 ---
 
+## Session N+1: dao-foundation-files/ Deep Audit — Full Contents Discovered
+
+### Context
+User asked "Did u see any DAO files in PIA?" — triggered full audit of `dao-foundation-files/` folder inside the PIA repo. Read-only session. This folder was not fully surfaced in earlier sessions.
+
+---
+
+### What dao-foundation-files/ Actually Is
+
+A **staging/working area** — agents operating on M1's PIA system prepared DAO code and data here before pushing to DAOV1 (GitHub) or M3 (100.102.217.69). Not part of PIA's core infrastructure.
+
+**Rule (CLAUDE.md):** Never modify. Never call PIA features "DAO."
+
+---
+
+### Full Inventory
+
+#### A. Research Documents — 6,329 lines total, 200+ sources
+
+| File | Lines | Subject |
+|---|---|---|
+| `research/RESEARCH_AI_MENTOR_KNOWLEDGE.md` | 1,489 | RAG architecture, chunking, hybrid search, re-ranking — full implementation roadmap for DAOV1 AI brain |
+| `research/RESEARCH_ONBOARDING_BUBBLES.md` | 1,729 | Onboarding retention (3x with structure), POAP/Galxe/Sismo/Hats credentials, bubble/sub-DAO lifecycle, token-gating (Collab.Land, Guild.xyz) |
+| `research/RESEARCH_GOVERNANCE.md` | 1,453 | Quadratic/conviction/optimistic/rage-quit voting, flash-loan prevention, delegation, progressive decentralisation, participation incentives |
+| `research/RESEARCH_TREASURY_TOOLS.md` | 666 | Build vs buy: Squads ($49/mo) + Google Sheets (now) + Xero/Koinly (formal) recommended for 9-person Solana DAO |
+| `research/RESEARCH_AGREEMENTS_SIGNATURES.md` | 297 | EIP-712, EIP-1271, soulbound tokens (EIP-5192), EAS attestations, 3-tier dispute resolution, ZK-KYC, legal wrappers |
+| `research/RESEARCH_TREASURY.md` | 260 | Safe multisig, spending tiers, timelocks, hot/warm/cold wallet architecture, FASB ASU 2023-08, multi-vault architecture |
+| `research/RESEARCH_TOKEN_DISTRIBUTION.md` | 254 | Sablier/Hedgey/Superfluid/LlamaPay, veSODA model, buyback-and-burn, Sybil resistance, LBP fair launch |
+| `research/RESEARCH_MARKETPLACE_BOUNTIES.md` | 181 | Bounty system design, marketplace mechanics |
+
+#### B. Planning Documents
+
+| File | Lines | What It Is |
+|---|---|---|
+| `COMPETITIVE_LANDSCAPE.md` | 302 | 17 competitors analysed. SodaWorld moat: AI mentor (12-18 months ahead), all-in-one. Market: 13,000+ DAOs, $30B+ treasury assets, only 8.5% use AI. 15 recommended features to adopt |
+| `TECHNICAL_IMPROVEMENTS_ROADMAP.md` | 473 | 33 concrete code recommendations across 8 areas. 19 must-have, 14 nice-to-have. Governance, treasury, AI, tokens, RAG, security, architecture |
+| `SPRINT_PLAN_GOVERNANCE_TREASURY_AGREEMENTS_TOKENS.md` | 869 | 4-sprint plan: 13 new tables, 19 API endpoints. Target: M3 at `100.102.217.69:5003`. Sprint 1: governance. Sprint 2: treasury. Sprint 3: agreements. Sprint 4: tokens |
+| `SOLANA_SODA_TOKEN_PLAN.md` | 586 | Full SODA token deployment: 100M supply, 6 decimals, allocation 20/5/35/20/10/10. Devnet keypairs created. Squads multisig, Streamflow vesting, Raydium LBP launch |
+| `VIDEOHOHO_AGENT_BRIEFING.md` | 431 | Phase 2 build spec for Videohoho Electron video editor (soda-yeti). Zustand migration, ElevenLabs TTS, Whisper captions, audio ducking, project save/load |
+| `VIDEOHOHO_CLAUDE.md` | 44 | Claude Code instructions for Videohoho: read JOURNAL.md first, autonomous decisions, update journal at end |
+
+#### C. Backend Source Files (Already in DAOV1 post-pull)
+All 9 AI modules + foundation types + event bus + middleware + migration 015 — compiled .ts/.js/.d.ts files staged here before being pushed to GitHub.
+
+#### D. Python Automation Scripts (~30 files)
+All target M3 at `100.102.217.69:3000` via PIA HTTP API. Mechanism: base64-encode Python → HTTP POST to M3 → execute → read output.
+
+| Script | What It Does |
+|---|---|
+| `populate-dao.py` | Seeds 8 proposals, votes, signatures, 15 milestones, 8 marketplace items, 15 knowledge items, 8 bounties, 15 treasury txns, 4 community bubbles, 12 admin logs |
+| `fix-all-m3.py` | Fixes M3 DB state: DAO name, 10 knowledge items, 4 bounties, API key injection |
+| `send-to-m3.py` | Remote shell via PIA session — executes embedded scripts on M3 |
+| `seed-users-m3.py` | Transfers + runs user seeding script on M3 |
+| `audit-db-m3.py` | Audits M3 DB schema and table contents |
+| `build-prod-m3.py` | Builds frontend production bundle on M3 |
+| `push-coach.ps1` / `push-legal.ps1` | PowerShell: push coach/legal modules to M3 |
+| 20+ others | inspect, check, patch, fix, read, list operations for M3 |
+
+#### E. Screenshots & Payload Files
+- `dao-council-live.png` — live DAO council page screenshot
+- `dao-frontend-full.png` — full DAO frontend screenshot
+- `coach_b64.txt` / `legal_b64.txt` — base64-encoded modules for remote transfer
+- `pty-payload.json` files — PTY session payloads for M3
+- `solana-faucet-captcha.png` — devnet faucet evidence
+
+---
+
+### Is This Work Useful? — Assessment
+
+| Recipient | Value | Reason |
+|---|---|---|
+| **Any agent building DAOV1 Sprint 1-4** | Critical | `SPRINT_PLAN` is a ready-to-execute 4-sprint plan with exact schemas + endpoints. The 8 research docs (200+ sources) back every decision |
+| **Farcake (Research)** | Very high | 6,329 lines of pre-done DAO research to index and reference — no need to re-research governance/treasury/agreements/tokens/onboarding |
+| **Wingspan (Presentations)** | High | `COMPETITIVE_LANDSCAPE` + `SOLANA_SODA_TOKEN_PLAN` contain investor-facing data (market size, tokenomics, competitive positioning) ready for pitch decks |
+| **Any Videohoho agent** | Direct | `VIDEOHOHO_AGENT_BRIEFING.md` is the complete Phase 2 build spec — read this before touching `C:\Users\mic\Downloads\Videohoho\` |
+| **Tim Buc (Library — not yet built)** | Medium | Python scripts represent completed M3 operations that should be archived when Tim Buc exists |
+
+---
+
+### M3 Status Note
+M3 (`SODA-YETI`, `100.102.217.69`) is currently **offline** in PIA. The sprint plan and all 30 Python scripts target M3. Work cannot continue until M3 comes back online and reconnects to hub.
+
+### Token Allocation Note (Important Discrepancy)
+`SOLANA_SODA_TOKEN_PLAN.md` says 20/5/35/20/10/10 (core/advisors/community/treasury/investors/public). DAOV1 seed data historically used 25/25/25/25. Sprint 4 is specifically tasked with fixing this inconsistency. **The correct allocation is 20/5/35/20/10/10.**
+
+---
+
+### Files Changed
+None — read-only audit.
+
+### Desktop App Impact
+`TECHNICAL_IMPROVEMENTS_ROADMAP.md` includes plugin manifest interface + module registry — architectural patterns the React UI (Electron settings/module management screens) will need to surface.
+
+---
+
+## Session 26: Eliyahu — Dashboard Audit + Strengthen Before Building
+
+### Context
+Eliyahu intelligence synthesis pass. Full journal read (Sessions 1–25). Deep code audit of `public/mission-control.html` (3,499 lines). Goal: before building new agents/infrastructure, what can be improved in what already exists?
+
+---
+
+### What The Dashboard Actually Has (Full Inventory)
+
+**Layout:** 3-panel — Machine list (left 320px) | Agent terminal/journal/messages (center flex) | Prompt queue (right 360px)
+
+**Already built and working:**
+- Stats bar: Machines, Agents, Working, Waiting, Idle, Done, Errors, Cost, Tokens
+- Machine tiles: status dot, power state, agent chips, mode badge (manual/auto/yolo/plan), power actions (Wake/Boot/Gear)
+- Agent detail: Terminal streaming, Journal entries with type badges, Messages tab with compose + inbox
+- Status banner: contextual text per agent state (RUNNING/WAITING/COMPLETED/ERROR/READY)
+- Cost footer: session cost, tokens in/out, tool calls, duration
+- Grid view: all agents as tiles, last 20 output lines live, status dot pulsing, inline send
+- Grid tile footer: status, restart count, network policy, model (truncated), tokens, elapsed
+- Spawn modal: comprehensive — machine, folder browser, mode, approval mode, model, budget, system prompt, max turns, tools, MCP servers, network policy, templates
+- WebSocket: handles mc:output, mc:prompt, mc:status, mc:agent_spawned, relay:message, mc:power_event, mc:browser_status
+
+---
+
+### What Is MISSING (Gap Analysis)
+
+| Gap | Sessions That Identified It | Effort |
+|---|---|---|
+| **Context % bar** | Sessions 2, 3 | 2 hrs — SDK fields exist, just not rendered |
+| **Soul name on agent cards** | Session 22 | 1 hr — `soulId` on agent object, not shown |
+| **Soul selector in spawn modal** | Session 22 | 1.5 hrs — `GET /api/souls` exists, just not wired |
+| **Fisher2050 status panel** | Session 21 | 1 hr — needs 2 small new routes |
+| **Kill All / bulk actions** | Sessions 3, 16 | 1 hr — `DELETE /api/mc/agents/:id` exists, just loop it |
+| **Git branch on grid tiles** | Session 2 | 30 min — Files API + `.git/HEAD` read |
+| **Terminal output relay M2→M1** | Session 1 | Larger — architecture gap, not just UI |
+
+---
+
+### Proposed Improvements — Priority Order
+
+**1. Context % Bar** (2 hrs, no new backend)
+Add progress bar to cost footer + grid tile footer. Yellow >70%, red >90%, pulsing at >95%.
+SDK already returns `agent.contextUsed` / `agent.contextWindow`. Just CSS + render.
+
+**2. Soul Selector in Spawn Modal** (1.5 hrs, no new backend)
+Add `<select>` dropdown that calls `GET /api/souls` (already exists, returns all 12). Selecting a soul pre-fills system_prompt and sends `soulId` in spawn payload. This makes the 12 souls Mic spent sessions building actually usable.
+
+**3. Soul Name on Agent Cards** (1 hr, no new backend)
+Grid tiles and machine chips currently show folder name + truncated ID. When `agent.soulId` is set, show the soul display name + emoji instead. "Farcake" not "abc12345".
+
+**4. Kill All / Bulk Actions** (1 hr, no new backend)
+3 buttons in stats bar: "Kill All", "Kill Done", "Kill Errors". Loop through filtered agents, call `DELETE /api/mc/agents/:id`. Delete is first-class per philosophy (Sessions 3, 16).
+
+**5. Fisher2050 Status Panel** (1 hr, needs 2 new routes)
+Collapsible "Services" section in left panel. Shows: last 9am standup timestamp, next run, last 6pm summary, "Run Now" button → `POST /api/fisher/run`. Spec already in IMPLEMENTATION_SPEC.md.
+
+**6. Git Branch on Tiles** (30 min, no new backend)
+Read `{cwd}/.git/HEAD` via Files API. Cache per agent. Show as small badge on grid tile header.
+
+**Total: ~7 hours. Zero new architecture. Existing system goes from functional to polished.**
+
+---
+
+### Files Changed
+| File | Change |
+|---|---|
+| `SESSION_JOURNAL_2026-02-20.md` | Added Session 26 — Eliyahu dashboard audit + improvement proposals |
+
+---
+
 ## Session 26: Deep Technical Audit — Current State Inventory
 
 ### Context
@@ -1890,3 +2055,32 @@ ExecutionEngine start/stop is now automatic — no user action required. The Rea
 
 ### Desktop App Impact
 No functional code changed — HTML diagram only. The React UI port of this page should adopt the same three-panel (Live / Needs Wire / Needs Creds) structure when built.
+
+## Session 29: Dashboard UX Improvements — Soul Selector, Context Bar, Kill Buttons, Branch Badge
+
+### Changes
+
+- **New UI: Soul selector in spawn modal** (`public/mission-control.html`): Added a `<select id="soul-select">` dropdown with "No soul (vanilla)" default above the Project field. On modal open, fetches `GET /api/souls` and populates the dropdown. Selecting a soul shows a small preview (role + personality snippet) in `<div id="soul-preview">`. Selected `soulId` is included in the `POST /api/mc/agents` body.
+
+- **New UI: Context usage bar on agent grid tiles** (`public/mission-control.html`): Added `.ctx-bar` / `.ctx-bar-fill` / `.ctx-label` CSS classes. In `renderGridView()`, reads `contextUsed` and `contextWindow` from the agent object, computes percentage, renders a thin 3px progress bar at the bottom of the tile body. Color: green < 70%, yellow 70–89%, red 90%+. Hidden if no data (0%).
+
+- **New UI: Soul name on agent grid tiles** (`public/mission-control.html`): In `renderGridView()`, if `agent.soulId` is set, the tile title shows the soul's display name (looked up from the in-memory `souls` array, or formatted from the ID via `formatSoulId()`). The folder/cwd name appears as a smaller muted subtitle below.
+
+- **New buttons: Kill All / Kill Done / Kill Errors** (`public/mission-control.html`): Added three buttons to the stats bar (rendered in `renderStats()`). Kill All prompts `confirm()` before deleting all agents. Kill Done targets `status === 'done' | 'idle' | 'completed'`. Kill Errors targets `status === 'error' | 'failed'`. All call `DELETE /api/mc/agents/:id` in a loop then refresh.
+
+- **New UI: Git branch badge on agent tiles** (`public/mission-control.html`): On `init()`, fetches `GET /api/files/read?path=.git/HEAD`, parses the branch name from `ref: refs/heads/NAME` format, stores in `let currentBranch`. Each grid tile shows a `<span class="branch-badge">` with the branch name. Hidden when branch is unknown.
+
+- **New state variables**: `souls[]` (array of soul objects from `/api/souls`) and `currentBranch` (string) added to the top-level state block.
+
+- **New functions**: `fetchSouls()`, `formatSoulId()`, `getSoulName()`, `onSoulSelect()`, `fetchGitBranch()`, `killAll()`, `killDone()`, `killErrors()`.
+
+- **Updated `fetchAgents()`**: Now also maps `soulId`, `contextUsed`, `contextWindow`, `model`, `hasAllowlist`, `hasNetworkPolicy`, `restartCount` fields from API response (previously some of these were missing from the agent object mapping).
+
+### Files Changed
+
+| File | Change |
+|---|---|
+| `public/mission-control.html` | Added soul selector, context bar, kill buttons, branch badge, supporting CSS and JS |
+
+### Desktop App Impact
+The React UI port of mission-control.html will need to expose: `GET /api/souls` for soul dropdown, `contextUsed`/`contextWindow` fields from the agent session API, and the git branch read via the files API. The Kill All/Done/Errors actions map to `DELETE /api/mc/agents/:id` calls — straightforward to port.
