@@ -1,6 +1,8 @@
 # Instructions for M2 (SODA-MONSTER-HUNTER)
 
-**From: M1 Hub (Izzit7) — 2026-02-20 10:30**
+**From: M1 Hub (Izzit7) — 2026-02-20 11:15**
+
+## URGENT UPDATE: You now get your own dashboard!
 
 ## What you need to do
 
@@ -36,23 +38,22 @@ If nvm is not installed, download Node v22 LTS from https://nodejs.org and insta
 
 ## What changed in this update
 
-1. **Agent ID translation fix** — Remote agents now properly track status (was showing "working" forever, now correctly shows error/idle/done)
+1. **YOUR OWN DASHBOARD** — After `npm run dev`, open http://localhost:3000 in your browser. You now have the full Mission Control dashboard, same as M1. Spawn agents, see their output, chat with them.
 
-2. **Remote shell commands** — Hub can now run shell commands on your machine via `run_shell` command (no more manual terminal work needed)
+2. **Hub connection preserved** — You still connect to M1's hub for fleet visibility. M1 can still see your machine and agents.
 
-3. **Remote file read/write** — Hub can read and write files on your machine via `read_file` and `write_file` commands
+3. **Agent ID translation fix** — Remote agents now properly track status
 
-4. **New API key** — A fresh `ANTHROPIC_API_KEY` has already been pushed to your `.env` file
+4. **Remote shell/file commands** — Hub can run commands on your machine via `run_shell`
 
-5. **Spawn logging** — Better error reporting when agent spawns fail
+5. **New API key** — Already pushed to your `.env` file
 
 ## After restart
 
-The hub (M1) will be able to:
-- Run `run_shell` commands on your machine remotely
-- Read/write files remotely
-- Diagnose issues without anyone touching your terminal
-- Spawn agents (once Node v22 is installed)
+- Open **http://localhost:3000** in your browser — that's YOUR dashboard
+- Spawn agents on your own projects (Birdfountain, InvestorDome, etc.)
+- See live terminal output just like M1
+- M1 can also still control your machine remotely
 
 ---
 

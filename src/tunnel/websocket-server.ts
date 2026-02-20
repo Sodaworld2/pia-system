@@ -357,6 +357,12 @@ export class TunnelWebSocketServer {
               this.agentClientToDbId.set(spokeAgent.id, dbAgent.id);
               logger.info(`Mapped spoke agent ${spokeAgent.id} → DB agent ${dbAgent.id}`);
             }
+            // Broadcast to hub dashboard so it sees the new remote agent immediately
+            const registeredId = dbAgent?.id || spokeAgent.id;
+            this.broadcastMc({
+              type: 'mc:status',
+              payload: { sessionId: registeredId, status: spokeAgent.status },
+            });
           }
           break;
 
@@ -370,6 +376,11 @@ export class TunnelWebSocketServer {
               progress: payload.progress,
               current_task: payload.current_task,
               last_output: payload.last_output,
+            });
+            // Broadcast to hub dashboard for real-time status updates
+            this.broadcastMc({
+              type: 'mc:status',
+              payload: { sessionId: resolvedAgentId, status: payload.status },
             });
           }
           break;

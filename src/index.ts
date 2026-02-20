@@ -130,14 +130,34 @@ async function startHub(): Promise<void> {
 }
 
 async function startLocal(): Promise<void> {
-  // Initialize local database (minimal, for caching)
-  logger.info('Initializing local database...');
+  // Initialize database
+  logger.info('Initializing database...');
   initDatabase();
 
-  // Start local service
-  logger.info('Starting PIA Local Service...');
+  // Start API server — gives this machine its own dashboard + agent management
+  logger.info('Starting API server...');
+  const app = createServer();
+  startServer(app);
+
+  // Start local WebSocket server — streams agent output to this machine's dashboard
+  logger.info('Starting local WebSocket server...');
+  initWebSocketServer(config.server.wsPort);
+
+  // Connect to Hub as spoke — for fleet visibility from the hub machine
+  logger.info('Starting PIA Local Service (hub connection)...');
   const { startLocalService } = await import('./local/service.js');
   await startLocalService();
+
+  // Log startup complete
+  logger.info('');
+  logger.info('='.repeat(50));
+  logger.info('  PIA Worker is ready!');
+  logger.info('='.repeat(50));
+  logger.info(`  Dashboard: http://localhost:${config.server.port}`);
+  logger.info(`  API:       http://localhost:${config.server.port}/api`);
+  logger.info(`  Hub:       ${config.hub.url}`);
+  logger.info('='.repeat(50));
+  logger.info('');
 }
 
 async function shutdown(): Promise<void> {
