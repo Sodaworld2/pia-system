@@ -396,6 +396,19 @@ router.post('/machines/:id/command', async (req: Request, res: Response): Promis
 });
 
 /**
+ * GET /api/mc/debug/command-results
+ * Returns recent command results from spoke machines (for diagnosing remote spawn issues)
+ */
+router.get('/debug/command-results', async (_req: Request, res: Response) => {
+  try {
+    const { getCommandResultLog } = await import('../../tunnel/websocket-server.js');
+    res.json({ results: getCommandResultLog() });
+  } catch (error) {
+    res.status(500).json({ error: `${error}` });
+  }
+});
+
+/**
  * GET /api/mc/machines/:id/projects
  * List known git repositories on a machine (from project registry)
  */

@@ -225,6 +225,18 @@ export class HubClient {
         this.handleDiagnose(command.data as Record<string, unknown>);
         break;
 
+      case 'run_shell':
+        this.handleRunShell(command.data as Record<string, unknown>);
+        break;
+
+      case 'write_file':
+        this.handleWriteFile(command.data as Record<string, unknown>);
+        break;
+
+      case 'read_file':
+        this.handleReadFile(command.data as Record<string, unknown>);
+        break;
+
       default:
         logger.warn(`Unknown command: ${command.action}`);
     }
@@ -590,6 +602,76 @@ export class HubClient {
       this.send({ type: 'command:result', payload: result });
     } catch (error) {
       this.send({ type: 'command:result', payload: { action: 'diagnose', requestId, success: false, error: `${error}` } });
+    }
+  }
+
+  /** Run a shell command remotely and return stdout/stderr */
+  private handleRunShell(data: Record<string, unknown>): void {
+    const requestId = (data?.requestId as string) || '';
+    const command = data?.command as string;
+    const timeoutMs = (data?.timeout as number) || 30000;
+
+    if (!command) {
+      this.send({ type: 'command:result', payload: { action: 'run_shell', requestId, success: false, error: 'No command provided' } });
+      return;
+    }
+
+    logger.info(`run_shell: ${command.substring(0, 200)}`);
+
+    const { exec } = require('child_process');
+    const child = exec(command, { timeout: timeoutMs, maxBuffer: 1024 * 1024, cwd: data?.cwd as string || process.cwd() },
+      (error: Error | null, stdout: string, stderr: string) => {
+        this.send({
+          type: 'command:result',
+          payload: {
+            action: 'run_shell',
+            requestId,
+            success: !error,
+            stdout: stdout?.substring(0, 10000) || '',
+            stderr: stderr?.substring(0, 5000) || '',
+            exitCode: (error as any)?.code ?? 0,
+            error: error ? error.message : undefined,
+          },
+        });
+      },
+    );
+  }
+
+  /** Write a file on this machine */
+  private handleWriteFile(data: Record<string, unknown>): void {
+    const requestId = (data?.requestId as string) || '';
+    const filePath = data?.path as string;
+    const content = data?.content as string;
+
+    if (!filePath || content === undefined) {
+      this.send({ type: 'command:result', payload: { action: 'write_file', requestId, success: false, error: 'path and content required' } });
+      return;
+    }
+
+    try {
+      writeFileSync(filePath, content, 'utf-8');
+      logger.info(`write_file: ${filePath} (${content.length} bytes)`);
+      this.send({ type: 'command:result', payload: { action: 'write_file', requestId, success: true, path: filePath, bytes: content.length } });
+    } catch (error) {
+      this.send({ type: 'command:result', payload: { action: 'write_file', requestId, success: false, error: `${error}` } });
+    }
+  }
+
+  /** Read a file from this machine */
+  private handleReadFile(data: Record<string, unknown>): void {
+    const requestId = (data?.requestId as string) || '';
+    const filePath = data?.path as string;
+
+    if (!filePath) {
+      this.send({ type: 'command:result', payload: { action: 'read_file', requestId, success: false, error: 'path required' } });
+      return;
+    }
+
+    try {
+      const content = readFileSync(filePath, 'utf-8');
+      this.send({ type: 'command:result', payload: { action: 'read_file', requestId, success: true, path: filePath, content: content.substring(0, 50000) } });
+    } catch (error) {
+      this.send({ type: 'command:result', payload: { action: 'read_file', requestId, success: false, error: `${error}` } });
     }
   }
 

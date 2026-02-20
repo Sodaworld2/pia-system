@@ -438,6 +438,7 @@ export class AgentSessionManager extends EventEmitter {
           // With ELECTRON_RUN_AS_NODE=1 (from getNodeSpawnEnv()), it acts as Node.js.
           // Use our own stored cwd — the SDK strips backslashes from config.cwd on Windows
           const spawnCwd = session.config.cwd || config.cwd || process.cwd();
+          logger.info(`[SDK spawn] command=${config.command} args=${JSON.stringify(config.args?.slice(0, 5))} cwd=${spawnCwd} execPath=${process.execPath}`);
           const child = spawn(process.execPath, config.args || [], {
             cwd: spawnCwd,
             env: spawnEnv,
@@ -445,6 +446,9 @@ export class AgentSessionManager extends EventEmitter {
           });
           child.on('error', (err: Error) => {
             logger.error(`Child process error: ${err.message} (code: ${(err as any).code})`);
+          });
+          child.on('exit', (code: number | null, signal: string | null) => {
+            logger.info(`[SDK spawn] process exited: code=${code} signal=${signal}`);
           });
           return child;
         },

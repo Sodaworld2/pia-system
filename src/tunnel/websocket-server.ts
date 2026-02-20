@@ -62,11 +62,19 @@ interface BufferedCommand {
 const COMMAND_BUFFER_MAX = 100;
 const COMMAND_BUFFER_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
+// Debug: store last N command results for diagnostic endpoint
+const commandResultLog: Array<{ timestamp: number; result: Record<string, unknown> }> = [];
+const RESULT_LOG_MAX = 50;
+
+export function getCommandResultLog() { return commandResultLog; }
+
 export class TunnelWebSocketServer {
   private wss: WebSocketServer;
   private clients: Map<WebSocket, Client> = new Map();
   private mcSubscribers: Set<WebSocket> = new Set();
   private machineClients: Map<string, WebSocket> = new Map(); // machineId → WebSocket
+  private clientToDbId: Map<string, string> = new Map(); // clientId → canonical DB ID
+  private agentClientToDbId: Map<string, string> = new Map(); // spoke agentId → hub DB agentId
   private pendingRequests: Map<string, { resolve: (data: Record<string, unknown>) => void; timer: NodeJS.Timeout }> = new Map();
   private heartbeatInterval: NodeJS.Timeout | null = null;
   private commandBuffer: Map<string, BufferedCommand[]> = new Map(); // machineId → buffered commands
@@ -191,6 +199,7 @@ export class TunnelWebSocketServer {
           this.handleHubMessage(msg.type, msg.payload).then((dbId) => {
             if (dbId && dbId !== msg.payload!.id) {
               this.machineClients.set(dbId, ws);
+              this.clientToDbId.set(msg.payload!.id as string, dbId);
               logger.info(`Machine ${msg.payload!.name} tracked by client ID ${msg.payload!.id} and DB ID ${dbId}`);
               // Replay any buffered commands for this DB ID
               this.replayBufferedCommands(dbId);
@@ -201,6 +210,10 @@ export class TunnelWebSocketServer {
             this.replayBufferedCommands(msg.payload!.id as string);
           });
         } else {
+          // Translate client machineId to DB ID for agent messages
+          if (msg.payload?.machineId && this.clientToDbId.has(msg.payload.machineId)) {
+            msg.payload.machineId = this.clientToDbId.get(msg.payload.machineId);
+          }
           this.handleHubMessage(msg.type, msg.payload);
         }
         break;
@@ -210,9 +223,11 @@ export class TunnelWebSocketServer {
         if (!client.authenticated) return;
         if (msg.payload) {
           const p = msg.payload as Record<string, unknown>;
+          // Translate spoke sessionId to hub DB agent ID
+          const resolvedSessionId = this.agentClientToDbId.get(p.sessionId as string) || p.sessionId;
           this.broadcastMc({
             type: 'mc:output',
-            payload: { sessionId: p.sessionId, data: p.data },
+            payload: { sessionId: resolvedSessionId, data: p.data },
           });
         }
         break;
@@ -221,11 +236,13 @@ export class TunnelWebSocketServer {
       case 'agent:buffer':
         if (!client.authenticated) return;
         if (msg.payload) {
+          const p = msg.payload as Record<string, unknown>;
+          const resolvedSessionId = this.agentClientToDbId.get(p.sessionId as string) || p.sessionId;
           this.broadcastMc({
             type: 'mc:output',
             payload: {
-              sessionId: (msg.payload as Record<string, unknown>).sessionId,
-              data: (msg.payload as Record<string, unknown>).buffer,
+              sessionId: resolvedSessionId,
+              data: p.buffer,
               isBuffer: true,
             },
           });
@@ -245,11 +262,17 @@ export class TunnelWebSocketServer {
             pending.resolve(p);
           }
           if (p.action === 'spawn_agent' && p.success) {
+            // Translate spoke IDs to hub DB IDs for the dashboard
+            const resolvedMachineId = this.clientToDbId.get(p.machineId as string) || p.machineId;
+            const resolvedAgentId = this.agentClientToDbId.get(p.agentId as string) || p.agentId;
             this.broadcastMc({
               type: 'mc:agent_spawned',
-              payload: { machineId: p.machineId, agentId: p.agentId, message: p.message },
+              payload: { machineId: resolvedMachineId, agentId: resolvedAgentId, message: p.message },
             });
           }
+          // Store for diagnostic endpoint
+          commandResultLog.push({ timestamp: Date.now(), result: p });
+          if (commandResultLog.length > RESULT_LOG_MAX) commandResultLog.shift();
           logger.info(`Command result from spoke: ${JSON.stringify(p).substring(0, 200)}`);
         }
         break;
@@ -316,26 +339,33 @@ export class TunnelWebSocketServer {
 
         case 'agent:register':
           if (payload?.machineId && payload?.agent) {
-            aggregator.handleAgentRegister({
+            const spokeAgent = payload.agent as {
+              id: string;
+              name: string;
+              type: string;
+              status: string;
+              progress: number;
+              current_task?: string;
+              last_output?: string;
+            };
+            const dbAgent = aggregator.handleAgentRegister({
               machineId: payload.machineId,
-              agent: payload.agent as {
-                id: string;
-                name: string;
-                type: string;
-                status: string;
-                progress: number;
-                current_task?: string;
-                last_output?: string;
-              },
+              agent: spokeAgent,
             });
+            // Map spoke agent ID → hub DB agent ID so updates resolve correctly
+            if (dbAgent && dbAgent.id !== spokeAgent.id) {
+              this.agentClientToDbId.set(spokeAgent.id, dbAgent.id);
+              logger.info(`Mapped spoke agent ${spokeAgent.id} → DB agent ${dbAgent.id}`);
+            }
           }
           break;
 
         case 'agent:update':
           if (payload?.machineId && payload?.agentId) {
+            const resolvedAgentId = this.agentClientToDbId.get(payload.agentId) || payload.agentId;
             aggregator.handleAgentUpdate({
               machineId: payload.machineId,
-              agentId: payload.agentId,
+              agentId: resolvedAgentId,
               status: payload.status,
               progress: payload.progress,
               current_task: payload.current_task,
@@ -346,10 +376,13 @@ export class TunnelWebSocketServer {
 
         case 'agent:remove':
           if (payload?.machineId && payload?.agentId) {
+            const resolvedAgentId = this.agentClientToDbId.get(payload.agentId) || payload.agentId;
             aggregator.handleAgentRemove({
               machineId: payload.machineId,
-              agentId: payload.agentId,
+              agentId: resolvedAgentId,
             });
+            // Clean up mapping
+            this.agentClientToDbId.delete(payload.agentId);
           }
           break;
       }
