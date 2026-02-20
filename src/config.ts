@@ -1,6 +1,18 @@
 import { config as loadEnv } from 'dotenv';
 import { existsSync } from 'fs';
+import { hostname } from 'os';
 import { getEnvPath, getDatabasePath } from './electron-paths.js';
+
+// Fleet registry — each machine auto-identifies by hostname.
+// PIA_MODE and PIA_HUB_URL in .env still override if set explicitly.
+const FLEET: Record<string, { mode: 'hub' | 'local'; hubUrl: string; machineName: string }> = {
+  'IZZIT7':               { mode: 'hub',   hubUrl: 'http://localhost:3000',        machineName: 'Izzit7 (M1 Hub)' },
+  'SODA-MONSTER-HUNTER':  { mode: 'local', hubUrl: 'http://100.73.133.3:3000',     machineName: 'soda-monster-hunter (M2)' },
+  'SODA-YETI':            { mode: 'local', hubUrl: 'http://100.73.133.3:3000',     machineName: 'soda-yeti (M3)' },
+};
+
+const machineHostname = hostname().toUpperCase();
+const fleetEntry = FLEET[machineHostname];
 
 // Load .env file
 const envPath = getEnvPath();
@@ -64,7 +76,7 @@ function getEnvInt(key: string, defaultValue: number): number {
 }
 
 export const config: PIAConfig = {
-  mode: getEnv('PIA_MODE', 'hub') as 'hub' | 'local',
+  mode: (process.env.PIA_MODE as 'hub' | 'local') || fleetEntry?.mode || 'hub',
 
   server: {
     port: getEnvInt('PIA_PORT', 3000),
@@ -78,8 +90,8 @@ export const config: PIAConfig = {
   },
 
   hub: {
-    url: getEnv('PIA_HUB_URL', 'http://localhost:3000'),
-    machineName: getEnv('PIA_MACHINE_NAME', 'Unknown Machine'),
+    url: getEnv('PIA_HUB_URL', fleetEntry?.hubUrl || 'http://localhost:3000'),
+    machineName: getEnv('PIA_MACHINE_NAME', fleetEntry?.machineName || machineHostname || 'Unknown Machine'),
     /** Extra directories to scan for git repos (comma-separated). Added to default scan paths. */
     projectRoots: getEnv('PIA_PROJECT_ROOTS', '').split(',').map(s => s.trim()).filter(Boolean),
   },
