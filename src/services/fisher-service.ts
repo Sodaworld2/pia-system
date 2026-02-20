@@ -17,6 +17,7 @@ import { runAutonomousTask } from '../orchestrator/autonomous-worker.js';
 import { getTaskQueue } from '../orchestrator/task-queue.js';
 import { getAgentBus } from '../comms/agent-bus.js';
 import { createLogger } from '../utils/logger.js';
+import { getEmailService } from './email-service.js';
 
 const logger = createLogger('FisherService');
 
@@ -95,6 +96,13 @@ export class FisherService {
       this.config.eliyahuCron,
       'eliyahu',
       () => this.buildEliyahuPrompt(),
+      async (result) => {
+        // After Eliyahu runs, email the briefing to Mic
+        const to = process.env.EMAIL_MIC || 'mic@sodalabs.ai';
+        const dateStr = new Date().toISOString().split('T')[0];
+        const html = `<pre style="font-family:sans-serif;white-space:pre-wrap">${result.summary}</pre>`;
+        await getEmailService().sendBriefing(to, `☀️ Eliyahu Morning Briefing — ${dateStr}`, html);
+      },
     );
 
     // Weekly memory summarization — prevents soul context window bloat
@@ -205,6 +213,7 @@ export class FisherService {
     cronExpr: string,
     soulId: string,
     promptBuilder: () => string,
+    onComplete?: (result: Awaited<ReturnType<typeof runAutonomousTask>>) => Promise<void>,
   ): void {
     if (!cron.validate(cronExpr)) {
       logger.error(`[FisherService] Invalid cron expression for "${name}": ${cronExpr}`);
@@ -216,7 +225,7 @@ export class FisherService {
       async () => {
         logger.info(`[FisherService] Running: ${name}`);
         try {
-          await runAutonomousTask({
+          const result = await runAutonomousTask({
             id: nanoid(),
             description: promptBuilder(),
             soulId,
@@ -225,6 +234,11 @@ export class FisherService {
             maxTurns: 25,
           });
           logger.info(`[FisherService] Completed: ${name}`);
+          if (onComplete) {
+            await onComplete(result).catch(err =>
+              logger.error(`[FisherService] onComplete hook failed for ${name}: ${err}`),
+            );
+          }
         } catch (err) {
           logger.error(`[FisherService] ${name} failed: ${err}`);
         }
@@ -377,26 +391,60 @@ End with your signature: "Ziggi's Verdict: [PASS/CONCERN/FAIL] — [one sentence
 
   private buildEliyahuPrompt(): string {
     const dateStr = new Date().toISOString().split('T')[0];
+    const yesterday = Math.floor((Date.now() - 86400000) / 1000);
 
-    return `ELIYAHU MORNING BRIEFING PREP — ${dateStr} 06:00
+    // Pull last 24h agent_records from Tim Buc's archive
+    let recentRecords: string = '(no records yet — Tim Buc may not have filed any sessions)';
+    try {
+      const { getDatabase } = require('../db/database.js');
+      const db = getDatabase();
+      const rows = db.prepare(`
+        SELECT agent, project, task_summary, cost_usd, tool_calls,
+               quality_verdict, quality_score, summary, created_at
+        FROM agent_records
+        WHERE created_at >= ?
+        ORDER BY created_at DESC
+        LIMIT 30
+      `).all(yesterday) as Array<Record<string, unknown>>;
 
-You are Eliyahu, the Knowledge Manager. Process yesterday's intelligence.
+      if (rows.length > 0) {
+        recentRecords = rows.map((r) =>
+          `- [${r.project}/${r.agent}] ${r.task_summary} | verdict=${r.quality_verdict} score=${r.quality_score} cost=$${Number(r.cost_usd).toFixed(4)}`,
+        ).join('\n');
+      }
+    } catch {
+      // DB may not be ready — use placeholder
+    }
 
-1. Use read_file to read any session journals from the last 24 hours
-2. Use list_directory to check for new files in key project directories
-3. Identify patterns across projects and decisions from yesterday
-4. Generate your morning briefing: 2 minutes to read, 3 key insights
-5. Use report_progress with status 'completed' to deliver the briefing
+    return `ELIYAHU MORNING BRIEFING — ${dateStr} 06:00
 
-Format your briefing as:
-## Eliyahu's Morning Briefing — ${dateStr}
-**Key Insight 1:** ...
-**Key Insight 2:** ...
-**Key Insight 3:** ...
-**Open Questions:** [what still needs answering]
-**Key Takeaway:** [one sentence]
+You are Eliyahu, the Knowledge Manager and Intelligence Synthesiser for Mic (Soda World / SodaLabs, Johannesburg).
 
-Stay curious. Connect dots across sessions. Stay in character as Eliyahu.`;
+## Yesterday's Session Records (from Tim Buc's archive)
+${recentRecords}
+
+## Your Task
+Read the records above and synthesise a morning briefing for Mic.
+- 3 key insights max (never more)
+- Surface anything time-sensitive or at risk FIRST
+- Connect dots across projects/agents — patterns Mic would miss
+- Be direct, no filler, no sycophancy
+- Sign off with your total filed count
+
+## Output Format
+## ☀️ Eliyahu Morning Briefing — ${dateStr}
+
+**🔴 Time-Sensitive:** [anything urgent, or "nothing critical today"]
+
+**Insight 1:** ...
+**Insight 2:** ...
+**Insight 3:** ...
+
+**Open Questions:** [what needs answering today]
+
+**Key Takeaway:** [one sentence — the single most important thing]
+
+*Filed: N sessions. Eliyahu signing off.*`;
   }
 }
 
