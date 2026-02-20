@@ -1,6 +1,6 @@
 # PIA System — Master Knowledge Base
 
-> **Last Updated:** 2026-02-19
+> **Last Updated:** 2026-02-20
 > **What This Is:** The single consolidated reference for everything about PIA — what it is, what it does, what was decided, what's still planned.
 > **Visual Version:** Open `/pia-book.html` in your browser for the formatted HTML version.
 
@@ -83,6 +83,26 @@ Everything that's been discussed, debated, or brainstormed across all sessions.
 | SQLite over PostgreSQL | Keep SQLite, don't switch to Postgres | SQLite handles 100K writes/sec, PIA does ~10/sec. Adding a DB server dependency is overkill for 3 machines. Just enable WAL mode and do daily backups. | Feb 16 |
 | Gemini for browser vision | Use Gemini 2.0 Flash for screenshot analysis, not Claude | Much cheaper ($0.075/1M vs Claude's pricing), free tier available, vision-capable. Claude stays focused on reasoning/coding. | Feb 16 |
 
+### External Research — Marc Nuri Blog (Feb 2026)
+
+Source: https://blog.marcnuri.com/boosting-developer-productivity-ai-2025
+
+Marc Nuri is a senior open-source developer who went from 10–15 → **25+ GitHub commits/day** purely by restructuring around async AI agent workflows. His findings validate and inform PIA's design:
+
+| Insight | Relevance to PIA |
+|---------|-----------------|
+| **Parallelism is the real multiplier** — not faster typing, but running multiple agents simultaneously | PIA's multi-machine fleet is exactly this |
+| **CLI agents are the game-changer** — they work semi-autonomously (read files, run tests, commit) | PIA uses Claude Agent SDK for exactly this |
+| **Role shift: implementer → orchestrator** — you give tasks, review, course-correct | PIA Mission Control is the orchestrator dashboard |
+| **Context % matters** — high context window usage = unstable agent, should be visible | ❌ PIA doesn't show this yet — high value to add |
+| **Git branch per session** — his dashboard shows current branch per agent | ❌ PIA doesn't show branch — easy to add |
+| **Git worktrees** — run multiple CLI agents on the SAME repo safely using separate worktrees | ❌ PIA doesn't use/suggest worktrees yet |
+| **Mobile review** — he reviews/approves PRs from his phone | ❌ PIA dashboard not mobile-optimised |
+| **Project quality = AI-readiness** — well-tested, consistent codebases get far better AI results | Design principle to adopt |
+| **Burnout risk** — async productivity means you're tempted to never stop | Worth noting in PIA docs |
+
+His dashboard (shown in YouTube demo) also displays: project name, initial prompt, git branch, machine name, session duration, model used, **context % used**, current status (waiting/working/needs permission).
+
 ### Ideas Explored (Future)
 
 | Idea | What It Is | Status | Notes |
@@ -95,6 +115,10 @@ Everything that's been discussed, debated, or brainstormed across all sessions.
 | **DAO Separation** | Move `dao-foundation-files/` to its own repo (`Sodaworld2/DAOV1`). | Deferred | Waiting for Machine 3 reconciliation. DAOV1 repo already exists on GitHub. |
 | **MQTT for Cortex Telemetry** | Use the built-in MQTT broker for streaming telemetry data instead of REST polling. | Planned | MQTT broker already exists (`src/comms/mqtt-broker.ts`). Topic hierarchy: `pia/machine/event`. |
 | **Apache Guacamole Integration** | Embed remote desktop in the PIA dashboard — browser-based RDP/VNC/SSH. | Long-term | Would let you see remote machine screens right in the dashboard. Complex setup (Docker). |
+| **Context % bar on agent cards** | Show how full the agent's context window is (like Marc Nuri's dashboard). High context = unstable agent. | Planned | SDK exposes `ModelUsage.contextWindow` — see Context7 findings below. |
+| **Git branch on agent cards** | Show which branch the agent is working on. | Easy win | Call `git branch --show-current` in the project dir at spawn time. |
+| **Git worktree support** | When spawning multiple agents on the same repo, create separate git worktrees automatically. | Planned | Prevents agents overwriting each other's changes. `git worktree add ../agent-worktree-1 main`. |
+| **Mobile-optimised dashboard** | Responsive CSS so Mission Control works on phone. | Medium | Enables reviewing/approving agents from anywhere, not just at the desk. |
 | **Agent Shops / Marketplace** | A marketplace where pre-built agent configurations can be shared and deployed. | Plan exists | `PROJECT_PLAN_AGENT_SHOPS.md` has the full plan. |
 
 ### Design Principles
@@ -399,7 +423,7 @@ A chronological summary of every major work session.
 
 | Library | Version | Purpose | Notes |
 |---------|---------|---------|-------|
-| `@anthropic-ai/claude-agent-sdk` | Latest | AI agent spawning | Core. query(), stream_event, setPermissionMode() |
+| `@anthropic-ai/claude-agent-sdk` | Latest | AI agent spawning | Core. query(), stream_event, setPermissionMode(). Full usage tracking — see notes below. |
 | `better-sqlite3` | Latest | Database | WAL mode, 5 performance pragmas, 42 migrations |
 | `express` | 4.x | HTTP API | Port 3000, helmet, rate limiting, JSON limits |
 | `ws` | Latest | WebSocket | Port 3001, heartbeat, maxPayload 1MB, command buffer |
@@ -412,6 +436,91 @@ A chronological summary of every major work session.
 | `electron` | Latest | Desktop app | Wraps Express server |
 | `electron-builder` | 26.x | Packaging | NSIS + portable targets |
 | `electron-updater` | Latest | Auto-update | GitHub Releases based |
+
+### Claude Agent SDK — Context Window & Cost Tracking (Context7, Feb 2026)
+
+**Key finding:** The SDK exposes a `ModelUsage` type with a `contextWindow` field — this is the exact number needed to show context % on agent cards (like Marc Nuri's dashboard).
+
+```typescript
+type ModelUsage = {
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadInputTokens: number;
+  cacheCreationInputTokens: number;
+  webSearchRequests: number;
+  costUSD: number;
+  contextWindow: number;   // ← TOTAL context window size for the model
+}
+```
+
+**How to get it:**
+- Use `onMessage` callback — fires for every assistant message with `.usage`
+- Final result object has `result.usage.total_cost_usd` for cumulative cost
+- Per-step cost formula: `input * 0.00003 + output * 0.00015 + cacheRead * 0.0000075`
+
+```typescript
+const result = await query({
+  prompt: "...",
+  options: {
+    onMessage: (message) => {
+      if (message.type === "assistant" && message.usage) {
+        const pct = Math.round((message.usage.inputTokens / message.usage.contextWindow) * 100);
+        console.log(`Context used: ${pct}%`);
+      }
+    }
+  }
+});
+console.log("Total cost:", result.usage.total_cost_usd);
+```
+
+**PIA action:** Add `contextWindow` field to agent session tracking. Show a progress bar on each agent card: `tokensIn / contextWindow * 100`. Warn (yellow) at 70%, danger (red) at 90%.
+
+Source: https://platform.claude.com/docs/en/agent-sdk/cost-tracking + https://platform.claude.com/docs/en/agent-sdk/typescript
+
+---
+
+### External Research — "Five Levels of Vibe Coding" + Dark Factory (Feb 2026)
+
+Source: YouTube video transcript — Dan Shapiro's framework + StrongDM case study
+
+#### The Five Levels Framework
+
+| Level | Name | What Happens | Who's Here |
+|-------|------|-------------|------------|
+| 0 | Spicy Autocomplete | AI suggests next line, human types everything | Old Copilot users |
+| 1 | Coding Intern | AI does a scoped task, human reviews everything | Most beginners |
+| 2 | Junior Developer | AI does multi-file changes, human reads all code | **90% of "AI-native" devs** |
+| 3 | Developer as Manager | Human directs AI, reviews at feature/PR level (not line-by-line) | Where most people top out |
+| 4 | Developer as Product Manager | Write spec, walk away, check if tests pass, don't read code | Frontier teams |
+| 5 | Dark Factory | Spec in → working software out. No human writes or reviews code | StrongDM, Anthropic, OpenAI |
+
+**Where PIA sits:** PIA is the infrastructure that enables users to operate at **Level 3–4**. Mission Control is the orchestration layer. The goal is to give one person the leverage of a team at Level 4.
+
+#### StrongDM Dark Factory — Key Insights
+
+- 3 engineers, no sprints, no standups, no Jira. Just: write specs → evaluate outcomes.
+- **Scenarios vs Tests:** Behavioral specs stored **OUTSIDE** the codebase so the agent cannot see (and cannot game) them during development. Like a holdout set in ML. The agent builds software; scenarios evaluate if it actually works. Agent never sees evaluation criteria.
+- **Digital Twin Universe:** Simulated clones of every external service (Okta, Jira, Slack, Google Docs) — agents develop and test against twins, never touching real APIs or real data.
+- **Metric:** If you haven't spent $1,000 per engineer per day in compute, your factory has room to improve.
+- Output: 16,000 lines of Rust, 9,500 lines of Go, 700 lines of TypeScript — all shipped, all agent-written.
+
+#### J-Curve Warning
+
+Developers who bolt AI onto existing workflows get **19% SLOWER** (METR 2025 randomised control trial). They believed they were 24% faster — wrong on direction AND magnitude. The dip happens because the tool changes the workflow but the workflow is not redesigned around it. **PIA must help users redesign the workflow, not just add a tool.**
+
+#### Spec Quality Is The New Bottleneck
+
+> "The bottleneck has moved from implementation speed to spec quality."
+
+The machines build what you describe. If the description is ambiguous, you get software that fills in gaps with machine guesses, not customer-centric guesses. This directly informs how PIA agent prompts and CLAUDE.md should be written — precision matters more than anything.
+
+#### Relevant Numbers (2026)
+
+- 90% of Claude Code's codebase written by Claude Code itself
+- 4% of all public GitHub commits authored by Claude Code (projected 20%+ by end of 2026)
+- Claude Code: $1B run rate in 6 months since launch
+- Junior dev job postings down 67% in the US; UK grad tech roles down 46% in 2024
+- AI-native startups averaging $3.5M revenue per employee (vs $600K SaaS average)
 
 ---
 

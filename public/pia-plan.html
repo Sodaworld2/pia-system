@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIA System — The Big Plan 🚀</title>
+<style>
+  :root {
+    --blue: #4361ee;
+    --purple: #7209b7;
+    --pink: #f72585;
+    --green: #06d6a0;
+    --yellow: #ffd166;
+    --orange: #ef476f;
+    --dark: #0d0d1a;
+    --card: #1a1a2e;
+    --border: #2a2a4a;
+    --text: #e0e0ff;
+    --muted: #8888aa;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--dark);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ═══ HERO ═══ */
+  .hero {
+    background: linear-gradient(135deg, #0d0d1a 0%, #1a0533 50%, #0d0d1a 100%);
+    padding: 60px 20px 40px;
+    text-align: center;
+    border-bottom: 2px solid var(--purple);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 20% 50%, rgba(67,97,238,0.15) 0%, transparent 60%),
+      radial-gradient(circle at 80% 50%, rgba(114,9,183,0.15) 0%, transparent 60%);
+  }
+  .hero-emoji { font-size: 80px; display: block; margin-bottom: 20px; }
+  .hero h1 {
+    font-size: clamp(28px, 5vw, 52px);
+    font-weight: 900;
+    background: linear-gradient(90deg, var(--blue), var(--pink), var(--yellow));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+  }
+  .hero p {
+    font-size: 20px;
+    color: var(--muted);
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .hero .date-badge {
+    display: inline-block;
+    margin-top: 20px;
+    background: rgba(114,9,183,0.3);
+    border: 1px solid var(--purple);
+    border-radius: 20px;
+    padding: 6px 18px;
+    font-size: 14px;
+    color: var(--purple);
+  }
+
+  /* ═══ NAV PILLS ═══ */
+  .nav {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 20px;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .nav a {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-size: 13px;
+    color: var(--muted);
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  .nav a:hover { background: var(--blue); color: white; border-color: var(--blue); }
+
+  /* ═══ LAYOUT ═══ */
+  .container { max-width: 1100px; margin: 0 auto; padding: 40px 20px 80px; }
+
+  /* ═══ SECTION ═══ */
+  .section {
+    margin-bottom: 60px;
+    scroll-margin-top: 80px;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 30px;
+  }
+  .section-icon {
+    width: 56px; height: 56px;
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+    flex-shrink: 0;
+  }
+  .section-header h2 {
+    font-size: clamp(22px, 3vw, 32px);
+    font-weight: 800;
+  }
+  .section-header .sub {
+    font-size: 14px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  /* ═══ CARDS ═══ */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .card h3 { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
+  .card p { color: var(--muted); line-height: 1.7; }
+
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+
+  /* ═══ COLOUR ACCENTS ═══ */
+  .accent-blue  { border-left: 4px solid var(--blue); }
+  .accent-purple { border-left: 4px solid var(--purple); }
+  .accent-pink  { border-left: 4px solid var(--pink); }
+  .accent-green { border-left: 4px solid var(--green); }
+  .accent-yellow { border-left: 4px solid var(--yellow); }
+  .accent-orange { border-left: 4px solid var(--orange); }
+
+  .icon-blue   { background: rgba(67,97,238,0.2); }
+  .icon-purple { background: rgba(114,9,183,0.2); }
+  .icon-pink   { background: rgba(247,37,133,0.2); }
+  .icon-green  { background: rgba(6,214,160,0.2); }
+  .icon-yellow { background: rgba(255,209,102,0.2); }
+
+  /* ═══ DIAGRAM ═══ */
+  .diagram {
+    background: #0a0a15;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 30px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.9;
+    overflow-x: auto;
+    position: relative;
+  }
+  .diagram .title {
+    font-family: inherit;
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+  }
+  .c-blue   { color: #79b8ff; }
+  .c-green  { color: #85e89d; }
+  .c-yellow { color: #ffd166; }
+  .c-pink   { color: #f97bbb; }
+  .c-purple { color: #b392f0; }
+  .c-muted  { color: #555; }
+  .c-white  { color: #e0e0ff; }
+  .c-orange { color: #ffab70; }
+
+  /* ═══ MACHINE BOXES ═══ */
+  .machine-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 20px;
+    align-items: center;
+    margin: 30px 0;
+  }
+  .machine-box {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 28px 22px;
+    text-align: center;
+    position: relative;
+    border: 2px solid;
+  }
+  .machine-box.hub  { border-color: var(--blue); box-shadow: 0 0 30px rgba(67,97,238,0.2); }
+  .machine-box.worker { border-color: var(--purple); box-shadow: 0 0 30px rgba(114,9,183,0.2); }
+  .machine-box .badge {
+    display: inline-block;
+    border-radius: 12px;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+  .hub .badge  { background: rgba(67,97,238,0.3); color: var(--blue); }
+  .worker .badge { background: rgba(114,9,183,0.3); color: var(--purple); }
+  .machine-box .name { font-size: 22px; font-weight: 800; margin: 6px 0; }
+  .machine-box .hostname { font-size: 12px; color: var(--muted); font-family: monospace; }
+  .machine-box .agents-list {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .agent-pill {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 13px;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .agent-pill .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+    flex-shrink: 0;
+  }
+  .arrow-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .arrow-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    max-width: 90px;
+  }
+  .big-arrow { font-size: 32px; }
+
+  /* ═══ FLOW STEPS ═══ */
+  .flow {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .flow-step {
+    display: flex;
+    gap: 16px;
+    position: relative;
+  }
+  .flow-step::before {
+    content: '';
+    position: absolute;
+    left: 20px;
+    top: 44px;
+    width: 2px;
+    height: calc(100% - 4px);
+    background: var(--border);
+  }
+  .flow-step:last-child::before { display: none; }
+  .step-num {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800;
+    font-size: 16px;
+    flex-shrink: 0;
+    z-index: 1;
+  }
+  .step-content {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    flex: 1;
+    margin-bottom: 12px;
+  }
+  .step-content h4 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .step-content p  { font-size: 13px; color: var(--muted); }
+
+  /* ═══ BADGES & PILLS ═══ */
+  .tag {
+    display: inline-block;
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    margin: 2px;
+  }
+  .tag-blue   { background: rgba(67,97,238,0.2);  color: var(--blue); }
+  .tag-purple { background: rgba(114,9,183,0.2); color: #b392f0; }
+  .tag-green  { background: rgba(6,214,160,0.2);  color: var(--green); }
+  .tag-yellow { background: rgba(255,209,102,0.2); color: var(--yellow); }
+  .tag-pink   { background: rgba(247,37,133,0.2); color: var(--pink); }
+  .tag-red    { background: rgba(239,71,111,0.2); color: var(--orange); }
+
+  /* ═══ CALLOUT BOX ═══ */
+  .callout {
+    border-radius: 12px;
+    padding: 18px 22px;
+    margin: 20px 0;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .callout-icon { font-size: 24px; flex-shrink: 0; }
+  .callout-body h4 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .callout-body p  { font-size: 13px; }
+  .callout.info    { background: rgba(67,97,238,0.1);  border: 1px solid rgba(67,97,238,0.3); }
+  .callout.success { background: rgba(6,214,160,0.1);  border: 1px solid rgba(6,214,160,0.3); }
+  .callout.warning { background: rgba(255,209,102,0.1); border: 1px solid rgba(255,209,102,0.3); }
+  .callout.idea    { background: rgba(114,9,183,0.1);  border: 1px solid rgba(114,9,183,0.3); }
+
+  /* ═══ FIX CARDS ═══ */
+  .fix-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .fix-header {
+    padding: 16px 22px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: rgba(255,255,255,0.03);
+  }
+  .fix-number {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .fix-header h3 { font-size: 17px; font-weight: 700; }
+  .fix-body { padding: 20px 22px; }
+  .before-after {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 14px;
+  }
+  @media(max-width: 600px) { .before-after { grid-template-columns: 1fr; } }
+  .before, .after {
+    border-radius: 10px;
+    padding: 14px;
+  }
+  .before { background: rgba(239,71,111,0.1); border: 1px solid rgba(239,71,111,0.3); }
+  .after  { background: rgba(6,214,160,0.1);  border: 1px solid rgba(6,214,160,0.3); }
+  .before .label { color: var(--orange); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .after  .label { color: var(--green);  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .before p, .after p { font-size: 13px; color: var(--muted); }
+
+  /* ═══ TECH SOURCE ═══ */
+  .source-box {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-top: 16px;
+    font-size: 13px;
+  }
+  .source-box .src-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .source-box code {
+    background: rgba(255,255,255,0.07);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 12px;
+    font-family: 'Consolas', monospace;
+    color: var(--yellow);
+  }
+
+  /* ═══ CODE BLOCK ═══ */
+  .code-block {
+    background: #0a0a15;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    overflow-x: auto;
+    margin-top: 12px;
+  }
+
+  /* ═══ STAT BOXES ═══ */
+  .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 30px; }
+  .stat-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    text-align: center;
+  }
+  .stat-box .stat-num { font-size: 36px; font-weight: 900; }
+  .stat-box .stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; }
+
+  /* ═══ TIMELINE ═══ */
+  .timeline { position: relative; padding-left: 24px; }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: linear-gradient(to bottom, var(--blue), var(--purple), var(--pink));
+    border-radius: 2px;
+  }
+  .tl-item {
+    position: relative;
+    margin-bottom: 28px;
+    padding-left: 20px;
+  }
+  .tl-dot {
+    position: absolute;
+    left: -30px;
+    top: 4px;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    border: 3px solid var(--dark);
+  }
+  .tl-item h4 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .tl-item p  { font-size: 13px; color: var(--muted); }
+  .tl-done   .tl-dot { background: var(--green); }
+  .tl-doing  .tl-dot { background: var(--yellow); box-shadow: 0 0 8px var(--yellow); }
+  .tl-next   .tl-dot { background: var(--border); }
+
+  /* ═══ ANALOGY BOXES ═══ */
+  .analogy {
+    background: linear-gradient(135deg, rgba(67,97,238,0.1), rgba(114,9,183,0.1));
+    border: 1px solid rgba(114,9,183,0.3);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+  .analogy .analogy-title { font-size: 13px; color: var(--purple); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+  .analogy h3 { font-size: 20px; font-weight: 800; margin-bottom: 10px; }
+  .analogy p  { font-size: 14px; color: var(--muted); }
+
+  /* ═══ FOOTER ═══ */
+  footer {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--muted);
+    font-size: 13px;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 700px) {
+    .machine-grid { grid-template-columns: 1fr; }
+    .arrow-col { transform: rotate(90deg); margin: 10px 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════
+     HERO
+════════════════════════════════════════════════════════ -->
+<div class="hero">
+  <span class="hero-emoji">🤖🌐✨</span>
+  <h1>PIA System — The Big Plan</h1>
+  <p>A simple, picture-friendly guide to what we built, what we fixed, and what's coming next.</p>
+  <div class="date-badge">📅 February 2026 · Session Update</div>
+</div>
+
+<!-- sticky nav -->
+<nav class="nav">
+  <a href="#what-is-pia">🏠 What is PIA?</a>
+  <a href="#machines">🖥️ The Machines</a>
+  <a href="#fixes">🔧 What We Fixed</a>
+  <a href="#next">🚀 What's Next</a>
+  <a href="#tech">⚡ How it Works</a>
+  <a href="#big-picture">🌍 Big Picture</a>
+</nav>
+
+<!-- ════════════════════════════════════════════════════════
+     MAIN
+════════════════════════════════════════════════════════ -->
+<div class="container">
+
+
+<!-- ──────────────────────────────────────────────────────
+     SECTION 1: WHAT IS PIA?
+────────────────────────────────────────────────────── -->
+<section class="section" id="what-is-pia">
+  <div class="section-header">
+    <div class="section-icon icon-blue">🏠</div>
+    <div>
+      <h2>What is PIA?</h2>
+      <div class="sub">Explained simply — like you're 12</div>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-title">🍕 The Pizza Shop Analogy</div>
+    <h3>Imagine a pizza shop chain…</h3>
+    <p>
+      The <strong>head office (M1)</strong> takes orders and tells the kitchens what to make.<br>
+      The <strong>kitchens (M2, M3, …)</strong> actually cook the pizzas and report back.<br>
+      The <strong>AI agents</strong> are like robot chefs — they read the order and get to work.<br>
+      The <strong>dashboard</strong> is the big screen on the wall showing every kitchen in real time.
+    </p>
+  </div>
+
+  <div class="grid-3">
+    <div class="card accent-blue">
+      <h3>🧠 Hub (M1 · Izzit7)</h3>
+      <p>The brain. Lives on your main PC. Shows the dashboard. Gives orders to all the worker machines.</p>
+    </div>
+    <div class="card accent-purple">
+      <h3>💪 Worker (M2 · soda-monster)</h3>
+      <p>The muscle. Runs AI agents that actually <em>do</em> things — write code, read files, run commands.</p>
+    </div>
+    <div class="card accent-green">
+      <h3>🤖 Agents (Claude AI)</h3>
+      <p>Each agent is a mini Claude brain running inside a worker. It gets a task, thinks, and does it step by step.</p>
+    </div>
+    <div class="card accent-yellow">
+      <h3>🔌 WebSocket</h3>
+      <p>A live telephone line between machines. Instead of sending letters (HTTP), they stay on the call the whole time.</p>
+    </div>
+    <div class="card accent-pink">
+      <h3>📡 Tailscale</h3>
+      <p>A private internet tunnel connecting your machines securely. Like a secret road only your machines can use.</p>
+    </div>
+    <div class="card accent-orange">
+      <h3>🗃️ SQLite DB</h3>
+      <p>A local database on M1 that remembers all machines, agents, and what happened. Like the shop's order book.</p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ──────────────────────────────────────────────────────
+     SECTION 2: THE MACHINES
+────────────────────────────────────────────────────── -->
+<section class="section" id="machines">
+  <div class="section-header">
+    <div class="section-icon icon-purple">🖥️</div>
+    <div>
+      <h2>The Two Machines</h2>
+      <div class="sub">M1 is the boss · M2 does the work</div>
+    </div>
+  </div>
+
+  <div class="machine-grid">
+    <!-- M1 -->
+    <div class="machine-box hub">
+      <div class="badge">HUB</div>
+      <div class="name">M1 · Izzit7</div>
+      <div class="hostname">localhost:3000</div>
+      <div class="agents-list">
+        <div class="agent-pill"><div class="dot"></div> Dashboard (Mission Control)</div>
+        <div class="agent-pill"><div class="dot"></div> SQLite Database</div>
+        <div class="agent-pill"><div class="dot"></div> WebSocket Server (port 3001)</div>
+        <div class="agent-pill"><div class="dot"></div> REST API (port 3000)</div>
+      </div>
+    </div>
+
+    <!-- ARROW -->
+    <div class="arrow-col">
+      <div class="big-arrow">⟵</div>
+      <div class="arrow-label" style="color:var(--green)">heartbeats &amp; status</div>
+      <div style="height:16px;"></div>
+      <div class="big-arrow">⟶</div>
+      <div class="arrow-label" style="color:var(--blue)">commands &amp; tasks</div>
+      <div style="margin-top:12px; font-size:11px; color:var(--muted)">Tailscale<br>100.127.x.x</div>
+    </div>
+
+    <!-- M2 -->
+    <div class="machine-box worker">
+      <div class="badge">WORKER</div>
+      <div class="name">M2 · soda-monster</div>
+      <div class="hostname">100.127.165.12:3000</div>
+      <div class="agents-list">
+        <div class="agent-pill"><div class="dot"></div> Hub Client (spoke)</div>
+        <div class="agent-pill"><div class="dot"></div> Agent Session Manager</div>
+        <div class="agent-pill"><div class="dot" style="background:var(--yellow);box-shadow:0 0 6px var(--yellow)"></div> Farcake2025 🤖</div>
+        <div class="agent-pill"><div class="dot" style="background:var(--yellow);box-shadow:0 0 6px var(--yellow)"></div> Birdfountain2026 🤖</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <div class="callout-icon">💡</div>
+    <div class="callout-body">
+      <h4>Key insight</h4>
+      <p>M2's API is directly reachable at <code style="background:rgba(255,255,255,0.1);border-radius:4px;padding:2px 6px;font-family:monospace">http://100.127.165.12:3000</code> over Tailscale. This means M1 can send orders <em>directly</em> to M2 without any relay!</p>
+    </div>
+  </div>
+
+  <!-- How spawning works -->
+  <div class="card" style="margin-top:24px">
+    <h3>🎬 How spawning an agent works — step by step</h3>
+    <div style="margin-top:16px">
+      <div class="flow">
+        <div class="flow-step">
+          <div class="step-num" style="background:rgba(67,97,238,0.2);color:var(--blue)">1</div>
+          <div class="step-content">
+            <h4>You click "Spawn Agent" on M1's dashboard</h4>
+            <p>You pick a machine (M2), give it a name like <em>Farcake2025</em>, and hit go.</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num" style="background:rgba(114,9,183,0.2);color:var(--purple)">2</div>
+          <div class="step-content">
+            <h4>M1 sends a <code style="font-size:12px">spawn_agent</code> command over WebSocket</h4>
+            <p>M1's hub sees the machine ID and sends the command down the WebSocket tunnel to M2.</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num" style="background:rgba(247,37,133,0.2);color:var(--pink)">3</div>
+          <div class="step-content">
+            <h4>M2's hub-client receives it and starts the agent</h4>
+            <p>M2's local service wakes up, creates a new Claude session and starts the AI thinking.</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num" style="background:rgba(6,214,160,0.2);color:var(--green)">4</div>
+          <div class="step-content">
+            <h4>M2 registers the agent back with M1</h4>
+            <p>M2 sends an <code style="font-size:12px">agent:register</code> message so M1 knows the agent exists.</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num" style="background:rgba(255,209,102,0.2);color:var(--yellow)">5</div>
+          <div class="step-content">
+            <h4>M1 broadcasts to the dashboard</h4>
+            <p>M1's WebSocket server tells all dashboard browsers: "new agent appeared!" — and the card shows up. ✅</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ──────────────────────────────────────────────────────
+     SECTION 3: WHAT WE FIXED
+────────────────────────────────────────────────────── -->
+<section class="section" id="fixes">
+  <div class="section-header">
+    <div class="section-icon icon-green">🔧</div>
+    <div>
+      <h2>What We Just Fixed</h2>
+      <div class="sub">Three bugs squashed this session</div>
+    </div>
+  </div>
+
+  <div class="stat-row">
+    <div class="stat-box">
+      <div class="stat-num" style="color:var(--green)">3</div>
+      <div class="stat-label">Bugs Fixed</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" style="color:var(--blue)">4</div>
+      <div class="stat-label">Files Changed</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" style="color:var(--yellow)">~80</div>
+      <div class="stat-label">Lines of Code</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" style="color:var(--pink)">✓</div>
+      <div class="stat-label">No Breaking Changes</div>
+    </div>
+  </div>
+
+  <!-- FIX 1 -->
+  <div class="fix-card">
+    <div class="fix-header">
+      <div class="fix-number" style="background:rgba(6,214,160,0.2);color:var(--green)">1</div>
+      <div>
+        <h3>Remote agents now appear in M1's dashboard 🎉</h3>
+        <div style="margin-top:4px"><span class="tag tag-blue">mission-control.ts</span><span class="tag tag-green">GET /api/mc/agents</span></div>
+      </div>
+    </div>
+    <div class="fix-body">
+      <p style="color:var(--muted);font-size:14px">M1's agent list only showed agents <em>running locally on M1</em>. Agents spawned on M2 were invisible to M1's dashboard.</p>
+      <div class="before-after">
+        <div class="before">
+          <div class="label">❌ Before</div>
+          <p>Only returned sessions from the local AgentSessionManager. M2's agents were never included.</p>
+        </div>
+        <div class="after">
+          <div class="label">✅ After</div>
+          <p>Now also reads the hub's SQLite database for remote agents. Both local + remote agents are merged and returned.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FIX 2 -->
+  <div class="fix-card">
+    <div class="fix-header">
+      <div class="fix-number" style="background:rgba(67,97,238,0.2);color:var(--blue)">2</div>
+      <div>
+        <h3>Chat messages now reach M2's agents 💬</h3>
+        <div style="margin-top:4px"><span class="tag tag-blue">mission-control.ts</span><span class="tag tag-purple">POST /api/mc/agents/:id/respond</span></div>
+      </div>
+    </div>
+    <div class="fix-body">
+      <p style="color:var(--muted);font-size:14px">When you typed a chat message to an agent on M2 from M1's dashboard, nothing happened — M1 couldn't find the agent session locally.</p>
+      <div class="before-after">
+        <div class="before">
+          <div class="label">❌ Before</div>
+          <p>M1 looked for the agent in its own local session manager. Not found → message silently dropped.</p>
+        </div>
+        <div class="after">
+          <div class="label">✅ After</div>
+          <p>M1 looks up the machine's IP in the database, then <em>proxies</em> the message directly to M2's API (<code style="font-size:11px">100.127.165.12:3000</code>). Message delivered! ✓</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FIX 3 -->
+  <div class="fix-card">
+    <div class="fix-header">
+      <div class="fix-number" style="background:rgba(247,37,133,0.2);color:var(--pink)">3</div>
+      <div>
+        <h3>New agent card appears instantly on M1's dashboard ⚡</h3>
+        <div style="margin-top:4px"><span class="tag tag-pink">websocket-server.ts</span><span class="tag tag-yellow">mission-control.html</span></div>
+      </div>
+    </div>
+    <div class="fix-body">
+      <p style="color:var(--muted);font-size:14px">Even after fix #1, the dashboard never <em>knew to refresh</em> when a remote agent appeared. It only refreshed on specific WebSocket events — none of which were fired for remote agents.</p>
+      <div class="before-after">
+        <div class="before">
+          <div class="label">❌ Before</div>
+          <p>Hub only broadcast <code style="font-size:11px">mc:status</code> when M2 registered an agent. Dashboard ignored this for new agents.</p>
+        </div>
+        <div class="after">
+          <div class="label">✅ After</div>
+          <p>Hub now also broadcasts <code style="font-size:11px">mc:agent_spawned</code>. Dashboard catches this and calls <code style="font-size:11px">fetchAgents()</code> — card appears in seconds.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ──────────────────────────────────────────────────────
+     SECTION 4: WHAT'S NEXT
+────────────────────────────────────────────────────── -->
+<section class="section" id="next">
+  <div class="section-header">
+    <div class="section-icon icon-pink">🚀</div>
+    <div>
+      <h2>What's Coming Next</h2>
+      <div class="sub">The features on the roadmap</div>
+    </div>
+  </div>
+
+  <div class="timeline">
+
+    <div class="tl-item tl-done">
+      <div class="tl-dot"></div>
+      <h4>✅ Agent spawning from M1 → M2</h4>
+      <p>Click a button on M1, agent appears on M2. Done.</p>
+    </div>
+
+    <div class="tl-item tl-done">
+      <div class="tl-dot"></div>
+      <h4>✅ Remote agents visible in M1 dashboard</h4>
+      <p>M1 can see all agents across all machines in one place. Done (just fixed!).</p>
+    </div>
+
+    <div class="tl-item tl-done">
+      <div class="tl-dot"></div>
+      <h4>✅ Chat messages routed to correct machine</h4>
+      <p>Type a message on M1, it reaches the agent on M2. Done (just fixed!).</p>
+    </div>
+
+    <div class="tl-item tl-doing">
+      <div class="tl-dot"></div>
+      <h4>🔄 Live terminal output mirroring M2 → M1</h4>
+      <p>See what M2's agent is doing <em>in real time</em> on M1's terminal panel. The output stream needs to relay from M2 through the WebSocket hub to M1's dashboard.</p>
+    </div>
+
+    <div class="tl-item tl-next">
+      <div class="tl-dot"></div>
+      <h4>⬜ Two-way conversation from M1</h4>
+      <p>Chat back and forth with any remote agent directly from M1's dashboard — no need to open M2's browser at all.</p>
+    </div>
+
+    <div class="tl-item tl-next">
+      <div class="tl-dot"></div>
+      <h4>⬜ M2's terminal output in M1's terminal panel</h4>
+      <p>The terminal pane in M1's dashboard shows the raw PTY output from M2's agent — just like tmux sharing.</p>
+    </div>
+
+    <div class="tl-item tl-next">
+      <div class="tl-dot"></div>
+      <h4>⬜ Electron desktop app</h4>
+      <p>The whole PIA system wrapped in a real desktop app (Windows/Mac) — no browser needed, with a React UI replacing the HTML dashboard.</p>
+    </div>
+
+  </div>
+
+  <div class="callout idea">
+    <div class="callout-icon">🧩</div>
+    <div class="callout-body">
+      <h4>The Big Challenge: Terminal Mirroring</h4>
+      <p>Right now, agent output only goes to the dashboard on the <em>same machine</em>. To see M2's agent output on M1, we need M2 to relay every text chunk over WebSocket to M1, and M1 to forward it to its dashboard. This is the next thing to build.</p>
+    </div>
+  </div>
+
+  <!-- diagram of what we're building -->
+  <div class="diagram" style="margin-top:24px">
+    <div class="title">Architecture Diagram — Terminal Mirroring (What We're Building)</div>
+<span class="c-muted">┌─────────────────────────────────────────────────────────────────────┐</span>
+<span class="c-blue">│  M1 · DASHBOARD (your browser)                                      │</span>
+<span class="c-muted">│                                                                     │</span>
+<span class="c-white">│   ┌──────────────────────────────────────────────────────────────┐  │</span>
+<span class="c-white">│   │  🖥 Terminal Panel                                           │  │</span>
+<span class="c-green">│   │  > Farcake2025 is reading file README.md...                  │  │</span>
+<span class="c-green">│   │  > Found 3 sections. Writing report...                       │  │</span>
+<span class="c-yellow">│   │  💬 [You type here] ───────────────────────────────────────  │  │</span>
+<span class="c-white">│   └──────────────────────────────────────────────────────────────┘  │</span>
+<span class="c-muted">└────────────────────────────┬────────────────────────────────────────┘</span>
+                             <span class="c-muted">│</span>
+                    <span class="c-blue">WebSocket (port 3001)</span>
+                             <span class="c-muted">│</span>
+<span class="c-muted">┌────────────────────────────┴────────────────────────────────────────┐</span>
+<span class="c-blue">│  M1 · HUB SERVER                                                    │</span>
+<span class="c-muted">│                                                                     │</span>
+<span class="c-white">│   receives:  </span><span class="c-green">mc:output { agentId, machineId, text }</span>              │
+<span class="c-white">│   forwards:  </span><span class="c-yellow">same event → all dashboard browsers</span>                  │
+<span class="c-muted">└────────────────────────────┬────────────────────────────────────────┘</span>
+                             <span class="c-muted">│</span>
+                  <span class="c-purple">Tailscale (100.127.165.12)</span>
+                             <span class="c-muted">│</span>
+<span class="c-muted">┌────────────────────────────┴────────────────────────────────────────┐</span>
+<span class="c-purple">│  M2 · WORKER SERVER                                                 │</span>
+<span class="c-muted">│                                                                     │</span>
+<span class="c-white">│   Agent text output </span><span class="c-muted">──►</span><span class="c-white"> hub-client </span><span class="c-muted">──►</span><span class="c-white"> WebSocket </span><span class="c-muted">──►</span><span class="c-white"> M1 Hub      │</span>
+<span class="c-muted">│                                                                     │</span>
+<span class="c-yellow">│   🤖 Farcake2025    (running Claude agent SDK)                      │</span>
+<span class="c-yellow">│   🤖 Birdfountain2026 (running Claude agent SDK)                   │</span>
+<span class="c-muted">└─────────────────────────────────────────────────────────────────────┘</span>
+  </div>
+</section>
+
+
+<!-- ──────────────────────────────────────────────────────
+     SECTION 5: HOW THE TECH WORKS
+────────────────────────────────────────────────────── -->
+<section class="section" id="tech">
+  <div class="section-header">
+    <div class="section-icon icon-yellow">⚡</div>
+    <div>
+      <h2>How the Tech Actually Works</h2>
+      <div class="sub">From Context7 docs · real code patterns</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+
+    <!-- Claude SDK Streaming -->
+    <div class="card accent-yellow">
+      <h3>🤖 Claude Agent SDK — Streaming</h3>
+      <p>Agents output text <em>one chunk at a time</em> as Claude thinks. We capture each tiny piece and send it to the dashboard instantly — no waiting for the full response.</p>
+      <div class="source-box">
+        <div class="src-label">📚 From Context7 — Claude Agent SDK docs</div>
+        The key is <code>includePartialMessages: true</code> — this makes the SDK emit <code>stream_event</code> messages with <code>text_delta</code> chunks as Claude generates each word.
+      </div>
+      <div class="code-block">
+<span class="c-muted">// How agent streaming works inside PIA</span>
+<span class="c-purple">for await</span> (<span class="c-blue">const</span> msg <span class="c-purple">of</span> <span class="c-green">query</span>({
+  prompt: <span class="c-yellow">"Write the project report"</span>,
+  options: { <span class="c-orange">includePartialMessages</span>: <span class="c-blue">true</span> }
+})) {
+  <span class="c-purple">if</span> (msg.type === <span class="c-yellow">"stream_event"</span>) {
+    <span class="c-purple">const</span> ev = msg.event;
+    <span class="c-purple">if</span> (ev.type === <span class="c-yellow">"content_block_delta"</span>
+        && ev.delta.type === <span class="c-yellow">"text_delta"</span>) {
+      <span class="c-muted">// Send this tiny chunk to dashboard ↓</span>
+      <span class="c-green">broadcastToHub</span>(ev.delta.text);
+    }
+  }
+}
+      </div>
+    </div>
+
+    <!-- WebSocket Broadcast -->
+    <div class="card accent-blue">
+      <h3>📡 WebSocket — Broadcasting to Everyone</h3>
+      <p>When something happens (agent output, status change), M1's WebSocket server instantly tells <em>every connected browser</em> — no page refresh needed.</p>
+      <div class="source-box">
+        <div class="src-label">📚 From Context7 — ws library docs</div>
+        The <code>wss.clients</code> Set contains every connected browser. We loop through, check if the connection is open, and send.
+      </div>
+      <div class="code-block">
+<span class="c-muted">// How PIA broadcasts to all dashboard tabs</span>
+<span class="c-blue">function</span> <span class="c-green">broadcast</span>(data) {
+  wss.clients.<span class="c-green">forEach</span>((client) => {
+    <span class="c-purple">if</span> (client.readyState === WebSocket.<span class="c-orange">OPEN</span>) {
+      client.<span class="c-green">send</span>(<span class="c-green">JSON.stringify</span>(data));
+    }
+  });
+}
+
+<span class="c-muted">// Example: new agent appeared</span>
+<span class="c-green">broadcast</span>({
+  type: <span class="c-yellow">"mc:agent_spawned"</span>,
+  payload: { id: <span class="c-yellow">"Farcake2025"</span>, machineId: <span class="c-yellow">"M2"</span> }
+});
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Message flow diagram -->
+  <div class="card" style="margin-top: 20px">
+    <h3>📨 The Message Flow — Output from Agent to Your Screen</h3>
+    <div class="diagram" style="margin-top:16px">
+<span class="c-yellow">  🤖 Claude Agent (M2)</span>
+       <span class="c-muted">│</span>
+       <span class="c-muted">│  text_delta: "The PIA system is..."</span>
+       <span class="c-muted">▼</span>
+<span class="c-purple">  AgentSession.ts</span>  <span class="c-muted">(captures chunk from SDK)</span>
+       <span class="c-muted">│</span>
+       <span class="c-muted">│  sends ws message: { type: "agent:output", text: "..." }</span>
+       <span class="c-muted">▼</span>
+<span class="c-purple">  hub-client.ts (M2)</span>  <span class="c-muted">(relays to M1 over Tailscale)</span>
+       <span class="c-muted">│</span>
+       <span class="c-muted">│  WebSocket tunnel ─────────────────────────────────────────────►</span>
+       <span class="c-muted">│                                                              │</span>
+       <span class="c-muted">▼                                                              ▼</span>
+<span class="c-blue">  websocket-server.ts (M1)</span>                              <span class="c-blue">M1 Hub Server</span>
+       <span class="c-muted">│</span>
+       <span class="c-muted">│  broadcast({ type: "mc:output", ... })</span>
+       <span class="c-muted">▼</span>
+<span class="c-green">  🌐 Dashboard browser</span>  <span class="c-muted">(appends text to terminal panel)</span>
+       <span class="c-muted">│</span>
+       <span class="c-muted">▼</span>
+<span class="c-green">  "The PIA system is..." appears on your screen 🎉</span>
+    </div>
+  </div>
+</section>
+
+
+<!-- ──────────────────────────────────────────────────────
+     SECTION 6: BIG PICTURE
+────────────────────────────────────────────────────── -->
+<section class="section" id="big-picture">
+  <div class="section-header">
+    <div class="section-icon icon-pink">🌍</div>
+    <div>
+      <h2>The Big Picture</h2>
+      <div class="sub">How PIA fits into the world of AI orchestration</div>
+    </div>
+  </div>
+
+  <div class="callout success">
+    <div class="callout-icon">📊</div>
+    <div class="callout-body">
+      <h4>Did you know? (from web research)</h4>
+      <p>75% of businesses are expected to use AI agent orchestration by 2025. The market is growing at 23% per year. Big companies like Datadog, New Relic, and Microsoft are all building fleet dashboards for AI agents — and that's exactly what PIA is doing.</p>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card accent-green">
+      <h3>🌐 What the big companies do</h3>
+      <p>Platforms like <strong>New Relic Fleet Control</strong> and <strong>Datadog</strong> let you manage hundreds of agents from one dashboard. They use live maps, color-coded status boards, and real-time health indicators.</p>
+      <p style="margin-top:10px">PIA is building the same thing — but for <em>your own machines</em>, with <em>Claude AI</em> as the agent brain.</p>
+    </div>
+    <div class="card accent-blue">
+      <h3>⚙️ WebSocket at scale (industry best practice)</h3>
+      <p>For big systems with many machines: use <strong>Redis Pub/Sub</strong> as a relay so WebSocket messages can cross multiple servers.</p>
+      <p style="margin-top:10px">PIA's current approach (direct WebSocket hub) works great for a small fleet. When you scale to 10+ machines, Redis becomes the next step.</p>
+    </div>
+  </div>
+
+  <div class="card accent-purple" style="margin-top:20px">
+    <h3>🏆 Where PIA fits — compared to the big players</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-top:16px">
+      <div style="text-align:center">
+        <div style="font-size:32px;margin-bottom:8px">🏢</div>
+        <strong>Datadog / New Relic</strong>
+        <p style="font-size:13px;color:var(--muted);margin-top:6px">Huge companies, $$$, monitors hundreds of servers</p>
+        <span class="tag tag-blue">Cloud</span>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:32px;margin-bottom:8px">🤖</div>
+        <strong>CrewAI / LangChain</strong>
+        <p style="font-size:13px;color:var(--muted);margin-top:6px">AI frameworks, no built-in fleet dashboard</p>
+        <span class="tag tag-purple">Frameworks</span>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:32px;margin-bottom:8px">🚀</div>
+        <strong>PIA System</strong>
+        <p style="font-size:13px;color:var(--muted);margin-top:6px">Your own fleet, Claude AI, full control, free</p>
+        <span class="tag tag-green">Local + Private</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ──────────────────────────────────────────────────────
+     SUMMARY / TL;DR
+────────────────────────────────────────────────────── -->
+<section class="section">
+  <div class="section-header">
+    <div class="section-icon icon-blue">📋</div>
+    <div>
+      <h2>TL;DR — The Short Version</h2>
+      <div class="sub">Everything on one screen</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>🎯 What did we just do?</h3>
+    <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <span style="font-size:20px">✅</span>
+        <div><strong>Fixed the agent list</strong> — M1 now shows agents running on M2</div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <span style="font-size:20px">✅</span>
+        <div><strong>Fixed chat</strong> — Messages you type on M1 now reach the agent on M2</div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <span style="font-size:20px">✅</span>
+        <div><strong>Fixed live updates</strong> — New agent cards appear instantly when spawned on M2</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3>🔮 What are we building next?</h3>
+    <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <span style="font-size:20px">🔄</span>
+        <div><strong>Terminal mirroring</strong> — See M2's agent output live in M1's dashboard terminal panel</div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <span style="font-size:20px">💬</span>
+        <div><strong>Two-way chat</strong> — Full conversation with remote agents from M1, no need to open M2</div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <span style="font-size:20px">🖥️</span>
+        <div><strong>Electron app</strong> — Wrap everything in a real desktop app with a React UI</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout warning" style="margin-top:20px">
+    <div class="callout-icon">⚡</div>
+    <div class="callout-body">
+      <h4>Restart the server to activate today's fixes!</h4>
+      <p>The three code changes made today need the PIA server to restart before they take effect. Run <code style="background:rgba(255,255,255,0.1);border-radius:4px;padding:2px 6px;font-family:monospace">npm run dev</code> on M1 to pick up the changes.</p>
+    </div>
+  </div>
+</section>
+
+
+</div><!-- /container -->
+
+<footer>
+  <div style="font-size:28px;margin-bottom:12px">🤖 🔗 🌐</div>
+  <strong>PIA System — Project Intelligence Agent</strong><br>
+  Plan document generated February 2026 · Sources: Context7 MCP, Web Research, Session Analysis
+  <div style="margin-top:12px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
+    <span class="tag tag-blue">Claude Agent SDK</span>
+    <span class="tag tag-purple">ws (WebSocket)</span>
+    <span class="tag tag-green">Express + TypeScript</span>
+    <span class="tag tag-yellow">SQLite</span>
+    <span class="tag tag-pink">Tailscale</span>
+  </div>
+</footer>
+
+</body>
+</html>

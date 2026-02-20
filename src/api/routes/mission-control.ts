@@ -172,12 +172,15 @@ router.post('/agents', async (req: Request, res: Response): Promise<void> => {
 
 /**
  * GET /api/mc/agents
- * List all active agent sessions
+ * List all active agent sessions (local + remote from hub DB)
  */
-router.get('/agents', (_req: Request, res: Response) => {
+router.get('/agents', async (_req: Request, res: Response) => {
   try {
     const mgr = getAgentSessionManager();
-    const agents = mgr.getAllSessions().map(s => ({
+    const localSessions = mgr.getAllSessions();
+    const localIds = new Set(localSessions.map(s => s.id));
+
+    const agents: Record<string, unknown>[] = localSessions.map(s => ({
       id: s.id,
       mode: s.config.mode,
       task: s.config.task.substring(0, 200),
@@ -194,7 +197,40 @@ router.get('/agents', (_req: Request, res: Response) => {
       restartCount: s.restartCount,
       hasAllowlist: !!(s.config.allowedTools?.length),
       hasNetworkPolicy: !!(s.config.networkPolicy),
+      machineId: s.config.machineId || 'local',
     }));
+
+    // Include remote agents from hub DB (agents on other machines)
+    try {
+      const { getAllAgents } = await import('../../db/queries/agents.js') as typeof import('../../db/queries/agents.js');
+      const dbAgents = getAllAgents();
+      for (const a of dbAgents) {
+        if (!localIds.has(a.id) && a.machine_id && a.machine_id !== 'local') {
+          agents.push({
+            id: a.id,
+            mode: 'sdk',
+            task: (a.current_task || '').substring(0, 200),
+            cwd: '',
+            status: (a.status as unknown) as string,
+            approvalMode: 'auto',
+            model: 'claude-opus-4-6',
+            cost: 0,
+            tokensIn: 0,
+            tokensOut: 0,
+            toolCalls: 0,
+            createdAt: (a.started_at || 0) * 1000,
+            errorMessage: undefined,
+            restartCount: 0,
+            hasAllowlist: false,
+            hasNetworkPolicy: false,
+            machineId: a.machine_id,
+          });
+        }
+      }
+    } catch {
+      // Hub DB not available (local mode) — skip remote agents
+    }
+
     res.json({ agents });
   } catch (error) {
     logger.error(`Failed to list agents: ${error}`);
@@ -673,7 +709,7 @@ router.get('/agents/:id', async (req: Request, res: Response): Promise<void> => 
  * POST /api/mc/agents/:id/respond
  * Respond to an agent's prompt
  */
-router.post('/agents/:id/respond', (req: Request, res: Response) => {
+router.post('/agents/:id/respond', async (req: Request, res: Response) => {
   try {
     const { promptId, choice } = req.body;
     const agentId = req.params.id as string;
@@ -684,13 +720,45 @@ router.post('/agents/:id/respond', (req: Request, res: Response) => {
     }
 
     const pm = getPromptManager();
+    const mgr = getAgentSessionManager();
+    const localSession = mgr.getSession(agentId);
 
     if (promptId) {
       // Respond to specific prompt
       pm.respond(promptId, choice);
+    } else if (localSession) {
+      // Local agent — respond directly
+      mgr.respond(agentId, choice);
     } else {
-      // Send raw response to agent session (PTY mode)
-      const mgr = getAgentSessionManager();
+      // Try to proxy to remote machine via hub DB
+      try {
+        const { getAgentById } = await import('../../db/queries/agents.js') as typeof import('../../db/queries/agents.js');
+        const { getMachineById } = await import('../../db/queries/machines.js') as typeof import('../../db/queries/machines.js');
+        const dbAgent = getAgentById(agentId);
+        if (dbAgent && dbAgent.machine_id) {
+          const machine = getMachineById(dbAgent.machine_id);
+          const ip = machine?.ip_address;
+          if (ip) {
+            const http = await import('http');
+            const body = JSON.stringify({ choice });
+            await new Promise<void>((resolve, reject) => {
+              const proxyReq = http.request(
+                { hostname: ip, port: 3000, path: `/api/mc/agents/${agentId}/respond`, method: 'POST',
+                  headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) } },
+                (proxyRes) => { proxyRes.resume(); resolve(); }
+              );
+              proxyReq.on('error', reject);
+              proxyReq.write(body);
+              proxyReq.end();
+            });
+            res.json({ success: true, message: `Response proxied to ${machine.name} for agent ${agentId}` });
+            return;
+          }
+        }
+      } catch (proxyErr) {
+        logger.warn(`Failed to proxy respond to remote machine: ${proxyErr}`);
+      }
+      // Fallback: still call local respond (may warn if session not found)
       mgr.respond(agentId, choice);
     }
 

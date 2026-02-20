@@ -96,7 +96,8 @@
       "mcp__context7__query-docs",
       "WebFetch(domain:ylianst.github.io)",
       "WebFetch(domain:www.elevenforum.com)",
-      "WebFetch(domain:sodalabs-ai.web.app)"
+      "WebFetch(domain:sodalabs-ai.web.app)",
+      "WebFetch(domain:blog.marcnuri.com)"
     ]
   },
   "hooks": {

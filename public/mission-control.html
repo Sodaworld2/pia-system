@@ -1868,6 +1868,10 @@ function handleWsMessage(msg) {
       }
       break;
     }
+    case 'mc:agent_spawned':
+      // Remote agent appeared — refresh agent list so it shows in the dashboard
+      fetchAgents().then(renderAll);
+      break;
     case 'authenticated':
       // Good, now subscribe
       break;

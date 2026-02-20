@@ -359,6 +359,11 @@ export class TunnelWebSocketServer {
             }
             // Broadcast to hub dashboard so it sees the new remote agent immediately
             const registeredId = dbAgent?.id || spokeAgent.id;
+            // mc:agent_spawned triggers fetchAgents() in the dashboard to create a new card
+            this.broadcastMc({
+              type: 'mc:agent_spawned',
+              payload: { id: registeredId, machineId: payload.machineId, status: spokeAgent.status, task: spokeAgent.current_task || '' },
+            });
             this.broadcastMc({
               type: 'mc:status',
               payload: { sessionId: registeredId, status: spokeAgent.status },

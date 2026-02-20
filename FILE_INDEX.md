@@ -116,6 +116,8 @@
 | `research/SDK-RESEARCH-REFERENCES.md` | SDK research references |
 | `research/AGENT-REVOLUTION-INTEL-2026-02-14.md` | Agent revolution intelligence report |
 | `research/agreements-signatures-research.md` | Agreement signatures research |
+| `research/ORCHESTRATOR-AGENT-VIDEO-SYNTHESIS.md` | Full synthesis: Orchestrator Agent lesson (Core 4, CRUD for agents, observability, delete philosophy, PIA build checklist) |
+| `research/CLAUDE-CODE-MULTI-AGENT-NATIVE-SYNTHESIS.md` | Full synthesis: Claude Code native multi-agent tools (team_create, task_*, send_message, agent sandboxes, E2B) |
 
 ## Data & Knowledge Store
 

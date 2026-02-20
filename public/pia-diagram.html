@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIA — Architecture: Now vs After</title>
+<style>
+  :root {
+    --dark:   #0a0a14;
+    --card:   #13131f;
+    --border: #1e1e35;
+    --blue:   #4361ee;
+    --purple: #7209b7;
+    --green:  #06d6a0;
+    --yellow: #ffd166;
+    --pink:   #f72585;
+    --orange: #ef476f;
+    --red:    #ef476f;
+    --text:   #dde1ff;
+    --muted:  #7070a0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--dark); color: var(--text); line-height: 1.5; }
+
+  /* ═══ HEADER ═══ */
+  header {
+    background: linear-gradient(135deg, #0d0030 0%, #0a0a14 100%);
+    padding: 40px 24px 30px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+  }
+  header h1 { font-size: clamp(24px,4vw,42px); font-weight: 900;
+    background: linear-gradient(90deg,var(--blue),var(--pink)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  header p { color: var(--muted); margin-top: 8px; font-size: 15px; }
+
+  /* ═══ NAV ═══ */
+  nav { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; padding:16px; background:var(--card); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; }
+  nav a { background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:20px; padding:5px 14px; font-size:13px; color:var(--muted); text-decoration:none; transition:all .2s; }
+  nav a:hover { background:var(--blue); color:#fff; border-color:var(--blue); }
+
+  /* ═══ LAYOUT ═══ */
+  .wrap { max-width: 1300px; margin: 0 auto; padding: 40px 20px 80px; }
+  .section { margin-bottom: 64px; scroll-margin-top: 70px; }
+  .section-title { font-size: clamp(20px,3vw,30px); font-weight:800; margin-bottom:24px; display:flex; align-items:center; gap:12px; }
+  .section-title span { font-size:32px; }
+
+  /* ═══ SPLIT VIEW ═══ */
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media(max-width:900px) { .split { grid-template-columns: 1fr; } }
+
+  /* ═══ DIAGRAM PANEL ═══ */
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+  }
+  .panel-header {
+    padding: 16px 22px;
+    font-weight: 800;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .panel-body { padding: 24px 22px; }
+
+  /* ═══ MACHINE BOXES ═══ */
+  .machine {
+    border-radius: 16px;
+    border: 2px solid;
+    padding: 18px;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .machine.hub    { border-color: var(--blue);   background: rgba(67,97,238,0.07); }
+  .machine.worker { border-color: var(--purple);  background: rgba(114,9,183,0.07); }
+  .machine.browser{ border-color: var(--green);   background: rgba(6,214,160,0.07); }
+  .machine-label {
+    display: inline-block;
+    border-radius: 8px;
+    padding: 2px 10px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+  .hub .machine-label    { background:rgba(67,97,238,0.25); color:var(--blue); }
+  .worker .machine-label { background:rgba(114,9,183,0.25); color:#b392f0; }
+  .browser .machine-label{ background:rgba(6,214,160,0.25); color:var(--green); }
+  .machine-name { font-size: 17px; font-weight: 800; margin-bottom: 12px; }
+
+  /* ═══ COMPONENT PILLS ═══ */
+  .components { display: flex; flex-direction: column; gap: 6px; }
+  .comp {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 11px;
+    font-size: 13px;
+  }
+  .comp .dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+  .comp.new  { border-color: rgba(6,214,160,0.4); background: rgba(6,214,160,0.08); }
+  .comp.new .dot { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .comp.existing .dot { background: var(--blue); }
+  .comp.agent .dot { background: var(--yellow); box-shadow: 0 0 6px var(--yellow); }
+  .comp.missing { border-color: rgba(239,71,111,0.3); background: rgba(239,71,111,0.06); opacity:.7; }
+  .comp.missing .dot { background: var(--red); }
+
+  /* ═══ ARROWS / FLOWS ═══ */
+  .flows { display:flex; flex-direction:column; gap:8px; margin:16px 0; }
+  .flow-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 9px 14px;
+    font-size: 13px;
+  }
+  .flow-row .arrow { font-size:16px; flex-shrink:0; }
+  .flow-row .from  { color:var(--muted); font-size:12px; }
+  .flow-row.ok   { border-left:3px solid var(--green); }
+  .flow-row.miss { border-left:3px solid var(--red); opacity:.75; }
+  .flow-row.new  { border-left:3px solid var(--yellow); }
+
+  /* ═══ ARROW CONNECTOR ═══ */
+  .connector {
+    text-align: center;
+    margin: 10px 0;
+    color: var(--muted);
+    font-size: 13px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+  .connector .line { width:2px; height:20px; background:var(--border); margin:0 auto; }
+  .connector .label { font-size:11px; }
+
+  /* ═══ LEGEND ═══ */
+  .legend { display:flex; gap:16px; flex-wrap:wrap; margin-bottom:20px; }
+  .legend-item { display:flex; align-items:center; gap:7px; font-size:13px; }
+  .legend-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+
+  /* ═══ TODO LIST ═══ */
+  .todo-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:16px; }
+  .todo-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    border-left: 4px solid;
+    position: relative;
+  }
+  .todo-card.p1 { border-left-color: var(--green); }
+  .todo-card.p2 { border-left-color: var(--blue); }
+  .todo-card.p3 { border-left-color: var(--yellow); }
+  .todo-card.p4 { border-left-color: var(--muted); }
+  .todo-num {
+    position: absolute;
+    top: 16px; right: 16px;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items:center; justify-content:center;
+    font-size: 13px; font-weight: 800;
+    background: rgba(255,255,255,0.07);
+    color: var(--muted);
+  }
+  .todo-card h3 { font-size: 15px; font-weight:800; margin-bottom:8px; padding-right:36px; }
+  .todo-card p  { font-size:13px; color:var(--muted); line-height:1.6; }
+  .todo-tags { display:flex; gap:6px; flex-wrap:wrap; margin-top:12px; }
+  .tag { display:inline-block; border-radius:6px; padding:2px 8px; font-size:11px; font-weight:700; }
+  .tag-green  { background:rgba(6,214,160,0.15); color:var(--green); }
+  .tag-blue   { background:rgba(67,97,238,0.15); color:#79b8ff; }
+  .tag-yellow { background:rgba(255,209,102,0.15); color:var(--yellow); }
+  .tag-purple { background:rgba(114,9,183,0.15); color:#b392f0; }
+  .tag-red    { background:rgba(239,71,111,0.15); color:var(--orange); }
+  .tag-muted  { background:rgba(255,255,255,0.07); color:var(--muted); }
+
+  /* ═══ DATA FLOW DIAGRAM ═══ */
+  .flow-diagram {
+    background: #080812;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    font-family: 'Consolas','Courier New',monospace;
+    font-size: 13.5px;
+    line-height: 2;
+    overflow-x: auto;
+  }
+  .c-blue   { color:#79b8ff; }
+  .c-green  { color:#85e89d; }
+  .c-yellow { color:#ffd166; }
+  .c-pink   { color:#f97bbb; }
+  .c-purple { color:#b392f0; }
+  .c-muted  { color:#444466; }
+  .c-red    { color:#ff7b7b; }
+  .c-white  { color:#dde1ff; }
+  .c-orange { color:#ffab70; }
+
+  /* ═══ COMPARISON TABLE ═══ */
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th { padding:12px 14px; text-align:left; background:rgba(255,255,255,0.04); color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid var(--border); }
+  td { padding:11px 14px; border-bottom:1px solid rgba(255,255,255,0.04); vertical-align:top; }
+  tr:last-child td { border-bottom:none; }
+  .yes { color:var(--green); font-weight:700; }
+  .no  { color:var(--red); font-weight:700; }
+  .partial { color:var(--yellow); font-weight:700; }
+
+  footer { text-align:center; padding:40px 20px; color:var(--muted); font-size:13px; border-top:1px solid var(--border); }
+
+  /* ═══ KIDS SECTION ═══ */
+  .kids-bg {
+    background: linear-gradient(160deg, #0d0030 0%, #001a3a 50%, #0a1a00 100%);
+    border-top: 3px solid #ffd166;
+    border-bottom: 3px solid #ffd166;
+    padding: 60px 20px;
+  }
+  .kids-title {
+    text-align: center;
+    font-size: clamp(28px,5vw,52px);
+    font-weight: 900;
+    margin-bottom: 8px;
+    background: linear-gradient(90deg,#ffd166,#f72585,#4361ee,#06d6a0);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  }
+  .kids-sub { text-align:center; font-size:18px; color:#aaa; margin-bottom:48px; }
+
+  /* story steps */
+  .story { display:flex; flex-direction:column; gap:0; max-width:860px; margin:0 auto 60px; }
+  .story-step {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 24px;
+    align-items: center;
+    padding: 28px 0;
+    border-bottom: 1px dashed rgba(255,255,255,0.08);
+    position: relative;
+  }
+  .story-step:last-child { border-bottom: none; }
+  .story-icon {
+    width: 120px; height: 120px;
+    border-radius: 24px;
+    display: flex; align-items:center; justify-content:center;
+    font-size: 60px;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .story-text h3 { font-size: clamp(18px,3vw,26px); font-weight:900; margin-bottom:8px; }
+  .story-text p  { font-size: clamp(14px,2vw,17px); color:#aabbcc; line-height:1.7; }
+  .story-text .kid-detail { font-size:14px; color:#667799; margin-top:6px; font-style:italic; }
+
+  /* connector arrow between steps */
+  .story-arrow {
+    text-align: center;
+    font-size: 32px;
+    color: rgba(255,255,255,0.15);
+    padding: 4px 0;
+  }
+
+  /* the big cast */
+  .cast { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:20px; max-width:860px; margin:0 auto 60px; }
+  .cast-card {
+    background: rgba(255,255,255,0.04);
+    border: 2px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 24px 16px;
+    text-align: center;
+    transition: transform .2s;
+  }
+  .cast-card:hover { transform: translateY(-4px); }
+  .cast-emoji { font-size: 52px; display:block; margin-bottom:12px; }
+  .cast-name  { font-size: 16px; font-weight:800; margin-bottom:6px; }
+  .cast-role  { font-size: 13px; color:#8899bb; line-height:1.5; }
+
+  /* fun fact boxes */
+  .fun-facts { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:16px; max-width:860px; margin:0 auto; }
+  .fun-fact {
+    border-radius:16px; padding:20px;
+    font-size:15px; line-height:1.6;
+    border:2px solid;
+  }
+  .fun-fact .ff-emoji { font-size:36px; display:block; margin-bottom:10px; }
+  .fun-fact h4 { font-size:16px; font-weight:800; margin-bottom:6px; }
+  .fun-fact p { font-size:14px; }
+  .ff-blue   { background:rgba(67,97,238,0.12); border-color:rgba(67,97,238,0.3); }
+  .ff-green  { background:rgba(6,214,160,0.10); border-color:rgba(6,214,160,0.3); }
+  .ff-yellow { background:rgba(255,209,102,0.10); border-color:rgba(255,209,102,0.3); }
+  .ff-pink   { background:rgba(247,37,133,0.10); border-color:rgba(247,37,133,0.3); }
+  .ff-purple { background:rgba(114,9,183,0.10); border-color:rgba(114,9,183,0.3); }
+
+  .kids-section-title {
+    text-align:center; font-size:22px; font-weight:800;
+    margin-bottom:28px; color:#ddeeff;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>PIA System — Architecture Diagram</h1>
+  <p>How the system works <strong>now</strong> · What we're adding · Full to-do list</p>
+  <div style="margin-top:12px;font-size:13px;color:var(--muted)">📅 February 2026 · Sources: Marc Nuri blog · Context7 MCP · Five Levels of Vibe Coding</div>
+</header>
+
+<nav>
+  <a href="#now">🔵 Now</a>
+  <a href="#after">🟢 After</a>
+  <a href="#flows">📡 Data Flows</a>
+  <a href="#comparison">📊 Comparison</a>
+  <a href="#todo">✅ To-Do List</a>
+  <a href="#kids">🧒 For Kids!</a>
+</nav>
+
+<div class="wrap">
+
+
+<!-- ══════════════════════════════════════════════════════
+     SECTION 1 — HOW IT WORKS NOW
+══════════════════════════════════════════════════════ -->
+<section class="section" id="now">
+  <div class="section-title"><span>🔵</span> How PIA Works RIGHT NOW</div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div> Existing & working</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div> Running agent</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div> Missing / broken</div>
+  </div>
+
+  <div class="split">
+
+    <!-- LEFT: machine stack -->
+    <div>
+
+      <!-- Browser -->
+      <div class="machine browser">
+        <div class="machine-label">Browser</div>
+        <div class="machine-name">🌐 Your Dashboard (mission-control.html)</div>
+        <div class="components">
+          <div class="comp existing"><div class="dot"></div> Agent cards (name, status, cost, tokens)</div>
+          <div class="comp existing"><div class="dot"></div> Terminal output panel (local agents only)</div>
+          <div class="comp existing"><div class="dot"></div> Spawn dialog (pick machine + project)</div>
+          <div class="comp existing"><div class="dot"></div> Chat input → respond endpoint</div>
+          <div class="comp missing"><div class="dot"></div> ❌ Context % bar not shown</div>
+          <div class="comp missing"><div class="dot"></div> ❌ Git branch not shown</div>
+          <div class="comp missing"><div class="dot"></div> ❌ M2 agent output not visible here</div>
+        </div>
+      </div>
+
+      <div class="connector">
+        <div class="line"></div>
+        <div style="font-size:18px">⇅</div>
+        <div class="label" style="color:var(--green)">WebSocket port 3001</div>
+        <div class="line"></div>
+      </div>
+
+      <!-- M1 Hub -->
+      <div class="machine hub">
+        <div class="machine-label">Hub — M1</div>
+        <div class="machine-name">🖥️ Izzit7 · localhost:3000</div>
+        <div class="components">
+          <div class="comp existing"><div class="dot"></div> Express API (port 3000)</div>
+          <div class="comp existing"><div class="dot"></div> WebSocket Server (port 3001)</div>
+          <div class="comp existing"><div class="dot"></div> SQLite DB (machines, agents, projects)</div>
+          <div class="comp existing"><div class="dot"></div> Hub Aggregator (heartbeat monitor)</div>
+          <div class="comp existing"><div class="dot"></div> GET /api/mc/agents — now includes remote</div>
+          <div class="comp existing"><div class="dot"></div> POST respond — now proxies to M2 IP</div>
+          <div class="comp missing"><div class="dot"></div> ❌ Does NOT relay M2 agent output to dashboard</div>
+        </div>
+      </div>
+
+      <div class="connector">
+        <div class="line"></div>
+        <div style="font-size:18px">⇅</div>
+        <div class="label" style="color:var(--purple)">Tailscale · 100.127.165.12</div>
+        <div class="line"></div>
+      </div>
+
+      <!-- M2 Worker -->
+      <div class="machine worker">
+        <div class="machine-label">Worker — M2</div>
+        <div class="machine-name">💪 soda-monster-hunter · :3000</div>
+        <div class="components">
+          <div class="comp existing"><div class="dot"></div> Hub Client (WebSocket spoke)</div>
+          <div class="comp existing"><div class="dot"></div> Agent Session Manager</div>
+          <div class="comp agent"><div class="dot"></div> 🤖 Farcake2025 (Claude SDK running)</div>
+          <div class="comp agent"><div class="dot"></div> 🤖 Birdfountain2026 (Claude SDK running)</div>
+          <div class="comp missing"><div class="dot"></div> ❌ Agent text output stays on M2 only</div>
+          <div class="comp missing"><div class="dot"></div> ❌ No contextWindow tracking sent to hub</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: current flow diagram -->
+    <div>
+      <div class="panel">
+        <div class="panel-header" style="background:rgba(67,97,238,0.1)">📡 Current Data Flows</div>
+        <div class="panel-body">
+
+          <div class="flows">
+            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Working ✅</div>
+            <div class="flow-row ok"><div class="arrow">→</div><div><div>M2 → M1: <strong>machine:register</strong></div><div class="from">M2 connects and identifies itself</div></div></div>
+            <div class="flow-row ok"><div class="arrow">→</div><div><div>M2 → M1: <strong>heartbeat</strong> every 30s</div><div class="from">Keeps M2 shown as online</div></div></div>
+            <div class="flow-row ok"><div class="arrow">→</div><div><div>M1 → M2: <strong>spawn_agent</strong></div><div class="from">Dashboard spawns agent on M2</div></div></div>
+            <div class="flow-row ok"><div class="arrow">→</div><div><div>M2 → M1: <strong>agent:register</strong></div><div class="from">M2 tells M1 about new agent</div></div></div>
+            <div class="flow-row ok"><div class="arrow">→</div><div><div>M1 → Dashboard: <strong>mc:agent_spawned</strong></div><div class="from">Card appears in dashboard ✅ (just fixed)</div></div></div>
+            <div class="flow-row ok"><div class="arrow">→</div><div><div>Dashboard → M1 → M2: <strong>respond</strong></div><div class="from">Chat message proxied to M2 ✅ (just fixed)</div></div></div>
+          </div>
+
+          <div class="flows" style="margin-top:16px">
+            <div style="font-size:11px;color:var(--red);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Missing ❌</div>
+            <div class="flow-row miss"><div class="arrow">✗</div><div><div>M2 agent output → M1 dashboard</div><div class="from">text_delta chunks never leave M2's server</div></div></div>
+            <div class="flow-row miss"><div class="arrow">✗</div><div><div>contextWindow data → agent card</div><div class="from">SDK has it but PIA doesn't track it</div></div></div>
+            <div class="flow-row miss"><div class="arrow">✗</div><div><div>Git branch → agent card</div><div class="from">Never queried at spawn time</div></div></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════
+     SECTION 2 — HOW IT WILL WORK AFTER
+══════════════════════════════════════════════════════ -->
+<section class="section" id="after">
+  <div class="section-title"><span>🟢</span> How PIA Will Work AFTER Improvements</div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div> Already exists</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div> New / improved</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div> Running agent</div>
+  </div>
+
+  <div class="split">
+
+    <!-- LEFT: improved machine stack -->
+    <div>
+
+      <!-- Browser AFTER -->
+      <div class="machine browser">
+        <div class="machine-label">Browser — After</div>
+        <div class="machine-name">🌐 Dashboard (mission-control.html)</div>
+        <div class="components">
+          <div class="comp existing"><div class="dot"></div> Agent cards (name, status, cost, tokens)</div>
+          <div class="comp new"><div class="dot"></div> ✨ Context % bar per agent (yellow→red)</div>
+          <div class="comp new"><div class="dot"></div> ✨ Git branch shown on each card</div>
+          <div class="comp new"><div class="dot"></div> ✨ M2 terminal output visible here</div>
+          <div class="comp new"><div class="dot"></div> ✨ Two-way chat works for remote agents</div>
+          <div class="comp new"><div class="dot"></div> ✨ Mobile-responsive layout</div>
+        </div>
+      </div>
+
+      <div class="connector">
+        <div class="line"></div>
+        <div style="font-size:18px">⇅</div>
+        <div class="label" style="color:var(--green)">WebSocket + new events</div>
+        <div class="line"></div>
+      </div>
+
+      <!-- M1 Hub AFTER -->
+      <div class="machine hub">
+        <div class="machine-label">Hub — M1 After</div>
+        <div class="machine-name">🖥️ Izzit7 · localhost:3000</div>
+        <div class="components">
+          <div class="comp existing"><div class="dot"></div> Express API + WebSocket + SQLite</div>
+          <div class="comp existing"><div class="dot"></div> Remote agent proxy (respond)</div>
+          <div class="comp new"><div class="dot"></div> ✨ Relays mc:output from M2 → dashboard</div>
+          <div class="comp new"><div class="dot"></div> ✨ Stores contextWindow per agent in DB</div>
+        </div>
+      </div>
+
+      <div class="connector">
+        <div class="line"></div>
+        <div style="font-size:18px">⇅</div>
+        <div class="label" style="color:var(--purple)">Tailscale + more events</div>
+        <div class="line"></div>
+      </div>
+
+      <!-- M2 Worker AFTER -->
+      <div class="machine worker">
+        <div class="machine-label">Worker — M2 After</div>
+        <div class="machine-name">💪 soda-monster-hunter</div>
+        <div class="components">
+          <div class="comp existing"><div class="dot"></div> Hub Client + Agent Session Manager</div>
+          <div class="comp agent"><div class="dot"></div> 🤖 Agents (Claude SDK)</div>
+          <div class="comp new"><div class="dot"></div> ✨ onMessage → sends text_delta to hub</div>
+          <div class="comp new"><div class="dot"></div> ✨ Sends contextWindow % in heartbeat</div>
+          <div class="comp new"><div class="dot"></div> ✨ Reports git branch at spawn time</div>
+          <div class="comp new"><div class="dot"></div> ✨ Git worktrees for parallel safe agents</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: improved flow diagram -->
+    <div>
+      <div class="panel">
+        <div class="panel-header" style="background:rgba(6,214,160,0.08)">📡 New Data Flows (After)</div>
+        <div class="panel-body">
+
+          <div class="flows">
+            <div style="font-size:11px;color:var(--green);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">New flows ✨</div>
+
+            <div class="flow-row new"><div class="arrow">→</div><div>
+              <div>M2 agent <strong>text_delta</strong> → hub-client → M1 → dashboard</div>
+              <div class="from">Every word agent types appears live on M1's terminal</div>
+            </div></div>
+
+            <div class="flow-row new"><div class="arrow">→</div><div>
+              <div>SDK <strong>onMessage.usage.inputTokens / contextWindow</strong> → card</div>
+              <div class="from">Context % bar: green→yellow (70%)→red (90%)</div>
+            </div></div>
+
+            <div class="flow-row new"><div class="arrow">→</div><div>
+              <div><strong>git branch --show-current</strong> at spawn → card</div>
+              <div class="from">Branch shown on every agent card</div>
+            </div></div>
+
+            <div class="flow-row new"><div class="arrow">→</div><div>
+              <div>M2 creates <strong>git worktree</strong> per agent</div>
+              <div class="from">Multiple agents on same repo, no conflicts</div>
+            </div></div>
+
+            <div class="flow-row new"><div class="arrow">→</div><div>
+              <div>Dashboard → M1 → M2 → agent <strong>respond</strong></div>
+              <div class="from">Full two-way chat: message sent AND response visible</div>
+            </div></div>
+
+          </div>
+
+          <div style="margin-top:20px;padding:14px;background:rgba(255,209,102,0.07);border:1px solid rgba(255,209,102,0.2);border-radius:10px;font-size:13px;">
+            <strong style="color:var(--yellow)">⭐ Biggest win:</strong>
+            <span style="color:var(--muted)"> Terminal mirroring turns M1 into a true control room. You'll see every word M2's agent types — in real time — without opening M2's browser.</span>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════
+     SECTION 3 — FULL DATA FLOW (ASCII DIAGRAM)
+══════════════════════════════════════════════════════ -->
+<section class="section" id="flows">
+  <div class="section-title"><span>📡</span> Complete Data Flow — After All Improvements</div>
+
+  <div class="flow-diagram">
+<span class="c-green">┌─────────────────────────────────────────────────────────────────────────────┐</span>
+<span class="c-green">│  🌐 YOUR BROWSER (Dashboard)                                                │</span>
+<span class="c-green">│                                                                             │</span>
+<span class="c-white">│  ┌──────────────┐  ┌──────────────────────────────┐  ┌──────────────────┐  │</span>
+<span class="c-white">│  │ Agent Cards  │  │ Terminal Panel               │  │ Chat Input       │  │</span>
+<span class="c-yellow">│  │ Farcake2025  │  │ > Reading README.md...       │  │ [Hi, what are    │  │</span>
+<span class="c-yellow">│  │ ██████░░ 72% │  │ > Found 3 sections...        │  │  you working on?]│  │</span>
+<span class="c-green">│  │ branch: main │  │ > Writing report now...      │  │ [Send] ──────►   │  │</span>
+<span class="c-white">│  └──────────────┘  └──────────────────────────────┘  └──────────────────┘  │</span>
+<span class="c-white">│       ▲  context%          ▲  mc:output                     │ respond       │</span>
+<span class="c-green">└───────┼────────────────────┼─────────────────────────────────┼─────────────┘</span>
+        <span class="c-muted">│</span>                    <span class="c-muted">│</span>                                 <span class="c-muted">│</span>
+        <span class="c-blue">│ WebSocket port 3001 (all events)</span>                   <span class="c-blue">│ HTTP POST</span>
+        <span class="c-muted">│</span>                    <span class="c-muted">│</span>                                 <span class="c-muted">│</span>
+<span class="c-blue">┌───────┼────────────────────┼─────────────────────────────────┼─────────────┐</span>
+<span class="c-blue">│  🖥️  M1 HUB — Izzit7 (localhost:3000)                        │             │</span>
+<span class="c-blue">│                                                               │             │</span>
+<span class="c-white">│  WebSocket Server ──► broadcast(mc:output)                    │             │</span>
+<span class="c-white">│  Hub Aggregator   ──► stores contextWindow in SQLite          │             │</span>
+<span class="c-white">│  REST API         ◄── respond proxy ◄────────────────────────┘             │</span>
+<span class="c-white">│                                │ proxies to M2 IP (100.127.165.12:3000)    │</span>
+<span class="c-blue">└────────────────────────────────┼──────────────────────────────────────────┘</span>
+                                 <span class="c-muted">│</span>
+         <span class="c-purple">Tailscale WireGuard (100.127.165.12) — all traffic encrypted</span>
+                                 <span class="c-muted">│</span>
+<span class="c-purple">┌────────────────────────────────┼──────────────────────────────────────────┐</span>
+<span class="c-purple">│  💪 M2 WORKER — soda-monster-hunter (:3000)                              │</span>
+<span class="c-purple">│                                                                            │</span>
+<span class="c-white">│  Hub Client                                                                │</span>
+<span class="c-white">│    ├─ receives: spawn_agent, kill_agent, send_input from M1                │</span>
+<span class="c-white">│    └─ sends:    agent:register, heartbeat, </span><span class="c-green">agent:output (NEW)</span><span class="c-white"> to M1        │</span>
+<span class="c-white">│                                                                            │</span>
+<span class="c-white">│  Agent Session Manager                                                     │</span>
+<span class="c-white">│    ├─ onMessage callback ──► </span><span class="c-green">captures text_delta + contextWindow</span>           │
+<span class="c-white">│    └─ sends chunk to hub-client ──► hub-client forwards to M1              │</span>
+<span class="c-white">│                                                                            │</span>
+<span class="c-yellow">│  🤖 Farcake2025  [worktree: /projects/pia-agent-1]                        │</span>
+<span class="c-yellow">│  🤖 Birdfountain [worktree: /projects/pia-agent-2]   ← no conflicts!      │</span>
+<span class="c-purple">└────────────────────────────────────────────────────────────────────────────┘</span>
+</div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════
+     SECTION 4 — COMPARISON TABLE
+══════════════════════════════════════════════════════ -->
+<section class="section" id="comparison">
+  <div class="section-title"><span>📊</span> Feature Comparison — Now vs After</div>
+
+  <div class="panel">
+    <div class="panel-body" style="padding:0">
+      <table>
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>Now</th>
+            <th>After</th>
+            <th>Effort</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Spawn agent on M2 from M1</td>
+            <td class="yes">✅ Working</td>
+            <td class="yes">✅ Same</td>
+            <td style="color:var(--muted)">Done</td>
+          </tr>
+          <tr>
+            <td>M2 agents visible in M1 dashboard</td>
+            <td class="yes">✅ Fixed today</td>
+            <td class="yes">✅ Same</td>
+            <td style="color:var(--muted)">Done</td>
+          </tr>
+          <tr>
+            <td>Chat message routed to M2 agent</td>
+            <td class="yes">✅ Fixed today</td>
+            <td class="yes">✅ Same</td>
+            <td style="color:var(--muted)">Done</td>
+          </tr>
+          <tr>
+            <td>Agent card appears instantly</td>
+            <td class="yes">✅ Fixed today</td>
+            <td class="yes">✅ Same</td>
+            <td style="color:var(--muted)">Done</td>
+          </tr>
+          <tr>
+            <td><strong>Context % bar on agent card</strong></td>
+            <td class="no">❌ Not shown</td>
+            <td class="yes">✅ Live bar (yellow→red)</td>
+            <td><span class="tag tag-green">2 hrs</span></td>
+          </tr>
+          <tr>
+            <td><strong>Git branch on agent card</strong></td>
+            <td class="no">❌ Not shown</td>
+            <td class="yes">✅ Shown at spawn</td>
+            <td><span class="tag tag-green">1 hr</span></td>
+          </tr>
+          <tr>
+            <td><strong>M2 terminal output on M1</strong></td>
+            <td class="no">❌ Stays on M2</td>
+            <td class="yes">✅ Streams to M1 dashboard</td>
+            <td><span class="tag tag-blue">1–2 days</span></td>
+          </tr>
+          <tr>
+            <td><strong>Two-way chat fully working</strong></td>
+            <td class="partial">⚠️ Send works, see reply on M2</td>
+            <td class="yes">✅ Reply visible on M1</td>
+            <td><span class="tag tag-blue">1 day</span></td>
+          </tr>
+          <tr>
+            <td><strong>Mobile-responsive dashboard</strong></td>
+            <td class="no">❌ Desktop only</td>
+            <td class="yes">✅ Works on phone</td>
+            <td><span class="tag tag-blue">1 day</span></td>
+          </tr>
+          <tr>
+            <td><strong>Git worktrees for parallel agents</strong></td>
+            <td class="no">❌ Agents share working dir</td>
+            <td class="yes">✅ Each agent gets own worktree</td>
+            <td><span class="tag tag-yellow">1 day</span></td>
+          </tr>
+          <tr>
+            <td><strong>Behavioral scenario evals</strong></td>
+            <td class="no">❌ No external evals</td>
+            <td class="yes">✅ Specs outside codebase</td>
+            <td><span class="tag tag-yellow">1 week</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════
+     SECTION 5 — TO-DO LIST
+══════════════════════════════════════════════════════ -->
+<section class="section" id="todo">
+  <div class="section-title"><span>✅</span> Full To-Do List — Prioritised</div>
+
+  <div class="todo-grid">
+
+    <!-- #1 -->
+    <div class="todo-card p1">
+      <div class="todo-num">1</div>
+      <h3>Context % Bar on Agent Cards</h3>
+      <p>Use <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">ModelUsage.contextWindow</code> from the Claude Agent SDK <code>onMessage</code> callback. Show a bar: green → yellow at 70% → red at 90%. High context = unstable agent — user needs to know.</p>
+      <div class="todo-tags">
+        <span class="tag tag-green">⚡ 2 hours</span>
+        <span class="tag tag-blue">mission-control.html</span>
+        <span class="tag tag-blue">agent-session.ts</span>
+        <span class="tag tag-purple">Context7 SDK docs</span>
+      </div>
+    </div>
+
+    <!-- #2 -->
+    <div class="todo-card p1">
+      <div class="todo-num">2</div>
+      <h3>Git Branch on Agent Cards</h3>
+      <p>At spawn time, run <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">git branch --show-current</code> in the project directory. Store on agent session and display on the card. Marc Nuri's dashboard shows this — it's very useful to know which branch is being modified.</p>
+      <div class="todo-tags">
+        <span class="tag tag-green">⚡ 1 hour</span>
+        <span class="tag tag-blue">agent-session.ts</span>
+        <span class="tag tag-blue">mission-control.html</span>
+        <span class="tag tag-purple">Marc Nuri blog</span>
+      </div>
+    </div>
+
+    <!-- #3 -->
+    <div class="todo-card p1">
+      <div class="todo-num">3</div>
+      <h3>Terminal Output Mirroring M2 → M1</h3>
+      <p>The #1 missing feature. M2's agent output (text_delta chunks from Claude SDK) never reaches M1's dashboard terminal. Fix: M2's hub-client forwards every chunk to M1 via WebSocket as a new <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">agent:output</code> event. M1 relays to dashboard as <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">mc:output</code>.</p>
+      <div class="todo-tags">
+        <span class="tag tag-blue">📅 1–2 days</span>
+        <span class="tag tag-blue">hub-client.ts</span>
+        <span class="tag tag-blue">websocket-server.ts</span>
+        <span class="tag tag-blue">mission-control.html</span>
+      </div>
+    </div>
+
+    <!-- #4 -->
+    <div class="todo-card p1">
+      <div class="todo-num">4</div>
+      <h3>Two-Way Chat Fully Working on M1</h3>
+      <p>Sending messages to M2 agents now works (respond proxy). But replies are only visible in M2's terminal. Once terminal mirroring (#3) is done, this is automatic — output relay makes two-way chat complete on M1.</p>
+      <div class="todo-tags">
+        <span class="tag tag-blue">📅 1 day</span>
+        <span class="tag tag-muted">depends on #3</span>
+        <span class="tag tag-blue">mission-control.ts</span>
+      </div>
+    </div>
+
+    <!-- #5 -->
+    <div class="todo-card p2">
+      <div class="todo-num">5</div>
+      <h3>Mobile-Responsive Dashboard</h3>
+      <p>Currently the dashboard only works on desktop. Marc Nuri reviews and approves agents from his phone while picking up kids from school. Responsive CSS lets you do the same — check agent status and approve tool permissions anywhere.</p>
+      <div class="todo-tags">
+        <span class="tag tag-blue">📅 1 day</span>
+        <span class="tag tag-blue">mission-control.html</span>
+        <span class="tag tag-purple">Marc Nuri blog</span>
+      </div>
+    </div>
+
+    <!-- #6 -->
+    <div class="todo-card p2">
+      <div class="todo-num">6</div>
+      <h3>Git Worktrees for Parallel Agents</h3>
+      <p>When spawning multiple agents on the same repo, they share the working directory — they'll overwrite each other's changes. Git worktrees give each agent a separate checkout of the same repo. Auto-create a worktree at spawn time, clean it up when agent finishes.</p>
+      <div class="todo-tags">
+        <span class="tag tag-blue">📅 1 day</span>
+        <span class="tag tag-blue">hub-client.ts</span>
+        <span class="tag tag-blue">agent-session.ts</span>
+        <span class="tag tag-purple">Marc Nuri blog</span>
+      </div>
+    </div>
+
+    <!-- #7 -->
+    <div class="todo-card p3">
+      <div class="todo-num">7</div>
+      <h3>Behavioral Scenario Eval System</h3>
+      <p>From StrongDM's dark factory: keep behavioral tests OUTSIDE the codebase in a separate folder agents can't see. This prevents agents from "teaching to the test." Each scenario describes what the software should do from the outside. The agent builds it; scenarios verify it actually works.</p>
+      <div class="todo-tags">
+        <span class="tag tag-yellow">📅 1 week</span>
+        <span class="tag tag-muted">long-term</span>
+        <span class="tag tag-purple">Dark Factory video</span>
+      </div>
+    </div>
+
+    <!-- #8 -->
+    <div class="todo-card p3">
+      <div class="todo-num">8</div>
+      <h3>Electron Desktop App (React UI)</h3>
+      <p>The full desktop app wrapping the Express server, with a React + shadcn/ui UI replacing mission-control.html. Already in progress (Phases 1–3 done). Remaining: React component library, React UI, production hardening.</p>
+      <div class="todo-tags">
+        <span class="tag tag-yellow">📅 2–3 weeks</span>
+        <span class="tag tag-muted">progressive migration</span>
+        <span class="tag tag-blue">electron-main.cjs</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════
+     WHERE WE ARE IN THE 5 LEVELS
+══════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="section-title"><span>🏆</span> Where PIA Sits in the Five Levels</div>
+  <div class="panel">
+    <div class="panel-body">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;">
+        <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:16px;opacity:.5">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Level 0</div>
+          <div style="font-weight:800;margin-bottom:6px">Spicy Autocomplete</div>
+          <div style="font-size:13px;color:var(--muted)">AI suggests next line. You still type everything.</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:16px;opacity:.6">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Level 1</div>
+          <div style="font-weight:800;margin-bottom:6px">Coding Intern</div>
+          <div style="font-size:13px;color:var(--muted)">AI does a scoped task. You review everything.</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:16px;opacity:.7">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Level 2</div>
+          <div style="font-weight:800;margin-bottom:6px">Junior Developer</div>
+          <div style="font-size:13px;color:var(--muted)">AI does multi-file changes. You still read all code. <strong style="color:var(--yellow)">90% of "AI-native" devs are here.</strong></div>
+        </div>
+        <div style="background:rgba(67,97,238,0.12);border:2px solid var(--blue);border-radius:12px;padding:16px;position:relative">
+          <div style="position:absolute;top:-10px;left:16px;background:var(--blue);color:#fff;font-size:11px;font-weight:800;padding:2px 10px;border-radius:10px;">YOU ARE HERE</div>
+          <div style="font-size:11px;color:var(--blue);text-transform:uppercase;margin-bottom:6px">Level 3</div>
+          <div style="font-weight:800;margin-bottom:6px">Developer as Manager</div>
+          <div style="font-size:13px;color:var(--muted)">You direct AI, review at feature/PR level. PIA is built for this — Mission Control is your orchestration layer.</div>
+        </div>
+        <div style="background:rgba(6,214,160,0.08);border:2px dashed rgba(6,214,160,0.4);border-radius:12px;padding:16px;position:relative">
+          <div style="position:absolute;top:-10px;left:16px;background:var(--green);color:#000;font-size:11px;font-weight:800;padding:2px 10px;border-radius:10px;">TARGET</div>
+          <div style="font-size:11px;color:var(--green);text-transform:uppercase;margin-bottom:6px">Level 4</div>
+          <div style="font-weight:800;margin-bottom:6px">Developer as Product Manager</div>
+          <div style="font-size:13px;color:var(--muted)">Write spec, walk away, come back and check if tests pass. Terminal mirroring + eval system gets us here.</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.02);border:1px dashed rgba(255,255,255,0.1);border-radius:12px;padding:16px;opacity:.5">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Level 5</div>
+          <div style="font-weight:800;margin-bottom:6px">Dark Factory</div>
+          <div style="font-size:13px;color:var(--muted)">Spec in, software out. No human writes or reviews code. StrongDM lives here.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+</div><!-- /wrap -->
+
+
+<!-- ══════════════════════════════════════════════════════
+     KIDS SECTION 🧒
+══════════════════════════════════════════════════════ -->
+<div class="kids-bg" id="kids">
+<div style="max-width:900px;margin:0 auto">
+
+  <div class="kids-title">🤖 What is PIA? 🤖</div>
+  <div class="kids-sub">Explained for a 6-year-old! 🌟</div>
+
+  <!-- ── THE CAST ── -->
+  <div class="kids-section-title">✨ Meet the Characters ✨</div>
+  <div class="cast">
+
+    <div class="cast-card" style="border-color:rgba(67,97,238,0.4)">
+      <span class="cast-emoji">🧠</span>
+      <div class="cast-name" style="color:#79b8ff">M1 · The Boss</div>
+      <div class="cast-role">Lives on the big computer. Tells everyone what to do. Has the big TV screen showing everything!</div>
+    </div>
+
+    <div class="cast-card" style="border-color:rgba(114,9,183,0.4)">
+      <span class="cast-emoji">💪</span>
+      <div class="cast-name" style="color:#b392f0">M2 · The Worker</div>
+      <div class="cast-role">Another computer far away. Gets the jobs from the Boss and does all the hard work!</div>
+    </div>
+
+    <div class="cast-card" style="border-color:rgba(255,209,102,0.4)">
+      <span class="cast-emoji">🤖</span>
+      <div class="cast-name" style="color:#ffd166">AI Agents · The Robots</div>
+      <div class="cast-role">Little robot helpers that live inside M2. Each one gets one job to do. They NEVER stop until it's done!</div>
+    </div>
+
+    <div class="cast-card" style="border-color:rgba(6,214,160,0.4)">
+      <span class="cast-emoji">📺</span>
+      <div class="cast-name" style="color:#06d6a0">Dashboard · The TV</div>
+      <div class="cast-role">A webpage that shows you ALL the robots working in real time. Like a mission control room at NASA! 🚀</div>
+    </div>
+
+    <div class="cast-card" style="border-color:rgba(247,37,133,0.4)">
+      <span class="cast-emoji">📡</span>
+      <div class="cast-name" style="color:#f72585">WebSocket · The Walkie-Talkie</div>
+      <div class="cast-role">The secret phone line between computers. Always ON so messages arrive instantly — no waiting!</div>
+    </div>
+
+    <div class="cast-card" style="border-color:rgba(255,160,50,0.4)">
+      <span class="cast-emoji">🛣️</span>
+      <div class="cast-name" style="color:#ffab70">Tailscale · The Secret Road</div>
+      <div class="cast-role">A private tunnel connecting all the computers safely. Like a secret underground road only YOUR computers can use!</div>
+    </div>
+
+  </div>
+
+  <!-- ── THE STORY ── -->
+  <div class="kids-section-title">📖 The Story — Step by Step</div>
+  <div class="story">
+
+    <div class="story-step">
+      <div class="story-icon" style="background:rgba(67,97,238,0.15)">🧑‍💻</div>
+      <div class="story-text">
+        <h3 style="color:#79b8ff">1. You open the Dashboard</h3>
+        <p>You open a webpage on M1 (the Boss computer). It looks like a mission control room with lots of cards showing robots and machines.</p>
+        <div class="kid-detail">It's like turning on the TV to see all your toys working! 📺</div>
+      </div>
+    </div>
+
+    <div class="story-arrow">⬇️</div>
+
+    <div class="story-step">
+      <div class="story-icon" style="background:rgba(255,209,102,0.15)">🎯</div>
+      <div class="story-text">
+        <h3 style="color:#ffd166">2. You spawn an Agent on M2</h3>
+        <p>You click a button and say "Go build something on M2!" The Boss sends a secret message through the Walkie-Talkie to M2.</p>
+        <div class="kid-detail">It's like texting your friend "hey, can you go tidy your room?" 📱</div>
+      </div>
+    </div>
+
+    <div class="story-arrow">⬇️</div>
+
+    <div class="story-step">
+      <div class="story-icon" style="background:rgba(114,9,183,0.15)">🤖</div>
+      <div class="story-text">
+        <h3 style="color:#b392f0">3. M2 wakes up a Robot</h3>
+        <p>M2 receives the message and wakes up a brand new AI robot. The robot is called Claude — it's SUPER smart and knows how to read files, write code, and run commands.</p>
+        <div class="kid-detail">It's like opening a toy box and out jumps a robot that already knows everything! 🪄</div>
+      </div>
+    </div>
+
+    <div class="story-arrow">⬇️</div>
+
+    <div class="story-step">
+      <div class="story-icon" style="background:rgba(6,214,160,0.15)">⚡</div>
+      <div class="story-text">
+        <h3 style="color:#06d6a0">4. The Robot gets to work</h3>
+        <p>The robot starts reading files, writing code, running tests. Every word it types gets sent back to M1 through the Secret Road so YOU can see it live on the Dashboard!</p>
+        <div class="kid-detail">It's like watching someone draw a picture from far away — you see every single stroke! ✏️</div>
+      </div>
+    </div>
+
+    <div class="story-arrow">⬇️</div>
+
+    <div class="story-step">
+      <div class="story-icon" style="background:rgba(247,37,133,0.15)">💬</div>
+      <div class="story-text">
+        <h3 style="color:#f72585">5. You can talk to it!</h3>
+        <p>If the robot needs help or you want to tell it something, you type in the chat box on M1. Your message travels through the Secret Road all the way to the robot on M2. The robot reads it and replies!</p>
+        <div class="kid-detail">It's like walkie-talkies but the other person is a ROBOT doing your homework! 📻🤖</div>
+      </div>
+    </div>
+
+    <div class="story-arrow">⬇️</div>
+
+    <div class="story-step">
+      <div class="story-icon" style="background:rgba(255,209,102,0.15)">🏁</div>
+      <div class="story-text">
+        <h3 style="color:#ffd166">6. Job done — Robot goes home!</h3>
+        <p>When the job is finished, the robot shows you what it made, then gets deleted. Gone! Clean slate. Next time you need something done, a fresh new robot wakes up ready to go!</p>
+        <div class="kid-detail">It's like a sandcastle — you build it, admire it, then wash it away so you can build a better one! 🏖️</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── WHAT WE'RE ADDING ── -->
+  <div class="kids-section-title">🔨 What We're Building Next</div>
+  <div class="cast" style="margin-bottom:48px">
+
+    <div class="cast-card" style="border-color:rgba(6,214,160,0.5);background:rgba(6,214,160,0.06)">
+      <span class="cast-emoji">📊</span>
+      <div class="cast-name" style="color:#06d6a0">Brain Fullness Bar</div>
+      <div class="cast-role">A little bar showing how full the robot's brain is. When it gets too full 🔴 the robot starts making mistakes!</div>
+    </div>
+
+    <div class="cast-card" style="border-color:rgba(67,97,238,0.5);background:rgba(67,97,238,0.06)">
+      <span class="cast-emoji">🌿</span>
+      <div class="cast-name" style="color:#79b8ff">Which Branch</div>
+      <div class="cast-role">Shows which "version" of the code the robot is working on. Like knowing which drawing pad the robot is using!</div>
+    </div>
+
+    <div class="cast-card" style="border-color:rgba(247,37,133,0.5);background:rgba(247,37,133,0.06)">
+      <span class="cast-emoji">📺</span>
+      <div class="cast-name" style="color:#f72585">Live TV from M2</div>
+      <div class="cast-role">Right now M2's robot output is invisible on M1. We're fixing this so you see EVERYTHING live — like watching M2 on a TV screen!</div>
+    </div>
+
+    <div class="cast-card" style="border-color:rgba(255,209,102,0.5);background:rgba(255,209,102,0.06)">
+      <span class="cast-emoji">🌳</span>
+      <div class="cast-name" style="color:#ffd166">Private Rooms</div>
+      <div class="cast-role">When two robots work on the same project they might mess up each other's work. We give each robot its own private copy — like their own toy box!</div>
+    </div>
+
+    <div class="cast-card" style="border-color:rgba(114,9,183,0.5);background:rgba(114,9,183,0.06)">
+      <span class="cast-emoji">🧙</span>
+      <div class="cast-name" style="color:#b392f0">The Boss Robot</div>
+      <div class="cast-role">A special robot that CONTROLS other robots! You tell it "build me a website" and it wakes up 5 robots and tells each one what part to build!</div>
+    </div>
+
+    <div class="cast-card" style="border-color:rgba(255,100,100,0.5);background:rgba(255,100,100,0.06)">
+      <span class="cast-emoji">📱</span>
+      <div class="cast-name" style="color:#ff9999">Works on Phone</div>
+      <div class="cast-role">Right now the dashboard only works on a big screen. Soon you can check on your robots from your phone — even at the park! 🌳</div>
+    </div>
+
+  </div>
+
+  <!-- ── FUN FACTS ── -->
+  <div class="kids-section-title">🌟 Cool Facts!</div>
+  <div class="fun-facts">
+
+    <div class="fun-fact ff-yellow">
+      <span class="ff-emoji">🤯</span>
+      <h4>90% of Claude Code was written by Claude itself!</h4>
+      <p>The robot helped build itself. That's like a toy building more toys! 🪀</p>
+    </div>
+
+    <div class="fun-fact ff-blue">
+      <span class="ff-emoji">⚡</span>
+      <h4>Messages travel in milliseconds!</h4>
+      <p>When you type a message on M1, the robot on M2 sees it almost instantly — faster than you can blink! 😲</p>
+    </div>
+
+    <div class="fun-fact ff-green">
+      <span class="ff-emoji">🌍</span>
+      <h4>3 computers, 160 GB of memory!</h4>
+      <p>M1 + M2 + M3 together have 160 gigabytes of RAM and 56 processor threads. That's like having 56 brains working at once! 🧠</p>
+    </div>
+
+    <div class="fun-fact ff-pink">
+      <span class="ff-emoji">🚀</span>
+      <h4>A robot can write code 10x faster than a human!</h4>
+      <p>What takes a human developer 2 months to write, the robot finishes in 2 days. Wild, right? 🏎️</p>
+    </div>
+
+    <div class="fun-fact ff-purple">
+      <span class="ff-emoji">🏭</span>
+      <h4>Some teams have ZERO humans writing code!</h4>
+      <p>A company called StrongDM has 3 people and NO ONE writes code. They just tell the robots what to build and check if it works! 🎮</p>
+    </div>
+
+  </div>
+
+</div>
+</div>
+
+<footer>
+  <div style="font-size:28px;margin-bottom:12px">🤖 📡 🌐</div>
+  <strong>PIA System Architecture Diagram</strong><br>
+  Generated February 2026 · Sources: Marc Nuri blog · Context7 MCP (Claude SDK docs) · Dan Shapiro Five Levels · StrongDM dark factory case study
+</footer>
+
+</body>
+</html>
