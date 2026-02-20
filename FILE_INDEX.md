@@ -130,6 +130,7 @@
 | `research/IMPLEMENTATION_SPEC.md` | **Builder's blueprint** — Fisher2050 merge spec, Google Calendar OAuth, Google Tasks sync, 3 new DB tables, 8 new API endpoints, TypeScript interfaces |
 | `research/DEVILS_ADVOCATE.md` | **Critical analysis** — 6 architectural risks, complexity risks, business contradictions, 6 immediate fixes, technique dictionary with failure modes |
 | `research/SYNC_REPORT.md` | **Knowledge sync report** — 20 gaps found, 8 new pia-book.html chapters added, outstanding items and HTML page status *(Session 12, 2026-02-20)* |
+| `research/CURRENT_STATE_AUDIT.md` | **Deep technical audit** — every src/ file read, 28 working capabilities, 7 activation priorities, what's wired vs stub *(Session 26, 2026-02-20)* |
 | `research/CODE_REPOSITORY_MAP.md` | **Complete code ecosystem map** — 26 codebases mapped, 14 with GitHub remotes, stacks, status, relation to PIA |
 | `research/TERMINAL_SEARCH_BRIEFING.md` | **Self-contained prompt for new terminal** — paste into fresh Claude to do deep repo search + produce unification plan |
 

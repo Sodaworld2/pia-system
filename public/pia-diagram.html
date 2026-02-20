@@ -481,105 +481,243 @@
      SECTION 1 — HOW IT WORKS NOW
 ══════════════════════════════════════════════════════ -->
 <section class="section" id="now">
-  <div class="section-title"><span>🔵</span> How PIA Works RIGHT NOW</div>
+  <div class="section-title"><span>🔵</span> What PIA Can Do RIGHT NOW</div>
+  <p style="color:var(--muted);font-size:13px;margin-bottom:24px">Source: CURRENT_STATE_AUDIT.md — 2026-02-20. 28 verified capabilities. Three panels: always-running, built but not wired, and needs credentials.</p>
 
-  <div class="legend">
-    <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div> Existing & working</div>
-    <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div> Running agent</div>
-    <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div> Missing / broken</div>
-  </div>
+  <style>
+    .now-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(360px,1fr)); gap:20px; }
+    .now-panel { background:var(--card); border:1px solid var(--border); border-radius:18px; overflow:hidden; }
+    .now-panel-header { padding:14px 20px; font-weight:800; font-size:15px; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--border); }
+    .now-panel-body { padding:18px 20px; display:flex; flex-direction:column; gap:10px; }
+    .now-group-label { font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); margin-top:8px; margin-bottom:2px; }
+    .now-item { display:flex; align-items:flex-start; gap:10px; font-size:13px; line-height:1.5; }
+    .now-badge { font-size:10px; font-weight:800; padding:2px 7px; border-radius:5px; white-space:nowrap; flex-shrink:0; margin-top:1px; }
+    .badge-live { background:rgba(6,214,160,0.18); color:var(--green); border:1px solid rgba(6,214,160,0.35); }
+    .badge-wire { background:rgba(255,160,50,0.18); color:#ffab70; border:1px solid rgba(255,160,50,0.35); }
+    .badge-cred { background:rgba(114,9,183,0.18); color:#b392f0; border:1px solid rgba(114,9,183,0.35); }
+    .now-item-text { flex:1; }
+    .now-item-text strong { color:var(--text); }
+    .now-item-text span { color:var(--muted); }
+    .now-wire-cost { font-size:11px; color:#ffab70; font-weight:700; margin-top:2px; }
+  </style>
 
-  <div class="split">
+  <div class="now-grid">
 
-    <!-- LEFT: machine stack -->
-    <div>
+    <!-- PANEL 1: Running at Boot -->
+    <div class="now-panel">
+      <div class="now-panel-header" style="background:rgba(6,214,160,0.07)">
+        <span style="font-size:20px">🟢</span> Running at Boot — Always On
+      </div>
+      <div class="now-panel-body">
 
-      <!-- Browser -->
-      <div class="machine browser">
-        <div class="machine-label">Browser</div>
-        <div class="machine-name">🌐 Your Dashboard (mission-control.html)</div>
-        <div class="components">
-          <div class="comp existing"><div class="dot"></div> Agent cards (name, status, cost, tokens)</div>
-          <div class="comp existing"><div class="dot"></div> Terminal output panel (local agents only)</div>
-          <div class="comp existing"><div class="dot"></div> Spawn dialog (pick machine + project)</div>
-          <div class="comp existing"><div class="dot"></div> Chat input → respond endpoint</div>
-          <div class="comp missing"><div class="dot"></div> ❌ Context % bar not shown</div>
-          <div class="comp missing"><div class="dot"></div> ❌ Git branch not shown</div>
-          <div class="comp missing"><div class="dot"></div> ❌ M2 agent output not visible here</div>
+        <div class="now-group-label">Infrastructure</div>
+        <div class="now-item">
+          <span class="now-badge badge-live">LIVE</span>
+          <div class="now-item-text"><strong>Express API Server</strong> <span>— all REST endpoints on port 3000</span></div>
         </div>
-      </div>
-
-      <div class="connector">
-        <div class="line"></div>
-        <div style="font-size:18px">⇅</div>
-        <div class="label" style="color:var(--green)">WebSocket port 3001</div>
-        <div class="line"></div>
-      </div>
-
-      <!-- M1 Hub -->
-      <div class="machine hub">
-        <div class="machine-label">Hub — M1</div>
-        <div class="machine-name">🖥️ Izzit7 · localhost:3000</div>
-        <div class="components">
-          <div class="comp existing"><div class="dot"></div> Express API (port 3000)</div>
-          <div class="comp existing"><div class="dot"></div> WebSocket Server (port 3001)</div>
-          <div class="comp existing"><div class="dot"></div> SQLite DB (machines, agents, projects)</div>
-          <div class="comp existing"><div class="dot"></div> Hub Aggregator (heartbeat monitor)</div>
-          <div class="comp existing"><div class="dot"></div> GET /api/mc/agents — now includes remote</div>
-          <div class="comp existing"><div class="dot"></div> POST respond — now proxies to M2 IP</div>
-          <div class="comp missing"><div class="dot"></div> ❌ Does NOT relay M2 agent output to dashboard</div>
+        <div class="now-item">
+          <span class="now-badge badge-live">LIVE</span>
+          <div class="now-item-text"><strong>WebSocket Server</strong> <span>— broadcasts agent output to dashboard, relays hub/spoke commands</span></div>
         </div>
-      </div>
-
-      <div class="connector">
-        <div class="line"></div>
-        <div style="font-size:18px">⇅</div>
-        <div class="label" style="color:var(--purple)">Tailscale · 100.127.165.12</div>
-        <div class="line"></div>
-      </div>
-
-      <!-- M2 Worker -->
-      <div class="machine worker">
-        <div class="machine-label">Worker — M2</div>
-        <div class="machine-name">💪 soda-monster-hunter · :3000</div>
-        <div class="components">
-          <div class="comp existing"><div class="dot"></div> Hub Client (WebSocket spoke)</div>
-          <div class="comp existing"><div class="dot"></div> Agent Session Manager</div>
-          <div class="comp agent"><div class="dot"></div> 🤖 Farcake2025 (Claude SDK running)</div>
-          <div class="comp agent"><div class="dot"></div> 🤖 Birdfountain2026 (Claude SDK running)</div>
-          <div class="comp missing"><div class="dot"></div> ❌ Agent text output stays on M2 only</div>
-          <div class="comp missing"><div class="dot"></div> ❌ No contextWindow tracking sent to hub</div>
+        <div class="now-item">
+          <span class="now-badge badge-live">LIVE</span>
+          <div class="now-item-text"><strong>SQLite Database</strong> <span>— persists agents, machines, tasks, souls, memories, sessions</span></div>
         </div>
-      </div>
+        <div class="now-item">
+          <span class="now-badge badge-live">LIVE</span>
+          <div class="now-item-text"><strong>Network Sentinel</strong> <span>— intrusion detection middleware on all routes</span></div>
+        </div>
 
+        <div class="now-group-label">Agent Control</div>
+        <div class="now-item">
+          <span class="now-badge badge-live">LIVE</span>
+          <div class="now-item-text"><strong>AgentSessionManager</strong> <span>— spawns SDK/PTY/API Claude agents, streams output to dashboard</span></div>
+        </div>
+        <div class="now-item">
+          <span class="now-badge badge-live">LIVE</span>
+          <div class="now-item-text"><strong>PromptManager</strong> <span>— tool approval routing (auto/manual/yolo/plan)</span></div>
+        </div>
+        <div class="now-item">
+          <span class="now-badge badge-live">LIVE</span>
+          <div class="now-item-text"><strong>AutonomousWorker</strong> <span>— Claude API tool-loop executor (run_command, read_file, write_file)</span></div>
+        </div>
+        <div class="now-item">
+          <span class="now-badge badge-live">LIVE</span>
+          <div class="now-item-text"><strong>Doctor</strong> <span>— auto-healer, checks system health every 60s</span></div>
+        </div>
+
+        <div class="now-group-label">Orchestration</div>
+        <div class="now-item">
+          <span class="now-badge badge-live">LIVE</span>
+          <div class="now-item-text"><strong>HeartbeatService</strong> <span>— reports CPU, memory, disk to DB every 30s</span></div>
+        </div>
+        <div class="now-item">
+          <span class="now-badge badge-live">LIVE</span>
+          <div class="now-item-text"><strong>ExecutionEngine</strong> <span>— pulls from TaskQueue, routes to AIRouter (auto-starts at boot)</span></div>
+        </div>
+        <div class="now-item">
+          <span class="now-badge badge-live">LIVE</span>
+          <div class="now-item-text"><strong>TaskQueue</strong> <span>— priority-based SQLite-backed task queue</span></div>
+        </div>
+        <div class="now-item">
+          <span class="now-badge badge-live">LIVE</span>
+          <div class="now-item-text"><strong>FisherService</strong> <span>— 5 cron jobs: standup, evening summary, Ziggi audit, Eliyahu briefing, weekly memory prune</span></div>
+        </div>
+        <div class="now-item">
+          <span class="now-badge badge-live">LIVE</span>
+          <div class="now-item-text"><strong>The Cortex</strong> <span>— fleet intelligence brain (collect + analyse intervals)</span></div>
+        </div>
+        <div class="now-item">
+          <span class="now-badge badge-live">LIVE</span>
+          <div class="now-item-text"><strong>Hub Aggregator</strong> <span>— machine registry + heartbeat aggregation from spokes (hub mode)</span></div>
+        </div>
+        <div class="now-item">
+          <span class="now-badge badge-live">LIVE</span>
+          <div class="now-item-text"><strong>Alert Monitor</strong> <span>— fires alerts when thresholds exceeded (hub mode)</span></div>
+        </div>
+        <div class="now-item">
+          <span class="now-badge badge-live">LIVE</span>
+          <div class="now-item-text"><strong>CrossMachineRelay</strong> <span>— relays messages between hub and worker machines, persists to DB</span></div>
+        </div>
+        <div class="now-item">
+          <span class="now-badge badge-live">LIVE</span>
+          <div class="now-item-text"><strong>RepoRouter</strong> <span>— registry and task routing for alive repos across machines</span></div>
+        </div>
+        <div class="now-item">
+          <span class="now-badge badge-live">LIVE</span>
+          <div class="now-item-text"><strong>Local Hub Client</strong> <span>— spoke WebSocket connecting worker machine to hub (local mode)</span></div>
+        </div>
+
+        <div class="now-group-label">Souls System</div>
+        <div class="now-item">
+          <span class="now-badge badge-live">LIVE</span>
+          <div class="now-item-text"><strong>SoulEngine</strong> <span>— loads/saves/queries agent souls (personality, goals, memories) from DB</span></div>
+        </div>
+        <div class="now-item">
+          <span class="now-badge badge-live">LIVE</span>
+          <div class="now-item-text"><strong>SoulSeeder</strong> <span>— seeds 12 default souls at boot (Fisher2050, Ziggi, Eliyahu, Tim Buc, Controller, Farcake, Andy, Wingspan, Bird Fountain, Coder Machine, Monitor, Owl)</span></div>
+        </div>
+        <div class="now-item">
+          <span class="now-badge badge-live">LIVE</span>
+          <div class="now-item-text"><strong>MemoryManager</strong> <span>— adds/retrieves/prunes memories per soul in DB (runs via SoulEngine); weekly summarization cron active</span></div>
+        </div>
+
+        <div class="now-group-label">Comms Infrastructure</div>
+        <div class="now-item">
+          <span class="now-badge badge-live">LIVE</span>
+          <div class="now-item-text"><strong>AgentBus</strong> <span>— in-process inter-agent message bus (direct + broadcast); lazy singleton, live on first use</span></div>
+        </div>
+        <div class="now-item">
+          <span class="now-badge badge-live">LIVE</span>
+          <div class="now-item-text"><strong>MQTTBroker</strong> <span>— in-process pub/sub with MQTT-style topic wildcards; lazy singleton</span></div>
+        </div>
+        <div class="now-item">
+          <span class="now-badge badge-live">LIVE</span>
+          <div class="now-item-text"><strong>WebhookManager</strong> <span>— outgoing HTTP POST callbacks to registered URLs when events fire; lazy singleton</span></div>
+        </div>
+        <div class="now-item">
+          <span class="now-badge badge-live">LIVE</span>
+          <div class="now-item-text"><strong>WhatsApp API Routes</strong> <span>— HTTP endpoints to start/stop/status/send WhatsApp (routes live; bot starts on demand via POST)</span></div>
+        </div>
+        <div class="now-item">
+          <span class="now-badge badge-live">LIVE</span>
+          <div class="now-item-text"><strong>Mission Control API</strong> <span>— REST API: spawn/list/kill/respond agents, machines, templates, settings, remote file/dir ops</span></div>
+        </div>
+
+      </div>
     </div>
 
-    <!-- RIGHT: current flow diagram -->
-    <div>
-      <div class="panel">
-        <div class="panel-header" style="background:rgba(67,97,238,0.1)">📡 Current Data Flows</div>
-        <div class="panel-body">
+    <!-- PANEL 2: Built — One Step to Activate -->
+    <div class="now-panel">
+      <div class="now-panel-header" style="background:rgba(255,160,50,0.07)">
+        <span style="font-size:20px">🟠</span> Built — One Step to Activate
+      </div>
+      <div class="now-panel-body">
+        <p style="font-size:12px;color:var(--muted);margin-bottom:6px">Code is complete. Missing only the wire-up call or an env var.</p>
 
-          <div class="flows">
-            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Working ✅</div>
-            <div class="flow-row ok"><div class="arrow">→</div><div><div>M2 → M1: <strong>machine:register</strong></div><div class="from">M2 connects and identifies itself</div></div></div>
-            <div class="flow-row ok"><div class="arrow">→</div><div><div>M2 → M1: <strong>heartbeat</strong> every 30s</div><div class="from">Keeps M2 shown as online</div></div></div>
-            <div class="flow-row ok"><div class="arrow">→</div><div><div>M1 → M2: <strong>spawn_agent</strong></div><div class="from">Dashboard spawns agent on M2</div></div></div>
-            <div class="flow-row ok"><div class="arrow">→</div><div><div>M2 → M1: <strong>agent:register</strong></div><div class="from">M2 tells M1 about new agent</div></div></div>
-            <div class="flow-row ok"><div class="arrow">→</div><div><div>M1 → Dashboard: <strong>mc:agent_spawned</strong></div><div class="from">Card appears in dashboard ✅ (just fixed)</div></div></div>
-            <div class="flow-row ok"><div class="arrow">→</div><div><div>Dashboard → M1 → M2: <strong>respond</strong></div><div class="from">Chat message proxied to M2 ✅ (just fixed)</div></div></div>
+        <div class="now-item" style="align-items:flex-start">
+          <span class="now-badge badge-wire">NEEDS WIRE</span>
+          <div class="now-item-text">
+            <strong>Discord Bot</strong> (<code style="font-size:11px;background:rgba(255,255,255,0.07);padding:1px 4px;border-radius:3px">src/comms/discord-bot.ts</code>)
+            <span> — Full Discord bot via discord.js: receives messages, splits long replies, routes to orchestrator. No Discord token env var wired and <code style="font-size:11px;background:rgba(255,255,255,0.07);padding:1px 4px;border-radius:3px">initializeCommunications()</code> is never called from index.ts.</span>
+            <div class="now-wire-cost">Activation: add DISCORD_BOT_TOKEN to config + call initializeCommunications() in startHub() — 10 lines</div>
           </div>
-
-          <div class="flows" style="margin-top:16px">
-            <div style="font-size:11px;color:var(--red);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Missing ❌</div>
-            <div class="flow-row miss"><div class="arrow">✗</div><div><div>M2 agent output → M1 dashboard</div><div class="from">text_delta chunks never leave M2's server</div></div></div>
-            <div class="flow-row miss"><div class="arrow">✗</div><div><div>contextWindow data → agent card</div><div class="from">SDK has it but PIA doesn't track it</div></div></div>
-            <div class="flow-row miss"><div class="arrow">✗</div><div><div>Git branch → agent card</div><div class="from">Never queried at spawn time</div></div></div>
-          </div>
-
         </div>
+
+        <div class="now-item" style="align-items:flex-start">
+          <span class="now-badge badge-wire">NEEDS WIRE</span>
+          <div class="now-item-text">
+            <strong>WhatsApp Bot (auto-start)</strong> (<code style="font-size:11px;background:rgba(255,255,255,0.07);padding:1px 4px;border-radius:3px">src/comms/whatsapp-bot.ts</code>)
+            <span> — Full WhatsApp bot via Baileys WebSocket: QR pairing, message receive/send, session persistence. Bot is built; user must currently POST /api/whatsapp/start manually. Not auto-started at boot.</span>
+            <div class="now-wire-cost">Activation: set PIA_WHATSAPP_ENABLED=true + call createWhatsAppBot().start() in startHub() — 3 lines</div>
+          </div>
+        </div>
+
+        <div class="now-item" style="align-items:flex-start">
+          <span class="now-badge badge-wire">NEEDS WIRE</span>
+          <div class="now-item-text">
+            <strong>comms/Orchestrator (PTY-based)</strong> (<code style="font-size:11px;background:rgba(255,255,255,0.07);padding:1px 4px;border-radius:3px">src/comms/orchestrator.ts</code>)
+            <span> — Old-style orchestrator spawning Claude via PTY, routing Discord/WhatsApp messages. Never started at boot. Superseded by the modern AgentSessionManager SDK flow; referenced only for a Discord status check.</span>
+            <div class="now-wire-cost">Note: obsolete — use AgentSessionManager instead. No new wiring recommended.</div>
+          </div>
+        </div>
+
+        <div class="now-item" style="align-items:flex-start">
+          <span class="now-badge badge-wire">NEEDS WIRE</span>
+          <div class="now-item-text">
+            <strong>PowerManager</strong> (<code style="font-size:11px;background:rgba(255,255,255,0.07);padding:1px 4px;border-radius:3px">src/services/power-manager.ts</code>)
+            <span> — Wake-on-LAN magic packet, TCP probe, SSH bootstrap for remote machines. Fully built. Not wired to any route or auto-start. No API routes call it.</span>
+            <div class="now-wire-cost">Activation: create src/api/routes/power.ts with /api/power/:machineId/wake + /bootstrap — ~80 lines</div>
+          </div>
+        </div>
+
+        <div class="now-item" style="align-items:flex-start">
+          <span class="now-badge badge-wire">NEEDS WIRE</span>
+          <div class="now-item-text">
+            <strong>comms/index.ts initializeCommunications</strong> (<code style="font-size:11px;background:rgba(255,255,255,0.07);padding:1px 4px;border-radius:3px">src/comms/index.ts</code>)
+            <span> — Wires Discord and WhatsApp together into the comms Orchestrator. Never imported or called from src/index.ts. Must be called with Discord token + WhatsApp enabled flag.</span>
+            <div class="now-wire-cost">Activation: import and call initializeCommunications() in startHub() — 1 import + 1 call</div>
+          </div>
+        </div>
+
       </div>
     </div>
+
+    <!-- PANEL 3: Needs External Credentials -->
+    <div class="now-panel">
+      <div class="now-panel-header" style="background:rgba(114,9,183,0.07)">
+        <span style="font-size:20px">🔑</span> Needs External Credentials
+      </div>
+      <div class="now-panel-body">
+        <p style="font-size:12px;color:var(--muted);margin-bottom:6px">Code is ready. Nothing runs until these are supplied.</p>
+
+        <div class="now-item" style="align-items:flex-start">
+          <span class="now-badge badge-cred">KEY</span>
+          <div class="now-item-text">
+            <strong>ANTHROPIC_API_KEY</strong>
+            <span> — Required for everything AI: all SDK agent spawns from Mission Control, all 4 FisherService cron jobs (standup, summary, Ziggi, Eliyahu), all AutonomousWorker runs. Without this, agents return error messages silently. The single highest-leverage action — set this first.</span>
+          </div>
+        </div>
+
+        <div class="now-item" style="align-items:flex-start">
+          <span class="now-badge badge-cred">KEY</span>
+          <div class="now-item-text">
+            <strong>Discord Bot Token</strong>
+            <span> — Passed as <code style="font-size:11px;background:rgba(255,255,255,0.07);padding:1px 4px;border-radius:3px">discordToken</code> to <code style="font-size:11px;background:rgba(255,255,255,0.07);padding:1px 4px;border-radius:3px">createDiscordBot()</code>. No env var currently defined in config.ts. Discord bot is fully built and waiting.</span>
+          </div>
+        </div>
+
+        <div class="now-item" style="align-items:flex-start">
+          <span class="now-badge badge-cred">SCAN</span>
+          <div class="now-item-text">
+            <strong>WhatsApp QR Scan</strong>
+            <span> — No API key needed. Uses Baileys WebSocket with QR pairing. First run requires physical scan with a real WhatsApp phone. Session is persisted to <code style="font-size:11px;background:rgba(255,255,255,0.07);padding:1px 4px;border-radius:3px">data/whatsapp-session/</code> — after first scan, auto-reconnects.</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
   </div>
 </section>
 
@@ -923,6 +1061,24 @@
             <td class="no">❌ Sessions not archived</td>
             <td class="yes">✅ Session → Tim Buc → Records → Eliyahu</td>
             <td><span class="tag tag-blue">2–3 days</span></td>
+          </tr>
+          <tr>
+            <td><strong>ExecutionEngine task processing</strong></td>
+            <td class="partial">⚠️ Built but not started (autoStart=false, tasks accumulate)</td>
+            <td class="yes">✅ Auto-starts at boot — initExecutionEngine({ autoStart: true })</td>
+            <td style="color:var(--muted)">Done (1-line fix applied)</td>
+          </tr>
+          <tr>
+            <td><strong>Memory summarization for souls</strong></td>
+            <td class="no">❌ Memories accumulate forever — no pruning job</td>
+            <td class="yes">✅ Weekly cron (3am Sunday) summarizes all active souls via MemoryManager</td>
+            <td style="color:var(--muted)">Done (added to FisherService)</td>
+          </tr>
+          <tr>
+            <td><strong>Discord bot activation</strong></td>
+            <td class="no">❌ Fully built but orphaned — initializeCommunications() never called</td>
+            <td class="yes">✅ Wire: add DISCORD_BOT_TOKEN + call initializeCommunications() in startHub()</td>
+            <td><span class="tag tag-green">10 lines</span></td>
           </tr>
         </tbody>
       </table>

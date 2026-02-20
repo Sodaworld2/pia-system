@@ -77,10 +77,10 @@ async function startHub(): Promise<void> {
   const heartbeat = getHeartbeatService();
   heartbeat.start(30000); // Every 30 seconds
 
-  // Start Execution Engine (but don't auto-process - user starts it)
-  logger.info('Initializing Execution Engine...');
-  const { getExecutionEngine } = await import('./orchestrator/execution-engine.js');
-  getExecutionEngine(); // Initialize but don't start - user controls via API
+  // Start Execution Engine
+  logger.info('Starting Execution Engine...');
+  const { initExecutionEngine } = await import('./orchestrator/execution-engine.js');
+  initExecutionEngine({ autoStart: true });
 
   // Start Doctor (auto-healing)
   logger.info('Starting Doctor (auto-healer)...');

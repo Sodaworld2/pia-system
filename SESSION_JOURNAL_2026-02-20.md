@@ -1673,3 +1673,220 @@ Documentation/visual only. No backend changes.
 
 ### Desktop App Impact
 Dependency fix only. Fisher-service.ts now compiles and starts. No new API or WebSocket changes.
+
+---
+
+## Session N: Cross-System Knowledge Review — Is Discovered Work Useful?
+
+### Context
+Full review of all journals (Feb 17–20) + DAOV1 docs + M2 file inventory. No code written this session — pure intelligence gathering. Goal: assess whether work discovered across DAOV1, PIA, and M2 is of value to any agent or builder in the ecosystem, and record findings so nothing gets lost.
+
+---
+
+### What Was Found
+
+#### 1. DAOV1 AI Mentor System — Large, Mostly Unknown to PIA Agents
+All of the following exists in `C:\Users\mic\OneDrive\Documents\GitHub\DAOV1\` and is production-grade but under-connected to the rest of the ecosystem:
+
+| Component | Location | What It Does |
+|---|---|---|
+| `AIMentorPanel.tsx` | `components/` | Full chat UI: speech recognition, persona selector, image gen placeholder, i18n |
+| `AIMentorWidget.tsx` | `components/` | Floating trigger button (bottom-right, pulse animation) |
+| `AIMentorIntake.tsx` | `components/` | Learning style intake: visual / oral / kinesthetic + Visionary / Builder / Diplomat |
+| `useAIMentor.ts` | `hooks/` | Central hook: UUID sessions, persona routing, step-based coaching, Gemini API |
+| `coaching_content.ts` | `coaching/` | 18 coaching sets (6 wizard steps × 3 learning styles) |
+| `backend/src/ai/` | 8 files | Full AI brain: personas, classifier, router (multi-model waterfall), RAG, memory, cost-guard |
+| `backend/src/modules/coach.ts` | `modules/` | OKR tracking, milestone planning, strengths assessment, performance coaching |
+| `backend/src/routes/brain.ts` | `routes/` | `/api/brain/chat`, `/api/brain/classify`, `/api/brain/personas` endpoints |
+| `backend/mentor_chats.db` | `backend/` | 589KB of real conversation history (M1 only) |
+| `backend/backups/` | 21 files | Timestamped DB snapshots Nov–Dec 2025 |
+| `docs/AI_MENTOR_NEXT_STEPS.md` | `docs/` | Production roadmap: 6 work areas, streaming, memory, voice, images, bubble-scope |
+| `docs/PIA_INSIGHTS_ANALYSIS.md` | `docs/` | 7 PIA architectural recommendations mapped to DAOV1 gaps with effort/impact ratings |
+| `dao-foundation-files/research/RESEARCH_AI_MENTOR_KNOWLEDGE.md` | PIA repo | 1,489 lines — 85+ academic/industry refs on RAG architecture, chunking, hybrid search |
+
+**M2 confirmation:** DAOV1 on M2 is at the same git commit as M1 (post-pull). No unique mentor data on M2. Live `mentor_chats.db` lives on M1 only.
+
+#### 2. DAOV1 System Specification — 35% Complete
+Per `docs/SESSION_JOURNAL.md` (DAOV1), the full system spec is ~35% done. 22 planning docs exist but most are vision/UX only. Missing: database schemas per module, API contracts, state machines, notification logic, AI module programming specs, security model, inter-module comms, integration specs with Farcake/Manfred/PIA/Sheba, deployment architecture.
+
+3 production sibling repos mapped with massive reusable infrastructure:
+- **SodaWorld** — email (Resend+SendGrid dual), 58+ notification types, FCM push, AI/bot system, gamification, 140+ React hooks
+- **SodaLabs** — 7 email templates, Google Calendar OAuth2, Mux video, reminder service
+- **RiseAtlantisClientPortal** — full analytics, multi-tenant admin, bulk invite system, 3-tier RBAC, branding system
+
+#### 3. PIA System — More Built Than Anyone Realised
+Session 12 audit (earlier today) found significant infrastructure already in place that agents were not referencing:
+- Soul engine complete (`soul-engine.ts`, `memory-manager.ts`, `seed-souls.ts`)
+- Task queue complete (`task-queue.ts`, priority/blocking, full REST API)
+- Agent bus complete (`agent-bus.ts` — in-memory pub/sub)
+- Fisher2050 previously ran as separate process (port 3002, disconnected DB) — **now fixed**, merged into main via `fisher-service.ts`
+- WhatsApp bot, Discord bot, MQTT broker all exist but not yet wired
+
+---
+
+### Is This Work Useful? — Assessment by Recipient
+
+#### For Tim Buc (Archivist agent — not yet built)
+**High value.** The DAOV1 `mentor_chats.db` and 21 backup snapshots are exactly the kind of session records Tim Buc is designed to file. Once Tim Buc exists, DAOV1 conversation logs should be fed through his pipeline → Agent Records DB → Eliyahu intelligence summaries. The 18 coaching sets in `coaching_content.ts` are pre-built training material for Tim Buc to index.
+
+#### For Eliyahu (Intelligence agent — not yet built)
+**High value.** `docs/PIA_INSIGHTS_ANALYSIS.md` is exactly the kind of cross-system intelligence Eliyahu should produce and maintain. It maps PIA patterns to DAOV1 gaps with effort/impact ratings. When Eliyahu is built, this document is a template for the kind of briefing notes he should generate daily.
+
+#### For Fisher2050 (Operations — now merged into main process)
+**Medium value.** The `RESEARCH_AI_MENTOR_KNOWLEDGE.md` (85+ refs on RAG/chunking) contains actionable specs for future tasks Fisher could schedule. Specifically: the RAG implementation task for DAOV1's AI mentor is well-enough specified to be a schedulable Fisher2050 task today.
+
+#### For Farcake (Research agent — on M3)
+**High value.** The 3 sibling repos (SodaWorld, SodaLabs, RiseAtlantis) and their reusable infrastructure are exactly the kind of cross-repo research Farcake should be cataloguing. The fact that DAOV1 needs email, notifications, calendar, and analytics — all of which exist battle-tested in sibling repos — is a prime research task Farcake could deliver on.
+
+#### For Andy (Editorial — on M3)
+**Low-medium value now.** The AI mentor coaching content (`coaching_content.ts`, 18 sets) has gaps — only the tokenomics step is fully written per `AI_MENTOR_NEXT_STEPS.md`. The other 5 steps need content written. That is an Andy task (writing in Mic's voice).
+
+#### For Any Agent Building DAOV1
+**Very high value.** The gap analysis and sibling repo map means no one should rebuild what already exists. Before writing any new code for DAOV1's email, notifications, calendar, or analytics — read what SodaWorld and SodaLabs already have. The DAOV1 `backend/src/ai/` layer (8 files, multi-model router, RAG, cost-guard) is production-grade and should be treated as the foundation — not rebuilt.
+
+#### For the Electron Desktop App (future React UI)
+**High value.** `docs/PIA_INSIGHTS_ANALYSIS.md` lists 7 specific PIA patterns that the DAO mentor needs: session persistence, cost waterfall/multi-model routing, personas-as-agents, DAO-spaces, mentor activity dashboard, automatic RAG, and security enforcement via middleware. The React UI team needs to know these exist as infrastructure requirements, not just features.
+
+---
+
+### Key Cross-Pollination Opportunities (Immediate)
+
+| Opportunity | From | To | Effort |
+|---|---|---|---|
+| Enforce AI costs via middleware (not prompts) | PIA cost-guard pattern | DAOV1 brain router | Low — pattern is documented in `cost-guard.ts`, just copy |
+| Session persistence: save on end, reload on start | PIA agent output persistence | DAOV1 `useAIMentor` hook | Low — `agent_output_snapshots` pattern already proven in PIA |
+| Feed DAOV1 `mentor_chats.db` into Tim Buc pipeline | DAOV1 | PIA Agent Records | Medium — depends on Tim Buc being built first |
+| Copy email templates from SodaLabs for DAOV1 | SodaLabs | DAOV1 Legal module | Low — templates exist, just needs route wiring |
+| Copy notification types from SodaWorld for DAOV1 | SodaWorld | DAOV1 Community module | Medium — 58 types, needs mapping to DAO events |
+| Andy writes missing coaching content (5 steps) | — | DAOV1 `coaching_content.ts` | Low — well-specified task, Andy's core job |
+| Farcake catalogues sibling repo reuse map | — | DAOV1 build planning | Medium — Farcake research task |
+
+---
+
+### What Agents Need to Know Going Forward
+
+1. **Don't re-research what's been found.** The sibling repo map (SodaWorld, SodaLabs, RiseAtlantis) is complete. Start from the existing code — file paths documented above.
+
+2. **DAOV1 AI brain is production-grade.** The `/api/brain/` routes are live. Any agent building DAO features should route through `brain.ts`, not create new Gemini API calls from scratch.
+
+3. **M2's DAOV1 is in sync.** No divergence. Both machines are at `847bf5d` post-pull.
+
+4. **The real gap is specification, not code.** DAOV1 is 35% specified. The bottleneck for Phase C (building) is completing PRD + architecture docs per module. Priority: Coach module (maps directly to AI mentor) → Legal module (agreements have the most user-facing urgency per VISION_FEEDBACK_DOC).
+
+5. **PIA soul engine, task queue, and agent bus are already built** and can be used now. Agents building new features should check these exist before designing new infrastructure.
+
+6. **Fisher2050 is now merged into main PIA process** (port 3002 architecture risk resolved). Don't treat it as a separate service.
+
+---
+
+### Files Checked / Verified This Session
+
+| File | Machine | Status |
+|---|---|---|
+| `C:\Users\mic\OneDrive\Documents\GitHub\DAOV1` (entire repo) | M1 | Up to date at `847bf5d` after pull |
+| `C:\Users\User\Documents\GitHub\DAOV1` | M2 | In sync with M1 — same commit, same files |
+| `backend/mentor_chats.db` (589KB) | M1 only | Live conversation data — not on M2 |
+| `backend/backups/` (21 files) | M1 only | Nov–Dec 2025 DB snapshots |
+| `dao-foundation-files/research/RESEARCH_AI_MENTOR_KNOWLEDGE.md` | PIA repo | 1,489 lines, 85+ RAG/chunking references |
+| All SESSION_JOURNALs (Feb 17–20) | PIA repo | Fully read and synthesised |
+| `docs/PIA_INSIGHTS_ANALYSIS.md` | DAOV1 | 7 cross-system recommendations documented |
+
+### Desktop App Impact
+No code changes this session. Cross-pollination opportunities identified will require React UI additions: mentor activity dashboard, DAO-space isolation per community, agent inbox view for mentor conversation history.
+
+---
+
+## Session 26: Deep Technical Audit — Current State Inventory
+
+### Context
+Pre-feature-addition audit of the entire PIA codebase. Read every file in `src/comms/`, `src/orchestrator/`, `src/services/`, `src/souls/`, plus `src/index.ts` and `src/api/routes/mission-control.ts`. Goal: produce an accurate "what is actually built and working TODAY" inventory before adding more features.
+
+### Changes
+
+- **New file**: `research/CURRENT_STATE_AUDIT.md` — full audit document with: executive summary, what is running at boot, what is built but not wired, credential requirements, real capability list (28 items), real gap list (10 items), recommended activation priority order (7 items).
+
+### Files Changed
+
+| File | Change |
+|---|---|
+| `research/CURRENT_STATE_AUDIT.md` | **NEW** — Deep technical audit of all comms, orchestrator, services, souls subsystems |
+
+### Key Audit Findings
+
+**What is definitely running at boot (hub mode):**
+- AgentSessionManager, PromptManager, Mission Control API, WebSocket server, SQLite DB
+- HeartbeatService (30s interval), Doctor (60s interval), FisherService (4 cron jobs)
+- SoulEngine + SoulSeeder (12 personalities seeded at boot)
+- CrossMachineRelay, RepoRouter (singletons initialized)
+- AgentBus, MQTTBroker, WebhookManager (lazy singletons — active on first call)
+- AutonomousWorker (callable via FisherService cron + `/api/orchestrator`)
+- TaskQueue (SQLite-backed, always ready)
+- The Cortex (fleet intelligence, 60s/120s intervals)
+
+**What is built but NOT wired at boot:**
+- Discord bot — needs `discordToken` + `initializeCommunications()` called in `startHub()`
+- WhatsApp bot — API routes exist, bot not auto-started (user must POST `/api/whatsapp/start`)
+- ExecutionEngine active loop — initialized but `.start()` never called (autoStart=false)
+- PowerManager (WOL/SSH bootstrap) — fully coded, zero API routes expose it
+
+**Single highest-leverage fix:**
+- Set `ANTHROPIC_API_KEY` in `.env` — activates all FisherService crons, all SDK agent spawns, all autonomous tasks. Zero code changes.
+
+**Second highest-leverage fix:**
+- Change `getExecutionEngine()` to `initExecutionEngine({ autoStart: true })` in `startHub()` — activates the task queue processing loop.
+
+### Desktop App Impact
+Audit is documentation only — no code changes. The React UI will eventually need to surface: ExecutionEngine start/stop controls, PowerManager wake/bootstrap UI, Discord/WhatsApp bot status panel, soul memory stats. All additive.
+
+---
+
+## Session 27: ExecutionEngine Auto-Start + Weekly Memory Summarization
+
+### Changes
+
+Based on the CURRENT_STATE_AUDIT.md findings, applied two activation fixes to existing built code:
+
+**Fix 1 — ExecutionEngine now auto-starts at boot** (`src/index.ts`):
+- Changed `getExecutionEngine()` (initialize only, never start) → `initExecutionEngine({ autoStart: true })`
+- TaskQueue now processes queued tasks automatically. Previously tasks accumulated but nothing ran them.
+- Impact: FisherService can now create tasks and they will actually execute.
+
+**Fix 2 — Weekly memory summarization added to FisherService** (`src/services/fisher-service.ts`):
+- Added 5th cron job: `0 3 * * 0` (3am Sunday) — calls `getSoulEngine().listSouls()` then `summarizeOldMemories()` for each
+- Added `memoryCron` to `FisherServiceConfig` interface and constructor defaults
+- Prevents soul context window bloat as memories accumulate over weeks/months
+- FisherService now manages 5 cron jobs (was 4)
+
+TypeScript compiles clean after both changes.
+
+### Files Changed
+
+| File | Change |
+|------|--------|
+| `src/index.ts` | `getExecutionEngine()` → `initExecutionEngine({ autoStart: true })` |
+| `src/services/fisher-service.ts` | Added `memoryCron` config + weekly memory summarization cron job |
+
+### Desktop App Impact
+ExecutionEngine start/stop is now automatic — no user action required. The React UI's "start engine" button (if built) would be redundant. Memory summarization is fully automatic — no UI required.
+
+---
+
+## Session 28: pia-diagram.html Updated to Reflect Real Current State (Audit)
+
+### Changes
+- **Updated `#now` section** in `public/pia-diagram.html`: replaced the old simplified machine-stack view (M1/M2 split with "missing" items) with a three-panel layout sourced directly from `research/CURRENT_STATE_AUDIT.md`
+  - Panel 1 "Running at Boot — Always On": 25 items with green LIVE badges, grouped by Infrastructure / Agent Control / Orchestration / Souls System / Comms Infrastructure. Includes the corrected ExecutionEngine status (now auto-starts) and MemoryManager (weekly prune cron active).
+  - Panel 2 "Built — One Step to Activate": 5 items with orange NEEDS WIRE badges — Discord Bot, WhatsApp Bot (auto-start), comms/Orchestrator (PTY, noted as obsolete), PowerManager, and comms/index.ts initializeCommunications. Each includes what's missing and the activation cost (lines of code).
+  - Panel 3 "Needs External Credentials": 3 items with purple KEY/SCAN badges — ANTHROPIC_API_KEY (highest priority), Discord Bot Token, WhatsApp QR Scan.
+- **Added 3 new rows** to the `#comparison` table (Feature Comparison — Now vs After):
+  - ExecutionEngine task processing (built but not started → now auto-starts, 1-line fix applied)
+  - Memory summarization for souls (accumulating forever → now weekly pruned via FisherService)
+  - Discord bot activation (built but orphaned → activation known, 10 lines)
+
+### Files Changed
+| File | Change |
+|---|---|
+| `public/pia-diagram.html` | `#now` section replaced with audit-accurate 3-panel layout; 3 new rows added to `#comparison` table |
+
+### Desktop App Impact
+No functional code changed — HTML diagram only. The React UI port of this page should adopt the same three-panel (Live / Needs Wire / Needs Creds) structure when built.

@@ -29,6 +29,7 @@ export interface FisherServiceConfig {
   eveningCron: string;      // default: '0 18 * * 1-5' (6pm weekdays)
   ziggiCron: string;        // default: '0 2 * * *'    (2am daily)
   eliyahuCron: string;      // default: '0 6 * * *'    (6am daily)
+  memoryCron: string;       // default: '0 3 * * 0'    (3am Sundays — weekly memory prune)
   timezone: string;         // default: 'Asia/Jerusalem'
   maxBudgetPerJob: number;  // default: 1.0
   model: string;            // default: 'claude-sonnet-4-5-20250929'
@@ -49,6 +50,7 @@ export class FisherService {
       eveningCron:   config?.eveningCron   ?? '0 18 * * 1-5',
       ziggiCron:     config?.ziggiCron     ?? '0 2 * * *',
       eliyahuCron:   config?.eliyahuCron   ?? '0 6 * * *',
+      memoryCron:    config?.memoryCron    ?? '0 3 * * 0',
       timezone:      config?.timezone      ?? 'Asia/Jerusalem',
       maxBudgetPerJob: config?.maxBudgetPerJob ?? 1.0,
       model:         config?.model         ?? 'claude-sonnet-4-5-20250929',
@@ -95,10 +97,32 @@ export class FisherService {
       () => this.buildEliyahuPrompt(),
     );
 
+    // Weekly memory summarization — prevents soul context window bloat
+    const memoryCronJob = cron.schedule(
+      this.config.memoryCron,
+      async () => {
+        logger.info('[FisherService] Running weekly memory summarization for all souls');
+        try {
+          const { getSoulEngine } = await import('../souls/soul-engine.js');
+          const engine = getSoulEngine();
+          const souls = engine.listSouls();
+          for (const soul of souls) {
+            await engine.getMemoryManager()?.summarizeOldMemories?.(soul.id);
+          }
+          logger.info(`[FisherService] Memory summarization complete for ${souls.length} souls`);
+        } catch (err) {
+          logger.error(`[FisherService] Memory summarization failed: ${err}`);
+        }
+      },
+      { timezone: this.config.timezone },
+    );
+    this.jobs.push(memoryCronJob);
+    logger.info(`[FisherService] Scheduled: Weekly Memory Summarization (${this.config.memoryCron})`);
+
     // Subscribe to AgentBus task:completed events
     this.subscribeToTaskCompletions();
 
-    logger.info('FisherService started — 4 cron jobs scheduled');
+    logger.info('FisherService started — 5 cron jobs scheduled');
   }
 
   /**
