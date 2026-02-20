@@ -1302,6 +1302,20 @@
       <div class="prompt-list" id="promptList"></div>
     </div>
 
+    <!-- Fisher2050 Scheduler Panel -->
+    <div class="prompt-panel" id="fisherPanel" style="margin-top:8px;">
+      <div class="panel-header" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>Fisher2050 Scheduler</span>
+        <span id="fisherStatus" style="font-size:11px;color:#3fb950;">● active</span>
+      </div>
+      <div id="fisherJobs" style="padding:8px 0;font-size:12px;"></div>
+      <div style="padding:4px 8px 8px;display:flex;gap:6px;">
+        <button class="btn ghost" style="font-size:11px;padding:4px 8px;" onclick="fisherTrigger('standup')">Standup</button>
+        <button class="btn ghost" style="font-size:11px;padding:4px 8px;" onclick="fisherTrigger('summary')">Summary</button>
+        <button class="btn ghost" style="font-size:11px;padding:4px 8px;" onclick="fisherPrompt()">Custom</button>
+      </div>
+    </div>
+
   </div>
 
   <!-- SPAWN MODAL -->
@@ -2830,6 +2844,53 @@ async function killErrors() {
   renderAll();
 }
 
+// ── FISHER2050 PANEL ──
+async function fetchFisherStatus() {
+  try {
+    const data = await api('/api/fisher/status');
+    const statusEl = document.getElementById('fisherStatus');
+    const jobsEl = document.getElementById('fisherJobs');
+    if (!statusEl || !jobsEl) return;
+
+    statusEl.textContent = data.running ? '● active' : '○ stopped';
+    statusEl.style.color = data.running ? '#3fb950' : '#f85149';
+
+    const rows = Object.entries(data.jobs || {}).map(([key, job]) => {
+      const j = job;
+      const last = j.lastRun ? new Date(j.lastRun).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '—';
+      return `<div style="display:flex;justify-content:space-between;padding:3px 8px;border-bottom:1px solid #21262d;">
+        <span style="color:#c9d1d9;">${esc(j.label)}</span>
+        <span style="color:#8b949e;font-family:monospace;">${esc(last)}</span>
+      </div>`;
+    });
+    jobsEl.innerHTML = rows.join('') || '<div style="padding:8px;color:#484f58;">Not started</div>';
+  } catch (e) {
+    const jobsEl = document.getElementById('fisherJobs');
+    if (jobsEl) jobsEl.innerHTML = '<div style="padding:8px;color:#484f58;">Service offline</div>';
+  }
+}
+
+async function fisherTrigger(job) {
+  try {
+    await api('/api/fisher/run', { method: 'POST', body: JSON.stringify({ job }) });
+    showToast(`Fisher2050 ${job} triggered`);
+    await fetchFisherStatus();
+  } catch (e) {
+    showToast(`Fisher trigger failed: ${e.message}`, true);
+  }
+}
+
+async function fisherPrompt() {
+  const prompt = window.prompt('Enter a custom prompt for Fisher2050:');
+  if (!prompt) return;
+  try {
+    const data = await api('/api/fisher/run', { method: 'POST', body: JSON.stringify({ prompt }) });
+    showToast(`Fisher2050 task queued (${data.taskId || '?'})`);
+  } catch (e) {
+    showToast(`Fisher run failed: ${e.message}`, true);
+  }
+}
+
 async function openSpawnModal() {
   document.getElementById('spawnModal').classList.add('visible');
   if (selectedMachine) {
@@ -3645,6 +3706,9 @@ async function init() {
     <div class="term-line system">Click a machine or "+ Spawn Agent" to begin.</div>
   `;
 
+  // Initial Fisher status load
+  fetchFisherStatus();
+
   // Refresh agents every 5s
   setInterval(async () => {
     await fetchAgents();
@@ -3659,6 +3723,9 @@ async function init() {
 
   // Refresh timestamps
   setInterval(() => renderPrompts(), 10000);
+
+  // Refresh Fisher status every 30s
+  setInterval(() => fetchFisherStatus(), 30000);
 }
 
 init();
