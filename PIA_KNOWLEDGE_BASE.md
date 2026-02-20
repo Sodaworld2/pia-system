@@ -45,7 +45,8 @@ Plain-English definitions of every PIA-specific term.
 | **Cross-Machine Relay** | The system (`src/comms/cross-machine.ts`) that routes messages between machines via WebSocket, Tailscale, ngrok, Discord, or REST API. |
 | **MQTT Broker** | A built-in publish/subscribe message broker (`src/comms/mqtt-broker.ts`) with topic hierarchy (`pia/machine/event`). Good for telemetry streaming. |
 | **Machine Message Board** | A persistent messaging system between machines, backed by SQLite. Machines can send messages to each other that survive restarts. |
-| **Agent Bus** | Inter-agent messaging system for agents to communicate with each other within PIA. |
+| **AgentBus** | In-memory pub/sub messaging between agents (`src/comms/agent-bus.ts`). Real-time events only — messages are LOST on restart. Use only when BOTH agents are running simultaneously. Contrast with `agent_messages` table. |
+| **agent_messages table** | Persistent async inbox per agent, backed by SQLite. Survives restarts. Used to leave a message for an agent that is currently offline; SoulEngine injects unread messages into context at next spawn. Needs TTL and inbox size limit before production deployment. |
 | **Heartbeat** | A "still alive" signal sent every 30 seconds from workers to the hub. If 3 heartbeats are missed (90 seconds), the hub marks the worker as offline. |
 
 ### Development Terms
@@ -56,6 +57,32 @@ Plain-English definitions of every PIA-specific term.
 | **File Index** | The `FILE_INDEX.md` file that catalogs every `.md` and `.html` file in the repository. Must be updated when files are created or deleted. |
 | **Electron Paths** | A centralized path resolution module (`src/electron-paths.ts`) that returns the correct file paths whether PIA is running as CLI (`npm run dev`) or as a packaged Electron desktop app. |
 | **Context7** | An MCP server that provides live, up-to-date documentation for any library. Used to audit PIA's dependencies and find best practices. |
+
+### Agent Ecosystem Terms (Added Feb 2026)
+
+| Term | What It Means |
+|------|---------------|
+| **Tim Buc** | The librarian archivist agent. Wakes (ephemeral) every time any agent session ends, reviews the raw Claude SDK logs, sorts by project/agent/type/date, and files everything to the Records DB. Named and invented in the 2026-02-20 planning session. Without Tim Buc, session logs sit unread. With Tim Buc, every session becomes institutional knowledge. |
+| **Ephemeral Agent** | An agent that does not run continuously. It is spawned when a trigger fires, executes its task, and terminates. Its soul is stored on disk and injected fresh at each spawn — making it the same agent every time, but costing zero compute at idle. |
+| **Calendar-Triggered Spawn** | Instead of cron jobs baked in code, Fisher2050 writes calendar entries that carry agent name, task, context, and machine preference. PIA watches the calendar; at trigger time it checks which machine is available and spawns the agent there. Editable by non-technical people, context is explicit, no code changes needed to schedule new work. |
+| **Agent Records** | The SQLite records database on M1 storing every Claude SDK session log — full message history, tool calls, reasoning steps, tokens used, context % per step, cost (total_cost_usd), and files consumed vs produced. Tim Buc writes here; Eliyahu reads here. |
+| **Soul System** | Every agent has a soul: a JSON/markdown specification injected into the Claude system prompt at every session start. Contains seven layers — Identity, Personality, Goals, Relationships, Rules, Memory, Schedule. What makes Fisher2050 recognisable across months of sessions, not just "the project management AI." |
+| **Agent Automation Profile** | The complete operational spec for an agent: Soul, Trigger, Machine, Input (what to read at startup), Task, Output, Reports To, Archives To, On Complete. Writing this spec for each agent is what makes the system run automatically. |
+| **Queue System** | Fisher2050 produces jobs into a queue; M3 specialist agents consume them one at a time (M3 can only run one agent at a time). Fisher manages machine capacity, books time slots, handles overruns, re-schedules if a machine goes offline. |
+| **Producer-Consumer Pattern** | The architectural pattern underlying the Queue System. Fisher2050 is the producer (creates jobs). Farcake, Andy, Wingspan are consumers (pick up and execute jobs). Decouples scheduling from execution. |
+| **Coder Machine** | A planned specialist agent on M3. Receives a spec, implements it in an isolated git worktree, submits a PR. Pure execution — no management, no decisions beyond the code. |
+| **Dark Factory** | Level 5 in the "Five Levels of Vibe Coding" framework. Spec in → working software out. No human writes or reviews code. StrongDM operates at this level with 3 engineers. PIA is the infrastructure for reaching this level. |
+
+### New Terms (Added Feb 2026 — Sessions 6–16)
+
+| Term | What It Means |
+|------|---------------|
+| **FisherService** | A merged class that runs Fisher2050's cron scheduling (9am standup, 6pm summary, 2am Ziggi, 6am Eliyahu) inside the PIA main process. **BUILT** — `src/services/fisher-service.ts` created Session 21, wired into `src/index.ts`. `node-cron` installed. Port 3002 sidecar still exists but is superseded. |
+| **CalendarWatcher** | A service (`src/services/calendar-watcher.ts` — designed, not built) that polls Google Calendar every 5 minutes, reads structured calendar entries written by Fisher2050, and triggers PIA agent spawns at event time. Requires Google OAuth. Local SQLite fallback recommended first. |
+| **Soul Seeding** | The process of loading soul definitions (personality files from `src/souls/personalities/`) into the SQLite `souls` table at startup via `src/souls/seed-souls.ts`. The soul engine cannot inject personalities unless they are seeded first. |
+| **RAG** | Retrieval-Augmented Generation — a pattern where, instead of loading all documents into context, a vector store or semantic search retrieves only the most relevant chunks. PIA does not yet have a RAG layer. This is the missing piece between Tim Buc's growing Records DB and Eliyahu's ability to synthesise across months of sessions without hitting context limits. |
+| **V1.0 Definition** | The concept of having a hard, committed finish line — a specific set of N items that, when working, means the system is useful daily without babysitting. Without this, roadmap scope creep is guaranteed. Currently missing from PIA; creating `V1_DEFINITION.md` is the #1 recommended immediate fix from the Devil's Advocate analysis. |
+| **GumballCMS** | A WhatsApp-first publishing platform built by SodaLabs (`sodalabs/GumballCMS/`). Sits at the end of all creative pipelines (Andy → GumballCMS, Bird Fountain → GumballCMS). Also the planned WhatsApp inbound bridge: you text GumballCMS → routes to Fisher2050's inbox. Full codebase exists; integration into PIA agent pipeline is pending. |
 
 ### DAO Terms (Separate Project)
 
@@ -211,7 +238,7 @@ His dashboard (shown in YouTube demo) also displays: project name, initial promp
 | **Browser Controller** | `src/browser-controller/controller.ts`, `gemini-vision.ts`, `types.ts` | Playwright + Gemini Vision: screenshot pages, Gemini analyzes them, decides next action, Playwright executes. Multi-step task loop. |
 | **The Cortex** | `src/cortex/index.ts`, `cortex-db.ts`, `data-collector.ts`, `intelligence.ts` | Fleet intelligence: collects telemetry every 60s, runs rule-based analysis every 120s, generates insights/alerts. Separate SQLite DB in `data/cortex/`. |
 | **Electron App** | `electron-main.cjs`, `electron-preload.cjs`, `src/electron-paths.ts` | Desktop app packaging: ASAR paths, port conflict resolution, crash restart, IPC, auto-update via GitHub Releases. |
-| **Fisher2050** | `fisher2050/` directory | Separate Express app on port 3002 — AI Project Manager with its own SQLite database. |
+| **Fisher2050** | `fisher2050/` directory | Separate Express app on port 3002 — AI Project Manager with its own SQLite database. **Architectural risk:** disconnected from PIA's main DB. Needs merging into main process as `FisherService`. |
 
 ### API Endpoints (Complete)
 
@@ -285,7 +312,30 @@ His dashboard (shown in YouTube demo) also displays: project name, initial promp
 | GET | `/api/files/read` | Read file from filesystem |
 | POST | `/api/files/write` | Write file to filesystem |
 
-### Database Migrations (as of Feb 17, 2026)
+#### Integrations (Designed — Not Yet Implemented)
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/api/integrations/google/auth` | Start Google OAuth flow |
+| GET | `/api/integrations/google/callback` | OAuth callback handler |
+| GET | `/api/integrations/google/status` | Google connection status |
+| POST | `/api/integrations/google/calendar/events` | Create calendar event (Fisher2050 writes here) |
+| GET | `/api/integrations/google/calendar/events` | List calendar events |
+| POST | `/api/integrations/google/tasks/sync` | Sync PIA tasks to Google Tasks |
+
+#### Fisher2050 (Designed — Not Yet Implemented)
+| Method | Path | Purpose |
+|--------|------|---------|
+| POST | `/api/fisher/run` | Run Fisher2050 on-demand |
+| GET | `/api/fisher/status` | Fisher2050 status and last run time |
+
+#### Agent Messages (Designed — Not Yet Implemented)
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/api/agent-messages/inbox/:agentId` | Read agent's inbox (unread messages) |
+| POST | `/api/agent-messages/inbox/:agentId` | Send message to agent's inbox |
+| POST | `/api/agent-messages/:messageId/reply` | Reply to a specific message |
+
+### Database Migrations (as of Feb 20, 2026)
 
 42 migrations from `001` to `042`, including:
 - `003_agent_souls` — Souls, memories, interactions tables
@@ -293,6 +343,14 @@ His dashboard (shown in YouTube demo) also displays: project name, initial promp
 - `040_machine_messages` — Machine message board
 - `041_fix_unique_constraint` — Per-machine project isolation
 - `042_session_resume_support` — Claude session ID for resumption
+
+**Migration 043 (Designed — Not Yet Applied):**
+- `agent_messages` table — persistent async inbox per agent. Columns: `id, to_agent, from_agent, subject, body, read, replied, reply_body, created_at, read_at`. Needs `expires_at` TTL column added before production deployment.
+
+**Migration 044 (Designed — Not Yet Applied):**
+- `integrations` table — OAuth token storage. Columns: `service, access_token, refresh_token, expires_at, scopes, account_email, connected_at`.
+- `calendar_events` table — Google Calendar ↔ PIA agent spawn bridge. Columns: `google_event_id, calendar_id, title, start_time, end_time, agent_soul_id, task_context, machine_preference, status, spawned_agent_id`.
+- `task_google_sync` table — PIA task ID ↔ Google Task ID mapping for idempotent sync.
 
 ---
 
@@ -322,6 +380,13 @@ What PIA can actually do right now.
 | SQLite performance tuning | WAL mode, 64MB cache, mmap, busy timeout, WAL checkpoint monitor |
 | WebSocket resilience | Heartbeat ping/pong, dead connection detection, command retry buffer, exponential backoff reconnect |
 | Graceful shutdown | Persists agent output buffers, closes WebSocket connections with proper codes |
+| Architecture diagram (`/pia-diagram.html`) | Now vs After comparison, full data flow, comparison table, to-do list, Five Levels framework, full ecosystem section (three-tier hierarchy, all agents, architectural patterns) |
+| Mind map (`/pia-mindmap.html`) | Interactive D3.js mind map of the full PIA × SodaLabs architecture. Zoom/pan, click nodes for detail. |
+| Storyboard (`/pia-storyboard.html`) | Visual storyboard / planning board for PIA features and sessions. |
+| Soul Engine (`src/souls/soul-engine.ts`) | Fully functional — loads souls from DB, injects into system prompt, saves memories. Soul schema confirmed: id, name, role, personality, goals, relationships, system_prompt, config, email, status. |
+| Task Queue (`src/orchestrator/task-queue.ts`) | Fully functional — priority queue, pending→in_progress→completed/failed, blocked_by, blocks, output fields. Full REST API at `/api/tasks`. |
+| Autonomous Worker (`src/orchestrator/autonomous-worker.ts`) | Fully functional — complete Claude API tool loop with soul injection. Not yet triggered cross-machine. |
+| AgentBus (`src/comms/agent-bus.ts`) | In-memory pub/sub between agents. Fully functional for real-time events. Messages lost on restart — by design. |
 
 ### Partially Working
 
@@ -333,6 +398,8 @@ What PIA can actually do right now.
 | Autonomous Worker | Code exists (`src/orchestrator/autonomous-worker.ts`), not triggered cross-machine |
 | Fleet Dashboard mockup | HTML exists (`FLEET_DASHBOARD_MOCKUP.html`), not wired to real data |
 | DAO admin dashboard | Plan exists, implementation not started |
+| Fisher2050 | Exists as a standalone app (port 3002, `fisher2050/` directory) with its own disconnected SQLite DB. Soul JSON complete. Cron scheduler built. Needs merging into PIA main process as `FisherService` before any dependent features can be built. |
+| GumballCMS | Full codebase exists at `sodalabs/GumballCMS/`. Integration into PIA agent pipeline (as WhatsApp bridge and output delivery layer) is pending — not connected to Fisher2050's inbox or any agent output flow. |
 
 ---
 
@@ -340,7 +407,36 @@ What PIA can actually do right now.
 
 Ordered roughly by priority.
 
-### High Priority
+### CRITICAL — Devil's Advocate Immediate Fixes (Feb 2026)
+
+These 6 items were identified as risk-reduction actions by the Devil's Advocate analysis (`research/DEVILS_ADVOCATE.md`). They are prerequisite to safe deployment of any new feature. Do these before anything else.
+
+| # | Fix | Effort | Why |
+|---|-----|--------|-----|
+| DA1 | **Write `V1_DEFINITION.md`** — define exactly which N items must work for v1.0 | 1 hour | Without a finish line, scope creep is guaranteed. Every build decision should be evaluated against v1.0. |
+| DA2 | **Merge Fisher2050 into PIA main process** (`FisherService` inside `startHub()`) | 2-3 days | Currently a disconnected sidecar with its own DB. Every feature that assumes Fisher2050 is part of PIA is building on a false assumption. Single biggest architectural risk. |
+| DA3 | **Add TTL + inbox size limit to `agent_messages`** before deploying | 1 hour | Without expiry, stale messages accumulate forever and inflate every agent's context on startup indefinitely. Add `expires_at` column (default 7 days) + SoulEngine hard limit of 10 unread messages per spawn. |
+| DA4 | **Write one integration test for the core loop** | 1 day | Fisher2050 receives task → creates calendar entry → PIA spawns agent → Tim Buc fires → record exists in Records DB. No need for real API calls — use mocks. Without this, there is no definition of "working" and regressions are invisible. |
+| DA5 | **Build local calendar fallback before touching Google OAuth** | 1 day | A simple `calendar_events` SQLite table Fisher2050 writes to and PIA's scheduler reads from. Makes calendar-triggered spawn work without any external dependency. Google Calendar becomes an enhancement, not a requirement. |
+| DA6 | **Wire methodology frameworks into agent system prompts** | 2-3 hours | Taoism, Rory Sutherland, Ubuntu, Nir Eyal, etc. live in `research/USER_WORKING_STYLE.md` but are not connected to any agent's actual soul. Until wired in, all the philosophy work produces documents agents do not read. |
+
+### High Priority — New Architecture (From MASTER_VISION.md Build Order, Feb 2026)
+
+These items are the build order extracted from the full PIA × SodaLabs architecture vision. They are sequenced by dependency — each item unblocks the next.
+
+| # | Task | Effort | Notes |
+|---|------|--------|-------|
+| B1 | **Fisher2050 Agent Spec** (full soul + automation profile) | 1 day | He activates everything else. Without Fisher nothing is schedulable. Write the spec first: soul JSON, trigger rules, machine preference, input/output definitions. |
+| B2 | **Agent Records DB** (Claude SDK log capture) | 1-2 days | Extend existing SQLite (migration 043+). Store per-session: full message history, tool calls, reasoning steps, tokens, context %, cost, files consumed vs produced. Tim Buc needs this to exist before he can file anything. |
+| B3 | **Tim Buc Agent** (event-triggered archivist) | 1 day | Ephemeral spawn triggered on every agent session end. Reviews raw SDK logs → sorts by project/agent/type/date → files to Records DB → terminates. This pipeline (session → Tim Buc → Records → Eliyahu) is what makes the system learn over time. |
+| B4 | **Owl Persistence Layer** | 1 day | Living task list across sessions. At session start: feed context to Controller and Fisher2050. At session end: update with progress. "Update me where we last left off." |
+| B5 | **Calendar-Triggered Spawn** | 2-3 days | PIA hub watches a calendar (Google Calendar API or local iCal). At event time: check which machine is available → spawn agent with soul + context from entry. Fisher2050 writes to the calendar; PIA executes it. Replaces all manual agent launching. |
+| B6 | **Messaging System** (email per agent + WebSocket channels) | 2-3 days | Every agent gets a real email address (`fisher2050@sodalabs.ai` etc). Inbound: email Fisher a goal. Outbound: Eliyahu 6am briefing, Fisher standup/summary. Internal: formalise existing WebSocket channels per agent (#quality, #briefings, etc). PIA hub = postmaster. GumballCMS = WhatsApp bridge. |
+| B7 | **Monitor Agent** (continuous push-based watchdog) | 1 day | Always-running agent on M1. Detects failures, stalls, context overload, machine offline. Pushes to Controller immediately — never waits to be polled. Observer pattern. |
+| B8 | **Context % Bar on Agent Cards** | 2 hours | SDK already exposes `ModelUsage.contextWindow` via `onMessage` callback. Show `inputTokens / contextWindow * 100` as a bar on each agent card. Yellow at 70%, red at 90%. |
+| B9 | **Activity Feed** (AI-narrated briefing screen) | 2-3 days | Non-technical screen showing what the AI workforce did today, explained in plain English. Eliyahu produces the text; the feed renders it. For stakeholders who do not understand the technology. |
+
+### High Priority — Infrastructure
 
 | # | Task | Effort | Notes |
 |---|------|--------|-------|
@@ -416,6 +512,23 @@ A chronological summary of every major work session.
 | Feb 17 (Eve) | Context7 sprint | Library audit of all 8 dependencies. SQLite pragmas, WebSocket hardening, command buffer, shutdown fix, output persistence, stale cleanup. |
 | Feb 17 (Eve) | Sprint round 2 | Client-side ping timeout, exponential backoff, maxPayload, graceful shutdown, SDK permission wiring. |
 | Feb 17 (Eve) | Final sprint | WAL checkpoint monitor, Playwright MCP config, SDK session resumption (migration 042). |
+| Feb 20 (AM) | Multi-machine fixes | Remote agents appear in M1 dashboard. `GET /api/mc/agents` now async + merges hub DB. `POST respond` proxies cross-machine. `mc:agent_spawned` WebSocket event added. `pia-plan.html` created. |
+| Feb 20 (AM) | Research synthesis | Marc Nuri blog, Context7 SDK docs, Five Levels of Vibe Coding video synthesized. `pia-diagram.html` created. |
+| Feb 20 (AM) | Orchestrator videos | Two video transcripts synthesized: Orchestrator Agent pattern + Claude Code native multi-agent tools (team_create, task_*, send_message). Research files created. |
+| Feb 20 (AM) | Architecture vision | Full PIA × SodaLabs system design session. 11 agents defined. Calendar-triggered spawn, three-tier hierarchy, producer-consumer, messaging system, machine-as-project-orchestrator patterns all defined. `pia-mindmap.html` + `MASTER_VISION.md` created. |
+| Feb 20 (PM) | Storyboard + Queue | 15-scene Club X storyboard built. Queue/producer-consumer pattern defined. `pia-storyboard.html` + `research/BUILD_LIST.md` + `SITE_MAP.md` created. |
+| Feb 20 (PM) | Codebase audit | Discovered substantial infrastructure already built (soul-engine, task-queue, autonomous-worker, agent-bus, Fisher2050 standalone). Build order re-prioritised. |
+| Feb 20 (PM) | Agent product sheets | `research/AGENT_PRODUCT_SHEETS.md` created — complete soul spec for all 12 agents. |
+| Feb 20 (PM) | Diagram + KB sync | `pia-diagram.html` ecosystem section added. `PIA_KNOWLEDGE_BASE.md` updated with 10 terms, 9 build items. |
+| Feb 20 (PM) | Site map + build list | `SITE_MAP.md` (31 HTML pages, all API routes, 37 WebSocket events, 30+ DB tables) + `research/BUILD_LIST.md` (53 items, 7 tiers) created. |
+| Feb 20 (PM) | Document index | 200+ documents scanned. `research/DOCUMENT_INDEX.md` + `research/USER_WORKING_STYLE.md` created. Methodology frameworks (Taoism, Sutherland, Ubuntu, etc.) identified for agent training. |
+| Feb 20 (PM) | Eliyahu EOD spec | `research/ELIYAHU_END_OF_DAY_SPEC.md` created. `agent_messages` table designed. Async agent query pattern documented. AgentBus vs agent_messages distinction clarified. |
+| Feb 20 (PM) | Diagram rebuild | `pia-diagram.html` kids/after/comparison sections updated. `pia-mindmap.html` rebuilt to 25 nodes across 6 zones. |
+| Feb 20 (PM) | Implementation spec | `research/IMPLEMENTATION_SPEC.md` created — Fisher2050 merge spec, Google Calendar integration, 3 new DB tables designed (migration 044). 5 new service files designed. |
+| Feb 20 (PM) | Agent product sheets final | `research/AGENT_PRODUCT_SHEETS.md` finalized at 848 lines — all 12 agents, cross-agent interaction map, build status. |
+| Feb 20 (PM) | Repository discovery | `research/CODE_REPOSITORY_MAP.md` + `research/TERMINAL_SEARCH_BRIEFING.md` created. 15+ standalone app codebases discovered across Downloads/ and sodalabs/. |
+| Feb 20 (Eve) | Devil's Advocate | `research/DEVILS_ADVOCATE.md` created — 7-section critical analysis. 6 immediate fixes identified. RAG gap, TTL gap, v1.0 definition gap, Fisher2050 isolation risk all named. |
+| Feb 20 (Eve) | KB updated | This knowledge base updated with all 16 sessions of new knowledge. |
 
 ---
 

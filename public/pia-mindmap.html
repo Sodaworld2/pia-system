@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIA × SodaLabs — System Architecture</title>
+<script src="/d3.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #07070f; font-family: 'Inter', system-ui, sans-serif; overflow: hidden; height: 100vh; color: #e2e2e8; }
+#app { display: flex; flex-direction: column; height: 100vh; }
+
+#header {
+  padding: 10px 20px;
+  background: #0c0c18;
+  border-bottom: 1px solid #1c1c2e;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+#header h1 { font-size: 15px; font-weight: 700; letter-spacing: 0.04em; color: #f0f0f8; }
+#header .sub { font-size: 11px; color: #555; margin-top: 2px; }
+#header .hint { font-size: 11px; color: #3a3a55; }
+
+#legend {
+  display: flex; gap: 14px; padding: 7px 20px; flex-wrap: wrap;
+  background: #09091a; border-bottom: 1px solid #181828;
+  flex-shrink: 0; align-items: center;
+}
+.leg { display: flex; align-items: center; gap: 5px; font-size: 10px; color: #666; }
+.leg-dot { width: 9px; height: 9px; border-radius: 2px; }
+.leg-sep { width: 1px; height: 14px; background: #1e1e30; margin: 0 4px; }
+
+#canvas-area { flex: 1; overflow: hidden; position: relative; cursor: grab; }
+#canvas-area:active { cursor: grabbing; }
+svg#main { width: 100%; height: 100%; }
+
+.zone-rect { fill-opacity: 0.04; stroke-opacity: 0.2; stroke-width: 1; }
+.zone-label { font-size: 9px; font-weight: 700; letter-spacing: 0.12em; opacity: 0.45; }
+
+.link { fill: none; stroke-width: 1.5; opacity: 0.5; }
+.link-primary   { stroke: #F59E0B; }
+.link-dispatch  { stroke: #10B981; }
+.link-feedback  { stroke: #EF4444; }
+.link-memory    { stroke: #A855F7; }
+.link-library   { stroke: #8B5CF6; }
+.link-machine   { stroke: #475569; stroke-dasharray: 4,3; }
+.link-tool      { stroke: #06B6D4; }
+.link-report    { stroke: #F59E0B; stroke-dasharray: 6,4; }
+
+.link-label { font-size: 8px; pointer-events: none; opacity: 0.55; }
+
+.node-group { cursor: pointer; }
+.node-bg { rx: 10; ry: 10; }
+.node-group:hover .node-bg { stroke-width: 2.5 !important; }
+.node-name { font-size: 12px; font-weight: 700; }
+.node-role { font-size: 9px; opacity: 0.6; }
+
+#detail {
+  position: fixed; right: 0; top: 0; height: 100vh; width: 290px;
+  background: #0c0c18; border-left: 1px solid #1c1c2e;
+  transform: translateX(100%); transition: transform 0.25s ease;
+  overflow-y: auto; z-index: 100;
+}
+#detail.open { transform: translateX(0); }
+#detail-top { padding: 18px; border-bottom: 1px solid #181828; display: flex; justify-content: space-between; align-items: flex-start; }
+#detail-close { background: none; border: none; color: #444; cursor: pointer; font-size: 18px; line-height: 1; padding: 2px; }
+#detail-close:hover { color: #fff; }
+#detail-body { padding: 16px; }
+.ds { margin-bottom: 16px; }
+.ds-title { font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #444; margin-bottom: 6px; }
+.ds-text { font-size: 12px; color: #bbb; line-height: 1.6; }
+.ds-item { font-size: 11px; color: #999; padding: 4px 0; border-bottom: 1px solid #141422; line-height: 1.5; }
+.ds-item:last-child { border-bottom: none; }
+
+#zoombts { position: absolute; bottom: 16px; right: 16px; display: flex; gap: 4px; z-index: 50; }
+.zbtn { width: 30px; height: 30px; background: #131320; border: 1px solid #22223a; border-radius: 6px; color: #666; cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; }
+.zbtn:hover { background: #1e1e30; color: #fff; }
+
+#tip { position: absolute; bottom: 16px; left: 16px; font-size: 10px; color: #2a2a40; z-index: 50; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="header">
+    <div>
+      <h1>PIA × SodaLabs — Living Architecture</h1>
+      <div class="sub">How the AI workforce fits together</div>
+    </div>
+    <div class="hint">Scroll to zoom · Drag to pan · Click nodes to explore</div>
+  </div>
+  <div id="legend">
+    <div class="leg"><div class="leg-dot" style="background:#F59E0B"></div>Interface</div>
+    <div class="leg"><div class="leg-dot" style="background:#EF4444"></div>Monitor</div>
+    <div class="leg"><div class="leg-dot" style="background:#3B82F6"></div>Management</div>
+    <div class="leg"><div class="leg-dot" style="background:#A855F7"></div>Memory</div>
+    <div class="leg"><div class="leg-dot" style="background:#8B5CF6"></div>Library</div>
+    <div class="leg"><div class="leg-dot" style="background:#10B981"></div>Specialists</div>
+    <div class="leg"><div class="leg-dot" style="background:#475569"></div>Machines</div>
+    <div class="leg"><div class="leg-dot" style="background:#06B6D4"></div>Tools</div>
+    <div class="leg"><div class="leg-dot" style="background:#7C3AED"></div>Built ⚡</div>
+    <div class="leg-sep"></div>
+    <div class="leg">● Live &nbsp; ◌ Building</div>
+  </div>
+  <div id="canvas-area">
+    <svg id="main"></svg>
+    <div id="zoombts">
+      <button class="zbtn" onclick="zI()">+</button>
+      <button class="zbtn" onclick="zO()">−</button>
+      <button class="zbtn" onclick="zR()" style="font-size:10px">⌂</button>
+    </div>
+    <div id="tip">Click any node to see details</div>
+  </div>
+</div>
+
+<div id="detail">
+  <div id="detail-top">
+    <div>
+      <div id="d-icon" style="font-size:28px;margin-bottom:6px"></div>
+      <div id="d-name" style="font-size:17px;font-weight:700"></div>
+      <div id="d-role" style="font-size:11px;color:#666;margin-top:3px"></div>
+    </div>
+    <button id="detail-close" onclick="closePanel()">✕</button>
+  </div>
+  <div id="detail-body"></div>
+</div>
+
+<script>
+// ── COLOURS ────────────────────────────────────────────────────────────────
+const C = {
+  human:      { bg:'#16120a', border:'#F59E0B', text:'#FDE68A' },
+  controller: { bg:'#16120a', border:'#F59E0B', text:'#FDE68A' },
+  monitor:    { bg:'#160a0a', border:'#EF4444', text:'#FCA5A5' },
+  management: { bg:'#090f1a', border:'#3B82F6', text:'#BFDBFE' },
+  memory:     { bg:'#110a1a', border:'#A855F7', text:'#DDD6FE' },
+  library:    { bg:'#0f0a1a', border:'#8B5CF6', text:'#C4B5FD' },
+  data:       { bg:'#0f0a1a', border:'#7C3AED', text:'#C4B5FD' },
+  infra:      { bg:'#0f0a1a', border:'#7C3AED', text:'#C4B5FD' },
+  specialist: { bg:'#091408', border:'#10B981', text:'#A7F3D0' },
+  machine:    { bg:'#0d0d12', border:'#475569', text:'#94A3B8' },
+  tool:       { bg:'#071414', border:'#06B6D4', text:'#A5F3FC' },
+};
+
+const LC = {
+  primary:'#F59E0B', dispatch:'#10B981', feedback:'#EF4444',
+  memory:'#A855F7', library:'#8B5CF6', machine:'#475569',
+  tool:'#06B6D4', report:'#F59E0B'
+};
+
+// ── ZONES ──────────────────────────────────────────────────────────────────
+const ZONES = [
+  { label:'MANAGEMENT LAYER',      x:270,  y:318, w:820,  h:148, c:'#3B82F6' },
+  { label:'MEMORY & RECORDS',      x:55,   y:200, w:300,  h:530, c:'#A855F7' },
+  { label:'SPECIALIST WORKFORCE',  x:390,  y:490, w:650,  h:118, c:'#10B981' },
+  { label:'TOOLS & PLATFORMS',     x:390,  y:650, w:820,  h:140, c:'#06B6D4' },
+  { label:'INFRASTRUCTURE (BUILT)',x:55,   y:730, w:320,  h:110, c:'#7C3AED' },
+  { label:'PHYSICAL MACHINES',     x:55,   y:860, w:1400, h:90,  c:'#475569' },
+];
+
+// ── NODES ──────────────────────────────────────────────────────────────────
+const NW = 138, NH = 60;
+
+const NODES = [
+  { id:'you',         label:'You',           icon:'👤', role:'Human · Decision Maker',               type:'human',      x:700,  y:50,
+    about:'The human at the top. You speak to the Controller, read Eliyahu\'s morning briefing, and make all final decisions.',
+    schedule:'On demand', machine:'Your device',
+    features:['Voice routing to Controller','Morning briefing from Eliyahu','Override any decision at any time'] },
+
+  { id:'controller',  label:'Controller',    icon:'🕵️', role:'Wakes with soul · Routes & dispatches', type:'controller', x:700,  y:155,
+    about:'The single door into the whole system. Wakes with soul loaded — identity, personality, skills, project knowledge. Greets you by name, asks which machine and project, then routes.',
+    soul:['Identity & name','Personality & voice','Project knowledge','Agent roster','Rules & boundaries'],
+    schedule:'On demand — wakes when you need it', machine:'M1',
+    features:['"Hi Mic, which computer?"','Routes to correct machine + project','Arms agents with context + memory + skills','Delegates to Fisher2050','Receives Monitor status pushes'] },
+
+  { id:'monitor',     label:'Monitor',       icon:'👁️', role:'Watchdog · Pushes status to Controller', type:'monitor',    x:1100, y:155,
+    about:'Never sleeps. Continuously checks all running agents across all machines. Pushes status updates to Controller so you never have to ask "what\'s happening?"',
+    schedule:'Continuous — always running', machine:'M1',
+    features:['Monitors M1, M2, M3 simultaneously','Pushes updates without being asked','Alerts on failures, stalls, context overload','No polling needed — event-driven push'] },
+
+  { id:'owl',         label:'Owl',           icon:'🦉', role:'Persistent task memory · Session bridge', type:'memory',    x:155,  y:320,
+    about:'The one persistent thing. Every agent can be deleted, every session can end — the Owl holds the task list across all sessions. Fisher2050 reads Owl at session start.',
+    schedule:'Always on — passive store', machine:'M1 (DB)',
+    features:['Persists task list across sessions','Feeds Fisher2050 at every session start','"Update me where we left off"','End-of-session: task agent updates the Owl'] },
+
+  { id:'eliyahu',     label:'Eliyahu',       icon:'🧠', role:'Knowledge Manager · "I noticed something…"', type:'management', x:390,  y:380, status:'live',
+    about:'Reads everything. Every log, every Tim Buc filing. Connects dots across projects. Farms out analysis lists. Delivers your morning briefing.',
+    soul:['Identity: Eliyahu','Curious analyst','Pattern connector','Decision tracker'],
+    schedule:'6am briefing + event-triggered', machine:'M1',
+    features:['Morning briefing: 3 things that matter','Reads Tim Buc\'s filed session records','Farms analysis lists to Fisher2050, Ziggi, Farcake','Tracks whether decisions from last month are working'] },
+
+  { id:'fisher',      label:'Fisher2050',    icon:'📋', role:'Project Manager · "Project health: 82%"', type:'management', x:700,  y:380, status:'live',
+    about:'The task router. You give Fisher a goal, he breaks it into tasks, assigns them to the right agents, follows up automatically. Morning standup. Evening summary.',
+    soul:['Identity: Fisher2050','Organised operator','Proactive follow-up','Uses confidence percentages'],
+    schedule:'9am standup · 6pm summary · on-demand', machine:'M1',
+    features:['Receives goals → breaks into tasks','Dispatches to Farcake, Andy, Bird Fountain, Wingspan','Follows up automatically on late tasks','Creates follow-up tasks from Ziggi verdicts','IPC: pings correct machine when new task ready','Produces jobs to Queue System (task-queue.ts already built ✅)','Creates Google Calendar events for scheduled tasks','Reads agent_messages inbox at wake'] },
+
+  { id:'ziggi',       label:'Ziggi',         icon:'🔍', role:'Quality Architect · "Verdict: 8/10"',    type:'management', x:1010, y:380, status:'live',
+    about:'Reviews everything before it goes out. Rates 1-10. Explains why. Teaches. 2am deep audit — full quality report by morning.',
+    soul:['Identity: Ziggi','Meticulous reviewer','Architecture smell detection','1-10 ratings system'],
+    schedule:'2am deep audit (ephemeral) + after every task', machine:'M2',
+    features:['Reviews all specialist output','Rates quality 1-10 with explanation','Overnight ephemeral spawn: wakes → audits → sleeps','Verdict triggers Fisher2050 follow-up if needed','Dispatches automated tests to Browser/QA Machine','Works with Farcake for deep research QA','Devil\'s advocate on every build'] },
+
+  { id:'timbuc',      label:'Tim Buc',       icon:'📚', role:'Librarian · Reviews · Sorts · Files',    type:'library',    x:155,  y:470,
+    about:'The archivist. Pinged every time an agent session ends. Wakes, reviews the raw Claude SDK logs, sorts and categorises them, files properly. Eliyahu reads Tim Buc\'s output.',
+    schedule:'Event-triggered: pinged on every agent session end', machine:'M1',
+    features:['Triggered when any agent session completes','Reviews raw Claude SDK logs (messages, tool calls, thinking)','Sorts by: project, agent, type, date','Files to records database','Ephemeral: wakes → works → sleeps'] },
+
+  { id:'records',     label:'Agent Records', icon:'🗄️', role:'Claude SDK logs · All sessions archived',  type:'data',       x:155,  y:610,
+    about:'Every agent session fully archived. Every message, every tool call, every reasoning step, every token used, every file read and written.',
+    schedule:'Persistent store', machine:'M1 (SQLite)',
+    features:['Full message history per session','All tool calls + results','Thinking / reasoning steps','Tokens + context % per step','Cost per session (total_cost_usd)','Files consumed (read) vs produced (written)'] },
+
+  { id:'farcake',     label:'Farcake',       icon:'🔬', role:'Research Engine · Investigates',          type:'specialist', x:460,  y:540, status:'building', machine:'M2',
+    about:'Your research agent. Doesn\'t search — investigates. Pulls from multiple sources, cross-references, gives you the actual answer.',
+    soul:['Identity: Farcake','Research engine','Cross-reference expert'],
+    schedule:'Task-triggered by Fisher2050', machine:'M2',
+    features:['Pulls from multiple sources simultaneously','Cross-references and validates claims','Produces structured research reports','Output archived by Tim Buc, reviewed by Ziggi','QA research: searches Context7, influencer content, competitive landscape','Partners with Ziggi on every quality review'] },
+
+  { id:'andy',        label:'Andy',          icon:'✍️', role:'Editorial Machine · Writes in your voice', type:'specialist', x:630,  y:540, status:'building', machine:'M3',
+    about:'Takes content from research to publication in YOUR voice. Learns how you write.',
+    soul:['Identity: Andy','Editorial engine','Voice learning system'],
+    schedule:'Task-triggered by Fisher2050', machine:'M3',
+    features:['Content: research to publication pipeline','Learns and writes in your specific voice','Output can pipe to Videohoho','Ziggi reviews quality'] },
+
+  { id:'birdfountain',label:'Bird Fountain', icon:'🎨', role:'Design Production · Image batches at scale', type:'specialist', x:810,  y:540, status:'live',     machine:'M2',
+    about:'Design department in one agent. Production runs: campaign assets, social batches, creative variations. Never asks for a brief twice.',
+    soul:['Identity: Bird Fountain','Design production','Creative scale'],
+    schedule:'Task-triggered by Fisher2050', machine:'M2',
+    features:['Production-scale image generation','Campaign assets and social batches','Output pipes to Videohoho','Ziggi quality checks output'] },
+
+  { id:'wingspan',    label:'Wingspan',      icon:'📊', role:'Presentations Expert · Deck intelligence', type:'specialist', x:985,  y:540, status:'live',     machine:'M3',
+    about:'Tracks pitch decks in flight. Knows which version went to which investor, what changed, what landed. Ends the FINAL_v3_REAL folder.',
+    soul:['Identity: Wingspan','Presentation expert','Version tracker'],
+    schedule:'Task-triggered by Fisher2050', machine:'M3',
+    features:['Deck version tracking per investor','Knows what changed and what landed','Results archived by Tim Buc'] },
+
+  { id:'videohoho',   label:'Videohoho',     icon:'🎬', role:'Video Editor · Smart fades · FFmpeg',     type:'tool',       x:660,  y:700,
+    about:'Electron desktop app. Smart video + audio merger with fade effects. Andy and Bird Fountain pipe output here for video production.',
+    schedule:'Manual or agent-triggered', machine:'Local (Electron)',
+    features:['Drag-drop video + audio files','Smart fade in/out (video + audio separately)','Volume control + export MP4','Cancel mid-export + Show in Explorer','Phase 2: TTS (ElevenLabs), captions, audio ducking'] },
+
+  { id:'gumballcms',  label:'GumballCMS',    icon:'📱', role:'WhatsApp-first CMS · Output delivery + Inbound channel', type:'tool', x:480,  y:700,
+    about:'The output layer for ALL creative agents. Andy, Bird Fountain, Wingspan, Videohoho all deliver through GumballCMS. ALSO acts as inbound: You → WhatsApp → GumballCMS → Fisher2050.',
+    schedule:'Always on (live platform)', machine:'Cloud',
+    features:['Receives output from Andy, Bird Fountain, Wingspan, Videohoho','Publishes to website + WhatsApp Status','WhatsApp bridge: your messages → Fisher2050 tasks','Builds UI and websites automatically'] },
+
+  { id:'calendar',    label:'Google Calendar', icon:'📅', role:'Scheduler · Fisher2050 writes events · PIA hub watches', type:'tool', x:840,  y:700,
+    about:'Fisher2050 creates Google Calendar events for every scheduled agent task. PIA hub watches the calendar — when an event fires, it picks an available machine and spawns the agent. Calendar entry = deployment config.',
+    schedule:'Polled every 5 min by calendar-watcher.ts', machine:'Google Cloud + M1 watcher',
+    features:['Fisher2050 writes events with agent + context + machine preference','PIA CalendarWatcher polls every 5 min','Event fires → pick available machine → spawn agent','Machine-agnostic dispatch: agent does not care which machine runs it','TODO: src/services/calendar-watcher.ts'] },
+
+  { id:'whatsapp',    label:'WhatsApp',      icon:'💬', role:'Human inbound channel · Route to Fisher2050', type:'tool',    x:1020, y:700,
+    about:'Your primary mobile interface. Text Fisher2050 on WhatsApp via the GumballCMS bridge. GumballCMS receives it, routes to Fisher2050\'s inbox as a task.',
+    schedule:'Always on', machine:'Your phone',
+    features:['Message Fisher2050 from anywhere','GumballCMS bridge converts to task','Fisher2050 reads from agent inbox','Reply comes back via GumballCMS → WhatsApp'] },
+
+  { id:'queue',       label:'Queue System',  icon:'📥', role:'Job Queue · Fisher2050 produces · Specialists consume', type:'data', x:550,  y:460,
+    about:'The operating system of the workforce. Fisher2050 creates jobs, puts them on the queue. Specialist agents consume jobs when their machine slot is available. Every job has status, priority, ETA.',
+    schedule:'Always active', machine:'M1 (SQLite + task-queue.ts)',
+    features:['Status: queued / running / done / failed / revision','Priority 1-5 per job','blocked_by + blocks dependency chains','Machine slot management (Fisher books machine time)','Already built: src/orchestrator/task-queue.ts'] },
+
+  { id:'souls_engine',label:'Soul Engine',   icon:'⚡', role:'Already built · Loads souls on wake · src/souls/', type:'data', x:155,  y:780,
+    about:'ALREADY BUILT. Every agent loads their soul on wake: identity, personality, goals, relationships, email, system_prompt. Soul survives across sessions. MemoryManager saves new memories after each session.',
+    schedule:'Triggered on every agent spawn', machine:'M1 (src/souls/soul-engine.ts)',
+    features:['Soul fields: identity, personality, goals, relationships, email','Injects soul into system_prompt at agent start','MemoryManager: saves new memories after session','Already seeded with personalities in src/souls/personalities/','Status: BUILT ✅'] },
+
+  { id:'comms_layer', label:'Comms Layer',   icon:'🔌', role:'Already built · AgentBus · WhatsApp + Discord + MQTT', type:'data', x:310,  y:780,
+    about:'ALREADY BUILT. Full inter-agent communication infrastructure. AgentBus for local messaging, CrossMachine for M1→M2→M3 relay, WhatsApp bot, Discord bot, MQTT broker.',
+    schedule:'Always on', machine:'M1 (src/comms/)',
+    features:['AgentBus: local inter-agent messages','CrossMachine: M1↔M2↔M3 relay','WhatsApp bot (src/comms/whatsapp-bot.ts) ✅','Discord bot (src/comms/discord-bot.ts) ✅','MQTT broker for pub/sub ✅','Status: BUILT ✅'] },
+
+  { id:'coder',       label:'Coder Machine', icon:'⚙️', role:'Dedicated Build Agent · Always on · CI/CD runner', type:'machine', x:920,  y:900,
+    about:'Dedicated compute node whose only job is writing and running code. Always on. Has its own build job queue. Fisher2050 books machine time here for coding tasks.',
+    schedule:'Always on — polling build queue', machine:'Dedicated build server',
+    features:['Dedicated to code builds only','Always on — never idles','Own build job queue (separate from main queue)','Fisher2050 books slots here','Handles: compile, test, deploy, package'] },
+
+  { id:'browser_machine', label:'Browser / QA', icon:'🧪', role:'QA Node · Playwright MCP · Automated browser tests', type:'machine', x:1120, y:900,
+    about:'Dedicated machine armed with Playwright MCP + full browser control. Ziggi dispatches QA tasks here. Runs automated tests, visual regression, screenshots. Separate from workers — browser is resource-intensive.',
+    schedule:'Spawned by Ziggi for QA runs', machine:'Dedicated QA node',
+    features:['Playwright MCP + browser controller','Visual regression testing','Automated QA workflows from Ziggi','Screenshots + test reports','Isolated from production workers'] },
+
+  { id:'m1',          label:'M1 — Izzit7',   icon:'🖥️', role:'Hub · Controller + Management live here',  type:'machine',    x:280,  y:900,
+    about:'The hub. Runs PIA hub server, Controller, Monitor, Eliyahu, Fisher2050, Tim Buc, Owl, SQLite DB.',
+    schedule:'Always on', machine:'Izzit7',
+    features:['PIA hub server (port 3000)','Dashboard: /mission-control.html','Controller + Monitor + Management agents','SQLite database','Tailscale mesh coordinator','Soul Engine (src/souls/ ✅ already built)','Task Queue (src/orchestrator/ ✅ already built)','Comms Layer (src/comms/ ✅ already built)','CalendarWatcher (TODO: src/services/calendar-watcher.ts)'] },
+
+  { id:'m2',          label:'M2 — Monster',  icon:'🖥️', role:'Worker · Farcake + Bird Fountain',         type:'machine',    x:560,  y:900,
+    about:'Worker machine. Runs Farcake (research) and Bird Fountain (design). Connected to M1 via Tailscale WebSocket.',
+    schedule:'Always on · Agents spawn on demand', machine:'soda-monster-hunter (100.127.165.12)',
+    features:['Farcake (research engine)','Bird Fountain (design production)','Ziggi (quality reviews)','Hub-client WebSocket to M1'] },
+
+  { id:'m3',          label:'M3 — Yeti',     icon:'🖥️', role:'Worker · Andy + Wingspan',                 type:'machine',    x:740,  y:900,
+    about:'Third worker. Runs Andy (editorial) and Wingspan (presentations). Tailscale connected.',
+    schedule:'Always on · Agents spawn on demand', machine:'SODA-YETI',
+    features:['Andy (editorial machine)','Wingspan (presentations expert)','Hub-client WebSocket to M1'] },
+];
+
+const LINKS = [
+  // ── Original links ──────────────────────────────────────────────────────
+  { s:'you',         t:'controller',   label:'voice',        type:'primary' },
+  { s:'controller',  t:'monitor',      label:'watchdog',     type:'primary' },
+  { s:'monitor',     t:'controller',   label:'status push',  type:'feedback', curve:-60 },
+  { s:'eliyahu',     t:'you',          label:'briefing',     type:'report' },
+  { s:'owl',         t:'controller',   label:'memory',       type:'memory' },
+  { s:'owl',         t:'fisher',       label:'task list',    type:'memory' },
+  { s:'controller',  t:'fisher',       label:'goal',         type:'primary' },
+  { s:'eliyahu',     t:'timbuc',       label:'reads',        type:'library' },
+  { s:'eliyahu',     t:'fisher',       label:'farms lists',  type:'library' },
+  { s:'timbuc',      t:'records',      label:'files',        type:'library' },
+  { s:'fisher',      t:'farcake',      label:'task',         type:'dispatch' },
+  { s:'fisher',      t:'andy',         label:'task',         type:'dispatch' },
+  { s:'fisher',      t:'birdfountain', label:'task',         type:'dispatch' },
+  { s:'fisher',      t:'wingspan',     label:'task',         type:'dispatch' },
+  { s:'fisher',      t:'ziggi',        label:'review',       type:'dispatch', curve:40 },
+  { s:'ziggi',       t:'fisher',       label:'verdict',      type:'feedback', curve:40 },
+  { s:'farcake',     t:'timbuc',       label:'output',       type:'library' },
+  { s:'andy',        t:'timbuc',       label:'output',       type:'library' },
+  { s:'andy',        t:'videohoho',    label:'content',      type:'tool' },
+  { s:'birdfountain',t:'videohoho',    label:'assets',       type:'tool' },
+  { s:'farcake',     t:'m2',           label:'runs on',      type:'machine' },
+  { s:'birdfountain',t:'m2',           label:'runs on',      type:'machine' },
+  { s:'andy',        t:'m3',           label:'runs on',      type:'machine' },
+  { s:'wingspan',    t:'m3',           label:'runs on',      type:'machine' },
+  { s:'controller',  t:'m1',           label:'lives on',     type:'machine' },
+
+  // ── Queue system ─────────────────────────────────────────────────────────
+  { s:'fisher',        t:'queue',          label:'produces jobs',  type:'dispatch' },
+  { s:'queue',         t:'farcake',        label:'consumes',       type:'dispatch' },
+  { s:'queue',         t:'andy',           label:'consumes',       type:'dispatch' },
+  { s:'queue',         t:'birdfountain',   label:'consumes',       type:'dispatch' },
+  { s:'queue',         t:'wingspan',       label:'consumes',       type:'dispatch' },
+  { s:'queue',         t:'coder',          label:'build jobs',     type:'dispatch' },
+
+  // ── GumballCMS output pipeline ───────────────────────────────────────────
+  { s:'andy',          t:'gumballcms',     label:'publishes',      type:'tool' },
+  { s:'birdfountain',  t:'gumballcms',     label:'delivers',       type:'tool' },
+  { s:'wingspan',      t:'gumballcms',     label:'delivers',       type:'tool' },
+  { s:'videohoho',     t:'gumballcms',     label:'video out',      type:'tool' },
+
+  // ── WhatsApp inbound chain ───────────────────────────────────────────────
+  { s:'whatsapp',      t:'gumballcms',     label:'routes',         type:'tool' },
+  { s:'gumballcms',    t:'fisher',         label:'inbound task',   type:'primary' },
+
+  // ── Calendar scheduling ──────────────────────────────────────────────────
+  { s:'fisher',        t:'calendar',       label:'schedules',      type:'tool' },
+  { s:'calendar',      t:'controller',     label:'triggers spawn', type:'primary' },
+
+  // ── QA loop ──────────────────────────────────────────────────────────────
+  { s:'ziggi',         t:'browser_machine',label:'QA dispatch',    type:'dispatch' },
+  { s:'ziggi',         t:'farcake',        label:'deep research',  type:'dispatch' },
+
+  // ── Infrastructure ────────────────────────────────────────────────────────
+  { s:'souls_engine',  t:'controller',     label:'loads soul',     type:'memory' },
+  { s:'souls_engine',  t:'fisher',         label:'loads soul',     type:'memory' },
+  { s:'comms_layer',   t:'m1',             label:'runs on',        type:'machine' },
+];
+
+// ── BUILD ──────────────────────────────────────────────────────────────────
+const nm = {};
+NODES.forEach(n => nm[n.id] = n);
+
+const svg  = d3.select('#main');
+const root = svg.append('g').attr('id','root');
+
+// defs: arrowheads
+const defs = svg.append('defs');
+Object.entries(LC).forEach(([type, color]) => {
+  defs.append('marker')
+    .attr('id', 'arr-'+type)
+    .attr('viewBox','0 -4 8 8').attr('refX',7).attr('refY',0)
+    .attr('markerWidth',6).attr('markerHeight',6).attr('orient','auto')
+    .append('path').attr('d','M0,-4L8,0L0,4')
+    .attr('fill', color).attr('opacity', 0.7);
+});
+
+// zones
+const zg = root.append('g');
+ZONES.forEach(z => {
+  zg.append('rect')
+    .attr('x',z.x).attr('y',z.y).attr('width',z.w).attr('height',z.h)
+    .attr('rx',14).attr('fill',z.c).attr('stroke',z.c)
+    .classed('zone-rect', true);
+  zg.append('text')
+    .attr('x',z.x+14).attr('y',z.y+17)
+    .attr('fill',z.c).classed('zone-label',true)
+    .text(z.label);
+});
+
+// link path helper
+function lpath(s, t, curve) {
+  const dx = t.x - s.x, dy = t.y - s.y;
+  const len = Math.sqrt(dx*dx + dy*dy) || 1;
+  const off = curve || 0;
+  const nx = -dy/len * off, ny = dx/len * off;
+  const mx = (s.x+t.x)/2 + nx, my = (s.y+t.y)/2 + ny;
+  return `M${s.x},${s.y} Q${mx},${my} ${t.x},${t.y}`;
+}
+
+// midpoint for label
+function lmid(s, t, curve) {
+  const off = curve || 0;
+  const dx = t.x - s.x, dy = t.y - s.y;
+  const len = Math.sqrt(dx*dx + dy*dy) || 1;
+  const nx = -dy/len * off, ny = dx/len * off;
+  return { x: (s.x+t.x)/2 + nx*0.5, y: (s.y+t.y)/2 + ny*0.5 };
+}
+
+const lg = root.append('g').attr('id','links');
+const linkEls = {};
+
+LINKS.forEach(lk => {
+  const s = nm[lk.s], t = nm[lk.t];
+  if (!s || !t) return;
+  const c = lk.curve || 0;
+  const key = lk.s+'-'+lk.t;
+  const el = lg.append('path')
+    .attr('d', lpath(s, t, c))
+    .attr('class', 'link link-'+lk.type)
+    .attr('marker-end', `url(#arr-${lk.type})`);
+  linkEls[key] = el;
+
+  const mid = lmid(s, t, c);
+  lg.append('text')
+    .attr('x', mid.x).attr('y', mid.y)
+    .attr('text-anchor','middle').attr('dominant-baseline','middle')
+    .attr('fill', LC[lk.type]).attr('class','link-label')
+    .text(lk.label);
+});
+
+// nodes
+const ng2 = root.append('g').attr('id','nodes');
+
+NODES.forEach(node => {
+  const col = C[node.type] || C.machine;
+  const g = ng2.append('g')
+    .attr('class','node-group')
+    .attr('transform',`translate(${node.x-NW/2},${node.y-NH/2})`)
+    .attr('data-id', node.id)
+    .on('click', () => showPanel(node.id))
+    .on('mouseenter', () => hlLinks(node.id, true))
+    .on('mouseleave', () => hlLinks(node.id, false));
+
+  // bg
+  g.append('rect')
+    .attr('class','node-bg')
+    .attr('width',NW).attr('height',NH)
+    .attr('rx',10).attr('fill',col.bg)
+    .attr('stroke',col.border).attr('stroke-width',1.5);
+
+  // top accent
+  g.append('rect').attr('width',NW).attr('height',3).attr('rx',10)
+    .attr('fill',col.border).attr('opacity',0.65);
+
+  // icon
+  g.append('text').attr('x',11).attr('y',34).attr('font-size',18)
+    .attr('dominant-baseline','middle').text(node.icon);
+
+  // name
+  g.append('text').attr('x',36).attr('y',22)
+    .attr('fill',col.text).attr('class','node-name').text(node.label);
+
+  // role
+  const roleShort = node.role.length > 30 ? node.role.slice(0,28)+'…' : node.role;
+  g.append('text').attr('x',36).attr('y',36)
+    .attr('fill',col.text).attr('class','node-role').text(roleShort);
+
+  // status badge
+  if (node.status) {
+    const live = node.status === 'live';
+    const bg2 = g.append('g').attr('transform',`translate(${NW-44},44)`);
+    bg2.append('rect').attr('width',38).attr('height',13).attr('rx',3)
+      .attr('fill', live?'#052e1c':'#1c1410')
+      .attr('stroke', live?'#10B981':'#78716c').attr('stroke-width',1);
+    bg2.append('text').attr('x',19).attr('y',6.5)
+      .attr('text-anchor','middle').attr('dominant-baseline','middle')
+      .attr('fill', live?'#34d399':'#a8a29e')
+      .attr('font-size',8).attr('font-weight','700')
+      .text(live ? '● LIVE' : '◌ BUILD');
+  }
+
+  // machine pill
+  if (node.machine && !['human','controller','monitor','owl','eliyahu','fisher','ziggi','timbuc','records','videohoho','gumballcms','calendar','whatsapp','queue','souls_engine','comms_layer','m1','m2','m3','coder','browser_machine'].includes(node.id)) {
+    g.append('text').attr('x',8).attr('y',56)
+      .attr('fill','#475569').attr('font-size',8).attr('font-weight','700')
+      .text(node.machine);
+  }
+});
+
+// ── HOVER HIGHLIGHT ────────────────────────────────────────────────────────
+function hlLinks(id, on) {
+  LINKS.forEach(lk => {
+    const related = lk.s === id || lk.t === id;
+    const key = lk.s+'-'+lk.t;
+    if (linkEls[key]) {
+      linkEls[key]
+        .attr('opacity', on ? (related ? 0.9 : 0.08) : 0.5)
+        .attr('stroke-width', on && related ? 2.5 : 1.5);
+    }
+  });
+  ng2.selectAll('.node-group').each(function() {
+    const nid = d3.select(this).attr('data-id');
+    const rel = nid === id || LINKS.some(l => (l.s===id&&l.t===nid)||(l.t===id&&l.s===nid));
+    d3.select(this).select('.node-bg').attr('opacity', on ? (rel?1:0.25) : 1);
+  });
+}
+
+// ── DETAIL PANEL ──────────────────────────────────────────────────────────
+function showPanel(id) {
+  const n = nm[id]; if (!n) return;
+  const col = C[n.type] || C.machine;
+  document.getElementById('d-icon').textContent = n.icon;
+  document.getElementById('d-name').textContent = n.label;
+  document.getElementById('d-name').style.color = col.text;
+  document.getElementById('d-role').textContent = n.role;
+
+  let h = '';
+  if (n.about) h += `<div class="ds"><div class="ds-title">About</div><div class="ds-text">${n.about}</div></div>`;
+  if (n.soul)  h += `<div class="ds"><div class="ds-title">Soul Layers</div>${n.soul.map(s=>`<div class="ds-item">🔹 ${s}</div>`).join('')}</div>`;
+  if (n.schedule) h += `<div class="ds"><div class="ds-title">Schedule</div><div class="ds-item" style="color:#A855F7">⏰ ${n.schedule}</div></div>`;
+  if (n.machine)  h += `<div class="ds"><div class="ds-title">Machine</div><div class="ds-item" style="color:#475569">🖥️ ${n.machine}</div></div>`;
+  if (n.features) h += `<div class="ds"><div class="ds-title">Capabilities</div>${n.features.map(f=>`<div class="ds-item">• ${f}</div>`).join('')}</div>`;
+
+  // show connections
+  const outs = LINKS.filter(l=>l.s===id).map(l=>`→ ${nm[l.t]?.label || l.t} (${l.label})`);
+  const ins  = LINKS.filter(l=>l.t===id).map(l=>`← ${nm[l.s]?.label || l.s} (${l.label})`);
+  if (outs.length || ins.length) {
+    h += `<div class="ds"><div class="ds-title">Connections</div>`;
+    [...outs,...ins].forEach(c => h += `<div class="ds-item" style="font-family:monospace;font-size:10px">${c}</div>`);
+    h += `</div>`;
+  }
+
+  document.getElementById('detail-body').innerHTML = h;
+  document.getElementById('detail').classList.add('open');
+}
+
+function closePanel() { document.getElementById('detail').classList.remove('open'); }
+
+// ── ZOOM / PAN ─────────────────────────────────────────────────────────────
+const zoom = d3.zoom().scaleExtent([0.15, 3]).on('zoom', e => root.attr('transform', e.transform));
+svg.call(zoom);
+
+function fit() {
+  const el = document.getElementById('main');
+  const w = el.clientWidth || 1200, h = el.clientHeight || 700;
+  const dw = 1480, dh = 1020;
+  const s = Math.min(w/dw, h/dh) * 0.88;
+  return d3.zoomIdentity.translate((w-dw*s)/2, (h-dh*s)/2).scale(s);
+}
+function zI() { svg.transition().duration(280).call(zoom.scaleBy, 1.3); }
+function zO() { svg.transition().duration(280).call(zoom.scaleBy, 0.77); }
+function zR() { svg.transition().duration(450).call(zoom.transform, fit()); }
+
+setTimeout(() => svg.call(zoom.transform, fit()), 80);
+</script>
+</body>
+</html>

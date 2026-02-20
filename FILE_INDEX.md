@@ -18,6 +18,7 @@
 
 | File | Purpose |
 |------|---------|
+| `SITE_MAP.md` | **Complete system inventory** — All 31 HTML pages, every API route, all 37 WebSocket events, 30+ SQLite tables, agent architecture |
 | `PIA_ARCHITECTURE.md` | **Single source of truth** — Hub/spoke design, modes, registration, remote spawning |
 | `ELECTRON_APP_ANALYSIS.md` | Full Electron desktop app technical analysis (9 chapters) |
 | `FULL_FEATURE_SPEC.md` | Complete feature specification |
@@ -57,6 +58,7 @@
 | `SESSION_JOURNAL_2026-02-16.md` | Permission architecture, features, fleet deployment, Electron, Cortex (13 sessions) |
 | `SESSION_JOURNAL_2026-02-16_claude_code.md` | Machine linking, ESM bug fix, all 3 machines online, Cortex Phase 1 |
 | `SESSION_JOURNAL_2026-02-17.md` | Security remediation, remote agent spawning, project registry, Playwright MCP, Context7 audit |
+| `SESSION_JOURNAL_2026-02-20.md` | **Today** — Multi-machine fixes, video research, full system vision planning, storyboard, parallel agents (5 sessions) |
 | `JOURNAL_2026-02-10.md` | Early journal |
 | `JOURNAL_2026-02-11.md` | Early journal |
 | `JOURNAL-2026-02-11.md` | Early journal (duplicate naming) |
@@ -97,6 +99,7 @@
 
 | File | Purpose |
 |------|---------|
+| `V1_DEFINITION.md` | **PIA v1.0 definition of done** — 12 acceptance criteria, 17 build items, 5-week target, explicit v2.0 deferral list |
 | `SPRINT_PLAN.md` | Sprint plan |
 | `PROJECT_PLAN_AGENT_SHOPS.md` | Agent Shops project plan |
 | `AGENT_TASK_PLANS.md` | Agent task plans |
@@ -118,6 +121,17 @@
 | `research/agreements-signatures-research.md` | Agreement signatures research |
 | `research/ORCHESTRATOR-AGENT-VIDEO-SYNTHESIS.md` | Full synthesis: Orchestrator Agent lesson (Core 4, CRUD for agents, observability, delete philosophy, PIA build checklist) |
 | `research/CLAUDE-CODE-MULTI-AGENT-NATIVE-SYNTHESIS.md` | Full synthesis: Claude Code native multi-agent tools (team_create, task_*, send_message, agent sandboxes, E2B) |
+| `research/MASTER_VISION.md` | **Comprehensive vision document** — full system diagram, all agent specs (12 agents), 5 architectural patterns, intelligence pipeline, messaging system, build order |
+| `research/AGENT_PRODUCT_SHEETS.md` | Internal product sheet per agent — soul, trigger, inputs, outputs, training notes (for AI training) *(created by sub-agent Session 5)* |
+| `research/BUILD_LIST.md` | **Master build list** — 53 items across 7 priority tiers, dependency graph, quick wins *(created Session 8)* |
+| `research/DOCUMENT_INDEX.md` | Index of all documents in InvestorDome, sodalabs, sodaworld, and PIA research folders |
+| `research/USER_WORKING_STYLE.md` | Agent training rules + working style analysis — 9 methodology frameworks, Mic's communication rules |
+| `research/ELIYAHU_END_OF_DAY_SPEC.md` | **Eliyahu EOD Agent spec** — how agent querying works (3 scenarios), async inbox pattern, full Eliyahu implementation blueprint, 10-step build order |
+| `research/IMPLEMENTATION_SPEC.md` | **Builder's blueprint** — Fisher2050 merge spec, Google Calendar OAuth, Google Tasks sync, 3 new DB tables, 8 new API endpoints, TypeScript interfaces |
+| `research/DEVILS_ADVOCATE.md` | **Critical analysis** — 6 architectural risks, complexity risks, business contradictions, 6 immediate fixes, technique dictionary with failure modes |
+| `research/SYNC_REPORT.md` | **Knowledge sync report** — 20 gaps found, 8 new pia-book.html chapters added, outstanding items and HTML page status *(Session 12, 2026-02-20)* |
+| `research/CODE_REPOSITORY_MAP.md` | **Complete code ecosystem map** — 26 codebases mapped, 14 with GitHub remotes, stacks, status, relation to PIA |
+| `research/TERMINAL_SEARCH_BRIEFING.md` | **Self-contained prompt for new terminal** — paste into fresh Claude to do deep repo search + produce unification plan |
 
 ## Data & Knowledge Store
 
@@ -184,6 +198,10 @@
 |------|---------|-----------|
 | `public/system-plan.html` | System plan visualization | `/system-plan.html` |
 | `public/pia-plan-infographic.html` | PIA plan infographic | `/pia-plan-infographic.html` |
+| `public/pia-plan.html` | Visual planning doc (pizza analogy, M1/M2 arch, research) | `/pia-plan.html` |
+| `public/pia-diagram.html` | **Architecture diagram** — Now vs After, to-do list, agent ecosystem | `/pia-diagram.html` |
+| `public/pia-mindmap.html` | **Interactive D3.js mind map** — full PIA × SodaLabs architecture, zoom/pan, click for detail | `/pia-mindmap.html` |
+| `public/pia-storyboard.html` | **15-scene Club X storyboard** — all agents working, live queue panel, auto-play | `/pia-storyboard.html` |
 | `public/wireframes.html` | Wireframe designs | `/wireframes.html` |
 | `public/agent-generator.html` | Agent generator tool | `/agent-generator.html` |
 

@@ -38,6 +38,115 @@
   nav a { background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:20px; padding:5px 14px; font-size:13px; color:var(--muted); text-decoration:none; transition:all .2s; }
   nav a:hover { background:var(--blue); color:#fff; border-color:var(--blue); }
 
+  /* ═══ ECOSYSTEM SECTION ═══ */
+  .eco-tier {
+    margin-bottom: 40px;
+  }
+  .eco-tier-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 10px;
+    padding: 5px 14px;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 16px;
+  }
+  .eco-tier-label.t1 { background: rgba(67,97,238,0.2); color: #79b8ff; border: 1px solid rgba(67,97,238,0.4); }
+  .eco-tier-label.t2 { background: rgba(247,37,133,0.15); color: #f97bbb; border: 1px solid rgba(247,37,133,0.35); }
+  .eco-tier-label.t3 { background: rgba(114,9,183,0.2); color: #b392f0; border: 1px solid rgba(114,9,183,0.4); }
+  .eco-tier-label.tools { background: rgba(6,214,160,0.15); color: var(--green); border: 1px solid rgba(6,214,160,0.35); }
+
+  .eco-agents {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  .eco-agent {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 18px;
+    min-width: 160px;
+    flex: 1 1 160px;
+    max-width: 230px;
+    position: relative;
+    transition: transform .2s, border-color .2s;
+  }
+  .eco-agent:hover { transform: translateY(-3px); }
+  .eco-agent.t1 { border-color: rgba(67,97,238,0.5); background: rgba(67,97,238,0.06); }
+  .eco-agent.t2 { border-color: rgba(247,37,133,0.4); background: rgba(247,37,133,0.06); }
+  .eco-agent.t3 { border-color: rgba(114,9,183,0.45); background: rgba(114,9,183,0.06); }
+  .eco-agent.tools { border-color: rgba(6,214,160,0.4); background: rgba(6,214,160,0.06); }
+  .eco-agent-emoji { font-size: 28px; display: block; margin-bottom: 8px; }
+  .eco-agent-name { font-size: 14px; font-weight: 800; margin-bottom: 4px; }
+  .eco-agent-role { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .eco-agent-meta {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+  .eco-tag {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-weight: 700;
+  }
+  .eco-tag-blue   { background: rgba(67,97,238,0.15); color: #79b8ff; }
+  .eco-tag-pink   { background: rgba(247,37,133,0.15); color: #f97bbb; }
+  .eco-tag-purple { background: rgba(114,9,183,0.15); color: #b392f0; }
+  .eco-tag-green  { background: rgba(6,214,160,0.15); color: var(--green); }
+  .eco-tag-yellow { background: rgba(255,209,102,0.15); color: var(--yellow); }
+  .eco-tag-muted  { background: rgba(255,255,255,0.07); color: var(--muted); }
+
+  .eco-tier-connector {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 20px 0;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .eco-tier-connector .arrow-down { font-size: 22px; }
+  .eco-tier-connector .arrow-line { flex: 1; height: 1px; background: var(--border); }
+
+  .pattern-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 18px;
+    margin-top: 24px;
+  }
+  .pattern-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px 22px;
+    border-left: 4px solid;
+    position: relative;
+  }
+  .pattern-card.p-blue   { border-left-color: var(--blue); }
+  .pattern-card.p-pink   { border-left-color: var(--pink); }
+  .pattern-card.p-green  { border-left-color: var(--green); }
+  .pattern-card.p-yellow { border-left-color: var(--yellow); }
+  .pattern-card.p-purple { border-left-color: #b392f0; }
+  .pattern-card h3 { font-size: 15px; font-weight: 800; margin-bottom: 8px; }
+  .pattern-card p  { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .pattern-flow {
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 12px;
+    background: rgba(0,0,0,0.35);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-top: 12px;
+    line-height: 1.8;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
   /* ═══ LAYOUT ═══ */
   .wrap { max-width: 1300px; margin: 0 auto; padding: 40px 20px 80px; }
   .section { margin-bottom: 64px; scroll-margin-top: 70px; }
@@ -161,8 +270,53 @@
   }
   .todo-card.p1 { border-left-color: var(--green); }
   .todo-card.p2 { border-left-color: var(--blue); }
-  .todo-card.p3 { border-left-color: var(--yellow); }
-  .todo-card.p4 { border-left-color: var(--muted); }
+  .todo-card.p3 { border-left-color: var(--purple); }
+  .todo-card.p4 { border-left-color: var(--yellow); }
+  .todo-card.p5 { border-left-color: var(--pink); }
+  .todo-card.p6 { border-left-color: var(--orange); }
+  .todo-card.p7 { border-left-color: var(--muted); }
+  .todo-tier-header {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 0 6px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+  }
+  .todo-tier-header h2 { font-size: 17px; font-weight: 900; }
+  .todo-tier-badge {
+    display: inline-block;
+    border-radius: 8px;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+  .tier-p1 { background:rgba(6,214,160,0.18); color:var(--green); }
+  .tier-p2 { background:rgba(67,97,238,0.18); color:#79b8ff; }
+  .tier-p3 { background:rgba(114,9,183,0.18); color:#b392f0; }
+  .tier-p4 { background:rgba(255,209,102,0.18); color:var(--yellow); }
+  .tier-p5 { background:rgba(247,37,133,0.18); color:var(--pink); }
+  .tier-p6 { background:rgba(239,71,111,0.18); color:var(--orange); }
+  .tier-p7 { background:rgba(112,112,160,0.18); color:var(--muted); }
+  .todo-tier-desc { font-size: 13px; color: var(--muted); flex: 1; }
+  .quick-wins-box {
+    grid-column: 1 / -1;
+    background: rgba(255,209,102,0.06);
+    border: 1px solid rgba(255,209,102,0.25);
+    border-radius: 16px;
+    padding: 20px 24px;
+  }
+  .quick-wins-box h3 { font-size:15px; font-weight:900; color:var(--yellow); margin-bottom:12px; }
+  .quick-wins-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:10px; }
+  .qw-item { display:flex; align-items:flex-start; gap:10px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; padding:10px 14px; }
+  .qw-item .qw-icon { font-size:18px; flex-shrink:0; margin-top:1px; }
+  .qw-item .qw-body {}
+  .qw-item .qw-title { font-size:13px; font-weight:800; margin-bottom:2px; }
+  .qw-item .qw-effort { font-size:11px; color:var(--yellow); font-weight:700; margin-bottom:3px; }
+  .qw-item .qw-desc { font-size:12px; color:var(--muted); line-height:1.5; }
   .todo-num {
     position: absolute;
     top: 16px; right: 16px;
@@ -316,6 +470,7 @@
   <a href="#flows">📡 Data Flows</a>
   <a href="#comparison">📊 Comparison</a>
   <a href="#todo">✅ To-Do List</a>
+  <a href="#ecosystem">🧠 Ecosystem</a>
   <a href="#kids">🧒 For Kids!</a>
 </nav>
 
@@ -433,7 +588,7 @@
      SECTION 2 — HOW IT WILL WORK AFTER
 ══════════════════════════════════════════════════════ -->
 <section class="section" id="after">
-  <div class="section-title"><span>🟢</span> How PIA Will Work AFTER Improvements</div>
+  <div class="section-title"><span>🟢</span> What We're Adding — Full Build Roadmap</div>
 
   <div class="legend">
     <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div> Already exists</div>
@@ -457,6 +612,9 @@
           <div class="comp new"><div class="dot"></div> ✨ M2 terminal output visible here</div>
           <div class="comp new"><div class="dot"></div> ✨ Two-way chat works for remote agents</div>
           <div class="comp new"><div class="dot"></div> ✨ Mobile-responsive layout</div>
+          <div class="comp new"><div class="dot"></div> ✨ Queue panel — live job board</div>
+          <div class="comp new"><div class="dot"></div> ✨ Agent inbox (agent_messages)</div>
+          <div class="comp new"><div class="dot"></div> ✨ Electron React UI (replaces this file)</div>
         </div>
       </div>
 
@@ -474,6 +632,15 @@
         <div class="components">
           <div class="comp existing"><div class="dot"></div> Express API + WebSocket + SQLite</div>
           <div class="comp existing"><div class="dot"></div> Remote agent proxy (respond)</div>
+          <div class="comp existing"><div class="dot"></div> Soul engine (src/souls/soul-engine.ts)</div>
+          <div class="comp existing"><div class="dot"></div> Task queue (src/orchestrator/task-queue.ts)</div>
+          <div class="comp existing"><div class="dot"></div> Agent bus (src/comms/agent-bus.ts)</div>
+          <div class="comp new"><div class="dot"></div> ✨ Fisher2050 soul seeded + active</div>
+          <div class="comp new"><div class="dot"></div> ✨ Tim Buc — event-triggered archivist</div>
+          <div class="comp new"><div class="dot"></div> ✨ Eliyahu EOD review (10pm cron)</div>
+          <div class="comp new"><div class="dot"></div> ✨ Monitor Agent (push-based watchdog)</div>
+          <div class="comp new"><div class="dot"></div> ✨ Google Calendar integration</div>
+          <div class="comp new"><div class="dot"></div> ✨ agent_messages DB table (inbox)</div>
           <div class="comp new"><div class="dot"></div> ✨ Relays mc:output from M2 → dashboard</div>
           <div class="comp new"><div class="dot"></div> ✨ Stores contextWindow per agent in DB</div>
         </div>
@@ -497,6 +664,8 @@
           <div class="comp new"><div class="dot"></div> ✨ Sends contextWindow % in heartbeat</div>
           <div class="comp new"><div class="dot"></div> ✨ Reports git branch at spawn time</div>
           <div class="comp new"><div class="dot"></div> ✨ Git worktrees for parallel safe agents</div>
+          <div class="comp new"><div class="dot"></div> ✨ GumballCMS WhatsApp bridge (inbound)</div>
+          <div class="comp new"><div class="dot"></div> ✨ Coder Machine + Browser/QA Machine</div>
         </div>
       </div>
 
@@ -505,11 +674,11 @@
     <!-- RIGHT: improved flow diagram -->
     <div>
       <div class="panel">
-        <div class="panel-header" style="background:rgba(6,214,160,0.08)">📡 New Data Flows (After)</div>
+        <div class="panel-header" style="background:rgba(6,214,160,0.08)">📡 New Data Flows &amp; Features</div>
         <div class="panel-body">
 
           <div class="flows">
-            <div style="font-size:11px;color:var(--green);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">New flows ✨</div>
+            <div style="font-size:11px;color:var(--green);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Dashboard &amp; Output Relay ✨</div>
 
             <div class="flow-row new"><div class="arrow">→</div><div>
               <div>M2 agent <strong>text_delta</strong> → hub-client → M1 → dashboard</div>
@@ -526,21 +695,56 @@
               <div class="from">Branch shown on every agent card</div>
             </div></div>
 
+          </div>
+
+          <div class="flows" style="margin-top:16px">
+            <div style="font-size:11px;color:var(--yellow);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Agent Intelligence Pipeline ✨</div>
+
             <div class="flow-row new"><div class="arrow">→</div><div>
-              <div>M2 creates <strong>git worktree</strong> per agent</div>
-              <div class="from">Multiple agents on same repo, no conflicts</div>
+              <div><strong>Fisher2050</strong> soul seeded → 9am standup + 6pm summary</div>
+              <div class="from">Project manager with real identity, books machine time</div>
             </div></div>
 
             <div class="flow-row new"><div class="arrow">→</div><div>
-              <div>Dashboard → M1 → M2 → agent <strong>respond</strong></div>
-              <div class="from">Full two-way chat: message sent AND response visible</div>
+              <div>Session end → <strong>Tim Buc</strong> wakes → files to Records DB</div>
+              <div class="from">Every session becomes institutional knowledge</div>
+            </div></div>
+
+            <div class="flow-row new"><div class="arrow">→</div><div>
+              <div><strong>Eliyahu</strong> reads Tim Buc filings → 6am morning briefing</div>
+              <div class="from">2-minute briefing: 3 things that matter today</div>
+            </div></div>
+
+            <div class="flow-row new"><div class="arrow">→</div><div>
+              <div><strong>Monitor Agent</strong> pushes status → Controller</div>
+              <div class="from">Observer pattern — never polls, always pushes</div>
+            </div></div>
+
+          </div>
+
+          <div class="flows" style="margin-top:16px">
+            <div style="font-size:11px;color:var(--pink);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Scheduling &amp; Comms ✨</div>
+
+            <div class="flow-row new"><div class="arrow">→</div><div>
+              <div><strong>Google Calendar</strong> → PIA hub watches → spawn agent</div>
+              <div class="from">Calendar replaces hard-coded cron jobs for scheduling</div>
+            </div></div>
+
+            <div class="flow-row new"><div class="arrow">→</div><div>
+              <div><strong>Queue System</strong> — jobs table, Fisher produces, agents consume</div>
+              <div class="from">task-queue.ts already exists — now wired to Fisher2050</div>
+            </div></div>
+
+            <div class="flow-row new"><div class="arrow">→</div><div>
+              <div>WhatsApp → <strong>GumballCMS bridge</strong> → Fisher2050 inbox</div>
+              <div class="from">Task your AI project manager from your phone</div>
             </div></div>
 
           </div>
 
           <div style="margin-top:20px;padding:14px;background:rgba(255,209,102,0.07);border:1px solid rgba(255,209,102,0.2);border-radius:10px;font-size:13px;">
-            <strong style="color:var(--yellow)">⭐ Biggest win:</strong>
-            <span style="color:var(--muted)"> Terminal mirroring turns M1 into a true control room. You'll see every word M2's agent types — in real time — without opening M2's browser.</span>
+            <strong style="color:var(--yellow)">⭐ Big insight:</strong>
+            <span style="color:var(--muted)"> Most of the infrastructure already exists (soul engine, task queue, agent bus, WhatsApp). The build is about wiring agents INTO it — not starting from scratch.</span>
           </div>
 
         </div>
@@ -684,6 +888,42 @@
             <td class="yes">✅ Specs outside codebase</td>
             <td><span class="tag tag-yellow">1 week</span></td>
           </tr>
+          <tr>
+            <td><strong>Queue system (producer-consumer)</strong></td>
+            <td class="partial">⚠️ task-queue.ts exists, not wired</td>
+            <td class="yes">✅ Fisher2050 produces, agents consume</td>
+            <td><span class="tag tag-blue">2–3 days</span></td>
+          </tr>
+          <tr>
+            <td><strong>Soul system with email identity</strong></td>
+            <td class="partial">⚠️ SoulEngine built, agents not seeded</td>
+            <td class="yes">✅ Every agent has name, email, personality</td>
+            <td><span class="tag tag-blue">1 day</span></td>
+          </tr>
+          <tr>
+            <td><strong>Calendar-triggered ephemeral spawn</strong></td>
+            <td class="no">❌ Manual spawning only</td>
+            <td class="yes">✅ Fisher2050 writes calendar → PIA spawns</td>
+            <td><span class="tag tag-yellow">3–5 days</span></td>
+          </tr>
+          <tr>
+            <td><strong>Multi-machine fleet on your hardware</strong></td>
+            <td class="yes">✅ M1 + M2 working</td>
+            <td class="yes">✅ M1 + M2 + M3 fully orchestrated</td>
+            <td><span class="tag tag-green">Progressive</span></td>
+          </tr>
+          <tr>
+            <td><strong>WhatsApp bridge inbound (GumballCMS)</strong></td>
+            <td class="no">❌ No inbound WhatsApp</td>
+            <td class="yes">✅ Text Fisher2050 → task created</td>
+            <td><span class="tag tag-yellow">1 week</span></td>
+          </tr>
+          <tr>
+            <td><strong>Tim Buc intelligence pipeline</strong></td>
+            <td class="no">❌ Sessions not archived</td>
+            <td class="yes">✅ Session → Tim Buc → Records → Eliyahu</td>
+            <td><span class="tag tag-blue">2–3 days</span></td>
+          </tr>
         </tbody>
       </table>
     </div>
@@ -696,106 +936,683 @@
 ══════════════════════════════════════════════════════ -->
 <section class="section" id="todo">
   <div class="section-title"><span>✅</span> Full To-Do List — Prioritised</div>
+  <p style="color:var(--muted);font-size:13px;margin-bottom:24px">53 items across 7 priority tiers. Everything flows from the top — do not skip ahead. Items within a tier can run in parallel.</p>
 
   <div class="todo-grid">
 
-    <!-- #1 -->
+    <!-- ══ TIER 1 ══ -->
+    <div class="todo-tier-header">
+      <span class="todo-tier-badge tier-p1">P1</span>
+      <h2>Foundation</h2>
+      <span class="todo-tier-desc">Build first — everything else depends on these 8 items</span>
+    </div>
+
     <div class="todo-card p1">
-      <div class="todo-num">1</div>
+      <div class="todo-num">1.1</div>
+      <h3>Fisher2050 Agent Spec</h3>
+      <p>Complete soul JSON: identity, personality, goals, rules, relationships, schedule. Full automation profile: trigger rules (9am, 6pm, calendar), machine preference (M1), input/output, task breakdown. The document the whole system runs from.</p>
+      <div class="todo-tags">
+        <span class="tag tag-green">⚡ 1 day</span>
+        <span class="tag tag-green">blocks everything</span>
+        <span class="tag tag-muted">no deps</span>
+      </div>
+    </div>
+
+    <div class="todo-card p1">
+      <div class="todo-num">1.2</div>
+      <h3>Agent Records DB</h3>
+      <p>New SQLite migration (043+) capturing per-session: full message history, tool calls, reasoning steps, tokens used, context % per turn, cost (total_cost_usd), files consumed/produced, agent soul ID, machine ID. Tim Buc cannot file anything until this exists.</p>
+      <div class="todo-tags">
+        <span class="tag tag-green">⚡ 1–2 days</span>
+        <span class="tag tag-blue">agent-session.ts</span>
+        <span class="tag tag-muted">depends on 1.1</span>
+      </div>
+    </div>
+
+    <div class="todo-card p1">
+      <div class="todo-num">1.3</div>
       <h3>Context % Bar on Agent Cards</h3>
-      <p>Use <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">ModelUsage.contextWindow</code> from the Claude Agent SDK <code>onMessage</code> callback. Show a bar: green → yellow at 70% → red at 90%. High context = unstable agent — user needs to know.</p>
+      <p>Use <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">ModelUsage.contextWindow</code> from the SDK <code>onMessage</code> callback. Show progress bar on each agent card: green → yellow at 70% → red at 90%. Most actionable real-time health signal.</p>
       <div class="todo-tags">
         <span class="tag tag-green">⚡ 2 hours</span>
-        <span class="tag tag-blue">mission-control.html</span>
         <span class="tag tag-blue">agent-session.ts</span>
-        <span class="tag tag-purple">Context7 SDK docs</span>
+        <span class="tag tag-blue">mission-control.html</span>
+        <span class="tag tag-muted">depends on 1.2</span>
       </div>
     </div>
 
-    <!-- #2 -->
     <div class="todo-card p1">
-      <div class="todo-num">2</div>
-      <h3>Git Branch on Agent Cards</h3>
-      <p>At spawn time, run <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">git branch --show-current</code> in the project directory. Store on agent session and display on the card. Marc Nuri's dashboard shows this — it's very useful to know which branch is being modified.</p>
+      <div class="todo-num">1.4</div>
+      <h3>Owl Persistence Layer</h3>
+      <p>Living SQLite task list. At session start: Owl feeds state to Controller and Fisher ("here's where you left off"). At session end: Owl updates with completions and pending items. Without Owl, every session starts from zero. The thread of continuity between all sessions.</p>
       <div class="todo-tags">
-        <span class="tag tag-green">⚡ 1 hour</span>
-        <span class="tag tag-blue">agent-session.ts</span>
-        <span class="tag tag-blue">mission-control.html</span>
-        <span class="tag tag-purple">Marc Nuri blog</span>
+        <span class="tag tag-green">⚡ 1 day</span>
+        <span class="tag tag-blue">SQLite migration 044+</span>
+        <span class="tag tag-muted">depends on 1.2</span>
       </div>
     </div>
 
-    <!-- #3 -->
     <div class="todo-card p1">
-      <div class="todo-num">3</div>
-      <h3>Terminal Output Mirroring M2 → M1</h3>
-      <p>The #1 missing feature. M2's agent output (text_delta chunks from Claude SDK) never reaches M1's dashboard terminal. Fix: M2's hub-client forwards every chunk to M1 via WebSocket as a new <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">agent:output</code> event. M1 relays to dashboard as <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">mc:output</code>.</p>
+      <div class="todo-num">1.5</div>
+      <h3>Tim Buc Agent (event-triggered archivist)</h3>
+      <p>Ephemeral agent triggered on every session end. Reviews raw Claude SDK logs from Records DB, sorts by project/agent/type/date, tags consumed/produced files, quality flags, cost. Files organised summaries back to Records DB. Makes every session institutional knowledge.</p>
+      <div class="todo-tags">
+        <span class="tag tag-green">⚡ 1 day</span>
+        <span class="tag tag-blue">agent-session.ts</span>
+        <span class="tag tag-muted">depends on 1.2, 1.4</span>
+      </div>
+    </div>
+
+    <div class="todo-card p1">
+      <div class="todo-num">1.6</div>
+      <h3>PM2 Process Manager</h3>
+      <p>Install PM2 on M1, M2, M3. <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">pm2 start npm -- run dev</code>, <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">pm2 startup</code>, <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">pm2 save</code>. Auto-restart on crash, auto-start on machine boot. A 15-minute task that eliminates an entire category of outage.</p>
+      <div class="todo-tags">
+        <span class="tag tag-green">⚡ 15 min</span>
+        <span class="tag tag-green">quick win</span>
+        <span class="tag tag-muted">no deps</span>
+      </div>
+    </div>
+
+    <div class="todo-card p1">
+      <div class="todo-num">1.7</div>
+      <h3>Anthropic API Key Rotation</h3>
+      <p>Old key was in git history (scrubbed, but still active). Rotate via Anthropic console. Update <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">.env</code> on M1, M2, M3. Until done: live security exposure. 10-minute task.</p>
+      <div class="todo-tags">
+        <span class="tag tag-red">🔐 security</span>
+        <span class="tag tag-green">⚡ 10 min</span>
+        <span class="tag tag-green">quick win</span>
+        <span class="tag tag-muted">no deps</span>
+      </div>
+    </div>
+
+    <div class="todo-card p1">
+      <div class="todo-num">1.8</div>
+      <h3>File API Authentication</h3>
+      <p><code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">/api/files/read</code> and <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">/api/files/write</code> have no access restriction. Anyone on local network or Tailscale can read/write project files. Add token-based middleware already used on all other routes.</p>
+      <div class="todo-tags">
+        <span class="tag tag-red">🔐 security</span>
+        <span class="tag tag-green">⚡ 30 min</span>
+        <span class="tag tag-green">quick win</span>
+        <span class="tag tag-blue">src/api/routes/files.ts</span>
+      </div>
+    </div>
+
+    <!-- ══ TIER 2 ══ -->
+    <div class="todo-tier-header">
+      <span class="todo-tier-badge tier-p2">P2</span>
+      <h2>Agent Intelligence</h2>
+      <span class="todo-tier-desc">Core AI workforce architecture — the agents themselves</span>
+    </div>
+
+    <div class="todo-card p2">
+      <div class="todo-num">2.1</div>
+      <h3>Calendar-Triggered Spawn</h3>
+      <p>Hub watches Google Calendar or local iCal/JSON store. Fisher2050 writes entries with: agent name, task, machine preference, soul ID, input context path, on-complete hooks. At trigger time: PIA checks machine availability and spawns. Makes the AI workforce schedule visible and editable without code.</p>
+      <div class="todo-tags">
+        <span class="tag tag-blue">📅 2–3 days</span>
+        <span class="tag tag-blue">hub/aggregator.ts</span>
+        <span class="tag tag-muted">depends on 1.1, 1.4</span>
+      </div>
+    </div>
+
+    <div class="todo-card p2">
+      <div class="todo-num">2.2</div>
+      <h3>Monitor Agent (push-based watchdog)</h3>
+      <p>Always-on agent on M1. Watches: all agent statuses, machine heartbeats, context %, cost-per-hour burn rate, stall detection (no output delta &gt;5 min). When it detects a problem it pushes to Controller immediately — does not wait to be asked. Observer pattern: Monitor pushes, Controller never polls.</p>
+      <div class="todo-tags">
+        <span class="tag tag-blue">📅 1 day</span>
+        <span class="tag tag-muted">depends on 1.3, 1.5</span>
+      </div>
+    </div>
+
+    <div class="todo-card p2">
+      <div class="todo-num">2.3</div>
+      <h3>Eliyahu Agent (intelligence synthesis)</h3>
+      <p>Ephemeral agent triggered at 6am and when Tim Buc files new records. Reads Tim Buc's summaries. Connects patterns across projects and agents: failure rates, architectural drift, output trends. Produces a 2-minute morning briefing email: 3 things that matter today.</p>
       <div class="todo-tags">
         <span class="tag tag-blue">📅 1–2 days</span>
-        <span class="tag tag-blue">hub-client.ts</span>
+        <span class="tag tag-muted">depends on 1.5</span>
+      </div>
+    </div>
+
+    <div class="todo-card p2">
+      <div class="todo-num">2.4</div>
+      <h3>Agent Automation Profiles (all agents)</h3>
+      <p>Full profile document for each planned agent: Controller, Monitor, Fisher2050, Eliyahu, Ziggi, Tim Buc, Owl, Farcake, Andy, Bird Fountain, Wingspan. Each specifies: Soul, Trigger, Machine, Input, Task, Output, Reports To, Archives To, On Complete.</p>
+      <div class="todo-tags">
+        <span class="tag tag-blue">📅 2–3 days</span>
+        <span class="tag tag-muted">depends on 2.1, 2.3</span>
+      </div>
+    </div>
+
+    <div class="todo-card p2">
+      <div class="todo-num">2.5</div>
+      <h3>Ziggi Agent (2am quality auditor)</h3>
+      <p>Ephemeral agent spawned by cron/calendar at 2am. Reviews last 24hrs of specialist output from Records DB. Rates 1–10 against quality standards. If issues found, files a quality flag that Fisher creates a re-do task from. Ziggi costs zero for 23:55 of every day.</p>
+      <div class="todo-tags">
+        <span class="tag tag-blue">📅 1 day</span>
+        <span class="tag tag-muted">depends on 2.1, 1.2, 1.1</span>
+      </div>
+    </div>
+
+    <div class="todo-card p2">
+      <div class="todo-num">2.6</div>
+      <h3>Controller Agent (single entry point)</h3>
+      <p>Always-on on M1. Knows all machines, all projects, all active agents (from Owl). When you interact: Controller greets by name, asks which project, loads context from Owl, routes to correct machine and soul. The single door into the entire system — you never speak to M2 or M3 directly.</p>
+      <div class="todo-tags">
+        <span class="tag tag-blue">📅 1 day</span>
+        <span class="tag tag-muted">depends on 1.4, 2.4</span>
+      </div>
+    </div>
+
+    <div class="todo-card p2">
+      <div class="todo-num">2.7</div>
+      <h3>Farcake Soul + Profile (research, M3)</h3>
+      <p>Complete soul and automation profile for Farcake, the research engine. Does not just search — investigates. Cross-references sources, validates claims, produces structured findings. Triggered by Fisher2050 calendar entry. Validates the full pipeline: Fisher schedules, M3 executes, Tim Buc archives.</p>
+      <div class="todo-tags">
+        <span class="tag tag-blue">📅 1 day</span>
+        <span class="tag tag-muted">depends on 2.1, 2.4</span>
+      </div>
+    </div>
+
+    <div class="todo-card p2">
+      <div class="todo-num">2.8</div>
+      <h3>Andy Soul + Profile (editorial engine, M3)</h3>
+      <p>Andy's full soul and automation profile. Takes Farcake research output and writes in the client's voice. Input: Farcake output + voice samples + editorial brief. Output: draft content to GumballCMS or Videohoho + Tim Buc. The content pipeline made complete.</p>
+      <div class="todo-tags">
+        <span class="tag tag-blue">📅 1 day</span>
+        <span class="tag tag-muted">depends on 2.7</span>
+      </div>
+    </div>
+
+    <div class="todo-card p2">
+      <div class="todo-num">2.9</div>
+      <h3>Activity Feed (AI-narrated briefing screen)</h3>
+      <p>New screen in Mission Control. Shows what the AI workforce did today in plain English for non-technical stakeholders. Eliyahu produces the text. Feed renders: what each agent worked on, Ziggi quality issues, Fisher scheduling decisions, cost summary. The morning newspaper surface.</p>
+      <div class="todo-tags">
+        <span class="tag tag-blue">📅 2–3 days</span>
+        <span class="tag tag-blue">mission-control.html</span>
+        <span class="tag tag-muted">depends on 2.3, 2.5</span>
+      </div>
+    </div>
+
+    <!-- ══ TIER 3 ══ -->
+    <div class="todo-tier-header">
+      <span class="todo-tier-badge tier-p3">P3</span>
+      <h2>Communications Infrastructure</h2>
+      <span class="todo-tier-desc">The messaging layer that makes agents feel like real team members</span>
+    </div>
+
+    <div class="todo-card p3">
+      <div class="todo-num">3.1</div>
+      <h3>Agent Email Addresses (outbound)</h3>
+      <p>Set up outbound email via SendGrid or Mailgun for each agent: <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">fisher2050@sodalabs.ai</code>, <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">eliyahu@sodalabs.ai</code>, <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">ziggi@sodalabs.ai</code>, <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">timbuc@sodalabs.ai</code>. Configure DKIM/SPF.</p>
+      <div class="todo-tags">
+        <span class="tag tag-purple">📅 1 day</span>
+        <span class="tag tag-muted">depends on 2.3, 2.5</span>
+      </div>
+    </div>
+
+    <div class="todo-card p3">
+      <div class="todo-num">3.2</div>
+      <h3>Agent Email Addresses (inbound)</h3>
+      <p>Inbound routing for <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">fisher2050@sodalabs.ai</code> and <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">controller@sodalabs.ai</code>. Mailgun inbound routing or Cloudflare Email Workers → webhook → <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">/api/webhooks/incoming/email</code>. Email Fisher a goal from your phone — Fisher creates tasks and calendar entries.</p>
+      <div class="todo-tags">
+        <span class="tag tag-purple">📅 1–2 days</span>
+        <span class="tag tag-muted">depends on 3.1, 2.1</span>
+      </div>
+    </div>
+
+    <div class="todo-card p3">
+      <div class="todo-num">3.3</div>
+      <h3>WebSocket Agent Channels (formalise pub/sub)</h3>
+      <p>Name the existing WebSocket pub/sub channels to agent identities: <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">#operations</code> (Fisher), <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">#briefings</code> (Eliyahu), <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">#quality</code> (Ziggi), <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">#library</code> (Tim Buc), <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">#company</code> (all), <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">#project-*</code>. Pub/sub system already exists — this wires it to agent identities.</p>
+      <div class="todo-tags">
+        <span class="tag tag-purple">📅 1 day</span>
         <span class="tag tag-blue">websocket-server.ts</span>
-        <span class="tag tag-blue">mission-control.html</span>
+        <span class="tag tag-muted">depends on P1, 2.4</span>
       </div>
     </div>
 
-    <!-- #4 -->
-    <div class="todo-card p1">
-      <div class="todo-num">4</div>
-      <h3>Two-Way Chat Fully Working on M1</h3>
-      <p>Sending messages to M2 agents now works (respond proxy). But replies are only visible in M2's terminal. Once terminal mirroring (#3) is done, this is automatic — output relay makes two-way chat complete on M1.</p>
+    <div class="todo-card p3">
+      <div class="todo-num">3.4</div>
+      <h3>WhatsApp → Fisher2050 Bridge</h3>
+      <p>Connect existing Baileys WhatsApp integration to route inbound messages to Fisher2050. WhatsApp arrives → bot receives → posts to <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">/api/messages/send</code> with <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">to: fisher2050</code> → Fisher creates task. Task Fisher from your phone via WhatsApp.</p>
       <div class="todo-tags">
-        <span class="tag tag-blue">📅 1 day</span>
-        <span class="tag tag-muted">depends on #3</span>
-        <span class="tag tag-blue">mission-control.ts</span>
+        <span class="tag tag-purple">📅 1–2 days</span>
+        <span class="tag tag-blue">src/api/routes (whatsapp)</span>
+        <span class="tag tag-muted">depends on 3.2</span>
       </div>
     </div>
 
-    <!-- #5 -->
-    <div class="todo-card p2">
-      <div class="todo-num">5</div>
-      <h3>Mobile-Responsive Dashboard</h3>
-      <p>Currently the dashboard only works on desktop. Marc Nuri reviews and approves agents from his phone while picking up kids from school. Responsive CSS lets you do the same — check agent status and approve tool permissions anywhere.</p>
+    <div class="todo-card p3">
+      <div class="todo-num">3.5</div>
+      <h3>Inter-Agent Messaging Tool (<code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">send_message</code>)</h3>
+      <p>Add <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">send_message</code> as an MCP tool available to all agents. Structured messages between agents: <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">{ to, content, type }</code>. Routes via Machine Message Board or pub/sub. Fisher tells Andy to start because Farcake finished — no human mediation.</p>
       <div class="todo-tags">
-        <span class="tag tag-blue">📅 1 day</span>
-        <span class="tag tag-blue">mission-control.html</span>
-        <span class="tag tag-purple">Marc Nuri blog</span>
+        <span class="tag tag-purple">📅 1 day</span>
+        <span class="tag tag-blue">MCP tools layer</span>
+        <span class="tag tag-muted">depends on 3.3</span>
       </div>
     </div>
 
-    <!-- #6 -->
-    <div class="todo-card p2">
-      <div class="todo-num">6</div>
-      <h3>Git Worktrees for Parallel Agents</h3>
-      <p>When spawning multiple agents on the same repo, they share the working directory — they'll overwrite each other's changes. Git worktrees give each agent a separate checkout of the same repo. Auto-create a worktree at spawn time, clean it up when agent finishes.</p>
+    <!-- ══ TIER 4 ══ -->
+    <div class="todo-tier-header">
+      <span class="todo-tier-badge tier-p4">P4</span>
+      <h2>UI / Dashboard Improvements</h2>
+      <span class="todo-tier-desc">Visual and UX improvements to Mission Control and the fleet interface</span>
+    </div>
+
+    <div class="todo-card p4">
+      <div class="todo-num">4.1</div>
+      <h3>Git Branch Display on Agent Cards</h3>
+      <p>At spawn time, run <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">git branch --show-current</code> in project cwd. Store on session record. Display on agent card next to project name. From Marc Nuri: the most useful context when monitoring multiple agents.</p>
       <div class="todo-tags">
-        <span class="tag tag-blue">📅 1 day</span>
-        <span class="tag tag-blue">hub-client.ts</span>
+        <span class="tag tag-yellow">⚡ 2–4 hours</span>
+        <span class="tag tag-yellow">quick win</span>
         <span class="tag tag-blue">agent-session.ts</span>
-        <span class="tag tag-purple">Marc Nuri blog</span>
+        <span class="tag tag-muted">no deps</span>
       </div>
     </div>
 
-    <!-- #7 -->
-    <div class="todo-card p3">
-      <div class="todo-num">7</div>
-      <h3>Behavioral Scenario Eval System</h3>
-      <p>From StrongDM's dark factory: keep behavioral tests OUTSIDE the codebase in a separate folder agents can't see. This prevents agents from "teaching to the test." Each scenario describes what the software should do from the outside. The agent builds it; scenarios verify it actually works.</p>
+    <div class="todo-card p4">
+      <div class="todo-num">4.2</div>
+      <h3>Git Worktree Support</h3>
+      <p>Auto-create separate git worktrees when spawning multiple agents on the same repo: <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">git worktree add ../agent-worktree-{id} main</code>. Prevents agents overwriting each other's changes. Clean up worktree on session end.</p>
       <div class="todo-tags">
-        <span class="tag tag-yellow">📅 1 week</span>
-        <span class="tag tag-muted">long-term</span>
-        <span class="tag tag-purple">Dark Factory video</span>
+        <span class="tag tag-yellow">📅 1–2 days</span>
+        <span class="tag tag-blue">agent-session.ts</span>
+        <span class="tag tag-muted">depends on 4.1</span>
       </div>
     </div>
 
-    <!-- #8 -->
-    <div class="todo-card p3">
-      <div class="todo-num">8</div>
-      <h3>Electron Desktop App (React UI)</h3>
-      <p>The full desktop app wrapping the Express server, with a React + shadcn/ui UI replacing mission-control.html. Already in progress (Phases 1–3 done). Remaining: React component library, React UI, production hardening.</p>
+    <div class="todo-card p4">
+      <div class="todo-num">4.3</div>
+      <h3>Mobile-Optimised Mission Control</h3>
+      <p>Responsive CSS so Mission Control is usable on a phone: view agent status/output, approve tool prompts, kill/spawn agents. Marc Nuri reviews and approves PRs from his phone. The phone becomes the approval interface anywhere.</p>
       <div class="todo-tags">
-        <span class="tag tag-yellow">📅 2–3 weeks</span>
-        <span class="tag tag-muted">progressive migration</span>
+        <span class="tag tag-yellow">📅 2–3 days</span>
+        <span class="tag tag-blue">mission-control.html</span>
+        <span class="tag tag-muted">no deps</span>
+      </div>
+    </div>
+
+    <div class="todo-card p4">
+      <div class="todo-num">4.4</div>
+      <h3>Fleet Dashboard (wire mockup to real data)</h3>
+      <p><code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">FLEET_DASHBOARD_MOCKUP.html</code> exists as a static mockup. Wire it to real Cortex API data: machine status, agent counts, cost burn rate, recent activity. At-a-glance fleet health view separate from agent-detail Mission Control.</p>
+      <div class="todo-tags">
+        <span class="tag tag-yellow">📅 2–3 days</span>
+        <span class="tag tag-muted">depends on P1 working</span>
+      </div>
+    </div>
+
+    <div class="todo-card p4">
+      <div class="todo-num">4.5</div>
+      <h3>Visor — Machine Governance Screen</h3>
+      <p><code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">/visor.html</code> exists. Wire to real job queue data from <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">/api/tasks</code> and machine status from <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">/api/machines</code>. Per-machine view: running agents, queued tasks, resource usage. The factory floor view.</p>
+      <div class="todo-tags">
+        <span class="tag tag-yellow">📅 1–2 days</span>
+        <span class="tag tag-blue">public/visor.html</span>
+        <span class="tag tag-muted">depends on P1</span>
+      </div>
+    </div>
+
+    <div class="todo-card p4">
+      <div class="todo-num">4.6</div>
+      <h3>MQTT Broker → Cortex Telemetry</h3>
+      <p>MQTT broker exists but is not wired to the Cortex. Replace REST polling in dashboard with MQTT subscriptions on <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">pia/machine/+/status</code> and <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">pia/agent/+/output</code>. Real-time telemetry, near-zero polling overhead.</p>
+      <div class="todo-tags">
+        <span class="tag tag-yellow">📅 2–3 days</span>
+        <span class="tag tag-blue">src/comms/mqtt-broker.ts</span>
+        <span class="tag tag-muted">no blocking deps</span>
+      </div>
+    </div>
+
+    <div class="todo-card p4">
+      <div class="todo-num">4.7</div>
+      <h3>Autonomous Worker Cross-Machine Triggering</h3>
+      <p><code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">autonomous-worker.ts</code> exists but is not triggered cross-machine. Wire the hub to start an autonomous worker on a remote machine via WebSocket command channel. Required for Fisher2050 to actually dispatch work to M3 autonomously.</p>
+      <div class="todo-tags">
+        <span class="tag tag-yellow">📅 2–3 days</span>
+        <span class="tag tag-blue">src/orchestrator/autonomous-worker.ts</span>
+        <span class="tag tag-muted">depends on 2.1</span>
+      </div>
+    </div>
+
+    <div class="todo-card p4">
+      <div class="todo-num">4.8</div>
+      <h3>Version Mismatch Detection</h3>
+      <p>Workers report their git SHA during <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">machine:register</code>. Hub compares to its own SHA. Dashboard shows warning badge if any machine is on a different code version. Catches drift before it causes bugs.</p>
+      <div class="todo-tags">
+        <span class="tag tag-yellow">⚡ 1–2 hours</span>
+        <span class="tag tag-yellow">quick win</span>
+        <span class="tag tag-blue">hub/aggregator.ts</span>
+        <span class="tag tag-muted">no deps</span>
+      </div>
+    </div>
+
+    <div class="todo-card p4">
+      <div class="todo-num">4.9</div>
+      <h3>HTTP Fallback for WebSocket Commands</h3>
+      <p>When a WebSocket command to a spoke fails (connection dropped), fall back to sending the same command via HTTP to <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">http://{tailscale_ip}:3000/api/...</code>. Workers already run Express. Dramatically improves fleet command reliability during transient network issues.</p>
+      <div class="todo-tags">
+        <span class="tag tag-yellow">📅 1–2 days</span>
+        <span class="tag tag-blue">src/local/hub-client.ts</span>
+        <span class="tag tag-muted">no deps</span>
+      </div>
+    </div>
+
+    <!-- ══ TIER 5 ══ -->
+    <div class="todo-tier-header">
+      <span class="todo-tier-badge tier-p5">P5</span>
+      <h2>Platform Integrations</h2>
+      <span class="todo-tier-desc">Connecting PIA to external platforms where output gets delivered</span>
+    </div>
+
+    <div class="todo-card p5">
+      <div class="todo-num">5.1</div>
+      <h3>GumballCMS Integration — Output Delivery</h3>
+      <p>Connect Andy and Bird Fountain output to GumballCMS. Andy produces draft → POST to GumballCMS API → draft for approval. Bird Fountain produces assets → upload to GumballCMS media library. GumballCMS is the last mile — agents produce, GumballCMS ships.</p>
+      <div class="todo-tags">
+        <span class="tag tag-red">📅 2–3 days</span>
+        <span class="tag tag-muted">depends on 2.8, P3</span>
+      </div>
+    </div>
+
+    <div class="todo-card p5">
+      <div class="todo-num">5.2</div>
+      <h3>GumballCMS WhatsApp Bridge (production)</h3>
+      <p>Replace direct Baileys integration with GumballCMS as the WhatsApp bridge (GumballCMS is WhatsApp-first). Route: you → WhatsApp → GumballCMS → Fisher2050 inbox. GumballCMS becomes both input channel (instructions) and output channel (content goes live via WhatsApp approval).</p>
+      <div class="todo-tags">
+        <span class="tag tag-red">📅 2–3 days</span>
+        <span class="tag tag-muted">depends on 3.4, 5.1</span>
+      </div>
+    </div>
+
+    <div class="todo-card p5">
+      <div class="todo-num">5.3</div>
+      <h3>Videohoho Phase 2 Pipeline</h3>
+      <p>ElevenLabs TTS voiceovers, automatic captions, audio ducking, frame analysis. Connect PIA: Andy produces script + voiceover text → Videohoho renders with AI narration → GumballCMS publishes. Completes the full pipeline: research (Farcake) → writing (Andy) → video (Videohoho) → publish (GumballCMS).</p>
+      <div class="todo-tags">
+        <span class="tag tag-red">📅 3–5 days</span>
+        <span class="tag tag-muted">depends on 5.1</span>
+      </div>
+    </div>
+
+    <div class="todo-card p5">
+      <div class="todo-num">5.4</div>
+      <h3>Document Storage and Management System</h3>
+      <p>Structured document store in PIA beyond the Records DB: project briefs, research outputs, drafts, final deliverables. Agents can write, read, and search it. The shared workspace all agents reference. Without it, output lives scattered across file paths and Tim Buc has no canonical place to file produced documents.</p>
+      <div class="todo-tags">
+        <span class="tag tag-red">📅 2–3 days</span>
+        <span class="tag tag-muted">depends on 1.2, 1.5</span>
+      </div>
+    </div>
+
+    <div class="todo-card p5">
+      <div class="todo-num">5.5</div>
+      <h3>Coder Machine (dedicated build agent, M3)</h3>
+      <p>Specialist agent: receives feature spec → implements in isolated git worktree → runs tests → submits PR. Pure execution, no management. Spec in, working code out. Required for PIA to build its own features autonomously without a human writing code.</p>
+      <div class="todo-tags">
+        <span class="tag tag-red">📅 2–3 days</span>
+        <span class="tag tag-muted">depends on 4.2, P3, 5.4</span>
+      </div>
+    </div>
+
+    <div class="todo-card p5">
+      <div class="todo-num">5.6</div>
+      <h3>Bird Fountain Production Pipeline</h3>
+      <p>Bird Fountain (design agent, M2) needs a real production pipeline. Define: input format (brief JSON), output format (asset manifest), delivery mechanism to GumballCMS media library and Videohoho for video assets. Agent-grade design output delivery, end to end.</p>
+      <div class="todo-tags">
+        <span class="tag tag-red">📅 2–3 days</span>
+        <span class="tag tag-muted">depends on 5.1, 5.3</span>
+      </div>
+    </div>
+
+    <div class="todo-card p5">
+      <div class="todo-num">5.7</div>
+      <h3>Wingspan Deck Versioning System</h3>
+      <p>Wingspan (presentation agent, M3) tracks every version of every deck: which version went to which investor/client, what changed, what the audience profile was. Lightweight version store in the Document Storage system. Wingspan reads version history at session start, writes new version record at end.</p>
+      <div class="todo-tags">
+        <span class="tag tag-red">📅 1–2 days</span>
+        <span class="tag tag-muted">depends on 5.4</span>
+      </div>
+    </div>
+
+    <!-- ══ TIER 6 ══ -->
+    <div class="todo-tier-header">
+      <span class="todo-tier-badge tier-p6">P6</span>
+      <h2>Automation and Scheduling</h2>
+      <span class="todo-tier-desc">Making the system genuinely self-running — no human initiation required</span>
+    </div>
+
+    <div class="todo-card p6">
+      <div class="todo-num">6.1</div>
+      <h3>Queue / Producer-Consumer System</h3>
+      <p>Fisher2050 as intelligent producer: creates jobs with machine preference, soul, context, priority. M3 specialists consume one job at a time. Fisher manages: availability checks, slot booking, overrun detection, priority re-ordering, offline-machine rescheduling. The task queue exists — this makes Fisher the brain that manages it.</p>
+      <div class="todo-tags">
+        <span class="tag tag-red">📅 2–3 days</span>
+        <span class="tag tag-muted">depends on 2.1, 1.1</span>
+      </div>
+    </div>
+
+    <div class="todo-card p6">
+      <div class="todo-num">6.2</div>
+      <h3>Fleet Self-Update Command</h3>
+      <p><code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">POST /api/system/update</code> endpoint stub already exists. Implement it: send git pull + npm install + restart to all workers via WebSocket. Each worker executes and reports back. Add SHA comparison before update.</p>
+      <div class="todo-tags">
+        <span class="tag tag-red">📅 1 day</span>
+        <span class="tag tag-blue">src/api/routes</span>
+        <span class="tag tag-muted">depends on 4.8, P1</span>
+      </div>
+    </div>
+
+    <div class="todo-card p6">
+      <div class="todo-num">6.3</div>
+      <h3>Hub Failover (auto-promote worker)</h3>
+      <p>If hub is unreachable for 90 seconds (3 missed heartbeats), the highest-priority configured worker promotes itself: starts dashboard, switches aggregator on, broadcasts its new hub address. Eliminates the single point of failure in the entire architecture. High effort but essential for production reliability.</p>
+      <div class="todo-tags">
+        <span class="tag tag-red">📅 1–2 weeks</span>
+        <span class="tag tag-muted">depends on P1, 4.9</span>
+      </div>
+    </div>
+
+    <div class="todo-card p6">
+      <div class="todo-num">6.4</div>
+      <h3>9am Standup and 6pm Summary (Fisher emails)</h3>
+      <p>Fisher2050 sends two scheduled emails per day: 9am standup (running today, queued, blockers) and 6pm summary (completed, cost spent, Tim Buc filings, Ziggi quality results). Triggered by calendar entries Fisher writes for himself. The human-readable daily rhythm of the AI workforce.</p>
+      <div class="todo-tags">
+        <span class="tag tag-red">📅 1 day</span>
+        <span class="tag tag-muted">depends on 3.1, 2.1</span>
+      </div>
+    </div>
+
+    <div class="todo-card p6">
+      <div class="todo-num">6.5</div>
+      <h3>Agent Failsafe and Auto-Restart Rules</h3>
+      <p>Define rules for when an agent fails, stalls, or hits its budget: auto-restart (already built for SDK agents), notify Fisher2050 and Monitor, back-off period before retry, max retry count. Rules configurable per agent soul — a research agent should retry; a quality auditor should not.</p>
+      <div class="todo-tags">
+        <span class="tag tag-red">📅 1–2 days</span>
+        <span class="tag tag-muted">depends on 2.2, 2.6, 1.1</span>
+      </div>
+    </div>
+
+    <div class="todo-card p6">
+      <div class="todo-num">6.6</div>
+      <h3>Weekly Performance Review (Eliyahu automated)</h3>
+      <p>Eliyahu generates a weekly report every Friday at 5pm: week's output across all agents, quality trends from Ziggi's audits, cost efficiency (output per dollar), patterns needing attention, suggestions for the coming week. The system reviews its own performance and surfaces recommendations.</p>
+      <div class="todo-tags">
+        <span class="tag tag-red">📅 1 day</span>
+        <span class="tag tag-muted">depends on 2.3, 2.5, 3.1</span>
+      </div>
+    </div>
+
+    <!-- ══ TIER 7 ══ -->
+    <div class="todo-tier-header">
+      <span class="todo-tier-badge tier-p7">P7</span>
+      <h2>Desktop App (Electron)</h2>
+      <span class="todo-tier-desc">Packaging PIA as a standalone installable application — polished product layer</span>
+    </div>
+
+    <div class="todo-card p7">
+      <div class="todo-num">7.1</div>
+      <h3>Electron Phase 4 — Production Hardening</h3>
+      <p>Phases 1–3 already done (electron-paths, first-run wizard, settings page, auto-update, CI/CD). Phase 4: log rotation (logs in AppData), native module edge cases (node-pty, better-sqlite3 on all platforms), npx path resolution in packaged app, crash reporter integration.</p>
+      <div class="todo-tags">
+        <span class="tag tag-muted">📅 2 days</span>
         <span class="tag tag-blue">electron-main.cjs</span>
+        <span class="tag tag-muted">Phases 1–3 done</span>
+      </div>
+    </div>
+
+    <div class="todo-card p7">
+      <div class="todo-num">7.2</div>
+      <h3>React UI — Core Scaffolding</h3>
+      <p>Set up React + shadcn/ui alongside the existing HTML dashboard. Create the React app in <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">src/ui/</code>. Vite build config. Initial routes: fleet overview, agent list, mission control. Shell only — no functionality yet. HTML dashboard stays live until React is feature-complete.</p>
+      <div class="todo-tags">
+        <span class="tag tag-muted">📅 2–3 days</span>
+        <span class="tag tag-muted">depends on 7.1</span>
+      </div>
+    </div>
+
+    <div class="todo-card p7">
+      <div class="todo-num">7.3</div>
+      <h3>React UI — Mission Control Port</h3>
+      <p>Port <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">mission-control.html</code> (~2800 lines) to React components. Priority order: agent cards (context % bar + branch display), spawn dialog, output terminal viewer, approval prompts, templates. Keep API calls identical — backend contract does not change.</p>
+      <div class="todo-tags">
+        <span class="tag tag-muted">📅 2–3 weeks</span>
+        <span class="tag tag-muted">depends on 7.2, P4 improvements</span>
+      </div>
+    </div>
+
+    <div class="todo-card p7">
+      <div class="todo-num">7.4</div>
+      <h3>React UI — Fleet Overview Screen</h3>
+      <p>Fleet-level view: all machines as cards with real-time status, agent counts, CPU/RAM gauges, cost burn rate, recent activity feed. Replaces and improves the fleet dashboard mockup. Uses Cortex API data.</p>
+      <div class="todo-tags">
+        <span class="tag tag-muted">📅 3–5 days</span>
+        <span class="tag tag-muted">depends on 7.2, 4.4</span>
+      </div>
+    </div>
+
+    <div class="todo-card p7">
+      <div class="todo-num">7.5</div>
+      <h3>React UI — Souls / Agent Builder Screen</h3>
+      <p>Visual agent builder in React. Replaces <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px">agent-generator.html</code>. Form-based soul creation with live preview of the generated system prompt. Memory manager: view, add, prune memories per agent. Interaction history view.</p>
+      <div class="todo-tags">
+        <span class="tag tag-muted">📅 3–5 days</span>
+        <span class="tag tag-muted">depends on 7.2</span>
+      </div>
+    </div>
+
+    <div class="todo-card p7">
+      <div class="todo-num">7.6</div>
+      <h3>React UI — Settings and Security Screen</h3>
+      <p>Settings screen: API keys, budget limits, approval mode defaults, network policy, security allowlist/blocklist, MCP server manager. One screen with all configuration rather than scattered HTML settings pages.</p>
+      <div class="todo-tags">
+        <span class="tag tag-muted">📅 2–3 days</span>
+        <span class="tag tag-muted">depends on 7.2</span>
+      </div>
+    </div>
+
+    <div class="todo-card p7">
+      <div class="todo-num">7.7</div>
+      <h3>Electron + React Integration and Packaging</h3>
+      <p>Wire React UI into Electron: main process loads React build (or Vite dev server in dev mode), IPC bridge for desktop-only features (system tray, native notifications, Wake-on-LAN). electron-builder produces platform-specific installers (.exe / .dmg / .deb).</p>
+      <div class="todo-tags">
+        <span class="tag tag-muted">📅 3–5 days</span>
+        <span class="tag tag-muted">depends on 7.3, 7.4, 7.5, 7.6</span>
+      </div>
+    </div>
+
+    <div class="todo-card p7">
+      <div class="todo-num">7.8</div>
+      <h3>Electron System Tray Integration</h3>
+      <p>Minimise PIA to system tray. Tray icon: active agent count badge, colour indicator (green = idle, yellow = working, red = attention). Right-click menu: Open Dashboard, Quick Spawn, Show Alerts, Quit. Makes PIA feel like a background service, not a window you keep open.</p>
+      <div class="todo-tags">
+        <span class="tag tag-muted">📅 1 day</span>
+        <span class="tag tag-muted">depends on 7.7</span>
+      </div>
+    </div>
+
+    <div class="todo-card p7">
+      <div class="todo-num">7.9</div>
+      <h3>NSIS Installer and Auto-Update for Windows</h3>
+      <p>NSIS Windows installer: Start Menu shortcut, desktop icon, "Uninstall PIA" in Add/Remove Programs, auto-start on login option. Wire electron-updater to a GitHub releases feed. Users get a notification when a new version is available and can update with one click.</p>
+      <div class="todo-tags">
+        <span class="tag tag-muted">📅 1–2 days</span>
+        <span class="tag tag-muted">depends on 7.7</span>
+      </div>
+    </div>
+
+    <!-- ══ QUICK WINS ══ -->
+    <div class="todo-tier-header" style="border-bottom-color:rgba(255,209,102,0.3)">
+      <span class="todo-tier-badge tier-p4">QW</span>
+      <h2>Quick Wins</h2>
+      <span class="todo-tier-desc">Low effort, no blocking dependencies — slot these in between priority work</span>
+    </div>
+
+    <div class="quick-wins-box">
+      <h3>⚡ Can be done any time, independently of any priority track</h3>
+      <div class="quick-wins-grid">
+        <div class="qw-item">
+          <div class="qw-icon">🔐</div>
+          <div class="qw-body">
+            <div class="qw-title">Anthropic API Key Rotation</div>
+            <div class="qw-effort">10 min</div>
+            <div class="qw-desc">Old key is in git history and still active. Rotate it immediately. Eliminate live security exposure.</div>
+          </div>
+        </div>
+        <div class="qw-item">
+          <div class="qw-icon">🔒</div>
+          <div class="qw-body">
+            <div class="qw-title">File API Authentication (1.8)</div>
+            <div class="qw-effort">30 min</div>
+            <div class="qw-desc">Add token-based middleware to <code style="font-size:11px;background:rgba(255,255,255,0.07);padding:0 4px;border-radius:3px">/api/files</code> routes. Already exists on all other routes.</div>
+          </div>
+        </div>
+        <div class="qw-item">
+          <div class="qw-icon">🔄</div>
+          <div class="qw-body">
+            <div class="qw-title">PM2 Process Manager (1.6)</div>
+            <div class="qw-effort">15 min</div>
+            <div class="qw-desc">Auto-restart on crash, auto-start on boot across M1/M2/M3. Eliminates an entire category of outage.</div>
+          </div>
+        </div>
+        <div class="qw-item">
+          <div class="qw-icon">📊</div>
+          <div class="qw-body">
+            <div class="qw-title">Context % Bar on Cards (1.3)</div>
+            <div class="qw-effort">2 hours</div>
+            <div class="qw-desc">Most actionable real-time agent health signal. SDK already exposes the data.</div>
+          </div>
+        </div>
+        <div class="qw-item">
+          <div class="qw-icon">🌿</div>
+          <div class="qw-body">
+            <div class="qw-title">Git Branch Display on Cards (4.1)</div>
+            <div class="qw-effort">2–4 hours</div>
+            <div class="qw-desc">From Marc Nuri's research. Run <code style="font-size:11px;background:rgba(255,255,255,0.07);padding:0 4px;border-radius:3px">git branch --show-current</code> at spawn time. Immediately useful.</div>
+          </div>
+        </div>
+        <div class="qw-item">
+          <div class="qw-icon">🏷️</div>
+          <div class="qw-body">
+            <div class="qw-title">Version Mismatch Detection (4.8)</div>
+            <div class="qw-effort">1–2 hours</div>
+            <div class="qw-desc">Workers report git SHA at registration. Dashboard shows warning badge if any machine is drifted.</div>
+          </div>
+        </div>
+        <div class="qw-item">
+          <div class="qw-icon">🧹</div>
+          <div class="qw-body">
+            <div class="qw-title">Clean Up Stale Machine DB Entries</div>
+            <div class="qw-effort">30 min</div>
+            <div class="qw-desc">Remove "Main PC", "Main-PC", "Remote-Worker-1" ghost entries from the machines table.</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -849,6 +1666,383 @@
 </section>
 
 
+<!-- ══════════════════════════════════════════════════════
+     ECOSYSTEM SECTION — Full Agent Architecture
+══════════════════════════════════════════════════════ -->
+<section class="section" id="ecosystem">
+  <div class="section-title"><span>🧠</span> Full Agent Ecosystem — All Agents &amp; Machines</div>
+
+  <p style="color:var(--muted);font-size:14px;margin-bottom:32px;max-width:780px">
+    PIA × SodaLabs operates on a three-tier hierarchy. Strategic agents on M1 manage the whole operation; a dynamic project boss on M2 orchestrates active work; specialist execution agents on M3 produce concrete output. Every agent is ephemeral — spawned on demand, terminated when done, always carrying its soul.
+  </p>
+
+  <!-- TIER 1 — STRATEGIC (M1) -->
+  <div class="eco-tier">
+    <div class="eco-tier-label t1">Tier 1 — Strategic · M1 Izzit7 (Hub)</div>
+    <div class="eco-agents">
+
+      <div class="eco-agent t1">
+        <span class="eco-agent-emoji">🚪</span>
+        <div class="eco-agent-name" style="color:#79b8ff">Controller</div>
+        <div class="eco-agent-role">Single door into the system. Greets you by name, routes everything to the right machine and project.</div>
+        <div class="eco-agent-meta">
+          <span class="eco-tag eco-tag-muted">On-demand</span>
+          <span class="eco-tag eco-tag-blue">M1</span>
+        </div>
+      </div>
+
+      <div class="eco-agent t1">
+        <span class="eco-agent-emoji">📋</span>
+        <div class="eco-agent-name" style="color:#79b8ff">Fisher2050</div>
+        <div class="eco-agent-role">Project manager &amp; resource scheduler. Breaks goals into tasks, books machine time via calendar, dispatches agents, follows up automatically.</div>
+        <div class="eco-agent-meta">
+          <span class="eco-tag eco-tag-muted">9am + 6pm + calendar</span>
+          <span class="eco-tag eco-tag-blue">M1</span>
+        </div>
+      </div>
+
+      <div class="eco-agent t1">
+        <span class="eco-agent-emoji">🔍</span>
+        <div class="eco-agent-name" style="color:#79b8ff">Eliyahu</div>
+        <div class="eco-agent-role">Curious analyst. Reads Tim Buc's filed records, connects patterns across projects, produces your 2-minute morning briefing.</div>
+        <div class="eco-agent-meta">
+          <span class="eco-tag eco-tag-muted">6am + event</span>
+          <span class="eco-tag eco-tag-blue">M1</span>
+        </div>
+      </div>
+
+      <div class="eco-agent t1">
+        <span class="eco-agent-emoji">✔️</span>
+        <div class="eco-agent-name" style="color:#79b8ff">Ziggi</div>
+        <div class="eco-agent-role">Quality engineer. Reviews all output, rates 1–10, runs 2am audits. "Ziggi's Verdict: 8/10. Ship it."</div>
+        <div class="eco-agent-meta">
+          <span class="eco-tag eco-tag-muted">2am cron + task complete</span>
+          <span class="eco-tag eco-tag-blue">M1/M2</span>
+        </div>
+      </div>
+
+      <div class="eco-agent t1">
+        <span class="eco-agent-emoji">📚</span>
+        <div class="eco-agent-name" style="color:#79b8ff">Tim Buc</div>
+        <div class="eco-agent-role">Librarian archivist. Wakes when a session ends, reviews raw Claude SDK logs, sorts by project/agent/date, files to Records DB.</div>
+        <div class="eco-agent-meta">
+          <span class="eco-tag eco-tag-muted">Event: session end</span>
+          <span class="eco-tag eco-tag-blue">M1</span>
+        </div>
+      </div>
+
+      <div class="eco-agent t1">
+        <span class="eco-agent-emoji">🦉</span>
+        <div class="eco-agent-name" style="color:#79b8ff">Owl</div>
+        <div class="eco-agent-role">Persistent task list. Never ephemeral. At session start: feeds context. At session end: updates with progress. "Update me where we left off."</div>
+        <div class="eco-agent-meta">
+          <span class="eco-tag eco-tag-muted">Session start + end</span>
+          <span class="eco-tag eco-tag-blue">M1 (DB)</span>
+          <span class="eco-tag eco-tag-yellow">Always-on</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CONNECTOR M1 → M2 -->
+  <div class="eco-tier-connector">
+    <div class="arrow-line"></div>
+    <div class="arrow-down" style="color:var(--pink)">Fisher2050 dispatches via calendar ↓</div>
+    <div class="arrow-line"></div>
+  </div>
+
+  <!-- TIER 2 — PROJECT BOSS (M2) -->
+  <div class="eco-tier">
+    <div class="eco-tier-label t2">Tier 2 — Project Boss · M2 Monster (Dynamic Role)</div>
+    <div class="eco-agents">
+
+      <div class="eco-agent t2" style="max-width:100%;flex:1 1 100%">
+        <span class="eco-agent-emoji">🎯</span>
+        <div class="eco-agent-name" style="color:#f97bbb">Project Manager Mode</div>
+        <div class="eco-agent-role">
+          M2 has no permanent role below M1. When a project activates, M2 <em>becomes</em> the boss of that project — loads the project soul + Owl task list, and dispatches to M3 specialists. Multiple projects can run simultaneously on separate machines.
+          <br><br>
+          <strong style="color:var(--text)">Two interaction modes:</strong>
+          <span style="color:var(--green)"> BUILD</span> (autonomous execution, no prompting) ·
+          <span style="color:var(--yellow)"> PROMPT</span> (human in conversation)
+        </div>
+        <div class="eco-agent-meta">
+          <span class="eco-tag eco-tag-pink">Dynamic role</span>
+          <span class="eco-tag eco-tag-pink">M2</span>
+          <span class="eco-tag eco-tag-muted">100.127.165.12</span>
+          <span class="eco-tag eco-tag-blue">Bird Fountain (default)</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CONNECTOR M2 → M3 -->
+  <div class="eco-tier-connector">
+    <div class="arrow-line"></div>
+    <div class="arrow-down" style="color:#b392f0">M2 dispatches tasks to specialists ↓</div>
+    <div class="arrow-line"></div>
+  </div>
+
+  <!-- TIER 3 — EXECUTION (M3) -->
+  <div class="eco-tier">
+    <div class="eco-tier-label t3">Tier 3 — Execution · M3 Yeti (Specialists)</div>
+    <div class="eco-agents">
+
+      <div class="eco-agent t3">
+        <span class="eco-agent-emoji">🔬</span>
+        <div class="eco-agent-name" style="color:#b392f0">Farcake</div>
+        <div class="eco-agent-role">Research engine. Does not search — investigates. Cross-references multiple sources, validates claims, produces structured findings.</div>
+        <div class="eco-agent-meta">
+          <span class="eco-tag eco-tag-muted">Fisher2050 calendar</span>
+          <span class="eco-tag eco-tag-purple">M3</span>
+          <span class="eco-tag eco-tag-green">Building</span>
+        </div>
+      </div>
+
+      <div class="eco-agent t3">
+        <span class="eco-agent-emoji">✍️</span>
+        <div class="eco-agent-name" style="color:#b392f0">Andy</div>
+        <div class="eco-agent-role">Editorial engine. Writes in YOUR voice — not generic AI voice. Takes Farcake research to publication. Starts only after Farcake completes.</div>
+        <div class="eco-agent-meta">
+          <span class="eco-tag eco-tag-muted">After Farcake</span>
+          <span class="eco-tag eco-tag-purple">M3</span>
+          <span class="eco-tag eco-tag-green">Building</span>
+        </div>
+      </div>
+
+      <div class="eco-agent t3">
+        <span class="eco-agent-emoji">🎨</span>
+        <div class="eco-agent-name" style="color:#b392f0">Bird Fountain</div>
+        <div class="eco-agent-role">Design production at scale. Runs campaign assets, social batches, creative variations. Never asks for a brief twice.</div>
+        <div class="eco-agent-meta">
+          <span class="eco-tag eco-tag-muted">Fisher2050 calendar</span>
+          <span class="eco-tag eco-tag-purple">M2</span>
+          <span class="eco-tag eco-tag-yellow">Live</span>
+        </div>
+      </div>
+
+      <div class="eco-agent t3">
+        <span class="eco-agent-emoji">📊</span>
+        <div class="eco-agent-name" style="color:#b392f0">Wingspan</div>
+        <div class="eco-agent-role">Presentation expert. Tracks, updates, and produces decks. Knows every version — which went to which investor or client.</div>
+        <div class="eco-agent-meta">
+          <span class="eco-tag eco-tag-muted">Fisher2050 calendar</span>
+          <span class="eco-tag eco-tag-purple">M3</span>
+          <span class="eco-tag eco-tag-yellow">Live</span>
+        </div>
+      </div>
+
+      <div class="eco-agent t3">
+        <span class="eco-agent-emoji">🤖</span>
+        <div class="eco-agent-name" style="color:#b392f0">Coder Machine</div>
+        <div class="eco-agent-role">Autonomous code writer. Receives a spec, implements it in a git worktree, submits PR. One task per session, isolated from other agents.</div>
+        <div class="eco-agent-meta">
+          <span class="eco-tag eco-tag-muted">Fisher2050 calendar</span>
+          <span class="eco-tag eco-tag-purple">M3</span>
+          <span class="eco-tag eco-tag-muted">Planned</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CONNECTOR → Tools -->
+  <div class="eco-tier-connector">
+    <div class="arrow-line"></div>
+    <div class="arrow-down" style="color:var(--green)">Specialists output to platforms ↓</div>
+    <div class="arrow-line"></div>
+  </div>
+
+  <!-- TOOLS / PLATFORMS -->
+  <div class="eco-tier">
+    <div class="eco-tier-label tools">Tools &amp; Platforms</div>
+    <div class="eco-agents">
+
+      <div class="eco-agent tools">
+        <span class="eco-agent-emoji">🍬</span>
+        <div class="eco-agent-name" style="color:var(--green)">GumballCMS</div>
+        <div class="eco-agent-role">WhatsApp-first CMS. Output delivery layer for Andy, Bird Fountain, Wingspan. Also the WhatsApp bridge: you → message → Fisher2050 inbox.</div>
+        <div class="eco-agent-meta">
+          <span class="eco-tag eco-tag-green">Live</span>
+          <span class="eco-tag eco-tag-muted">Output + inbound</span>
+        </div>
+      </div>
+
+      <div class="eco-agent tools">
+        <span class="eco-agent-emoji">🎬</span>
+        <div class="eco-agent-name" style="color:var(--green)">Videohoho</div>
+        <div class="eco-agent-role">Electron video editor with smart fades + FFmpeg. Packages Andy content and Bird Fountain assets into polished video output.</div>
+        <div class="eco-agent-meta">
+          <span class="eco-tag eco-tag-yellow">Phase 2 pending</span>
+          <span class="eco-tag eco-tag-muted">ElevenLabs TTS next</span>
+        </div>
+      </div>
+
+      <div class="eco-agent tools">
+        <span class="eco-agent-emoji">📬</span>
+        <div class="eco-agent-name" style="color:var(--green)">Queue System</div>
+        <div class="eco-agent-role">Fisher2050 produces jobs → specialist agents consume them. One agent runs at a time on M3. Fisher manages the queue, handles overruns and re-schedules.</div>
+        <div class="eco-agent-meta">
+          <span class="eco-tag eco-tag-muted">Planned</span>
+          <span class="eco-tag eco-tag-green">Producer-Consumer</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── ARCHITECTURAL PATTERNS ── -->
+  <div style="margin-top:48px">
+    <div class="section-title" style="font-size:20px;margin-bottom:8px"><span>⚙️</span> New Architectural Patterns</div>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:24px">How the pieces connect and flow — patterns that make this system different from any other AI orchestration setup.</p>
+
+    <div class="pattern-grid">
+
+      <!-- Calendar-triggered spawning -->
+      <div class="pattern-card p-yellow">
+        <h3>📅 Calendar-Triggered Ephemeral Spawn</h3>
+        <p>Fisher2050 writes to a calendar. PIA watches the calendar. At trigger time PIA checks which machine is available and spawns there. The agent carries its full context in the calendar entry — no code changes needed to schedule new work.</p>
+        <div class="pattern-flow">
+<span class="c-yellow">Fisher2050</span> <span class="c-muted">→</span> <span class="c-white">Calendar entry</span>
+<span class="c-muted">→</span> <span class="c-blue">PIA Hub watches</span>
+<span class="c-muted">→</span> <span class="c-green">Trigger fires → check M1/M2/M3 available</span>
+<span class="c-muted">→</span> <span class="c-purple">Spawn agent with soul + context loaded</span>
+<span class="c-muted">→</span> <span class="c-white">Agent works → terminates → Tim Buc pinged</span>
+        </div>
+      </div>
+
+      <!-- Records pipeline -->
+      <div class="pattern-card p-blue">
+        <h3>🗂️ Records Pipeline (Intelligence Loop)</h3>
+        <p>Every session becomes institutional knowledge. Tim Buc files it, Eliyahu synthesises it, you get a briefing. The system grows smarter about your business every day.</p>
+        <div class="pattern-flow">
+<span class="c-yellow">Any agent works</span> <span class="c-muted">→</span> <span class="c-white">session ends</span>
+<span class="c-muted">→</span> <span class="c-blue">Tim Buc wakes (ephemeral)</span>
+<span class="c-muted">→</span> <span class="c-white">sorts: project / agent / type / date</span>
+<span class="c-muted">→</span> <span class="c-green">files to Records DB → terminates</span>
+<span class="c-muted">→</span> <span class="c-yellow">Eliyahu reads at 6am</span>
+<span class="c-muted">→</span> <span class="c-pink">You receive 2-minute morning briefing</span>
+        </div>
+      </div>
+
+      <!-- Queue / Producer-Consumer -->
+      <div class="pattern-card p-green">
+        <h3>📬 Queue / Producer-Consumer Pattern</h3>
+        <p>Fisher2050 produces jobs into a queue. M3 specialist agents consume one at a time. Fisher knows machine capacity — M3 can only run one agent at once — and books time slots accordingly. Work never stacks up unseen.</p>
+        <div class="pattern-flow">
+<span class="c-yellow">Fisher2050</span> <span class="c-muted">→ produces →</span> <span class="c-green">Job Queue</span>
+<span class="c-muted">    M3 free? →</span> <span class="c-purple">pop job → spawn Farcake</span>
+<span class="c-muted">    Farcake done →</span> <span class="c-purple">pop next → spawn Andy</span>
+<span class="c-muted">    M3 offline? →</span> <span class="c-yellow">Fisher reschedules automatically</span>
+        </div>
+      </div>
+
+      <!-- Messaging system -->
+      <div class="pattern-card p-pink">
+        <h3>📧 Messaging System — Digital Worker Identity</h3>
+        <p>Every agent and machine has a real email address and a WebSocket channel. You email Fisher2050 a goal — you do not configure a workflow. The psychological shift from software to team member is the product.</p>
+        <div class="pattern-flow">
+<span class="c-muted">Inbound:  </span><span class="c-white">you → fisher2050@sodalabs.ai → goal created</span>
+<span class="c-muted">          </span><span class="c-white">WhatsApp → GumballCMS → Fisher inbox</span>
+<span class="c-muted">Outbound: </span><span class="c-yellow">Eliyahu → 6am briefing email → you</span>
+<span class="c-muted">          </span><span class="c-yellow">Fisher → 9am standup + 6pm summary → you</span>
+<span class="c-muted">          </span><span class="c-pink">Ziggi → quality report → fisher2050</span>
+<span class="c-muted">Internal: </span><span class="c-blue">PIA WebSocket channels per agent (#quality etc)</span>
+        </div>
+      </div>
+
+      <!-- Push-based monitoring -->
+      <div class="pattern-card p-purple">
+        <h3>👁️ Push-Based Monitoring (Observer Pattern)</h3>
+        <p>The Monitor Agent never waits to be asked. It pushes status to Controller the moment something changes — agent stall, context overload, machine offline. The human is never the bottleneck in the information loop.</p>
+        <div class="pattern-flow">
+<span class="c-muted">Anti-pattern: </span><span class="c-red">Controller asks "what's happening?" → poll</span>
+<span class="c-muted">PIA pattern:  </span><span class="c-green">Monitor detects event → pushes instantly</span>
+<span class="c-muted">              </span><span class="c-green">Context overload → pushes to Controller</span>
+<span class="c-muted">              </span><span class="c-green">Machine offline  → pushes to Fisher2050</span>
+<span class="c-muted">              </span><span class="c-green">Agent stall      → pushes to you</span>
+        </div>
+      </div>
+
+      <!-- Ephemeral compute -->
+      <div class="pattern-card p-blue">
+        <h3>⚡ Ephemeral Compute — Pay Only While Working</h3>
+        <p>Agents do not run 24/7. An agent not running is not "off" — it simply does not exist yet. Its soul waits on disk, its identity persists in the DB. At trigger time PIA instantiates it, it works, it terminates.</p>
+        <div class="pattern-flow">
+<span class="c-muted">Idle cost:   </span><span class="c-green">$0 — soul file on disk, zero compute</span>
+<span class="c-muted">Active cost: </span><span class="c-yellow">only during the session window</span>
+<span class="c-muted">Example:     </span><span class="c-white">Ziggi 2am audit ≈ 5 min / day</span>
+<span class="c-muted">             </span><span class="c-white">costs nothing for 23hr 55min / day</span>
+<span class="c-muted">Same agent:  </span><span class="c-blue">soul injected fresh → consistent identity</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── FULL HIERARCHY ASCII ── -->
+  <div style="margin-top:48px">
+    <div class="section-title" style="font-size:20px;margin-bottom:16px"><span>🗺️</span> Full Three-Tier Hierarchy</div>
+    <div class="flow-diagram">
+<span class="c-muted">                              YOU</span>
+<span class="c-muted">                               │</span>
+<span class="c-blue">                    ┌──────────▼──────────┐</span>
+<span class="c-blue">                    │    CONTROLLER        │  ← soul: gateway identity</span>
+<span class="c-blue">                    │  "Hi Mic, which      │    knows you by name</span>
+<span class="c-blue">                    │   project?"          │    routes everything</span>
+<span class="c-blue">                    └──┬───────────────┬──┘</span>
+<span class="c-muted">                       │               │</span>
+<span class="c-blue">              ┌────────▼──┐     ┌──────▼──────────┐</span>
+<span class="c-blue">              │  MONITOR  │     │   FISHER2050     │  ← resource scheduler</span>
+<span class="c-blue">              │ (pushes   │     │ 9am + 6pm +      │    calendar dispatch</span>
+<span class="c-blue">              │  never    │     │ calendar-based   │    manages M3 capacity</span>
+<span class="c-blue">              │  polls)   │     └──────┬───────────┘</span>
+<span class="c-blue">              └───────────┘            │</span>
+<span class="c-muted">                     ┌─────────────────┼──────────────────┐</span>
+<span class="c-muted">                     │                 │                  │</span>
+<span class="c-yellow">              ┌──────▼──────┐  ┌───────▼──────┐  ┌───────▼─────┐</span>
+<span class="c-yellow">              │  ELIYAHU    │  │    ZIGGI      │  │     OWL     │</span>
+<span class="c-yellow">              │ (6am brief  │  │ (2am audit,  │  │ (persistent │</span>
+<span class="c-yellow">              │  patterns)  │  │  1-10 rating)│  │  task list) │</span>
+<span class="c-yellow">              └──────┬──────┘  └──────────────┘  └─────────────┘</span>
+<span class="c-muted">                     │</span>
+<span class="c-yellow">              ┌──────▼──────┐</span>
+<span class="c-yellow">              │  TIM BUC    │  ← event: session end → files to Records DB</span>
+<span class="c-yellow">              └──────┬──────┘</span>
+<span class="c-muted">                     │</span>
+<span class="c-green">              ┌──────▼──────┐</span>
+<span class="c-green">              │   RECORDS   │  ← Claude SDK logs: tokens, cost, files R/W</span>
+<span class="c-green">              │     DB      │</span>
+<span class="c-green">              └─────────────┘</span>
+<span class="c-muted"></span>
+<span class="c-muted">━━━━━━━━━━━━━━━━━━━━━━━━  CALENDAR DISPATCH  ━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="c-muted">  M2 MONSTER (Project Boss — dynamic role)</span>
+<span class="c-pink">              ┌──────────────────────────────────────┐</span>
+<span class="c-pink">              │  Loads project soul + Owl task list   │</span>
+<span class="c-pink">              │  BUILD mode or PROMPT mode            │</span>
+<span class="c-pink">              │  Dispatches to M3 specialists         │</span>
+<span class="c-pink">              └───────┬──────────────────────────────┘</span>
+<span class="c-muted">                      │</span>
+<span class="c-muted">         ┌────────────┼──────────────┬────────────────┐</span>
+<span class="c-purple">   ┌──────▼──────┐ ┌──▼──────────┐ ┌──▼──────────┐ ┌──▼──────────┐</span>
+<span class="c-purple">   │   FARCAKE   │ │    ANDY     │ │BIRD FOUNTAIN│ │  WINGSPAN   │</span>
+<span class="c-purple">   │  Research   │ │  Editorial  │ │   Design    │ │    Decks    │</span>
+<span class="c-purple">   │     M3      │ │     M3      │ │     M2      │ │     M3      │</span>
+<span class="c-purple">   └──────┬──────┘ └──┬──────────┘ └──┬──────────┘ └──┬──────────┘</span>
+<span class="c-muted">          └───────────┴───────────────┴───────────────┘</span>
+<span class="c-muted">                              │</span>
+<span class="c-green">              ┌───────────────▼──────────────────┐</span>
+<span class="c-green">              │  GumballCMS (publish + WhatsApp)  │</span>
+<span class="c-green">              │  Videohoho  (package into video)  │</span>
+<span class="c-green">              └──────────────────────────────────┘</span>
+    </div>
+  </div>
+
+</section>
+
+
 </div><!-- /wrap -->
 
 
@@ -858,177 +2052,258 @@
 <div class="kids-bg" id="kids">
 <div style="max-width:900px;margin:0 auto">
 
-  <div class="kids-title">🤖 What is PIA? 🤖</div>
-  <div class="kids-sub">Explained for a 6-year-old! 🌟</div>
+  <div class="kids-title">🍕 PIA is a Pizza Shop! 🍕</div>
+  <div class="kids-sub">Imagine running a restaurant — but all the workers are AI robots! 🤖</div>
 
-  <!-- ── THE CAST ── -->
-  <div class="kids-section-title">✨ Meet the Characters ✨</div>
+  <!-- ── THE PIZZA SHOP STORY ── -->
+  <div class="kids-section-title">📖 The Big Idea</div>
+  <div class="story" style="margin-bottom:40px">
+
+    <div class="story-step">
+      <div class="story-icon" style="background:rgba(255,209,102,0.18)">👨‍🍳</div>
+      <div class="story-text">
+        <h3 style="color:#ffd166">You are the Restaurant Owner</h3>
+        <p>You own the whole pizza shop! You decide what gets made, who does what, and what the pizza should taste like. You don't cook — you're in charge. You just text or email your team and they handle everything.</p>
+        <div class="kid-detail">In PIA: you are Mic — the human who gives the big goals 🎯</div>
+      </div>
+    </div>
+
+    <div class="story-arrow">⬇️</div>
+
+    <div class="story-step">
+      <div class="story-icon" style="background:rgba(67,97,238,0.18)">🚪</div>
+      <div class="story-text">
+        <h3 style="color:#79b8ff">Controller — The Front Desk Person</h3>
+        <p>When you walk in, Controller greets you by name: "Hi Mic! Which project today?" They know everything about the whole restaurant — who's working, what's cooking, which computer to use. You always speak to Controller first. Never go straight to the kitchen!</p>
+        <div class="kid-detail">In PIA: Controller is the single door into the whole system 🚪</div>
+      </div>
+    </div>
+
+    <div class="story-arrow">⬇️</div>
+
+    <div class="story-step">
+      <div class="story-icon" style="background:rgba(247,37,133,0.18)">📋</div>
+      <div class="story-text">
+        <h3 style="color:#f97bbb">Fisher2050 — The Kitchen Manager</h3>
+        <p>Fisher2050 is the most important person in the kitchen. You give him your order and he breaks it into jobs, puts them on the order board, tells everyone who does what, and follows up without being asked. He also books the kitchen — only one cook can use the stove at a time!</p>
+        <div class="kid-detail">Fisher sends you a morning standup and evening summary every day 📅</div>
+      </div>
+    </div>
+
+    <div class="story-arrow">⬇️</div>
+
+    <div class="story-step">
+      <div class="story-icon" style="background:rgba(114,9,183,0.18)">📜</div>
+      <div class="story-text">
+        <h3 style="color:#b392f0">Eliyahu — The Memory Person</h3>
+        <p>Eliyahu wakes up every morning at 6am, reads EVERYTHING that happened yesterday, and writes you a 2-minute briefing — just 3 things that matter today. He remembers every decision, every session, every pattern. "I noticed something..." is how he always starts.</p>
+        <div class="kid-detail">In PIA: Eliyahu makes sure you never forget anything important 🌅</div>
+      </div>
+    </div>
+
+    <div class="story-arrow">⬇️</div>
+
+    <div class="story-step">
+      <div class="story-icon" style="background:rgba(6,214,160,0.18)">⭐</div>
+      <div class="story-text">
+        <h3 style="color:#06d6a0">Ziggi — The Quality Inspector</h3>
+        <p>Every night at 2am, Ziggi sneaks into the kitchen and tastes EVERYTHING. She gives each dish a score out of 10 and writes down exactly what was wrong and how to fix it. "Ziggi's Verdict: 8/10. Ship it." If she scores below 7, Fisher2050 puts it back in the queue!</p>
+        <div class="kid-detail">Ziggi never lets bad pizza leave the restaurant 🍕✅</div>
+      </div>
+    </div>
+
+    <div class="story-arrow">⬇️</div>
+
+    <div class="story-step">
+      <div class="story-icon" style="background:rgba(255,209,102,0.18)">📚</div>
+      <div class="story-text">
+        <h3 style="color:#ffd166">Tim Buc — The Filing Clerk</h3>
+        <p>Every single time a robot finishes working, Tim Buc wakes up, reads all the raw notes from that session, organises them neatly by project and date, and files them in the notebook. Tim Buc is why Eliyahu can do his job — without Tim Buc, everything is messy!</p>
+        <div class="kid-detail">Tim Buc is the reason the restaurant gets smarter every single day 🗂️</div>
+      </div>
+    </div>
+
+    <div class="story-arrow">⬇️</div>
+
+    <div class="story-step">
+      <div class="story-icon" style="background:rgba(67,97,238,0.18)">🦉</div>
+      <div class="story-text">
+        <h3 style="color:#79b8ff">Owl — The Notebook Itself</h3>
+        <p>The Owl is not a person — it's the restaurant's master order book. Every task that's waiting, every task that got done, every task coming next — it's all in the Owl. Every time a session starts, everyone reads the Owl. Every time a session ends, the Owl gets updated.</p>
+        <div class="kid-detail">Without the Owl, every day starts from scratch — with it, every day builds on yesterday 🦉</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── THE KITCHEN TEAM ── -->
+  <div class="kids-section-title">👨‍🍳 Meet the Kitchen Team</div>
   <div class="cast">
 
-    <div class="cast-card" style="border-color:rgba(67,97,238,0.4)">
-      <span class="cast-emoji">🧠</span>
-      <div class="cast-name" style="color:#79b8ff">M1 · The Boss</div>
-      <div class="cast-role">Lives on the big computer. Tells everyone what to do. Has the big TV screen showing everything!</div>
+    <div class="cast-card" style="border-color:rgba(114,9,183,0.4)">
+      <span class="cast-emoji">🔬</span>
+      <div class="cast-name" style="color:#b392f0">Farcake</div>
+      <div class="cast-role">The Researcher! Goes out to find the ingredients and information. Doesn't just search — investigates deeply. Farcake finishes BEFORE Andy starts cooking.</div>
     </div>
 
     <div class="cast-card" style="border-color:rgba(114,9,183,0.4)">
-      <span class="cast-emoji">💪</span>
-      <div class="cast-name" style="color:#b392f0">M2 · The Worker</div>
-      <div class="cast-role">Another computer far away. Gets the jobs from the Boss and does all the hard work!</div>
+      <span class="cast-emoji">✍️</span>
+      <div class="cast-name" style="color:#b392f0">Andy</div>
+      <div class="cast-role">The Writer! Takes Farcake's research and writes the menu descriptions, articles, and stories — in YOUR voice, not like a robot. Andy makes it sound like YOU wrote it.</div>
     </div>
 
-    <div class="cast-card" style="border-color:rgba(255,209,102,0.4)">
-      <span class="cast-emoji">🤖</span>
-      <div class="cast-name" style="color:#ffd166">AI Agents · The Robots</div>
-      <div class="cast-role">Little robot helpers that live inside M2. Each one gets one job to do. They NEVER stop until it's done!</div>
+    <div class="cast-card" style="border-color:rgba(114,9,183,0.4)">
+      <span class="cast-emoji">🎨</span>
+      <div class="cast-name" style="color:#b392f0">Bird Fountain</div>
+      <div class="cast-role">The Designer! Makes everything look beautiful — social posts, campaign images, creative variations. Never asks for a brief twice. Always on M2.</div>
     </div>
 
-    <div class="cast-card" style="border-color:rgba(6,214,160,0.4)">
-      <span class="cast-emoji">📺</span>
-      <div class="cast-name" style="color:#06d6a0">Dashboard · The TV</div>
-      <div class="cast-role">A webpage that shows you ALL the robots working in real time. Like a mission control room at NASA! 🚀</div>
+    <div class="cast-card" style="border-color:rgba(114,9,183,0.4)">
+      <span class="cast-emoji">📊</span>
+      <div class="cast-name" style="color:#b392f0">Wingspan</div>
+      <div class="cast-role">The Presenter! Makes the pitch decks look amazing. Knows every version of every deck — which one went to which investor, which client.</div>
     </div>
 
     <div class="cast-card" style="border-color:rgba(247,37,133,0.4)">
-      <span class="cast-emoji">📡</span>
-      <div class="cast-name" style="color:#f72585">WebSocket · The Walkie-Talkie</div>
-      <div class="cast-role">The secret phone line between computers. Always ON so messages arrive instantly — no waiting!</div>
+      <span class="cast-emoji">👁️</span>
+      <div class="cast-name" style="color:#f97bbb">Monitor</div>
+      <div class="cast-role">The Security Camera! Always watching, never sleeping. The moment something goes wrong it PUSHES a warning to Controller immediately — doesn't wait to be asked.</div>
     </div>
 
-    <div class="cast-card" style="border-color:rgba(255,160,50,0.4)">
-      <span class="cast-emoji">🛣️</span>
-      <div class="cast-name" style="color:#ffab70">Tailscale · The Secret Road</div>
-      <div class="cast-role">A private tunnel connecting all the computers safely. Like a secret underground road only YOUR computers can use!</div>
+    <div class="cast-card" style="border-color:rgba(6,214,160,0.4)">
+      <span class="cast-emoji">🤖</span>
+      <div class="cast-name" style="color:#06d6a0">Coder Machine</div>
+      <div class="cast-role">The Tool Maker! When you need a new kitchen gadget built, Coder Machine writes the code, runs it in its own safe space, and hands it back. One build at a time.</div>
     </div>
 
   </div>
 
-  <!-- ── THE STORY ── -->
-  <div class="kids-section-title">📖 The Story — Step by Step</div>
+  <!-- ── THE BUILDINGS ── -->
+  <div class="kids-section-title" style="margin-top:48px">🏢 The Three Buildings</div>
+  <div class="cast">
+
+    <div class="cast-card" style="border-color:rgba(67,97,238,0.4)">
+      <span class="cast-emoji">🏠</span>
+      <div class="cast-name" style="color:#79b8ff">M1 — The Main Restaurant</div>
+      <div class="cast-role">This is Izzit7 — the hub computer. Controller, Fisher2050, Eliyahu, Tim Buc and Owl all live here. The dashboard screen is on this building's wall.</div>
+    </div>
+
+    <div class="cast-card" style="border-color:rgba(114,9,183,0.4)">
+      <span class="cast-emoji">🍳</span>
+      <div class="cast-name" style="color:#b392f0">M2 — The Production Kitchen</div>
+      <div class="cast-role">This is soda-monster-hunter — the project boss machine. When a project is running, M2 BECOMES the boss of that project. Bird Fountain lives here by default.</div>
+    </div>
+
+    <div class="cast-card" style="border-color:rgba(6,214,160,0.4)">
+      <span class="cast-emoji">🚗</span>
+      <div class="cast-name" style="color:#06d6a0">M3 — The Delivery Centre</div>
+      <div class="cast-role">This is Yeti — where Farcake, Andy, and Wingspan work. They receive their jobs, do the work, send results back up to M2. One agent at a time!</div>
+    </div>
+
+  </div>
+
+  <!-- ── THE TOOLS ── -->
+  <div class="kids-section-title" style="margin-top:48px">🛠️ Special Tools</div>
+  <div class="cast">
+
+    <div class="cast-card" style="border-color:rgba(6,214,160,0.4)">
+      <span class="cast-emoji">🍬</span>
+      <div class="cast-name" style="color:#06d6a0">GumballCMS</div>
+      <div class="cast-role">The Delivery Service! Gets finished food to the customer on WhatsApp or website. Also works the OTHER way — you can WhatsApp GumballCMS and it tells Fisher2050!</div>
+    </div>
+
+    <div class="cast-card" style="border-color:rgba(255,209,102,0.4)">
+      <span class="cast-emoji">📬</span>
+      <div class="cast-name" style="color:#ffd166">Queue System</div>
+      <div class="cast-role">The Order Board! All the jobs lined up waiting. Fisher2050 adds jobs, agents pick them up one by one. If a machine goes offline, Fisher reschedules automatically.</div>
+    </div>
+
+  </div>
+
+  <!-- ── HOW IT ALL FLOWS ── -->
+  <div class="kids-section-title" style="margin-top:48px">📖 How One Job Gets Done</div>
   <div class="story">
 
     <div class="story-step">
-      <div class="story-icon" style="background:rgba(67,97,238,0.15)">🧑‍💻</div>
+      <div class="story-icon" style="background:rgba(255,209,102,0.18)">💬</div>
       <div class="story-text">
-        <h3 style="color:#79b8ff">1. You open the Dashboard</h3>
-        <p>You open a webpage on M1 (the Boss computer). It looks like a mission control room with lots of cards showing robots and machines.</p>
-        <div class="kid-detail">It's like turning on the TV to see all your toys working! 📺</div>
+        <h3 style="color:#ffd166">Step 1: You give the order</h3>
+        <p>You WhatsApp GumballCMS or email Fisher2050: "Research and write an article about Afrotech." It arrives in Fisher's inbox as a task.</p>
+        <div class="kid-detail">Like texting your kitchen manager from your phone while at the beach! 📱</div>
       </div>
     </div>
 
     <div class="story-arrow">⬇️</div>
 
     <div class="story-step">
-      <div class="story-icon" style="background:rgba(255,209,102,0.15)">🎯</div>
+      <div class="story-icon" style="background:rgba(247,37,133,0.18)">📋</div>
       <div class="story-text">
-        <h3 style="color:#ffd166">2. You spawn an Agent on M2</h3>
-        <p>You click a button and say "Go build something on M2!" The Boss sends a secret message through the Walkie-Talkie to M2.</p>
-        <div class="kid-detail">It's like texting your friend "hey, can you go tidy your room?" 📱</div>
+        <h3 style="color:#f97bbb">Step 2: Fisher breaks it up</h3>
+        <p>Fisher2050 creates two calendar entries: "2pm — Farcake does research on M3" and "4pm — Andy writes the article on M3." He books the time slots so they don't crash.</p>
+        <div class="kid-detail">Like a kitchen manager scheduling who uses the oven and when! 🕐</div>
       </div>
     </div>
 
     <div class="story-arrow">⬇️</div>
 
     <div class="story-step">
-      <div class="story-icon" style="background:rgba(114,9,183,0.15)">🤖</div>
+      <div class="story-icon" style="background:rgba(114,9,183,0.18)">🔬</div>
       <div class="story-text">
-        <h3 style="color:#b392f0">3. M2 wakes up a Robot</h3>
-        <p>M2 receives the message and wakes up a brand new AI robot. The robot is called Claude — it's SUPER smart and knows how to read files, write code, and run commands.</p>
-        <div class="kid-detail">It's like opening a toy box and out jumps a robot that already knows everything! 🪄</div>
+        <h3 style="color:#b392f0">Step 3: Farcake investigates</h3>
+        <p>At 2pm, PIA spawns Farcake on M3 with its full soul and the task brief. Farcake researches, cross-checks sources, and produces a structured report. Then it terminates — gone!</p>
+        <div class="kid-detail">The researcher does ONE job, does it thoroughly, then goes home 🔬</div>
       </div>
     </div>
 
     <div class="story-arrow">⬇️</div>
 
     <div class="story-step">
-      <div class="story-icon" style="background:rgba(6,214,160,0.15)">⚡</div>
+      <div class="story-icon" style="background:rgba(114,9,183,0.18)">✍️</div>
       <div class="story-text">
-        <h3 style="color:#06d6a0">4. The Robot gets to work</h3>
-        <p>The robot starts reading files, writing code, running tests. Every word it types gets sent back to M1 through the Secret Road so YOU can see it live on the Dashboard!</p>
-        <div class="kid-detail">It's like watching someone draw a picture from far away — you see every single stroke! ✏️</div>
+        <h3 style="color:#b392f0">Step 4: Andy writes it up</h3>
+        <p>At 4pm, PIA spawns Andy on M3 with Farcake's research as input. Andy writes the article in your voice — not generic AI voice. Sends to GumballCMS to publish. Then terminates.</p>
+        <div class="kid-detail">Andy only starts AFTER Farcake is done — Fisher made sure of that! ✍️</div>
       </div>
     </div>
 
     <div class="story-arrow">⬇️</div>
 
     <div class="story-step">
-      <div class="story-icon" style="background:rgba(247,37,133,0.15)">💬</div>
+      <div class="story-icon" style="background:rgba(6,214,160,0.18)">⭐</div>
       <div class="story-text">
-        <h3 style="color:#f72585">5. You can talk to it!</h3>
-        <p>If the robot needs help or you want to tell it something, you type in the chat box on M1. Your message travels through the Secret Road all the way to the robot on M2. The robot reads it and replies!</p>
-        <div class="kid-detail">It's like walkie-talkies but the other person is a ROBOT doing your homework! 📻🤖</div>
+        <h3 style="color:#06d6a0">Step 5: Ziggi taste-tests it</h3>
+        <p>Ziggi reviews the article and gives it a score. "7.5/10 — good but add more local examples." Fisher2050 gets the report. If it needs fixing, Fisher creates a re-do task!</p>
+        <div class="kid-detail">Quality control happens automatically — you don't need to check everything yourself 🎖️</div>
       </div>
     </div>
 
     <div class="story-arrow">⬇️</div>
 
     <div class="story-step">
-      <div class="story-icon" style="background:rgba(255,209,102,0.15)">🏁</div>
+      <div class="story-icon" style="background:rgba(255,209,102,0.18)">🗂️</div>
       <div class="story-text">
-        <h3 style="color:#ffd166">6. Job done — Robot goes home!</h3>
-        <p>When the job is finished, the robot shows you what it made, then gets deleted. Gone! Clean slate. Next time you need something done, a fresh new robot wakes up ready to go!</p>
-        <div class="kid-detail">It's like a sandcastle — you build it, admire it, then wash it away so you can build a better one! 🏖️</div>
+        <h3 style="color:#ffd166">Step 6: Tim Buc files everything</h3>
+        <p>Tim Buc wakes up after each session, reads the raw notes, and files everything neatly in the Records notebook. Eliyahu will read these notes at 6am and tell you what happened.</p>
+        <div class="kid-detail">Every session becomes knowledge — the restaurant gets smarter every day 📚</div>
       </div>
-    </div>
-
-  </div>
-
-  <!-- ── WHAT WE'RE ADDING ── -->
-  <div class="kids-section-title">🔨 What We're Building Next</div>
-  <div class="cast" style="margin-bottom:48px">
-
-    <div class="cast-card" style="border-color:rgba(6,214,160,0.5);background:rgba(6,214,160,0.06)">
-      <span class="cast-emoji">📊</span>
-      <div class="cast-name" style="color:#06d6a0">Brain Fullness Bar</div>
-      <div class="cast-role">A little bar showing how full the robot's brain is. When it gets too full 🔴 the robot starts making mistakes!</div>
-    </div>
-
-    <div class="cast-card" style="border-color:rgba(67,97,238,0.5);background:rgba(67,97,238,0.06)">
-      <span class="cast-emoji">🌿</span>
-      <div class="cast-name" style="color:#79b8ff">Which Branch</div>
-      <div class="cast-role">Shows which "version" of the code the robot is working on. Like knowing which drawing pad the robot is using!</div>
-    </div>
-
-    <div class="cast-card" style="border-color:rgba(247,37,133,0.5);background:rgba(247,37,133,0.06)">
-      <span class="cast-emoji">📺</span>
-      <div class="cast-name" style="color:#f72585">Live TV from M2</div>
-      <div class="cast-role">Right now M2's robot output is invisible on M1. We're fixing this so you see EVERYTHING live — like watching M2 on a TV screen!</div>
-    </div>
-
-    <div class="cast-card" style="border-color:rgba(255,209,102,0.5);background:rgba(255,209,102,0.06)">
-      <span class="cast-emoji">🌳</span>
-      <div class="cast-name" style="color:#ffd166">Private Rooms</div>
-      <div class="cast-role">When two robots work on the same project they might mess up each other's work. We give each robot its own private copy — like their own toy box!</div>
-    </div>
-
-    <div class="cast-card" style="border-color:rgba(114,9,183,0.5);background:rgba(114,9,183,0.06)">
-      <span class="cast-emoji">🧙</span>
-      <div class="cast-name" style="color:#b392f0">The Boss Robot</div>
-      <div class="cast-role">A special robot that CONTROLS other robots! You tell it "build me a website" and it wakes up 5 robots and tells each one what part to build!</div>
-    </div>
-
-    <div class="cast-card" style="border-color:rgba(255,100,100,0.5);background:rgba(255,100,100,0.06)">
-      <span class="cast-emoji">📱</span>
-      <div class="cast-name" style="color:#ff9999">Works on Phone</div>
-      <div class="cast-role">Right now the dashboard only works on a big screen. Soon you can check on your robots from your phone — even at the park! 🌳</div>
     </div>
 
   </div>
 
   <!-- ── FUN FACTS ── -->
-  <div class="kids-section-title">🌟 Cool Facts!</div>
+  <div class="kids-section-title" style="margin-top:48px">🌟 Cool Facts!</div>
   <div class="fun-facts">
 
     <div class="fun-fact ff-yellow">
-      <span class="ff-emoji">🤯</span>
-      <h4>90% of Claude Code was written by Claude itself!</h4>
-      <p>The robot helped build itself. That's like a toy building more toys! 🪀</p>
+      <span class="ff-emoji">🏭</span>
+      <h4>Every agent has its own soul!</h4>
+      <p>Fisher2050 has a real email address (fisher2050@sodalabs.ai), a personality, and a name you recognise. It's not just a robot — it's a team member! 🤝</p>
     </div>
 
     <div class="fun-fact ff-blue">
       <span class="ff-emoji">⚡</span>
-      <h4>Messages travel in milliseconds!</h4>
-      <p>When you type a message on M1, the robot on M2 sees it almost instantly — faster than you can blink! 😲</p>
+      <h4>Agents are ephemeral!</h4>
+      <p>When a robot isn't working it literally doesn't exist — the soul file just sits on disk. At trigger time PIA creates it, it works, then vanishes. Zero running cost when idle! 😲</p>
     </div>
 
     <div class="fun-fact ff-green">
@@ -1038,15 +2313,15 @@
     </div>
 
     <div class="fun-fact ff-pink">
-      <span class="ff-emoji">🚀</span>
-      <h4>A robot can write code 10x faster than a human!</h4>
-      <p>What takes a human developer 2 months to write, the robot finishes in 2 days. Wild, right? 🏎️</p>
+      <span class="ff-emoji">📱</span>
+      <h4>You can run the whole restaurant from WhatsApp!</h4>
+      <p>Text GumballCMS on WhatsApp → it becomes a task in Fisher's inbox → Fisher schedules it → agents work → you get a result. All from your phone! 🚀</p>
     </div>
 
     <div class="fun-fact ff-purple">
       <span class="ff-emoji">🏭</span>
       <h4>Some teams have ZERO humans writing code!</h4>
-      <p>A company called StrongDM has 3 people and NO ONE writes code. They just tell the robots what to build and check if it works! 🎮</p>
+      <p>A company called StrongDM has 3 people and NO ONE writes code. They just tell the robots what to build and check if it works! The PIA dark factory is coming for that too. 🎮</p>
     </div>
 
   </div>

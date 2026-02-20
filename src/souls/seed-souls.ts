@@ -15,9 +15,23 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const PERSONALITY_FILES = [
+  // Strategic layer — M1 (Izzit7)
+  'controller.json',
   'fisher2050.json',
-  'ziggi.json',
   'eliyahu.json',
+  'tim_buc.json',
+  'owl.json',
+  'monitor.json',
+  // Quality gate
+  'ziggi.json',
+  // Execution layer — M3 (Yeti)
+  'farcake.json',
+  'andy.json',
+  'wingspan.json',
+  // Project orchestrator — M2 (Monster)
+  'bird_fountain.json',
+  // Dedicated build layer
+  'coder_machine.json',
 ];
 
 export function seedDefaultSouls(): void {

@@ -93,6 +93,13 @@ async function startHub(): Promise<void> {
   const { seedDefaultSouls } = await import('./souls/seed-souls.js');
   seedDefaultSouls();
 
+  // Start Fisher Service (cron-based agent scheduling — Fisher2050, Ziggi, Eliyahu)
+  logger.info('Starting Fisher Service...');
+  const { initFisherService } = await import('./services/fisher-service.js');
+  const fisherService = initFisherService();
+  fisherService.start();
+  logger.info('FisherService started');
+
   // Start The Cortex — Fleet Intelligence Brain
   logger.info('Starting The Cortex...');
   const { initCortex } = await import('./cortex/index.js');
@@ -186,6 +193,12 @@ async function shutdown(): Promise<void> {
   try {
     const { getDoctor } = await import('./agents/doctor.js');
     getDoctor().stop();
+  } catch { /* may not be initialized */ }
+
+  // Stop Fisher Service
+  try {
+    const { getFisherService } = await import('./services/fisher-service.js');
+    getFisherService().stop();
   } catch { /* may not be initialized */ }
 
   // Stop The Cortex

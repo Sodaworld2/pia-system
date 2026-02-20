@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Club X Launch — Project Storyboard</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #07070f; font-family: 'Inter', system-ui, sans-serif; color: #e2e2e8; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+
+/* HEADER */
+#hdr { padding: 10px 20px; background: #09091a; border-bottom: 1px solid #1a1a2e; display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+#hdr h1 { font-size: 14px; font-weight: 700; white-space: nowrap; color: #f0f0f8; }
+#prog-wrap { flex: 1; height: 5px; background: #1a1a2e; border-radius: 3px; overflow: hidden; }
+#prog-bar { height: 100%; background: linear-gradient(90deg, #F59E0B, #10B981); transition: width 0.6s ease; width: 0%; border-radius: 3px; }
+#meta { display: flex; gap: 16px; font-size: 11px; white-space: nowrap; }
+#s-num { color: #555; }
+#cost { color: #10B981; font-weight: 600; }
+#clock { color: #A855F7; font-weight: 600; }
+
+/* LAYOUT */
+#main { display: flex; flex: 1; min-height: 0; }
+
+/* SCENE PANEL */
+#scene { flex: 1; display: flex; flex-direction: column; padding: 14px; gap: 10px; min-height: 0; overflow: hidden; transition: background 1s ease; }
+#scene.morning  { background: linear-gradient(160deg, #0a0a22 0%, #07070f 100%); }
+#scene.day      { background: linear-gradient(160deg, #080e18 0%, #07070f 100%); }
+#scene.afternoon{ background: linear-gradient(160deg, #0c0a12 0%, #07070f 100%); }
+#scene.evening  { background: linear-gradient(160deg, #100810 0%, #07070f 100%); }
+#scene.night    { background: linear-gradient(160deg, #020210 0%, #000005 100%); }
+#scene.dawn     { background: linear-gradient(160deg, #0a0818 0%, #07070f 100%); }
+
+#sc-top { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+#sc-badge { font-size: 9px; font-weight: 700; letter-spacing: 0.12em; background: #141428; border: 1px solid #2a2a44; padding: 3px 8px; border-radius: 4px; color: #555; }
+#sc-title { font-size: 17px; font-weight: 700; color: #f0f0f8; }
+#sc-time { margin-left: auto; font-size: 11px; color: #A855F7; background: #130d20; border: 1px solid #2d1f40; padding: 3px 10px; border-radius: 10px; font-weight: 600; }
+
+#narr { font-size: 12px; color: #999; line-height: 1.6; background: #0a0a16; border: 1px solid #1a1a2e; border-radius: 8px; padding: 9px 14px; flex-shrink: 0; }
+
+/* AGENT GRID */
+#grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; flex: 1; min-height: 0; align-content: start; }
+
+.ag {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; padding: 10px 4px; border-radius: 10px;
+  border: 1.5px solid #161624; background: #0a0a14;
+  transition: all 0.5s ease; position: relative; min-height: 70px;
+}
+.ag.active {
+  border-color: var(--c);
+  background: color-mix(in srgb, var(--c) 10%, #0a0a14);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--c) 35%, transparent);
+  animation: ag-pulse 2s ease-in-out infinite;
+}
+.ag.watching { border-color: #1e1e2e; opacity: 0.65; }
+.ag.done { border-color: #10B981; background: #091310; opacity: 0.65; }
+.ag.idle { opacity: 0.15; }
+@keyframes ag-pulse {
+  0%,100% { box-shadow: 0 0 18px color-mix(in srgb, var(--c) 35%, transparent); }
+  50%      { box-shadow: 0 0 32px color-mix(in srgb, var(--c) 60%, transparent); }
+}
+.ag-ic { font-size: 22px; line-height: 1; }
+.ag-nm { font-size: 8.5px; font-weight: 600; text-align: center; color: #777; margin-top: 1px; }
+.ag-st {
+  font-size: 7.5px; font-weight: 700; padding: 2px 5px; border-radius: 3px;
+  letter-spacing: 0.06em; margin-top: 1px;
+}
+.ag-st.active   { background: #0f1e38; color: #60a5fa; }
+.ag-st.watching { background: #111120; color: #444; }
+.ag-st.done     { background: #051e12; color: #34d399; }
+.ag-st.idle     { background: #111118; color: #333; }
+
+/* SPEECH AREA */
+#bubbles { display: flex; flex-wrap: wrap; gap: 7px; flex-shrink: 0; min-height: 64px; align-items: flex-start; }
+
+.bub {
+  display: flex; gap: 8px; align-items: flex-start;
+  background: #10101e; border: 1px solid #242436;
+  border-radius: 10px; padding: 8px 12px; max-width: 290px;
+  animation: bub-in 0.35s ease; font-size: 11px;
+}
+.bub.action { border-color: #1a3020; background: #0a1410; }
+.bub.alert  { border-color: #3a1010; background: #160808; }
+.bub.thought{ border-color: #2a1a40; background: #0f0a1a; font-style: italic; }
+@keyframes bub-in { from { opacity:0; transform: translateY(5px); } to { opacity:1; transform: translateY(0); } }
+.b-ic { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+.b-nm { font-size: 9px; font-weight: 700; margin-bottom: 3px; }
+.b-tx { color: #bbb; line-height: 1.55; }
+
+/* QUEUE PANEL */
+#qpanel { width: 255px; background: #08081a; border-left: 1px solid #1a1a2e; display: flex; flex-direction: column; flex-shrink: 0; }
+#q-hdr { padding: 11px 14px; border-bottom: 1px solid #1a1a2e; font-size: 9.5px; font-weight: 700; letter-spacing: 0.12em; color: #444; display: flex; justify-content: space-between; }
+#q-run-ct { color: #3B82F6; font-weight: 700; }
+#q-list { flex: 1; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 4px; }
+
+.qj { display: flex; align-items: center; gap: 7px; padding: 7px 9px; border-radius: 7px; border: 1px solid transparent; background: #0c0c1a; transition: all 0.4s; }
+.qj.running  { border-color: #1a3060; background: #080e1c; }
+.qj.done     { border-color: #0a2818; background: #060e0a; opacity: 0.55; }
+.qj.failed   { border-color: #3a1010; background: #120808; }
+.qj.revision { border-color: #3a2000; background: #160c00; }
+.qj.queued   { border-color: #2a1e00; background: #100c00; }
+.qj.blocked  { opacity: 0.3; }
+
+.q-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.qj.running  .q-dot { background: #3B82F6; animation: q-blink 1s infinite; }
+.qj.done     .q-dot { background: #10B981; }
+.qj.failed   .q-dot { background: #EF4444; }
+.qj.revision .q-dot { background: #F59E0B; }
+.qj.queued   .q-dot { background: #854d0e; }
+.qj.blocked  .q-dot { background: #333; }
+@keyframes q-blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+.q-ag { font-size: 13px; flex-shrink: 0; }
+.q-tx { flex: 1; font-size: 9.5px; color: #999; line-height: 1.35; }
+.q-bd { font-size: 7.5px; font-weight: 700; padding: 2px 5px; border-radius: 3px; letter-spacing: 0.05em; flex-shrink: 0; }
+.qj.running  .q-bd { background: #0d1e40; color: #60a5fa; }
+.qj.done     .q-bd { background: #052014; color: #34d399; }
+.qj.failed   .q-bd { background: #280808; color: #f87171; }
+.qj.revision .q-bd { background: #281400; color: #fbbf24; }
+.qj.queued   .q-bd { background: #1c1000; color: #d97706; }
+.qj.blocked  .q-bd { background: #111; color: #444; }
+
+#q-stats { padding: 10px 14px; border-top: 1px solid #1a1a2e; font-size: 10px; display: flex; flex-direction: column; gap: 4px; }
+.q-row { display: flex; justify-content: space-between; color: #555; }
+.q-row span:last-child { color: #888; font-weight: 600; }
+
+/* NAV */
+#nav { padding: 9px 20px; background: #09091a; border-top: 1px solid #1a1a2e; display: flex; align-items: center; justify-content: center; gap: 10px; flex-shrink: 0; }
+.nb { background: #111128; border: 1px solid #262640; color: #777; padding: 7px 18px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.2s; }
+.nb:hover { background: #1c1c38; color: #fff; }
+.nb.play { background: #0c1a30; border-color: #183060; color: #60a5fa; }
+.nb.play.on { background: #1a0e00; border-color: #3a2000; color: #f59e0b; }
+#dots { display: flex; gap: 4px; align-items: center; }
+.dot { width: 6px; height: 6px; border-radius: 50%; background: #1e1e30; cursor: pointer; transition: all 0.25s; }
+.dot.cur { background: #F59E0B; width: 16px; border-radius: 3px; }
+.dot.past { background: #2a4a2a; }
+
+::-webkit-scrollbar { width: 3px; } ::-webkit-scrollbar-thumb { background: #2a2a40; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div id="hdr">
+  <h1>🏟️ Club X Venue Launch — Live Story</h1>
+  <div id="prog-wrap"><div id="prog-bar"></div></div>
+  <div id="meta">
+    <span id="s-num">Scene 1 of 15</span>
+    <span id="cost">💰 $0.00</span>
+    <span id="clock">🕐 9:03am</span>
+  </div>
+</div>
+
+<div id="main">
+  <div id="scene" class="morning">
+    <div id="sc-top">
+      <div id="sc-badge">SCENE 01</div>
+      <div id="sc-title">You Arrive</div>
+      <div id="sc-time">9:03am</div>
+    </div>
+    <div id="narr"></div>
+    <div id="grid"></div>
+    <div id="bubbles"></div>
+  </div>
+  <div id="qpanel">
+    <div id="q-hdr"><span>TASK QUEUE</span><span id="q-run-ct">0 running</span></div>
+    <div id="q-list"></div>
+    <div id="q-stats">
+      <div class="q-row"><span>Running</span><span id="qs-r">0</span></div>
+      <div class="q-row"><span>Waiting</span><span id="qs-w">0</span></div>
+      <div class="q-row"><span>Done</span><span id="qs-d">0</span></div>
+      <div class="q-row"><span>Est. remaining</span><span id="qs-e">—</span></div>
+    </div>
+  </div>
+</div>
+
+<div id="nav">
+  <button class="nb" onclick="go(-1)">◄ PREV</button>
+  <div id="dots"></div>
+  <button class="nb play" id="pbtn" onclick="togglePlay()">▶ PLAY</button>
+  <button class="nb" onclick="go(1)">NEXT ►</button>
+</div>
+
+<script>
+const A = {
+  you:     { n:'You',           e:'👤', c:'#F59E0B' },
+  ctrl:    { n:'Controller',    e:'🕵️', c:'#F59E0B' },
+  fisher:  { n:'Fisher2050',    e:'📋', c:'#3B82F6' },
+  eliyahu: { n:'Eliyahu',       e:'🧠', c:'#6366F1' },
+  monitor: { n:'Monitor',       e:'👁️', c:'#EF4444' },
+  ziggi:   { n:'Ziggi',         e:'🔍', c:'#3B82F6' },
+  timbuc:  { n:'Tim Buc',       e:'📚', c:'#8B5CF6' },
+  owl:     { n:'Owl',           e:'🦉', c:'#A855F7' },
+  farcake: { n:'Farcake',       e:'🔬', c:'#10B981' },
+  andy:    { n:'Andy',          e:'✍️', c:'#10B981' },
+  bird:    { n:'Bird Fountain', e:'🎨', c:'#10B981' },
+  wingspan:{ n:'Wingspan',      e:'📊', c:'#10B981' },
+  coder:   { n:'Coder Machine', e:'💻', c:'#06B6D4' },
+  video:   { n:'Videohoho',     e:'🎬', c:'#06B6D4' },
+  gumball: { n:'GumballCMS',    e:'🌐', c:'#06B6D4' },
+};
+
+const JOBS = [
+  { id:'J01',  a:'farcake',  d:'Research Club X market & positioning', m:'M3' },
+  { id:'J02',  a:'farcake',  d:'Research 5 competitor venues',         m:'M3' },
+  { id:'J03',  a:'andy',     d:'Write all launch copy',                m:'M3' },
+  { id:'J04',  a:'bird',     d:'20 launch flyers (5 variants × 4)',    m:'M2' },
+  { id:'J04b', a:'bird',     d:'↺ Flyer revision — fix CTA + logo',   m:'M2', rev:true },
+  { id:'J05',  a:'bird',     d:'Video assets & motion graphics',       m:'M2' },
+  { id:'J06',  a:'wingspan', d:'Investor + partner deck',              m:'M3' },
+  { id:'J07',  a:'coder',    d:'Build venue booking page',             m:'Coder' },
+  { id:'J08',  a:'coder',    d:'RSVP email system',                    m:'Coder' },
+  { id:'J09',  a:'video',    d:'Package 90s launch video',             m:'Local' },
+  { id:'J10',  a:'gumball',  d:'Publish full campaign',                m:'M1' },
+];
+
+// agent state keys: active / watching / done / idle
+// queue state: running / queued / blocked / done / failed / revision / null(hidden)
+const SCENES = [
+  { title:'You Arrive', time:'9:03am', bg:'morning', cost:0.00,
+    narr:'Tuesday morning. You sit down at M1. Controller wakes immediately — soul loaded, knows your name, ready.',
+    ag:{ you:'active', ctrl:'active', fisher:'watching', eliyahu:'watching', monitor:'watching', ziggi:'idle', timbuc:'idle', owl:'watching', farcake:'idle', andy:'idle', bird:'idle', wingspan:'idle', coder:'idle', video:'idle', gumball:'idle' },
+    sp:[
+      { a:'ctrl', t:'Good morning Mic. What are we building today?', type:'speech' },
+      { a:'you',  t:'New project — Club X venue launch. Need the full campaign package.', type:'speech' },
+    ], q:{} },
+
+  { title:'Goal Routed to Fisher2050', time:'9:04am', bg:'morning', cost:0.02,
+    narr:'Controller routes the goal to Fisher2050. Owl checks for previous context — brand new project, clean slate.',
+    ag:{ you:'watching', ctrl:'active', fisher:'active', eliyahu:'idle', monitor:'watching', ziggi:'idle', timbuc:'idle', owl:'active', farcake:'idle', andy:'idle', bird:'idle', wingspan:'idle', coder:'idle', video:'idle', gumball:'idle' },
+    sp:[
+      { a:'ctrl',  t:'Fisher — new project. Club X venue launch. Full package: research, copy, design, deck, code, video, publish.', type:'speech' },
+      { a:'owl',   t:'Checking memory... No previous context for Club X. Fresh project initialised.', type:'thought' },
+      { a:'fisher',t:'Received. Analysing task dependencies and scheduling machine time now.', type:'action' },
+    ], q:{} },
+
+  { title:'Fisher Builds the Task Queue', time:'9:06am', bg:'morning', cost:0.05,
+    narr:'Fisher2050 breaks the goal into 10 jobs, maps all dependencies, identifies what can run in parallel, and books machine time on M2, M3 and the Coder Machine.',
+    ag:{ you:'watching', ctrl:'watching', fisher:'active', eliyahu:'idle', monitor:'watching', ziggi:'idle', timbuc:'idle', owl:'watching', farcake:'idle', andy:'idle', bird:'idle', wingspan:'idle', coder:'idle', video:'idle', gumball:'idle' },
+    sp:[
+      { a:'fisher', t:'10 tasks created. J01 (Farcake) and J07 (Coder) start now in parallel. J03, J04 blocked until research is done.', type:'action' },
+      { a:'fisher', t:'M3 scheduled: Farcake at 9:15am. Coder Machine: starting immediately. Queue is live.', type:'speech' },
+    ], q:{ J01:'queued', J02:'queued', J03:'blocked', J04:'blocked', J05:'blocked', J06:'blocked', J07:'queued', J08:'blocked', J09:'blocked', J10:'blocked' } },
+
+  { title:'Farcake Spawns + Coder Starts', time:'9:15am', bg:'morning', cost:0.14,
+    narr:'Calendar fires at 9:15am. PIA checks M3 is online → spawns Farcake with soul + Club X brief loaded. Coder Machine launches the booking page in parallel. Two jobs running simultaneously.',
+    ag:{ you:'idle', ctrl:'idle', fisher:'watching', eliyahu:'idle', monitor:'watching', ziggi:'idle', timbuc:'watching', owl:'idle', farcake:'active', andy:'idle', bird:'idle', wingspan:'idle', coder:'active', video:'idle', gumball:'idle' },
+    sp:[
+      { a:'farcake', t:'Spawned on M3. Brief loaded. Pulling Club X market data and competitor positioning...', type:'action' },
+      { a:'coder',   t:'Starting booking page. React + Stripe. Mobile-first. Scaffold done — building components.', type:'action' },
+    ], q:{ J01:'running', J02:'queued', J03:'blocked', J04:'blocked', J05:'blocked', J06:'blocked', J07:'running', J08:'blocked', J09:'blocked', J10:'blocked' } },
+
+  { title:'Research Deep Dive', time:'9:50am', bg:'day', cost:0.52,
+    narr:'Farcake is deep in research — cross-referencing 5 competitors. The Coder Machine has already shipped the booking page to staging and started on the RSVP system. Tim Buc is watching both sessions.',
+    ag:{ you:'idle', ctrl:'idle', fisher:'watching', eliyahu:'idle', monitor:'watching', ziggi:'idle', timbuc:'watching', owl:'idle', farcake:'active', andy:'idle', bird:'idle', wingspan:'idle', coder:'active', video:'idle', gumball:'idle' },
+    sp:[
+      { a:'farcake', t:'"Club X has a rooftop terrace no competitor is using in their positioning. That\'s the angle."', type:'thought' },
+      { a:'coder',   t:'Booking page live on staging. All tests passing. Starting RSVP email system now.', type:'action' },
+      { a:'monitor', t:'M3: healthy. M2: idle. Coder: running. All systems nominal.', type:'thought' },
+    ], q:{ J01:'running', J02:'queued', J03:'blocked', J04:'blocked', J05:'blocked', J06:'blocked', J07:'done', J08:'running', J09:'blocked', J10:'blocked' } },
+
+  { title:'Farcake Done — Tim Buc Files', time:'10:22am', bg:'day', cost:1.18,
+    narr:'Farcake completes both research jobs and terminates. Tim Buc is pinged automatically. He wakes, reviews the full Claude session, sorts it, and files it. Fisher2050 sees the jobs done and unblocks the next wave.',
+    ag:{ you:'idle', ctrl:'idle', fisher:'active', eliyahu:'idle', monitor:'watching', ziggi:'idle', timbuc:'active', owl:'idle', farcake:'done', andy:'idle', bird:'idle', wingspan:'idle', coder:'done', video:'idle', gumball:'idle' },
+    sp:[
+      { a:'timbuc',  t:'Farcake session filed. 2,400-word research doc. $0.72 cost. 4 sources consumed → 1 file produced. Tagged and indexed.', type:'action' },
+      { a:'fisher',  t:'Research complete. Unblocking Andy (M3) and Bird Fountain (M2). Scheduling both now — parallel sprint.', type:'speech' },
+    ], q:{ J01:'done', J02:'done', J03:'queued', J04:'queued', J05:'blocked', J06:'blocked', J07:'done', J08:'done', J09:'blocked', J10:'blocked' } },
+
+  { title:'Andy + Bird Fountain — Parallel Sprint', time:'10:28am', bg:'day', cost:1.45,
+    narr:'Fisher books M3 for Andy and M2 for Bird Fountain simultaneously. Both agents spawn, load the Farcake research as context, and start their work.',
+    ag:{ you:'idle', ctrl:'idle', fisher:'watching', eliyahu:'idle', monitor:'watching', ziggi:'idle', timbuc:'watching', owl:'idle', farcake:'done', andy:'active', bird:'active', wingspan:'idle', coder:'done', video:'idle', gumball:'idle' },
+    sp:[
+      { a:'andy', t:'Writing in Mic\'s voice. Press release → social copy → email campaign → website homepage. Using rooftop angle throughout.', type:'action' },
+      { a:'bird', t:'Generating 5 flyer variants × 4 sizes. Club X rooftop as hero visual. Warm sunset palette.', type:'action' },
+    ], q:{ J01:'done', J02:'done', J03:'running', J04:'running', J05:'blocked', J06:'blocked', J07:'done', J08:'done', J09:'blocked', J10:'blocked' } },
+
+  { title:'Ziggi Reviews Everything', time:'11:35am', bg:'day', cost:2.28,
+    narr:'Andy and Bird Fountain both finish. Fisher2050 automatically triggers Ziggi to review both outputs before anything else moves forward. Quality gate.',
+    ag:{ you:'idle', ctrl:'idle', fisher:'watching', eliyahu:'idle', monitor:'watching', ziggi:'active', timbuc:'active', owl:'idle', farcake:'done', andy:'done', bird:'done', wingspan:'idle', coder:'done', video:'idle', gumball:'idle' },
+    sp:[
+      { a:'ziggi', t:'Andy copy: 9/10. Voice match is strong. Rooftop narrative consistent across all formats. Ship it.', type:'speech' },
+      { a:'ziggi', t:'Bird Fountain flyers: 6/10. Club X logo too small on 3 variants. CTA button lost in the background. REVISION NEEDED before anything ships.', type:'alert' },
+      { a:'fisher',t:'Revision task J04b created. Rescheduling Bird Fountain on M2 with Ziggi\'s notes loaded as context.', type:'action' },
+    ], q:{ J01:'done', J02:'done', J03:'done', J04:'failed', J04b:'queued', J05:'blocked', J06:'blocked', J07:'done', J08:'done', J09:'blocked', J10:'blocked' } },
+
+  { title:'Bird Fountain Revision', time:'11:42am', bg:'day', cost:2.58,
+    narr:'Bird Fountain spawns again on M2 with Ziggi\'s exact notes injected as context. No need to explain what went wrong — the soul loads the feedback automatically.',
+    ag:{ you:'idle', ctrl:'idle', fisher:'watching', eliyahu:'idle', monitor:'watching', ziggi:'watching', timbuc:'watching', owl:'idle', farcake:'done', andy:'done', bird:'active', wingspan:'idle', coder:'done', video:'idle', gumball:'idle' },
+    sp:[
+      { a:'bird',  t:'Revision loaded. Rebuilding: logo 40% larger, CTA button high-contrast white, visual hierarchy tightened.', type:'action' },
+      { a:'ziggi', t:'Watching the revision in real-time...', type:'thought' },
+    ], q:{ J01:'done', J02:'done', J03:'done', J04:'failed', J04b:'running', J05:'blocked', J06:'blocked', J07:'done', J08:'done', J09:'blocked', J10:'blocked' } },
+
+  { title:'Approved — Pipeline Surges Forward', time:'12:18pm', bg:'afternoon', cost:2.95,
+    narr:'Revised flyers pass Ziggi review. Fisher immediately unblocks Wingspan for the deck and Bird Fountain for video assets. Four jobs now in motion.',
+    ag:{ you:'idle', ctrl:'idle', fisher:'active', eliyahu:'idle', monitor:'watching', ziggi:'active', timbuc:'watching', owl:'idle', farcake:'done', andy:'done', bird:'watching', wingspan:'active', coder:'done', video:'idle', gumball:'idle' },
+    sp:[
+      { a:'ziggi',   t:'Revised flyers: 8/10. Much stronger. CTA is clear. Ship it.', type:'speech' },
+      { a:'fisher',  t:'Unblocking J05 (Bird Fountain video assets), J06 (Wingspan deck). Scheduling both now.', type:'action' },
+      { a:'wingspan',t:'Loading Andy copy + approved flyers. Building 12-slide investor deck + 8-slide partner deck.', type:'action' },
+    ], q:{ J01:'done', J02:'done', J03:'done', J04:'failed', J04b:'done', J05:'running', J06:'running', J07:'done', J08:'done', J09:'blocked', J10:'blocked' } },
+
+  { title:'Deck + Video Assets Complete', time:'1:35pm', bg:'afternoon', cost:3.88,
+    narr:'Wingspan finishes the investor and partner decks. Bird Fountain produces the motion graphic assets. Videohoho packages everything into a 90-second launch reel.',
+    ag:{ you:'idle', ctrl:'idle', fisher:'watching', eliyahu:'idle', monitor:'watching', ziggi:'idle', timbuc:'active', farcake:'done', andy:'done', bird:'done', wingspan:'done', coder:'done', video:'active', gumball:'idle' },
+    sp:[
+      { a:'video',  t:'Merging Bird Fountain motion assets with Andy\'s script. Applying smart fades. Exporting clubx_launch_v1.mp4.', type:'action' },
+      { a:'timbuc', t:'Filing Wingspan + Bird Fountain sessions. Consumed: 7 files. Produced: 3 decks + 28 assets + 1 video.', type:'action' },
+    ], q:{ J01:'done', J02:'done', J03:'done', J04:'failed', J04b:'done', J05:'done', J06:'done', J07:'done', J08:'done', J09:'running', J10:'blocked' } },
+
+  { title:'GumballCMS Publishes Everything', time:'2:08pm', bg:'afternoon', cost:4.25,
+    narr:'All 10 jobs complete. GumballCMS receives the full package and fires everything simultaneously — website, social, email, booking page linked, video live.',
+    ag:{ you:'idle', ctrl:'idle', fisher:'watching', eliyahu:'idle', monitor:'watching', ziggi:'idle', timbuc:'watching', owl:'idle', farcake:'done', andy:'done', bird:'done', wingspan:'done', coder:'done', video:'done', gumball:'active' },
+    sp:[
+      { a:'gumball', t:'Deploying: website copy live, 20 flyers scheduled across social, email campaign queued for Thursday, booking page linked, launch video uploaded to Instagram + YouTube.', type:'action' },
+      { a:'fisher',  t:'✅ All 10 tasks complete. Club X Phase 1 delivered. Mic — your approval needed on staging booking page.', type:'speech' },
+    ], q:{ J01:'done', J02:'done', J03:'done', J04:'failed', J04b:'done', J05:'done', J06:'done', J07:'done', J08:'done', J09:'done', J10:'running' } },
+
+  { title:'Owl Updates — Session Closes', time:'2:14pm', bg:'evening', cost:4.27,
+    narr:'You close the session. The Owl agent spawns, reads everything that happened today, and updates the living task list. Club X Phase 1 marked complete. Phase 2 queued.',
+    ag:{ you:'watching', ctrl:'idle', fisher:'idle', eliyahu:'idle', monitor:'watching', ziggi:'idle', timbuc:'idle', owl:'active', farcake:'idle', andy:'idle', bird:'idle', wingspan:'idle', coder:'idle', video:'idle', gumball:'done' },
+    sp:[
+      { a:'owl', t:'Club X Phase 1: ✅ complete. Booking page: ⏳ awaiting Mic approval. Phase 2 (social follow-up campaign) — added to queue for next session.', type:'action' },
+    ], q:{ J01:'done', J02:'done', J03:'done', J04:'failed', J04b:'done', J05:'done', J06:'done', J07:'done', J08:'done', J09:'done', J10:'done' } },
+
+  { title:'Ziggi\'s 2am Quality Audit', time:'2:00am', bg:'night', cost:4.38,
+    narr:'The building is dark. Ziggi spawns from a cron trigger on any available machine — ephemeral. Audits the entire day\'s output while everyone sleeps. Files report. Terminates.',
+    ag:{ you:'idle', ctrl:'idle', fisher:'idle', eliyahu:'idle', monitor:'watching', ziggi:'active', timbuc:'active', owl:'idle', farcake:'idle', andy:'idle', bird:'idle', wingspan:'idle', coder:'idle', video:'idle', gumball:'idle' },
+    sp:[
+      { a:'ziggi', t:'"Auditing full Club X package. Copy consistency across channels... Brand alignment... Video pacing... Booking page flow..."', type:'thought' },
+      { a:'ziggi', t:'Overall: 8.5/10. One pattern flagged: email CTA consistently weaker than social CTA — seen across last 3 projects. Passing to Eliyahu.', type:'action' },
+      { a:'timbuc',t:'Ziggi audit session filed. Terminates 2:18am.', type:'action' },
+    ], q:{ J01:'done', J02:'done', J03:'done', J04:'failed', J04b:'done', J05:'done', J06:'done', J07:'done', J08:'done', J09:'done', J10:'done' } },
+
+  { title:'Eliyahu\'s Morning Briefing', time:'6:00am', bg:'dawn', cost:4.44,
+    narr:'Eliyahu reads Tim Buc\'s filed records from the full day. Connects patterns across projects. Your morning briefing hits your inbox before you wake up.',
+    ag:{ you:'idle', ctrl:'idle', fisher:'idle', eliyahu:'active', monitor:'watching', ziggi:'idle', timbuc:'watching', owl:'idle', farcake:'idle', andy:'idle', bird:'idle', wingspan:'idle', coder:'idle', video:'idle', gumball:'idle' },
+    sp:[
+      { a:'eliyahu', t:'"I noticed something — email CTAs are weaker than social across 3 consecutive projects. Recommending: add email-specific CTA guide to Andy\'s soul."', type:'thought' },
+      { a:'eliyahu', t:'Morning brief ready ↗ Club X delivered in full. 11 agent sessions. $4.44 total cost. 1 quality flag (resolved). 1 pattern flagged for your call.', type:'action' },
+    ], q:{ J01:'done', J02:'done', J03:'done', J04:'failed', J04b:'done', J05:'done', J06:'done', J07:'done', J08:'done', J09:'done', J10:'done' } },
+];
+
+// ── RENDER ──────────────────────────────────────────────────────────────
+let cur = 0, playing = false, timer = null;
+
+function render(i) {
+  const sc = SCENES[i], tot = SCENES.length;
+  document.getElementById('prog-bar').style.width = ((i+1)/tot*100)+'%';
+  document.getElementById('s-num').textContent = `Scene ${i+1} of ${tot}`;
+  document.getElementById('cost').textContent = `💰 $${sc.cost.toFixed(2)}`;
+  document.getElementById('clock').textContent = `🕐 ${sc.time}`;
+
+  const scEl = document.getElementById('scene');
+  scEl.className = sc.bg;
+  document.getElementById('sc-badge').textContent = `SCENE ${String(i+1).padStart(2,'0')}`;
+  document.getElementById('sc-title').textContent = sc.title;
+  document.getElementById('sc-time').textContent = sc.time;
+  document.getElementById('narr').textContent = sc.narr;
+
+  // Agents
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  Object.entries(A).forEach(([id, ag]) => {
+    const st = sc.ag[id] || 'idle';
+    const labels = { active:'WORKING', watching:'WATCHING', done:'DONE', idle:'SLEEPING' };
+    const d = document.createElement('div');
+    d.className = 'ag ' + st;
+    d.style.setProperty('--c', ag.c);
+    d.innerHTML = `<div class="ag-ic">${ag.e}</div><div class="ag-nm">${ag.n}</div><div class="ag-st ${st}">${labels[st]||st}</div>`;
+    grid.appendChild(d);
+  });
+
+  // Bubbles
+  const ba = document.getElementById('bubbles');
+  ba.innerHTML = '';
+  (sc.sp||[]).forEach(sp => {
+    const ag = A[sp.a]; if (!ag) return;
+    const d = document.createElement('div');
+    d.className = 'bub ' + (sp.type||'speech');
+    d.innerHTML = `<span class="b-ic">${ag.e}</span><div><div class="b-nm" style="color:${ag.c}">${ag.n}</div><div class="b-tx">${sp.t}</div></div>`;
+    ba.appendChild(d);
+  });
+
+  // Queue
+  const ql = document.getElementById('q-list');
+  ql.innerHTML = '';
+  let rn=0, wt=0, dn=0;
+  JOBS.forEach(j => {
+    const st = sc.q[j.id];
+    if (st == null) return;
+    const ag = A[j.a];
+    const lbs = { running:'RUN', done:'DONE', failed:'FAIL', queued:'WAIT', blocked:'HOLD', revision:'FIX' };
+    const d = document.createElement('div');
+    d.className = 'qj ' + st;
+    d.innerHTML = `<div class="q-dot"></div><div class="q-ag">${ag?ag.e:'?'}</div><div class="q-tx">${j.id} — ${j.d}</div><div class="q-bd">${lbs[st]||st}</div>`;
+    ql.appendChild(d);
+    if(st==='running') rn++;
+    else if(st==='queued'||st==='blocked') wt++;
+    else if(st==='done') dn++;
+  });
+  document.getElementById('q-run-ct').textContent = rn + ' running';
+  document.getElementById('qs-r').textContent = rn;
+  document.getElementById('qs-w').textContent = wt;
+  document.getElementById('qs-d').textContent = dn;
+  document.getElementById('qs-e').textContent = rn>0||wt>0 ? `~${rn*20+wt*12} min` : dn>=9 ? '✅ All done' : '—';
+
+  // Dots
+  const dotsEl = document.getElementById('dots');
+  dotsEl.innerHTML = '';
+  for (let k=0; k<tot; k++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (k===i?' cur':(k<i?' past':''));
+    const idx = k;
+    d.onclick = () => { cur=idx; render(cur); };
+    dotsEl.appendChild(d);
+  }
+}
+
+function go(delta) {
+  cur = Math.max(0, Math.min(SCENES.length-1, cur+delta));
+  render(cur);
+}
+
+function togglePlay() {
+  playing = !playing;
+  const btn = document.getElementById('pbtn');
+  if (playing) {
+    btn.textContent = '⏸ PAUSE'; btn.classList.add('on');
+    timer = setInterval(() => { if(cur>=SCENES.length-1){togglePlay();return;} go(1); }, 4000);
+  } else {
+    btn.textContent = '▶ PLAY'; btn.classList.remove('on');
+    clearInterval(timer);
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if(e.key==='ArrowRight'||e.key==='ArrowDown') go(1);
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp') go(-1);
+  if(e.key===' '){e.preventDefault();togglePlay();}
+});
+
+render(0);
+</script>
+</body>
+</html>

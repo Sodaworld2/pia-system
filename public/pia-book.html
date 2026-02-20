@@ -511,6 +511,16 @@
 
   <div class="nav-section">Chapter 8</div>
   <a class="nav-link" href="#fileindex">File Index</a>
+
+  <div class="nav-section">Feb 2026 Vision</div>
+  <a class="nav-link" href="#agent-ecosystem">Agent Ecosystem</a>
+  <a class="nav-link" href="#arch-patterns">Arch Patterns</a>
+  <a class="nav-link" href="#intel-pipeline">Intelligence Pipeline</a>
+  <a class="nav-link" href="#soul-system">Soul System</a>
+  <a class="nav-link" href="#platforms">Platforms &amp; Tools</a>
+  <a class="nav-link" href="#qa-methodology">QA + Methodology</a>
+  <a class="nav-link" href="#build-order">Build Order</a>
+  <a class="nav-link" href="#differentiation">Differentiation</a>
 </nav>
 
 <!-- ── Content ── -->
@@ -531,11 +541,11 @@
       <div class="stat"><div class="num">3</div><div class="label">Machines</div></div>
       <div class="stat"><div class="num">56</div><div class="label">CPU Threads</div></div>
       <div class="stat"><div class="num">160</div><div class="label">GB RAM</div></div>
-      <div class="stat"><div class="num">42</div><div class="label">DB Migrations</div></div>
-      <div class="stat"><div class="num">80+</div><div class="label">.md Files</div></div>
+      <div class="stat"><div class="num">44</div><div class="label">DB Migrations</div></div>
+      <div class="stat"><div class="num">12</div><div class="label">AI Agents</div></div>
       <div class="stat"><div class="num">40+</div><div class="label">.html Files</div></div>
       <div class="stat"><div class="num">60+</div><div class="label">API Endpoints</div></div>
-      <div class="stat"><div class="num">10</div><div class="label">Journals</div></div>
+      <div class="stat"><div class="num">16</div><div class="label">Chapters</div></div>
     </div>
   </section>
 
@@ -849,6 +859,478 @@
       <tr><td>14</td><td>Vision Pro spatial view</td><td>Research done</td><td>WebXR first, visionOS later</td></tr>
       <tr><td>15</td><td>Onboarding wizard</td><td>After failover</td><td>Easy machine join flow</td></tr>
     </table>
+  </section>
+
+  <!-- Chapter 9: Agent Ecosystem (Feb 2026) -->
+  <section class="chapter" id="agent-ecosystem">
+    <div class="chapter-number">Chapter 9</div>
+    <h2>Agent Ecosystem — The AI Workforce</h2>
+    <p class="chapter-intro">Added in the Feb 2026 planning sessions. PIA is not just a tool runner — it is a company that employs AI. Every agent has a soul, a name, an email address, and a defined role in the organisation.</p>
+
+    <h3>The Insight</h3>
+    <p>Most AI frameworks start with "what can it do?" — PIA starts with "who is it?" Fisher2050 has a personality, a communication style, and a name before he has any tasks. This changes how clients relate to the AI — they learn to trust Eliyahu specifically, not "the knowledge management AI."</p>
+    <p>The closest parallel in software history: the shift from physical servers (you manage the machine) to serverless functions (you just define the work). You are making the same shift for knowledge workers. You define the soul and the responsibilities. PIA figures out which machine, when, and how.</p>
+
+    <h3>Three-Tier Hierarchy</h3>
+    <table>
+      <tr><th>Tier</th><th>Machine</th><th>Role</th><th>Who Lives Here</th></tr>
+      <tr><td><strong>M1 — Strategic</strong></td><td>Izzit7 (Hub)</td><td>Company-level thinking. Manages, routes, observes, reports. Never does execution work.</td><td>Controller, Monitor, Fisher2050, Eliyahu, Tim Buc, Owl, Records DB</td></tr>
+      <tr><td><strong>M2 — Project</strong></td><td>Monster</td><td>Dynamic project boss. When a project activates on M2, M2 becomes the orchestrator for that project. Loads project soul + task list from Owl. Dispatches to M3.</td><td>Bird Fountain (default) + dynamic project boss soul</td></tr>
+      <tr><td><strong>M3 — Execution</strong></td><td>Yeti</td><td>Task-focused workers that produce concrete output. One agent at a time, scheduled by Fisher2050.</td><td>Farcake, Andy, Wingspan</td></tr>
+    </table>
+
+    <h3>The Full Agent Roster (12 Agents)</h3>
+    <div class="term-grid">
+      <div class="term-card">
+        <div class="term-name">Controller</div>
+        <div class="term-def">Single door into the entire system. Greets the human by name, loads context from Owl, routes to correct machine and agent. You never speak to M2 or M3 directly. Machine: M1. Trigger: On-demand. Email: controller@sodalabs.ai</div>
+      </div>
+      <div class="term-card">
+        <div class="term-name">Fisher2050</div>
+        <div class="term-def">Project Manager and Machine Resource Scheduler. Takes a goal and converts it into a sequenced, scheduled set of tasks across the fleet — booking actual time slots, not just creating a to-do list. "Project health: 82%." Machine: M1. Trigger: 9am + 6pm + on-demand + calendar. Email: fisher2050@sodalabs.ai</div>
+      </div>
+      <div class="term-card">
+        <div class="term-name">Monitor Agent</div>
+        <div class="term-def">Always-running watchdog. Pushes status to Controller the moment anything changes — never waits to be asked. Detects stalls, crashes, context overload, machines offline. KEY: PUSHES, does not poll (Observer Pattern). Machine: M1. Trigger: Continuous.</div>
+      </div>
+      <div class="term-card">
+        <div class="term-name">Eliyahu</div>
+        <div class="term-def">Intelligence synthesizer and knowledge manager. Reads Tim Buc's filed session summaries, connects patterns across projects, delivers 2-minute morning briefing (3 things that matter). "I noticed something..." Machine: M1. Trigger: 6am daily + event. Email: eliyahu@sodalabs.ai</div>
+      </div>
+      <div class="term-card">
+        <div class="term-name">Ziggi</div>
+        <div class="term-def">Quality architect and review agent. Reviews all specialist output, rates 1-10, explains the better way, teaches. Runs 2am nightly audit (ephemeral spawn). "Ziggi's Verdict: 8/10. Ship it." Machine: M2. Trigger: 2am cron + task completion. Email: ziggi@sodalabs.ai</div>
+      </div>
+      <div class="term-card">
+        <div class="term-name">Tim Buc</div>
+        <div class="term-def">Librarian archivist. Wakes every time any agent session ends, reads raw Claude SDK logs, sorts by project/agent/date/type, files to Records DB, terminates. The reason Eliyahu can do his job. Without Tim Buc, every session is forgotten. Machine: M1. Trigger: Every session end. Email: timbuc@sodalabs.ai</div>
+      </div>
+      <div class="term-card">
+        <div class="term-name">Owl</div>
+        <div class="term-def">Persistent task state manager. The one thing in the system that cannot be ephemeral. At session start: feeds task state to Controller and Fisher2050. At session end: updated by all agents. "Update me where we last left off." Machine: M1 (SQLite DB). Trigger: Session start + end.</div>
+      </div>
+      <div class="term-card">
+        <div class="term-name">Farcake</div>
+        <div class="term-def">Research engine and investigation specialist. Does not search — investigates. Cross-references sources, validates claims, produces structured findings ready for Andy. Machine: M3. Trigger: Fisher2050 calendar entry. Email: farcake@sodalabs.ai. Status: Building.</div>
+      </div>
+      <div class="term-card">
+        <div class="term-name">Andy</div>
+        <div class="term-def">Editorial engine. Takes Farcake's research and writes in the client's voice — not generic AI voice. Delivers to GumballCMS (publish) or Videohoho (video). Machine: M3. Trigger: Fisher2050 calendar entry (after Farcake completes). Email: andy@sodalabs.ai. Status: Building.</div>
+      </div>
+      <div class="term-card">
+        <div class="term-name">Bird Fountain</div>
+        <div class="term-def">Visual production agent. Not one image at a time — production runs. Campaign asset batches, social creative sets. Never asks for a brief twice. Machine: M2. Trigger: Fisher2050 calendar. Email: birdfountain@sodalabs.ai. Status: Live.</div>
+      </div>
+      <div class="term-card">
+        <div class="term-name">Wingspan</div>
+        <div class="term-def">Presentation management and deck specialist. Ends "FINAL_v3_REAL.pptx" chaos. Tracks every deck version, knows which version went to which investor, never confuses versions. Machine: M3. Trigger: Fisher2050 calendar. Email: wingspan@sodalabs.ai. Status: Live.</div>
+      </div>
+      <div class="term-card">
+        <div class="term-name">Coder Machine</div>
+        <div class="term-def">Dedicated build agent. Always on, always polling the coding job queue. Receives a spec, writes code in isolated git worktree, runs tests, submits PR. The PIA equivalent of a dark factory — spec in, working code out. Machine: Dedicated node. Status: Spec complete.</div>
+      </div>
+    </table>
+
+    <h3>Communication Addresses</h3>
+    <table>
+      <tr><th>Agent</th><th>Email</th><th>Channel</th></tr>
+      <tr><td>Controller</td><td>controller@sodalabs.ai</td><td>#controller</td></tr>
+      <tr><td>Fisher2050</td><td>fisher2050@sodalabs.ai</td><td>#operations</td></tr>
+      <tr><td>Eliyahu</td><td>eliyahu@sodalabs.ai</td><td>#briefings</td></tr>
+      <tr><td>Ziggi</td><td>ziggi@sodalabs.ai</td><td>#quality</td></tr>
+      <tr><td>Tim Buc</td><td>timbuc@sodalabs.ai</td><td>#library</td></tr>
+      <tr><td>Farcake</td><td>farcake@sodalabs.ai</td><td>#research</td></tr>
+      <tr><td>Andy</td><td>andy@sodalabs.ai</td><td>#editorial</td></tr>
+      <tr><td>Bird Fountain</td><td>birdfountain@sodalabs.ai</td><td>#design</td></tr>
+      <tr><td>Wingspan</td><td>wingspan@sodalabs.ai</td><td>#presentations</td></tr>
+    </table>
+
+    <h3>Project Activation Pattern</h3>
+    <p>When a project activates on M2:</p>
+    <pre>"Update me where we last left off" → Owl reads task list → agent loads context
+Two modes:
+  BUILD: Autonomous execution — agent works without being prompted
+  PROMPT: Conversational — human gives new instructions
+On session end: Owl updates with what completed + what remains</pre>
+  </section>
+
+  <!-- Chapter 10: Architectural Patterns (Feb 2026) -->
+  <section class="chapter" id="arch-patterns">
+    <div class="chapter-number">Chapter 10</div>
+    <h2>Architectural Patterns</h2>
+    <p class="chapter-intro">Five key patterns that define how PIA × SodaLabs differs from every other AI orchestration system.</p>
+
+    <h3>Pattern 1 — Ephemeral Compute</h3>
+    <p>Agents do not run 24/7. They are spawned when needed and terminated when done. An agent not running is not "off" — it simply does not exist yet. Its soul file waits on disk. Its identity persists in the database.</p>
+    <pre>Trigger fires → PIA spawns agent with soul loaded
+→ Agent works → Agent terminates
+→ Tim Buc pinged → session archived</pre>
+    <p><strong>Why this matters:</strong> You pay for compute only when the agent is actively working. Ziggi at 2am costs nothing for 23 hours and 55 minutes per day. The soul — the thing that makes Ziggi <em>Ziggi</em> — costs nothing to store.</p>
+
+    <h3>Pattern 2 — Calendar-Triggered Machine-Agnostic Dispatch</h3>
+    <p>Fisher2050 writes to the calendar. PIA watches the calendar. At trigger time, PIA checks which machine is available and spawns there.</p>
+    <pre>Fisher2050 creates: [ZIGGI] 2am audit — any machine
+→ 2am: PIA checks M1 available? → spawn on M1
+→ M1 offline? → try M2 → spawn on M2</pre>
+    <p><strong>Why calendar over cron:</strong> The calendar is editable by Fisher2050 without touching code. Non-technical people can see "what's the AI team doing this week." The calendar entry carries full context (project, task, soul ID, machine preference) — a cron job cannot.</p>
+
+    <h3>Pattern 3 — Queue / Producer-Consumer</h3>
+    <p>Fisher2050 is the producer — creates jobs, manages the queue. Specialist agents (Farcake, Andy, Wingspan) are consumers — pick up one job at a time. M3 can only run one agent at a time, so Fisher books time slots.</p>
+    <table>
+      <tr><th>Field</th><th>Description</th></tr>
+      <tr><td>id</td><td>Unique job ID</td></tr>
+      <tr><td>type</td><td>research / editorial / design / build</td></tr>
+      <tr><td>agent</td><td>Soul ID of the agent to spawn</td></tr>
+      <tr><td>machine</td><td>m1 / m2 / m3 / any</td></tr>
+      <tr><td>status</td><td>queued / running / done / failed / revision</td></tr>
+      <tr><td>priority</td><td>1 (low) to 5 (critical)</td></tr>
+      <tr><td>context_file</td><td>Path to the task brief and context</td></tr>
+    </table>
+
+    <h3>Pattern 4 — Push Over Poll (Observer Pattern)</h3>
+    <p>Monitor Agent never waits to be asked. Fisher2050 does not wait for you to ask "what's the status?" Eliyahu does not wait for you to ask "what happened yesterday?" Every agent that produces information PUSHES it to whoever needs it.</p>
+    <p><strong>Why this matters:</strong> The human in the loop is never the bottleneck. The system runs whether you check in or not.</p>
+
+    <h3>Pattern 5 — Pipeline Architecture</h3>
+    <p>Output from one agent is automatically the input to the next. Fisher2050 manages the sequencing.</p>
+    <pre>Farcake (research) → Andy (writes it) → GumballCMS (publishes)
+Bird Fountain (designs) → Videohoho (video) → GumballCMS (publishes)
+Any agent (works) → Tim Buc (files it) → Eliyahu (reads it) → You (briefed)</pre>
+  </section>
+
+  <!-- Chapter 11: The Intelligence Pipeline -->
+  <section class="chapter" id="intel-pipeline">
+    <div class="chapter-number">Chapter 11</div>
+    <h2>The Intelligence Pipeline</h2>
+    <p class="chapter-intro">The loop that makes the system learn over time. This is what separates an AI that forgets everything from an AI that gets smarter about your business every day.</p>
+
+    <h3>Tim Buc → Records → Eliyahu</h3>
+    <pre>AGENT WORKS
+     │
+     ▼
+SESSION ENDS — Claude SDK logs generated:
+  - Full message history
+  - Every tool call + result
+  - Thinking / reasoning steps
+  - Tokens used + context % per step
+  - Cost (total_cost_usd)
+  - Files consumed (read) vs produced (written)
+     │
+     ▼
+TIM BUC WAKES (ephemeral, event-triggered)
+  Reviews raw logs
+  Sorts: project / agent / type / date
+  Tags: consumed files, produced files, cost, quality flags
+  Files to Records DB
+  Terminates
+     │
+     ▼
+ELIYAHU READS (6am or event-triggered)
+  Reads Tim Buc's organised summaries
+  Connects patterns across projects
+  "This type of task fails Ziggi review 40% of the time"
+  "That decision from 3 weeks ago is causing problems now"
+  Farms analysis lists to Fisher2050, Ziggi, Farcake
+     │
+     ▼
+YOU RECEIVE
+  2-minute morning briefing
+  3 things that actually matter today
+  Decisions surfaced, not buried</pre>
+
+    <h3>Agent Records DB — What Gets Stored</h3>
+    <p>Every Claude SDK session produces a record (stored in SQLite on M1, migration 043+):</p>
+    <table>
+      <tr><th>Field</th><th>What It Is</th></tr>
+      <tr><td>message_history</td><td>Full conversation between agent and Claude</td></tr>
+      <tr><td>tool_calls</td><td>Every tool call + result</td></tr>
+      <tr><td>reasoning_steps</td><td>Claude's thinking/reasoning</td></tr>
+      <tr><td>input_tokens</td><td>Tokens used per step</td></tr>
+      <tr><td>context_pct</td><td>Context window % at each step</td></tr>
+      <tr><td>total_cost_usd</td><td>Full session cost in USD</td></tr>
+      <tr><td>files_consumed</td><td>Files the agent read</td></tr>
+      <tr><td>files_produced</td><td>Files the agent wrote</td></tr>
+      <tr><td>agent_soul_id</td><td>Which soul ran this session</td></tr>
+      <tr><td>machine_id</td><td>Which machine ran this session</td></tr>
+    </table>
+
+    <h3>Async Agent Inbox Pattern</h3>
+    <p>An agent is not a service endpoint. It is a process. When an agent is not running, you do not get a 404 — you leave it a message for when it next wakes.</p>
+    <table>
+      <tr><th>Scenario</th><th>How to Query</th></tr>
+      <tr><td>Agent IS running</td><td>POST /api/mc/agents/:id/respond with { choice: "..." } — synchronous reply via WebSocket. Works cross-machine.</td></tr>
+      <tr><td>Agent is NOT running (one-off question)</td><td>Spawn it fresh with the question in the initial prompt. It answers and terminates.</td></tr>
+      <tr><td>Agent is NOT running (async message)</td><td>Write to agent_messages table (to_agent, from_agent, body). Next time agent wakes, SoulEngine reads unread inbox and injects into context.</td></tr>
+      <tr><td>Cross-machine query</td><td>M1 proxies respond calls to http://M2-IP:3000/api/mc/agents/:id/respond — already built.</td></tr>
+    </table>
+
+    <h3>The agent_messages Table (Migration 043)</h3>
+    <pre>CREATE TABLE agent_messages (
+  id TEXT PRIMARY KEY,
+  to_agent TEXT NOT NULL,
+  from_agent TEXT NOT NULL,
+  subject TEXT,
+  body TEXT NOT NULL,
+  read INTEGER DEFAULT 0,
+  replied INTEGER DEFAULT 0,
+  reply_body TEXT,
+  created_at INTEGER DEFAULT (unixepoch()),
+  read_at INTEGER
+);</pre>
+  </section>
+
+  <!-- Chapter 12: Soul System -->
+  <section class="chapter" id="soul-system">
+    <div class="chapter-number">Chapter 12</div>
+    <h2>The Soul System</h2>
+    <p class="chapter-intro">Every agent has a soul. Not a metaphor — a technical specification injected into the Claude system prompt at every session start. Seven layers that define identity, personality, and behaviour across all sessions.</p>
+
+    <h3>The Seven Soul Layers</h3>
+    <table>
+      <tr><th>Layer</th><th>What It Is</th><th>Why It Matters</th></tr>
+      <tr><td><strong>Identity</strong></td><td>Name, role, email address, purpose</td><td>They know who they are</td></tr>
+      <tr><td><strong>Personality</strong></td><td>How they communicate, tone, style, quirks</td><td>They feel like a real person</td></tr>
+      <tr><td><strong>Goals</strong></td><td>What they are trying to achieve long-term</td><td>They have direction beyond the task</td></tr>
+      <tr><td><strong>Relationships</strong></td><td>Who they work with and how</td><td>They collaborate naturally</td></tr>
+      <tr><td><strong>Rules</strong></td><td>Hard boundaries — what they cannot do</td><td>They stay safe and on-brand</td></tr>
+      <tr><td><strong>Memory</strong></td><td>Persistent recall across sessions</td><td>They remember and grow</td></tr>
+      <tr><td><strong>Schedule</strong></td><td>When they work, their triggers</td><td>They show up on time</td></tr>
+    </table>
+
+    <h3>What Already Exists in Code</h3>
+    <p>The soul system is not planned — it is built. Key files:</p>
+    <table>
+      <tr><th>File</th><th>Status</th><th>What It Does</th></tr>
+      <tr><td>src/souls/soul-engine.ts</td><td><span class="status done">Built</span></td><td>Full CRUD: getSoul(), createSoul(), generateSystemPrompt(), seedSoul(). Singleton.</td></tr>
+      <tr><td>src/souls/memory-manager.ts</td><td><span class="status done">Built</span></td><td>Memory management — scored by importance, old ones summarized and pruned.</td></tr>
+      <tr><td>src/souls/seed-souls.ts</td><td><span class="status done">Built</span></td><td>Seeds Fisher2050, Ziggi, Eliyahu at startup.</td></tr>
+      <tr><td>src/souls/personalities/fisher2050.json</td><td><span class="status done">Built</span></td><td>Full soul definition with config (dailyReviewTime, eveningSummaryTime, etc).</td></tr>
+      <tr><td>src/souls/personalities/ziggi.json</td><td><span class="status done">Built</span></td><td>Full soul definition with deepReviewTime: "02:00" config.</td></tr>
+      <tr><td>src/souls/personalities/eliyahu.json</td><td><span class="status done">Built</span></td><td>Full soul definition with morningBriefingTime: "06:00" config.</td></tr>
+      <tr><td>src/api/routes/souls.ts</td><td><span class="status done">Built</span></td><td>REST CRUD for souls + memories + interactions.</td></tr>
+    </table>
+
+    <h3>Soul Schema (Already Implemented)</h3>
+    <pre>interface Soul {
+  id: string;
+  name: string;
+  role: string;
+  personality: string;
+  goals: string[];
+  relationships: Record&lt;string, string&gt;;
+  system_prompt: string | null;
+  config: Record&lt;string, unknown&gt;;
+  email: string | null;  // ← already has email field!
+  status: 'active' | 'inactive' | 'archived';
+}</pre>
+  </section>
+
+  <!-- Chapter 13: Platforms and Tools -->
+  <section class="chapter" id="platforms">
+    <div class="chapter-number">Chapter 13</div>
+    <h2>Platforms and Tools</h2>
+    <p class="chapter-intro">The external platforms that PIA integrates with to deliver output and receive instructions.</p>
+
+    <h3>GumballCMS — Output Layer + Inbound Channel</h3>
+    <div class="idea-card">
+      <div class="idea-header"><span class="idea-title">GumballCMS</span><span class="status done">Live</span></div>
+      <div class="idea-desc">WhatsApp-first CMS that also builds UI and websites. Sits at the END of all creative pipelines — agents produce, GumballCMS ships. Also the ENTRY POINT — you WhatsApp GumballCMS with instructions, it routes to Fisher2050.</div>
+    </div>
+    <table>
+      <tr><th>Direction</th><th>Flow</th></tr>
+      <tr><td>Output (agents → world)</td><td>Andy (content), Bird Fountain (assets), Wingspan (decks), Videohoho (video) all deliver to GumballCMS for publication</td></tr>
+      <tr><td>Inbound (you → agents)</td><td>You → WhatsApp → GumballCMS → Fisher2050 inbox. Task Fisher from your phone.</td></tr>
+    </table>
+    <p><strong>Key capability:</strong> "Send a message, it becomes a post. Approve from chat, it goes live."</p>
+
+    <h3>Videohoho — Video Production Pipeline</h3>
+    <div class="idea-card">
+      <div class="idea-header"><span class="idea-title">Videohoho</span><span class="status working">Phase 2 Pending</span></div>
+      <div class="idea-desc">Electron desktop video editor with smart fades + FFmpeg. Phase 1 done (video + audio merge, smart fades, export MP4). Phase 2 pending: ElevenLabs TTS, captions, audio ducking, frame analysis. Andy (content) + Bird Fountain (visual assets) pipe output here.</div>
+    </div>
+    <table>
+      <tr><th>Component</th><th>Status</th></tr>
+      <tr><td>Video + audio merge, smart fades, export MP4</td><td><span class="status done">Phase 1 Done</span></td></tr>
+      <tr><td>ElevenLabs TTS for voiceovers</td><td><span class="status planned">Phase 2 Pending</span></td></tr>
+      <tr><td>Automatic captions</td><td><span class="status planned">Phase 2 Pending</span></td></tr>
+      <tr><td>Audio ducking + frame analysis</td><td><span class="status planned">Phase 2 Pending</span></td></tr>
+    </table>
+
+    <h3>Browser / QA Machine</h3>
+    <div class="idea-card">
+      <div class="idea-header"><span class="idea-title">Browser / QA Machine</span><span class="status planned">Planned</span></div>
+      <div class="idea-desc">A dedicated machine optimised for browser control. Armed with MCP servers + Playwright MCP. Runs automated browser tests, visual regression, QA workflows. Ziggi dispatches to this machine for automated quality checks. Separate from general workers because browser control is resource-intensive and needs isolation. Technical name: Headless Browser Farm / QA Node.</div>
+    </div>
+
+    <h3>Google Calendar Integration (Planned Build)</h3>
+    <p>Fisher2050 writes calendar entries that PIA watches. At trigger time, PIA spawns the specified agent with full context. The calendar entry carries all metadata needed:</p>
+    <pre>Title:       [AGENT_NAME] Task Description
+Time:        When to spawn
+Duration:    Expected session length
+Machine:     Preferred machine (or "any")
+Context: {
+  agent_soul_id: "ziggi",
+  task_context: "Run nightly code review",
+  machine_preference: "any"
+}</pre>
+    <p>New DB tables for this: <code>integrations</code> (OAuth tokens), <code>calendar_events</code> (PIA-Google bridge), <code>task_google_sync</code> (PIA task &harr; Google Task mapping). New routes: <code>/api/integrations/google/*</code>. New services: <code>FisherService</code> (merged cron scheduling), <code>CalendarWatcher</code> (polls Google Calendar every 5 min).</p>
+  </section>
+
+  <!-- Chapter 14: QA Loop + Methodology -->
+  <section class="chapter" id="qa-methodology">
+    <div class="chapter-number">Chapter 14</div>
+    <h2>Quality Loop + Methodology Frameworks</h2>
+    <p class="chapter-intro">How quality is maintained across the agent workforce, and the philosophical frameworks that inform how PIA and SodaLabs operate.</p>
+
+    <h3>Ziggi + Farcake QA Loop</h3>
+    <p>Testing is a core loop, not an afterthought. Every build goes through this cycle:</p>
+    <pre>Something is built
+     ↓
+Ziggi (devil's advocate) challenges it — questions assumptions, finds weaknesses
++ Farcake (deep research) searches:
+  - Context7 (official library docs)
+  - Influencer content (Mic's reference people)
+  - Competitive landscape
+  - Prior session records
+     ↓
+Combined verdict → quality score (1-10) + suggested improvements
+     ↓
+Fisher2050 either approves → deliver
+OR creates re-do task → re-queues</pre>
+    <p>This loop should run on EVERY build, not just final review. Every Agent Automation Profile includes a "Success Criteria" section that tells the agent what "done" looks like, who reviews it (Ziggi), and what research to cross-check (Farcake).</p>
+
+    <h3>The 9 Methodology Frameworks</h3>
+    <p>These frameworks are referenced across Mic's documents and are essential for training all agents to think and communicate correctly:</p>
+    <table>
+      <tr><th>Framework</th><th>Source / Reference</th><th>Application in PIA / SodaLabs</th></tr>
+      <tr><td><strong>Taoism</strong></td><td>"Tao of Soda"</td><td>Flow, naturalness, non-forcing. Agents should move with the work, not force it.</td></tr>
+      <tr><td><strong>Alchemy / Rory Sutherland</strong></td><td>Multiple docs</td><td>Reframing value, perception over reality. GumballCMS as WhatsApp bridge = alchemy of familiar UX.</td></tr>
+      <tr><td><strong>Hooked / Nir Eyal</strong></td><td>Sodalabs courses</td><td>Habit-forming product design. Agents create regular touchpoints (9am standup, 6am briefing).</td></tr>
+      <tr><td><strong>Design Thinking / IDEO</strong></td><td>Workshop docs</td><td>Human-centered process. Soul system: identity first, capability second.</td></tr>
+      <tr><td><strong>Positive Psychology / Seligman</strong></td><td>Culture docs</td><td>Wellbeing-first culture design. Agents have goals they care about, not just tasks.</td></tr>
+      <tr><td><strong>Yuk Hui Cosmotechnics</strong></td><td>Cultural tech docs</td><td>African/non-Western technology philosophy. Ubuntu: community-first AI design.</td></tr>
+      <tr><td><strong>PIE Model</strong></td><td>Product docs</td><td>Phygital integration. Agents bridge digital output and physical-world impact.</td></tr>
+      <tr><td><strong>Ubuntu</strong></td><td>Cultural docs</td><td>"I am because we are." Agents as members of a community, not isolated tools.</td></tr>
+      <tr><td><strong>DAO / Web3</strong></td><td>DAO docs</td><td>Decentralised ownership, token economy. SodaLabs operates on the system it sells.</td></tr>
+    </table>
+
+    <h3>Key Agent Training Rules (For All Agents)</h3>
+    <table>
+      <tr><th>Rule</th><th>What It Means</th></tr>
+      <tr><td><strong>Lead with the answer</strong></td><td>Conclusion first, reasoning after. Never bury the lead.</td></tr>
+      <tr><td><strong>3-item briefings</strong></td><td>Cap at 3 key points. Never dump. Eliyahu's morning briefing is a perfect example.</td></tr>
+      <tr><td><strong>Anti-sycophancy</strong></td><td>Push back to earn trust. Mic calls this the "Dafka Gene." Validation without substance is disrespectful.</td></tr>
+      <tr><td><strong>Never re-explain</strong></td><td>Assume Mic knows the context. Skip preamble and intros.</td></tr>
+      <tr><td><strong>Time-sensitive first</strong></td><td>Deadlines and blockers before ideas and plans.</td></tr>
+      <tr><td><strong>Use analogies</strong></td><td>Mic thinks in systems AND narrative. Analogies are the primary cognitive bridge.</td></tr>
+      <tr><td><strong>Anti-extraction</strong></td><td>Non-negotiable value position. Never frame technology as extracting from community.</td></tr>
+      <tr><td><strong>25-year horizon, sprint urgency</strong></td><td>Think long, act fast. Strategic patience + tactical speed.</td></tr>
+    </table>
+  </section>
+
+  <!-- Chapter 15: Build Order (Feb 2026) -->
+  <section class="chapter" id="build-order">
+    <div class="chapter-number">Chapter 15</div>
+    <h2>Master Build Order</h2>
+    <p class="chapter-intro">From BUILD_LIST.md — 53 items across 7 priority tiers. One thing leads to the next. Do not skip ahead.</p>
+
+    <h3>Priority 1 — Foundation (Build First)</h3>
+    <table>
+      <tr><th>#</th><th>Item</th><th>Effort</th><th>Why First</th></tr>
+      <tr><td>1.1</td><td>Fisher2050 Agent Spec (full soul + automation profile)</td><td>1 day</td><td>He activates everything else. Without Fisher nothing is schedulable.</td></tr>
+      <tr><td>1.2</td><td>Agent Records DB (Claude SDK log capture)</td><td>1-2 days</td><td>Tim Buc needs records to exist before he can file anything. Migration 043+.</td></tr>
+      <tr><td>1.3</td><td>Context % Bar on Agent Cards</td><td>2 hours</td><td>SDK already exposes ModelUsage.contextWindow. Yellow 70%, red 90%.</td></tr>
+      <tr><td>1.4</td><td>Owl Persistence Layer</td><td>1 day</td><td>"Update me where we last left off." Session continuity. Never start from zero.</td></tr>
+      <tr><td>1.5</td><td>Tim Buc Agent (event-triggered archivist)</td><td>1 day</td><td>session ends → Tim Buc files → Eliyahu reads → briefing. The intelligence pipeline.</td></tr>
+      <tr><td>1.6</td><td>PM2 Process Manager</td><td>15 min</td><td>Auto-restart on crash, auto-start on boot. All 3 machines.</td></tr>
+      <tr><td>1.7</td><td>Anthropic API Key Rotation</td><td>10 min</td><td>Old key in git history. Live security exposure.</td></tr>
+      <tr><td>1.8</td><td>File API Authentication</td><td>30 min</td><td>Anyone on port 3000 can read/write project files without auth.</td></tr>
+    </table>
+
+    <h3>Priority 2 — Agent Intelligence</h3>
+    <table>
+      <tr><th>#</th><th>Item</th><th>Effort</th></tr>
+      <tr><td>2.1</td><td>Calendar-Triggered Spawn (Google Calendar API or local iCal)</td><td>2-3 days</td></tr>
+      <tr><td>2.2</td><td>Monitor Agent (continuous push-based watchdog)</td><td>1 day</td></tr>
+      <tr><td>2.3</td><td>Eliyahu Agent (intelligence synthesis, 6am daily)</td><td>1-2 days</td></tr>
+      <tr><td>2.4</td><td>Agent Automation Profiles (all 12 agents)</td><td>2-3 days</td></tr>
+      <tr><td>2.5</td><td>Ziggi Agent (2am quality auditor)</td><td>1 day</td></tr>
+      <tr><td>2.6</td><td>Controller Agent (single entry point)</td><td>1 day</td></tr>
+      <tr><td>2.7</td><td>Farcake Soul + Profile (research specialist)</td><td>1 day</td></tr>
+      <tr><td>2.8</td><td>Andy Soul + Profile (editorial engine)</td><td>1 day</td></tr>
+      <tr><td>2.9</td><td>Activity Feed (AI-narrated briefing screen)</td><td>2-3 days</td></tr>
+    </table>
+
+    <h3>Priority 3 — Communications</h3>
+    <table>
+      <tr><th>#</th><th>Item</th><th>Effort</th></tr>
+      <tr><td>3.1</td><td>Agent Email Addresses (outbound via SendGrid/Mailgun)</td><td>1 day</td></tr>
+      <tr><td>3.2</td><td>Agent Email Addresses (inbound routing)</td><td>1-2 days</td></tr>
+      <tr><td>3.3</td><td>WebSocket Agent Channels (formalise #operations, #quality, etc)</td><td>1 day</td></tr>
+      <tr><td>3.4</td><td>WhatsApp → Fisher2050 Bridge (via GumballCMS)</td><td>1-2 days</td></tr>
+      <tr><td>3.5</td><td>Inter-Agent Messaging Tool (send_message MCP tool)</td><td>1 day</td></tr>
+    </table>
+
+    <h3>Dependency Chain (Summary)</h3>
+    <pre>Fisher2050 spec (1.1)
+   └── Agent Records DB (1.2)
+         └── Tim Buc (1.5)
+               └── Eliyahu (2.3)
+                     └── Activity Feed (2.9)
+         └── Owl (1.4)
+               └── Controller (2.6)
+               └── Calendar-triggered spawn (2.1)
+                     └── Ziggi (2.5)
+                     └── Fisher queue/producer (6.1)
+                           └── Coder Machine (5.5)</pre>
+  </section>
+
+  <!-- Chapter 16: How PIA Differs -->
+  <section class="chapter" id="differentiation">
+    <div class="chapter-number">Chapter 16</div>
+    <h2>How PIA Differs From Everyone Else</h2>
+    <p class="chapter-intro">Not "different from competitors" — what is genuinely new in the world of AI agent orchestration.</p>
+
+    <h3>Competitive Comparison</h3>
+    <table>
+      <tr><th>System</th><th>What It Does</th><th>Critical Gap vs PIA</th></tr>
+      <tr><td>CrewAI</td><td>Multi-agent task execution</td><td>No soul, no multi-machine, no identity, no scheduling, no memory</td></tr>
+      <tr><td>AutoGen (Microsoft)</td><td>Agent conversations</td><td>No personality, cloud-only, no calendar dispatch, no filing</td></tr>
+      <tr><td>LangGraph</td><td>Agent workflow graphs</td><td>Pure developer tool, no product layer, no employee concept</td></tr>
+      <tr><td>Claude Code native</td><td>team_create, task_create</td><td>Single machine, terminal only, no soul, no identity</td></tr>
+      <tr><td>Zapier / Make</td><td>Automation workflows</td><td>Not intelligent, no memory, no personality, not agentic</td></tr>
+      <tr><td>OpenAI Assistants</td><td>Persistent AI assistants</td><td>Cloud-only, no multi-machine, no soul system, no scheduling</td></tr>
+    </table>
+
+    <h3>What Is Genuinely New</h3>
+    <div class="idea-card">
+      <div class="idea-header"><span class="idea-title">1. Tim Buc Pipeline (invented Feb 2026)</span></div>
+      <div class="idea-desc">session ends → Tim Buc files → Eliyahu synthesises → briefing. A dedicated archivist agent whose only job is to take raw AI session logs and make them readable for an intelligence agent. No competitor has this pattern.</div>
+    </div>
+    <div class="idea-card">
+      <div class="idea-header"><span class="idea-title">2. Soul-First Architecture</span></div>
+      <div class="idea-desc">Everyone starts with "what can it do?" You start with "who is it?" Fisher2050 has a personality, a communication style, and a name before he has any tasks. This changes how clients relate to the AI — they learn to trust Eliyahu specifically, not "the knowledge management AI."</div>
+    </div>
+    <div class="idea-card">
+      <div class="idea-header"><span class="idea-title">3. Activity Feed with AI Narration</span></div>
+      <div class="idea-desc">A non-technical briefing screen showing what the AI workforce did, explained in plain English for stakeholders who do not understand the technology. Nobody is doing this. The difference between a server log and a morning newspaper.</div>
+    </div>
+    <div class="idea-card">
+      <div class="idea-header"><span class="idea-title">4. Machine-as-Project-Orchestrator</span></div>
+      <div class="idea-desc">Machines taking dynamic management roles rather than fixed roles. The physical machine becomes the project brain when a project activates on it. Enables parallel projects on separate machines without central coordination overhead.</div>
+    </div>
+    <div class="idea-card">
+      <div class="idea-header"><span class="idea-title">5. Calendar as Agent Operating Schedule</span></div>
+      <div class="idea-desc">Using a calendar (not code) as the scheduling system, with Fisher2050 writing to it. The entire AI workforce schedule is visible, editable by non-technical people, and carries context as part of each entry.</div>
+    </div>
+    <div class="idea-card">
+      <div class="idea-header"><span class="idea-title">6. Digital Worker Identity</span></div>
+      <div class="idea-desc">Agents with email addresses, channel memberships, and communication patterns that mirror human team members. You email Fisher2050 a goal and he creates tasks. You WhatsApp GumballCMS and it routes to Fisher2050. SodaLabs sells teams, not software.</div>
+    </div>
+    <div class="idea-card">
+      <div class="idea-header"><span class="idea-title">7. SodaLabs Eats Its Own Cooking</span></div>
+      <div class="idea-desc">The agency that sells AI workforce systems runs its own agency ON those systems. Every client output produced by Farcake + Andy + Bird Fountain + Wingspan going through GumballCMS is a live proof of concept that you show investors and clients.</div>
+    </div>
   </section>
 
   <!-- Chapter 7: Timeline -->
