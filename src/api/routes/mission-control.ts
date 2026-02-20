@@ -338,6 +338,19 @@ router.post('/machines/:id/command', async (req: Request, res: Response): Promis
     try {
       const { getWebSocketServer } = await import('../../tunnel/websocket-server.js');
       const ws = getWebSocketServer();
+
+      // If wait=true query param, use async send and wait for response
+      if (req.query.wait === 'true') {
+        try {
+          const timeoutMs = parseInt(req.query.timeout as string) || 15000;
+          const result = await ws.sendToMachineAsync(machineId, command, data || {}, timeoutMs);
+          res.json({ success: true, result });
+        } catch (err) {
+          res.status(504).json({ error: `${err}` });
+        }
+        return;
+      }
+
       const sent = ws.sendToMachine(machineId, {
         type: 'command',
         payload: { action: command, data },

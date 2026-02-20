@@ -221,6 +221,10 @@ export class HubClient {
         this.handleSetEnv(command.data as Record<string, unknown>);
         break;
 
+      case 'diagnose':
+        this.handleDiagnose(command.data as Record<string, unknown>);
+        break;
+
       default:
         logger.warn(`Unknown command: ${command.action}`);
     }
@@ -519,12 +523,70 @@ export class HubClient {
 
       // Write back
       writeFileSync(envPath, updated.join('\n'));
+
+      // Also inject into running process so spawned agents pick up changes immediately
+      for (const [key, value] of Object.entries(vars)) {
+        process.env[key] = value;
+      }
+
       const keyNames = Object.keys(vars).map(k => k.replace(/^(ANTHROPIC_API_KEY)$/, '$1 (masked)'));
-      logger.info(`Updated .env: ${keyNames.join(', ')}`);
+      logger.info(`Updated .env and process.env: ${keyNames.join(', ')}`);
 
       this.send({ type: 'command:result', payload: { action: 'set_env', requestId, success: true, keys: Object.keys(vars), path: envPath } });
     } catch (error) {
       this.send({ type: 'command:result', payload: { action: 'set_env', requestId, success: false, error: `${error}` } });
+    }
+  }
+
+  private handleDiagnose(data: Record<string, unknown>): void {
+    const requestId = (data?.requestId as string) || '';
+    try {
+      const hasApiKey = !!process.env.ANTHROPIC_API_KEY;
+      const apiKeyPrefix = hasApiKey ? process.env.ANTHROPIC_API_KEY!.substring(0, 12) + '...' : 'NOT SET';
+      const envPath = path.resolve(process.cwd(), '.env');
+      const envExists = existsSync(envPath);
+      let envHasKey = false;
+      if (envExists) {
+        const content = readFileSync(envPath, 'utf-8');
+        envHasKey = content.includes('ANTHROPIC_API_KEY=');
+      }
+
+      // Check if SDK is importable
+      let sdkAvailable = false;
+      try {
+        require.resolve('@anthropic-ai/claude-agent-sdk');
+        sdkAvailable = true;
+      } catch { sdkAvailable = false; }
+
+      // Check if database is initialized
+      let dbOk = false;
+      try {
+        const { getDatabase } = require('../db/database.js');
+        getDatabase();
+        dbOk = true;
+      } catch { dbOk = false; }
+
+      const result = {
+        action: 'diagnose',
+        requestId,
+        success: true,
+        hostname: process.env.COMPUTERNAME || require('os').hostname(),
+        cwd: process.cwd(),
+        nodeVersion: process.version,
+        hasApiKey,
+        apiKeyPrefix,
+        envFileExists: envExists,
+        envFileHasKey: envHasKey,
+        sdkAvailable,
+        databaseOk: dbOk,
+        platform: process.platform,
+        uptime: process.uptime(),
+      };
+
+      logger.info(`Diagnose result: ${JSON.stringify(result)}`);
+      this.send({ type: 'command:result', payload: result });
+    } catch (error) {
+      this.send({ type: 'command:result', payload: { action: 'diagnose', requestId, success: false, error: `${error}` } });
     }
   }
 
