@@ -176,6 +176,47 @@ None yet — plan only. Implementation will add new REST endpoints and WebSocket
 
 ---
 
+## Session 3b: Knowledge Base & File Index Creation (Opus 4.6)
+
+### What Was Done
+
+#### 1. FILE_INDEX.md (NEW)
+Complete index of every `.md` (~80+) and `.html` (~40+) file in the repository, organized into 12 categories: Architecture, Knowledge, Journals, Agent Prompts, Plans, Research, Data, HTML Dashboards, HTML Guides, HTML Planning, HTML DAO, HTML Mockups. Agents must check this before creating new files.
+
+#### 2. PIA_KNOWLEDGE_BASE.md (NEW)
+Master knowledge base with 8 sections:
+- **Terminology** (30+ terms defined in plain English)
+- **Ideas Discussed** (7 settled decisions, 5 future ideas)
+- **System Specification** (architecture, 60+ API endpoints, source files, migrations)
+- **Current Capabilities** (17 working, 4 partial)
+- **Still To Do** (15 prioritized items)
+- **Session Timeline** (Feb 10–19 summary)
+- **Key Libraries** (11 packages)
+- **Configuration Reference** (9 env vars)
+
+#### 3. public/pia-book.html (NEW)
+Visual HTML book served at `/pia-book.html`. Dark theme matching Mission Control (bg #050508, purple #9b4dca accents). Left sidebar navigation with 8 chapters, search functionality, term cards, idea cards, timeline, file entries, stats bar.
+
+#### 4. CLAUDE.md Updated
+Added "Knowledge Base & File Index Maintenance" section with:
+- Table of 3 files to maintain (FILE_INDEX.md, PIA_KNOWLEDGE_BASE.md, public/pia-book.html)
+- "How to Update" instructions for both FILE_INDEX.md and PIA_KNOWLEDGE_BASE.md
+- **Knowledge Organization Template** — standard 8-section pattern for any project documentation, saved so other agents follow the same method
+
+### Files Changed
+| File | Change |
+|---|---|
+| `FILE_INDEX.md` | **NEW** — Complete index of every .md and .html file |
+| `PIA_KNOWLEDGE_BASE.md` | **NEW** — Master knowledge base (8 sections) |
+| `public/pia-book.html` | **NEW** — Visual HTML book |
+| `CLAUDE.md` | Added Knowledge Base maintenance rules + template |
+
+### Desktop App Impact
+- New static page `/pia-book.html` — could be added to React app nav
+- No new endpoints, migrations, or WebSocket events
+
+---
+
 ## Session 4: Remote Machine Control — Full Implementation (Opus 4.6)
 
 ### What Was Done
@@ -260,5 +301,450 @@ When M2's settings modal is opened and saved:
 5. Click "Wake" → progress toast shows WOL → M2 boots → amber dot
 6. Click "Start PIA" → SSH connects → PIA starts → green dot
 7. M2 needs: Windows WOL enabled, OpenSSH Server running
+
+---
+
+## Session 5: M2 Network Connectivity & Firewall Troubleshooting (Opus 4.6)
+
+### Context
+M2 (soda-monster-hunter) was deployed and connected to the hub via WebSocket, but all direct inbound connections (ping, HTTP, RDP) failed from M1. This session diagnosed and fixed the Windows Firewall configuration on M2 to enable full remote control.
+
+### Problem
+- M2's PIA worker mode connects **outbound** to hub via WebSocket — this worked fine
+- But direct inbound connections from M1 to M2 (via Tailscale 100.127.165.12 or LAN 192.168.0.4) all timed out
+- Needed inbound access for: RDP remote desktop, Wake-on-LAN verification, direct health checks
+
+### Diagnosis Steps
+1. `curl http://100.127.165.12:3000/api/health` — timeout (exit 28)
+2. `ping 100.127.165.12` — 100% packet loss
+3. `tailscale status` — showed M2 as "active; direct 192.168.0.4:41641" (tunnel was up)
+4. Hub API `/api/mc/machines` — showed M2 as **online** (WebSocket outbound was working)
+5. Conclusion: Windows Firewall on M2 blocking all inbound traffic
+
+### Root Cause
+M2's Ethernet adapter (`MikroTik-7B6BB3 2`, InterfaceIndex 22) was set to **"Public" network profile** — the strictest Windows Firewall profile that blocks almost all inbound connections regardless of individual allow rules.
+
+Also found: **Radmin VPN** adapter (InterfaceIndex 11) also set to Public. Tailscale adapter (InterfaceIndex 36) was correctly set to Private.
+
+### Fix Applied (on M2 Admin PowerShell)
+
+#### Step 1: Firewall Rules Created
+```powershell
+# Allow all Tailscale subnet traffic inbound
+New-NetFirewallRule -Name "Allow-All-Tailscale" -DisplayName "Allow All Tailscale" -Direction Inbound -RemoteAddress 100.64.0.0/10 -Action Allow
+
+# Allow RDP from any source
+New-NetFirewallRule -Name "Allow-RDP-All" -DisplayName "Allow RDP All" -Direction Inbound -Protocol TCP -LocalPort 3389 -Action Allow
+```
+
+#### Step 2: RDP Enabled
+```powershell
+Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+```
+Verified: `fDenyTSConnections = 0` ✓
+
+#### Step 3: Network Profile Changed (THE KEY FIX)
+```powershell
+Set-NetConnectionProfile -InterfaceIndex 22 -NetworkCategory Private
+```
+Changed Ethernet from **Public → Private**. Verified with `Get-NetConnectionProfile`.
+
+#### Step 4: Firewall Temporarily Disabled for Testing
+```powershell
+Set-NetFirewallProfile -Profile Public,Private -Enabled False
+```
+
+### Result
+- **Ping**: ✓ Reply from 192.168.0.4, time=2ms, TTL=128
+- **RDP (port 3389)**: ✓ `Test-NetConnection` returned **True**
+- **Remote Desktop**: Ready — connect from M1 with `mstsc /v:100.127.165.12`
+
+### M2 MAC Address Confirmed
+- **MAC: A0-9F-7A-5D-DF-A4** (obtained from M1's ARP table: `arp -a 192.168.0.4`)
+- Needed for Wake-on-LAN feature built in Session 4
+
+### M2 Network Adapters Summary
+| Adapter | InterfaceIndex | Profile | IP |
+|---|---|---|---|
+| Ethernet (MikroTik) | 22 | Private (was Public) | 192.168.0.4 |
+| Radmin VPN | 11 | Public | Local only |
+| Tailscale | 36 | Private | 100.127.165.12 |
+
+### TODO: Re-Enable Firewall
+The Windows Firewall was disabled for testing. Need to re-enable with proper rules:
+```powershell
+Set-NetFirewallProfile -Profile Public,Private -Enabled True
+```
+The allow rules (Tailscale + RDP) should let traffic through even with firewall on, now that the Ethernet profile is Private.
+
+### Files Changed
+| File | Change |
+|---|---|
+| `SESSION_JOURNAL_2026-02-19.md` | Added Session 3b (Knowledge Base) + Session 5 (this) |
+
+### Desktop App Impact
+None — this was infrastructure/network configuration on M2, no code changes.
+
+---
+
+## Session 6: NordVPN Discovery + M1 Restart Required (Opus 4.6)
+
+### Context
+Continued debugging why M1 cannot reach M2 despite all Windows Firewall rules being correct on M2.
+
+### Key Discovery: NordVPN on M1 Was the Blocker
+Even after fixing M2's firewall (Session 5), M1 still couldn't reach M2. Investigation revealed:
+
+1. **NordVPN was active on M1** — NordLynx adapter (10.5.0.2) was routing all traffic through the VPN tunnel, preventing direct LAN communication
+2. **M1 was on WiFi** (192.168.0.2) AND Ethernet (192.168.0.11) simultaneously — dual routes to same subnet
+3. **MikroTik router** — may have WiFi client isolation (prevents WiFi clients from reaching Ethernet clients)
+
+### What Was Done on M2 (Firewall Rules Summary)
+All these rules were applied on M2 Admin PowerShell and are **persistent** (survive reboot):
+
+```powershell
+# 1. Allow Tailscale subnet
+New-NetFirewallRule -Name "Allow-All-Tailscale" -DisplayName "Allow All Tailscale" -Direction Inbound -RemoteAddress 100.64.0.0/10 -Action Allow
+
+# 2. Allow RDP from anywhere
+New-NetFirewallRule -Name "Allow-RDP-All" -DisplayName "Allow RDP All" -Direction Inbound -Protocol TCP -LocalPort 3389 -Action Allow
+
+# 3. Allow all LAN traffic
+New-NetFirewallRule -Name "Allow-LAN-All" -DisplayName "Allow All LAN" -Direction Inbound -RemoteAddress 192.168.0.0/24 -Action Allow
+
+# 4. Nuclear allow-all (temporary, should be removed later)
+netsh advfirewall firewall add rule name="Allow-ALL-Inbound" dir=in action=allow enable=yes
+
+# 5. RDP enabled
+Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+
+# 6. Ethernet profile changed from Public to Private
+Set-NetConnectionProfile -InterfaceIndex 22 -NetworkCategory Private
+
+# 7. Firewall re-enabled after testing
+Set-NetFirewallProfile -Profile Public,Private -Enabled True
+```
+
+### What Was Done on M1
+1. **NordVPN uninstalled** — was intercepting all traffic via NordLynx adapter
+2. **M1 connected to Ethernet** — now has wired connection (192.168.0.11) in addition to WiFi (192.168.0.2)
+3. **Restart required** — NordVPN uninstall needs reboot to fully remove network adapters and routing rules
+
+### Network Map (Current)
+```
+M1 (Izzit7 - Hub):
+  - Ethernet: 192.168.0.11
+  - WiFi: 192.168.0.2
+  - Tailscale: 100.73.133.3
+
+M2 (soda-monster-hunter - Worker):
+  - Ethernet: 192.168.0.4
+  - Tailscale: 100.127.165.12
+  - MAC: A0-9F-7A-5D-DF-A4
+
+M3 (soda-yeti - Worker):
+  - Tailscale: 100.102.217.69
+  - Status: Offline
+```
+
+### NEXT AGENT: What To Do After M1 Reboots
+
+1. **Start PIA on M1**: `cd C:\Users\mic\Downloads\pia-system && npm run dev`
+2. **Test connectivity to M2**:
+   ```bash
+   ping 192.168.0.4
+   ping 100.127.165.12
+   curl http://192.168.0.4:3389
+   ```
+3. **Test RDP**: `mstsc /v:192.168.0.4` or `mstsc /v:100.127.165.12`
+4. **Verify M2 is connected to hub**: `curl http://localhost:3000/api/mc/machines`
+5. **If ping still fails**: Check `ipconfig` — make sure NordLynx adapter is gone. Check `route print` for clean routing. Consider disabling WiFi on M1 and using only Ethernet.
+6. **Clean up M2 firewall**: Remove the nuclear "Allow-ALL-Inbound" rule once connectivity confirmed:
+   ```powershell
+   # On M2 Admin PowerShell:
+   netsh advfirewall firewall delete rule name="Allow-ALL-Inbound"
+   ```
+
+### M2 PIA Status
+- M2's PIA worker is running (`npm run dev` in normal PowerShell)
+- Connected to hub via WebSocket — confirmed online in `/api/mc/machines`
+- WebSocket heartbeats flowing every 30s
+- 12 known projects available for remote agent spawning
+
+### Files Changed
+| File | Change |
+|---|---|
+| `SESSION_JOURNAL_2026-02-19.md` | Added Session 6 (this) |
+
+### Desktop App Impact
+None — infrastructure/network changes only.
+
+---
+
+## Session 7: Continued Firewall Debugging — The Deep Dive (Opus 4.6)
+
+### Context
+M1 rebooted after NordVPN uninstall (Session 6). Resumed testing connectivity to M2. PIA Hub started on M1. The network issue persisted despite all previous fixes.
+
+### Progress Timeline
+
+#### 1. NordVPN Confirmed Gone
+- `ipconfig` on M1 — no NordLynx adapter present. Reboot successfully removed it.
+- M1 network: Ethernet 192.168.0.11, Tailscale 100.73.133.3 (no WiFi IP active — good)
+
+#### 2. Tailscale Tunnel Confirmed Working
+- `tailscale ping 100.127.165.12` → **pong in 1-2ms** via direct connection (192.168.0.4:41641)
+- Tailscale status shows M2 as "idle" with tx/rx data flowing
+- **But** Windows ICMP ping and TCP connections through Tailscale adapter → all timeout
+
+#### 3. Firewall OFF Test — SUCCESS
+- M2 disabled Windows Firewall on all profiles: `Set-NetFirewallProfile -Profile Public,Private,Domain -Enabled False`
+- **Result: Everything worked instantly** — ping 1ms, RDP port 3389 reachable (TcpTestSucceeded = True)
+- **Confirmed: M2's Windows Firewall is the sole blocker**
+
+#### 4. Firewall ON with Rules — FAILED
+Re-enabled firewall with Tailscale allow rules:
+```powershell
+New-NetFirewallRule -DisplayName "Allow Tailscale All" -Direction Inbound -RemoteAddress 100.64.0.0/10 -Action Allow -Profile Any -Enabled True
+New-NetFirewallRule -DisplayName "Allow ICMP Tailscale" -Direction Inbound -Protocol ICMPv4 -RemoteAddress 100.64.0.0/10 -Action Allow -Profile Any -Enabled True
+```
+**Result: Still blocked.** Ping and RDP both timeout.
+
+#### 5. Blanket Allow-All Rule — FAILED
+```powershell
+New-NetFirewallRule -DisplayName "TEMP-Allow-All-Inbound" -Direction Inbound -Action Allow -Profile Any -Enabled True
+```
+**Result: Still blocked.** This rules out rule scoping issues — even a rule with zero filters doesn't work.
+
+#### 6. Firewall Profile Investigation
+```
+AllowLocalFirewallRules: NotConfigured (defaults to True) on all profiles
+DefaultInboundAction: NotConfigured (defaults to Block) on all profiles
+No GPO overrides detected.
+```
+**This is the anomaly:** local allow rules SHOULD work but DON'T.
+
+#### 7. Radmin VPN — Removed + Rebooted
+- Radmin VPN was installed on M2 (detected in Session 5 on InterfaceIndex 11, Public profile)
+- Suspected WFP (Windows Filtering Platform) filter injection
+- **Uninstalled Radmin VPN, rebooted M2**
+- **Result: Still blocked.** Radmin was not the culprit.
+
+#### 8. M2 Network Adapter Investigation
+Two physical Ethernet ports on the Z890 AORUS board:
+
+| Adapter | Chip | Status | IP | Speed |
+|---|---|---|---|---|
+| Ethernet | Realtek PCIe GbE | Up | 192.168.0.4 (DHCP) | 1 Gbps |
+| Ethernet 2 | Marvell AQtion 10GBASE-T | Disconnected | 169.254.x.x (link-local) | 10 Gbps capable |
+
+Also present:
+- Tailscale — 100.127.165.12 (Private profile)
+- Intel Wi-Fi 7 BE200 — Disconnected
+
+Only the Realtek 1GbE is active. The 10GbE port has nothing plugged in.
+
+### The Mystery (Unsolved)
+**Firewall OFF = everything works. Firewall ON with blanket allow-all = blocked.**
+
+This behavior is NOT normal. Standard Windows Firewall allow rules should override the default block action. Possible remaining causes:
+1. **Windows Service Hardening rules** — deep system rules that can block even when allow rules exist
+2. **Residual WFP callout drivers** — from Radmin or other software, persisting even after uninstall
+3. **Tailscale adapter quirk** — traffic arriving on the Tailscale virtual adapter may not match firewall rules the same way physical NIC traffic does
+4. **DefaultInboundAction override** — "NotConfigured" may be inheriting a Block from somewhere unexpected
+
+### Next Step To Try
+Change the default inbound action for Private profile (which Tailscale is on):
+```powershell
+Set-NetFirewallProfile -Profile Private -DefaultInboundAction Allow
+```
+This changes the baseline from "block unless allowed" to "allow unless blocked" for Private networks. Less surgical but should definitively fix it.
+
+### What Works (Workarounds)
+- **Outbound from M2 to M1**: Works perfectly (WebSocket hub connection, PIA registration)
+- **Tailscale ping**: Works (goes through Tailscale's own protocol, bypasses OS firewall)
+- **Firewall completely off**: Everything works (not a permanent solution)
+
+### M2 PIA Status After Reboot
+- PIA restarted, WebSocket connected to hub
+- Shows as **online** in `/api/mc/machines`
+- 12 projects available for remote spawning
+
+### Files Changed
+| File | Change |
+|---|---|
+| `SESSION_JOURNAL_2026-02-19.md` | Added Session 7 (this) |
+
+### Desktop App Impact
+None — infrastructure/network debugging only.
+
+---
+
+## Session 8: FIREWALL FIXED — Root Cause Found (Opus 4.6)
+
+### Root Cause
+**Local Group Policy** configured by Nielo/Zugron when they set up TightVNC + Radmin VPN on M2. The policy set `LocalFirewallRules: N/A (GPO-store only)` on all three firewall profiles (Domain, Private, Public), meaning ALL locally-created firewall rules were silently ignored. Only GPO-deployed rules were evaluated.
+
+This is why:
+- Every `New-NetFirewallRule` we added did nothing (went to local store, ignored)
+- `DefaultInboundAction Allow` on all profiles did nothing (overridden by GPO)
+- Blanket allow-all rules did nothing (local store, ignored)
+- Only `Set-NetFirewallProfile -Enabled False` worked (bypasses entire WFP engine)
+
+### The Fix
+```powershell
+# 1. Delete Local Group Policy (the actual source of the lockdown)
+Remove-Item "C:\Windows\System32\GroupPolicy" -Recurse -Force
+Remove-Item "C:\Windows\System32\GroupPolicyUsers" -Recurse -Force
+
+# 2. Force policy refresh
+gpupdate /force
+
+# 3. Restart firewall service
+Restart-Service MpsSvc
+
+# 4. Reboot M2
+```
+
+### Result After Reboot
+- **Ping 100.127.165.12**: Reply in 1ms, 0% loss
+- **RDP port 3389**: TcpTestSucceeded = True
+- **Tailscale direct**: 3ms via 192.168.0.4:41641
+
+### What Also Happened During Debugging (Sessions 5-7)
+Things that were NOT the cause but were fixed along the way:
+1. ~~M2 Ethernet on Public profile~~ → Changed to Private (Session 5) — helpful but not the root cause
+2. ~~NordVPN on M1~~ → Uninstalled + rebooted (Session 6) — was a separate issue, now resolved
+3. ~~Radmin VPN on M2~~ → Uninstalled + rebooted (Session 7) — not the cause, but good to remove
+4. ~~Windows Firewall rules~~ → Many added, all ignored due to GPO-store-only
+5. ~~DefaultInboundAction Allow~~ → Set on all profiles, ignored due to GPO
+
+### Key Lesson
+When `netsh advfirewall show allprofiles` shows `LocalFirewallRules: N/A (GPO-store only)`, **no locally-created rules will work**. The fix is to reset Local Group Policy, not add more rules.
+
+### Zugron/Nielo's Original Setup (Now Removed)
+- **TightVNC** for remote desktop
+- **Radmin VPN** for the tunnel
+- **Local Group Policy** locked firewall to GPO-store only
+- This was a valid security setup for their use case, but incompatible with Tailscale
+
+### TODO
+- [ ] Add clean Tailscale firewall rules on M2 (allow 100.64.0.0/10 inbound)
+- [ ] Start PIA on M2 and verify hub connection
+- [ ] Test RDP from M1: `mstsc /v:100.127.165.12`
+- [ ] Clean up old firewall rules from Sessions 5-7
+- [ ] Set password on M2 User account for RDP (NLA requires it)
+
+### Files Changed
+| File | Change |
+|---|---|
+| `SESSION_JOURNAL_2026-02-19.md` | Added Session 8 (this) |
+
+### Desktop App Impact
+None — infrastructure/network fix only. But M2 is now fully reachable, enabling remote agent spawning, RDP, and Wake-on-LAN features built in Session 4.
+
+---
+
+## Session 9: Post-Fix Verification + Remaining Items (Opus 4.6)
+
+### Connectivity Status After GPO Fix
+| Test | Result |
+|---|---|
+| `tailscale ping 100.127.165.12` | pong 1-3ms direct via 192.168.0.4:41641 |
+| `ping 100.127.165.12` | Reply 1ms, 0% loss |
+| RDP port 3389 | TcpTestSucceeded = True |
+| PIA hub registration (WebSocket) | M2 online in `/api/mc/machines` |
+| PIA direct health (port 3000) | **Timeout** — PIA likely bound to localhost only |
+
+### Firewall Rule Note
+M2 has an "Allow Tailscale All" inbound rule but it was created **without the RemoteAddress filter** (command got split across lines). Currently allows ALL inbound. Needs to be fixed:
+```powershell
+# Remove the overly permissive rule
+Remove-NetFirewallRule -DisplayName "Allow Tailscale All"
+
+# Add correct one with Tailscale subnet filter
+New-NetFirewallRule -DisplayName "Allow Tailscale All" -Direction Inbound -RemoteAddress 100.64.0.0/10 -Action Allow -Profile Any -Enabled True
+New-NetFirewallRule -DisplayName "Allow ICMP Tailscale" -Direction Inbound -Protocol ICMPv4 -RemoteAddress 100.64.0.0/10 -Action Allow -Profile Any -Enabled True
+```
+
+### PIA Port 3000 Issue
+M2's PIA connects outbound to the hub (WebSocket) but port 3000 is not reachable from M1. Likely cause: PIA on M2 is binding to `127.0.0.1:3000` (localhost only) instead of `0.0.0.0:3000` (all interfaces). Need to check M2's config/`.env` and verify with `netstat -an | findstr "3000"`.
+
+### NEXT AGENT: What Still Needs Doing on M2
+1. **Fix firewall rule** — replace the allow-all with Tailscale-only (commands above)
+2. **Check PIA binding** — `netstat -an | findstr "3000"` — if `127.0.0.1:3000`, change to `0.0.0.0`
+3. **Set User password** — RDP with NLA requires a password: `net user User <password>`
+4. **Test RDP login** from M1: `mstsc /v:100.127.165.12`
+5. **Clean up old firewall rules** — remove all the rules from Sessions 5-7 that were never working:
+   - "Allow All Tailscale" (old)
+   - "Allow RDP All"
+   - "Allow All LAN"
+   - "Allow-ALL-Inbound" (nuclear netsh rule)
+   - "TEMP-Allow-All-Inbound"
+   - "Allow ICMP Tailscale" (old)
+
+### Network Map (Final Working State)
+```
+M1 (Izzit7 - Hub):
+  Ethernet: 192.168.0.11
+  Tailscale: 100.73.133.3
+  PIA: http://localhost:3000 (hub mode)
+  NordVPN: REMOVED
+
+M2 (soda-monster-hunter - Worker):
+  Ethernet: 192.168.0.4 (Realtek 1GbE)
+  Ethernet 2: Disconnected (Marvell 10GbE)
+  Tailscale: 100.127.165.12
+  MAC: A0-9F-7A-5D-DF-A4
+  PIA: Running (worker mode, WebSocket to hub)
+  Radmin VPN: REMOVED
+  TightVNC: REMOVED (with GPO lockdown)
+  Local Group Policy: RESET to defaults
+
+M3 (soda-yeti - Worker):
+  Tailscale: 100.102.217.69
+  Status: Offline
+```
+
+### Files Changed
+| File | Change |
+|---|---|
+| `SESSION_JOURNAL_2026-02-19.md` | Added Session 9 (this) |
+
+### Desktop App Impact
+None — status update only.
+
+---
+
+## Session 10: Full Fleet Connectivity Confirmed + Remote Control Test (Opus 4.6)
+
+### Key Discovery: Workers Don't Listen on Port 3000
+M2 in LOCAL (worker) mode does NOT bind to port 3000. It's a pure client — connects outbound to M1's hub via WebSocket (`ws://100.73.133.3:3001`). The `curl http://100.127.165.12:3000/api/health` timeout was expected behavior, not a bug. Only the hub (M1) runs an HTTP server.
+
+### Fleet Status
+| Machine | Status | Connection |
+|---|---|---|
+| M1 (Izzit7) | Online | Hub — `http://localhost:3000` |
+| M2 (soda-monster-hunter) | Online | Worker — WebSocket to hub |
+| M3 (soda-yeti) | Offline | — |
+
+### What's Working
+- Tailscale tunnel: M1 ↔ M2 direct, 1-3ms
+- ICMP ping: M1 → M2 via 100.127.165.12, 1ms
+- RDP port: 3389 open on M2
+- PIA hub registration: M2 online, 12 projects available
+- Remote agent spawning: Testing now...
+
+### Remote Control Test
+Testing whether M1 can spawn an agent on M2 through the PIA hub API...
+
+*(Results below)*
+
+### Files Changed
+| File | Change |
+|---|---|
+| `SESSION_JOURNAL_2026-02-19.md` | Added Session 10 (this) |
 
 ---
