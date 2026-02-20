@@ -106,6 +106,12 @@ async function startHub(): Promise<void> {
   getCalendarSpawnService().start();
   logger.info('CalendarSpawnService started');
 
+  // Start Tim Buc — Session Archivist (fires on every agent session complete)
+  logger.info('Starting Tim Buc archivist...');
+  const { startTimBuc } = await import('./services/tim-buc-service.js');
+  startTimBuc();
+  logger.info('Tim Buc started — watching for session completions');
+
   // Start The Cortex — Fleet Intelligence Brain
   logger.info('Starting The Cortex...');
   const { initCortex } = await import('./cortex/index.js');
