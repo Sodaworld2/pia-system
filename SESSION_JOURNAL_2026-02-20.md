@@ -2084,3 +2084,37 @@ No functional code changed — HTML diagram only. The React UI port of this page
 
 ### Desktop App Impact
 The React UI port of mission-control.html will need to expose: `GET /api/souls` for soul dropdown, `contextUsed`/`contextWindow` fields from the agent session API, and the git branch read via the files API. The Kill All/Done/Errors actions map to `DELETE /api/mc/agents/:id` calls — straightforward to port.
+
+---
+
+## Session 30: Fisher2050 API Routes + Dashboard Status Panel
+
+### Changes
+
+- **New file**: `src/api/routes/fisher.ts` — Two endpoints:
+  - `GET /api/fisher/status` — returns `{ running: bool, jobs: { standup, summary, ziggi, eliyahu, memory } }` with label, cron schedule, and lastRun timestamp per job
+  - `POST /api/fisher/run` — body `{ job: 'standup' | 'summary' }` or `{ prompt: string }` — triggers a scheduled job immediately or runs an on-demand Fisher2050 task. Returns `{ ok, triggered, taskId? }`
+
+- **Updated**: `src/api/server.ts` — imported `fisherRouter`, registered at `/api/fisher`
+
+- **New UI panel**: `public/mission-control.html` — "Fisher2050 Scheduler" panel in the right column, below Prompt Queue:
+  - Shows active/stopped badge (green ● / grey ○)
+  - Lists all 5 jobs with their last-run times
+  - Three buttons: Standup (trigger morning standup), Summary (trigger evening summary), Custom (prompts for arbitrary text)
+  - Loads on init via `fetchFisherStatus()`, refreshes every 30 seconds
+
+- **New JS functions** in `public/mission-control.html`: `fetchFisherStatus()`, `fisherTrigger(job)`, `fisherPrompt()`
+
+- **Commit**: `feat: Dashboard improvements` (e261ebf) — dashboard 5 improvements
+- **Commit**: `feat: Fisher2050 API routes + dashboard status panel` (7093f90)
+
+### Files Changed
+
+| File | Change |
+|---|---|
+| `src/api/routes/fisher.ts` | **NEW** — GET /api/fisher/status, POST /api/fisher/run |
+| `src/api/server.ts` | Registered /api/fisher router |
+| `public/mission-control.html` | Fisher2050 scheduler panel, fetchFisherStatus, fisherTrigger, fisherPrompt |
+
+### Desktop App Impact
+Fisher status panel should be a widget in the React sidebar. The two API routes are stable and ready to consume. The `lastRun` map is in-memory (resets on restart) — a future improvement would be persisting run times to SQLite.
