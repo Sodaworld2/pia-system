@@ -85,26 +85,46 @@ router.post('/agents', async (req: Request, res: Response): Promise<void> => {
       try {
         const { getWebSocketServer } = await import('../../tunnel/websocket-server.js');
         const ws = getWebSocketServer();
-        const sent = ws.sendToMachine(machineId, {
-          type: 'command',
-          payload: {
-            action: 'spawn_agent',
-            data: { mode, task, cwd, approvalMode, model, maxBudget, effort, systemPrompt,
-                    maxTurns, disallowedTools, allowedTools, additionalDirectories,
-                    enableCheckpointing, loadProjectSettings, autoRestart,
-                    networkPolicy, mcpServers, fallbackModel },
-          },
-        });
 
-        if (sent) {
-          logger.info(`Remote agent spawn request sent to machine ${machineId}`);
-          res.status(202).json({
-            message: `Spawn request sent to machine ${machineId}`,
-            machineId,
-            mode,
+        // Use async send to get spawn result back
+        try {
+          const result = await ws.sendToMachineAsync(machineId, 'spawn_agent', {
+            mode, task, cwd, approvalMode, model, maxBudget, effort, systemPrompt,
+            maxTurns, disallowedTools, allowedTools, additionalDirectories,
+            enableCheckpointing, loadProjectSettings, autoRestart,
+            networkPolicy, mcpServers, fallbackModel,
+          }, 30000);
+
+          if (result.success) {
+            logger.info(`Remote agent spawned on ${machineId}: ${result.agentId}`);
+            res.status(201).json({
+              message: result.message,
+              machineId,
+              agentId: result.agentId,
+              mode,
+            });
+          } else {
+            logger.error(`Remote spawn failed on ${machineId}: ${result.error}`);
+            res.status(500).json({ error: `Spawn failed on ${machineId}: ${result.error}` });
+          }
+        } catch (asyncErr) {
+          // Timeout or connection error — fall back to fire-and-forget
+          logger.warn(`Async spawn timed out for ${machineId}, falling back to fire-and-forget: ${asyncErr}`);
+          const sent = ws.sendToMachine(machineId, {
+            type: 'command',
+            payload: {
+              action: 'spawn_agent',
+              data: { mode, task, cwd, approvalMode, model, maxBudget, effort, systemPrompt,
+                      maxTurns, disallowedTools, allowedTools, additionalDirectories,
+                      enableCheckpointing, loadProjectSettings, autoRestart,
+                      networkPolicy, mcpServers, fallbackModel },
+            },
           });
-        } else {
-          res.status(503).json({ error: `Machine ${machineId} is not connected` });
+          if (sent) {
+            res.status(202).json({ message: `Spawn request sent to machine ${machineId} (async timeout, sent fire-and-forget)`, machineId, mode });
+          } else {
+            res.status(503).json({ error: `Machine ${machineId} is not connected` });
+          }
         }
       } catch (err) {
         res.status(503).json({ error: `Failed to reach machine ${machineId}: ${err}` });

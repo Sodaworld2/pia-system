@@ -231,6 +231,7 @@ export class HubClient {
   }
 
   private async handleSpawnAgent(data: Record<string, unknown>): Promise<void> {
+    const requestId = (data.requestId as string) || '';
     try {
       const { getAgentSessionManager } = await import('../mission-control/agent-session.js');
       const mgr = getAgentSessionManager();
@@ -272,6 +273,7 @@ export class HubClient {
         type: 'command:result',
         payload: {
           action: 'spawn_agent',
+          requestId,
           success: true,
           machineId: this.machineId,
           agentId: session.id,
@@ -315,6 +317,7 @@ export class HubClient {
         type: 'command:result',
         payload: {
           action: 'spawn_agent',
+          requestId,
           success: false,
           machineId: this.machineId,
           error: `${error}`,
