@@ -7,7 +7,6 @@ module.exports = {
     cwd: __dirname,
     env: {
       NODE_ENV: 'production',
-      PIA_MODE: 'hub'
     },
     watch: false,
     autorestart: true,

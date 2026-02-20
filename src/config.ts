@@ -75,8 +75,12 @@ function getEnvInt(key: string, defaultValue: number): number {
   return isNaN(parsed) ? defaultValue : parsed;
 }
 
+// Fleet entry takes priority over PIA_MODE env var when hostname matches a known machine.
+// This prevents PM2 env sections from accidentally overriding per-machine identity.
+const resolvedMode = (fleetEntry?.mode ?? (process.env.PIA_MODE as 'hub' | 'local')) ?? 'hub';
+
 export const config: PIAConfig = {
-  mode: (process.env.PIA_MODE as 'hub' | 'local') || fleetEntry?.mode || 'hub',
+  mode: resolvedMode,
 
   server: {
     port: getEnvInt('PIA_PORT', 3000),
