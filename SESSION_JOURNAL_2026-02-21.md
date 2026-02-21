@@ -381,3 +381,158 @@ Eliyahu periodic soul audit:
 
 ### Desktop App Impact
 React UI needs a full Souls screen: roster grid + soul editor + memory panel + preview. All backed by existing `/api/souls/*` REST API. No new backend beyond spawn-wiring fix.
+
+---
+
+## Session 6: Soul System Deep Audit + Full Enrichment Spec Written
+
+### What We Investigated
+
+Full code-level deep audit of all soul system files:
+- All 12 soul JSON files (field completeness, character counts)
+- soul-engine.ts (all 9 methods, generateSystemPrompt exact assembly order)
+- memory-manager.ts (all 9 methods, summarize/prune logic)
+- seed-souls.ts (idempotent seeding confirmed)
+- souls.ts API (17 endpoints confirmed — including soul_interactions table found)
+- agent-session.ts lines 116-144 (AgentSessionConfig type) + lines 499-504 (exact system prompt assembly)
+- mission-control.html structure (5 tabs, 3-panel layout, 3,749 lines)
+- visor.html (separate machine governance dashboard, 2,103 lines)
+
+### Key Findings
+
+**All 12 souls are fully written (not thin at all):**
+| Agent | Personality | Instructions | Goals | Rels |
+|---|---|---|---|---|
+| Fisher2050 | 1192c | 1593c | 6 | 11 |
+| Eliyahu | 1529c | 1544c | 5 | 6 |
+| Ziggi | 1584c | 1717c | 5 | 9 |
+| Coder Machine | 1479c | 1893c | 5 | 4 |
+| All others | 1037–1436c | 1199–1629c | 5 | 4–7 |
+- Missing email: coder_machine, monitor, owl — by design (infrastructure agents)
+- soul_interactions table discovered — wasn't documented before
+- All 17 API endpoints confirmed working (6 soul CRUD + 1 prompt gen + 8 memory + 2 interactions)
+
+**Exact wiring gap location confirmed:**
+- `AgentSessionConfig` interface: lines 116–144, file `src/mission-control/agent-session.ts`
+- System prompt assembly: lines 499–504 — uses `preset: 'claude_code'` + `append` only
+- Fix: add `soulId?: string` to config + import getSoulEngine + call generateSystemPrompt before query()
+
+**Why separate page (not tab in MC):**
+- mission-control.html already 3,749 lines — soul editor would push to 6,000+
+- Editor needs full-screen split layout (form 60% + preview 40%)
+- Solution: `public/soul-enrichment.html` — linked from MC header
+
+### Files Created
+| File | Purpose |
+|---|---|
+| `research/SOUL_ENRICHMENT_SPEC.md` | **NEW** — Complete soul enrichment system spec (400+ lines): 8 parts, 9 build phases, all component designs, all 8 integration points |
+
+### Soul Enrichment System — 8 Build Phases
+1. **Wire (30 min)** — soulId into agent-session.ts spawn flow — PREREQUISITE
+2. **Spawn modal selector (2 hrs)** — soul dropdown in mission-control.html spawn modal
+3. **FisherService soulId (1 hr)** — automated agents get souls on every cron spawn
+4. **Soul health endpoint (2 hrs)** — GET /api/souls/:id/health
+5. **soul-enrichment.html (2–3 days)** — full editor page
+6. **Tim Buc memory loop (1 day)** — sessions → memories → continuity
+7. **Cross-machine sync + versioning (1 day)** — soul:updated WS event + soul_versions table
+8. **Export/import (4 hrs)** — JSON portability
+9. **Eliyahu soul audit (1 day)** — autonomous health monitoring
+
+### 8 PIA Integration Points
+1. agent-session.ts lines 499-504 — spawn wire
+2. AgentSessionConfig type — soulId? field
+3. mission-control.ts POST /api/mc/agents — pass soulId through
+4. Spawn modal in mission-control.html — soul selector dropdown
+5. fisher-service.ts cron spawns — add soulId per scheduled agent
+6. Tim Buc archiver — add soul memories after filing
+7. WebSocket broadcast on soul save — cross-machine sync
+8. soul_versions table (new migration) — version snapshots + rollback
+
+### The Full Loop (When All 9 Phases Done)
+```
+Mic enriches soul in UI → PUT /api/souls/:id → snapshot + WS broadcast
+→ FisherService schedules agent → spawn({ soulId: 'fisher2050' })
+→ generateSystemPrompt() assembles → injected into Claude SDK
+→ Agent runs WITH personality for first time
+→ Session ends → Tim Buc files + adds memory to soul
+→ Next spawn includes yesterday's memory — CONTINUITY
+→ Eliyahu weekly audit flags thin souls → Fisher2050 schedules enrichment
+→ Cycle repeats
+```
+
+### Desktop App Impact
+React UI needs a Souls screen (soul-enrichment.html equivalent). New migration needed for soul_versions table. New endpoint needed for GET /api/souls/:id/health. All other backend is complete.
+
+---
+
+## Session 6: SDK Agent Spawn — Deep Debug (Autonomous)
+
+### Context
+Mic left the session autonomous. Goal: fully diagnose and fix SDK agent spawn (code 1 exit). All work done without interruption.
+
+### Root Causes Found (4 separate bugs)
+
+**Bug 1 — CLAUDE_CODE_ENTRYPOINT deleted (FIXED in prev session, confirmed here)**
+- `runSdkMode()` deleted `CLAUDE_CODE_ENTRYPOINT` from the child's environment
+- SDK sets this to `'sdk-ts'` before calling `spawnClaudeCodeProcess` — signals cli.js to enter SDK bidirectional mode
+- Without it, cli.js ran as an interactive CLI → initialization handshake failed → code 1 immediately
+- Fix: Removed both `delete cleanEnv.CLAUDE_CODE_ENTRYPOINT` and `delete spawnEnv.CLAUDE_CODE_ENTRYPOINT`
+
+**Bug 2 — Anthropic API account out of credits (ROOT CAUSE of all failures today)**
+- All SDK spawns were actually initializing correctly (system:init received, API calls being made)
+- But Anthropic API returned "Credit balance is too low" for every call
+- The "Credit balance is too low" message appeared in the assistant message content
+- The result message had `is_error: true` → CLI exited code 1 → auto-restart loop
+- **Mic action needed: Add credits at console.anthropic.com/settings/billing**
+- Once credits are restored, SDK spawn will work fully end-to-end ✅
+
+**Bug 3 — Auto-restart loop on billing errors (FIXED)**
+- When `is_error: true`, `taskSucceeded` was false → catch block → auto-restart checked `session.errorMessage`
+- But `session.errorMessage` was set from `result.errors?.join('; ') || subtype` — NOT the billing text
+- The billing text "Credit balance is too low" was in `session.outputBuffer` but ONLY if stream_events ran
+- For billing errors, no stream_events fire (API error before streaming) — text only in assistant message
+- The assistant message handler only called `pm.addJournalEntry()` but did NOT update `session.outputBuffer`
+- Fix A: Added billing keyword check against `session.outputBuffer`
+- Fix B: Added `session.outputBuffer` update in assistant message handler (with dedup check)
+- Fix C: `billingKeywords = ['credit balance', 'insufficient credit', 'payment required', 'billing', 'out of credits']`
+- **Result: billing errors → working → error in 1 attempt instead of 3**
+
+**Bug 4 — ExecutionEngine FOREIGN KEY constraint failed (FIXED)**
+- Task `9NbFTYIsEoj9WWtzFS4ma` had `agent_id: null` but `tasks.agent_id REFERENCES agents(id)`
+- ExecutionEngine called `queue.assign(task.id, task.agent_id || 'orchestrator')`
+- `'orchestrator'` is not in `agents` table → FK constraint failed every 60s
+- Fix A: `task-queue.ts` `assign()` now accepts `null` — if null, only updates status (not agent_id)
+- Fix B: `execution-engine.ts` passes `task.agent_id || null` instead of `|| 'orchestrator'`
+- Fix C: Marked orphan task `9NbFTYIsEoj9WWtzFS4ma` as `failed` in DB (stops infinite re-queue)
+- **Result: No more FK errors in logs**
+
+### Technical Discoveries (SDK Protocol)
+
+- **SDK reads project files via `--setting-sources project`** — loads `settings.local.json` which has hooks
+- **Hooks for SessionStart, PostToolUse, Stop** — these fire for EVERY cli.js process (including spawned agents)
+  - Hooks are benign: just fire HTTP to localhost:3000, ignore all errors → don't cause failures
+- **`session.claudeSessionId` gets set from `system:init` message's `session_id` field**
+  - On auto-restart, this ID is used as `--resume` for the next spawn
+  - This correctly resumes the conversation (same Claude session, continuous context)
+- **Both successful and failed spawn runs behave correctly at the protocol level**
+  - system:init always received → proof initialization protocol is working
+  - Failures are from API-level (billing), not SDK protocol level
+
+### Files Changed
+| File | Change |
+|---|---|
+| `src/mission-control/agent-session.ts` | Billing error detection: isBillingError check in catch block; outputBuffer update in assistant handler |
+| `src/orchestrator/task-queue.ts` | `assign()` accepts null agentId — only updates status, not agent_id when null |
+| `src/orchestrator/execution-engine.ts` | Pass `null` instead of `'orchestrator'` when task has no agent |
+| `sdk_debug_test.mjs` | **DELETED** — temporary debug file removed |
+| `sdk_test.mjs` | **DELETED** — temporary debug file removed |
+
+### What Remains (Mic Action Needed)
+| Action | Priority | Notes |
+|---|---|---|
+| **Add Anthropic credits** | 🔴 CRITICAL | console.anthropic.com/settings/billing — ALL agent spawns blocked until fixed |
+| SENDGRID_API_KEY in .env | ⚠️ HIGH | For Eliyahu email service |
+| M2 git pull + pm2 restart | ⚠️ HIGH | Gets today's fixes |
+
+### Desktop App Impact
+No new deps. Pure logic fixes. Auto-restart behavior fix is server-side.

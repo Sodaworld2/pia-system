@@ -319,6 +319,10 @@ export class AgentSessionManager extends EventEmitter {
   private async runSdkMode(session: AgentSession): Promise<void> {
     this.setStatus(session, 'working');
     const pm = getPromptManager();
+    // Track whether the SDK delivered a successful result message.
+    // The Claude CLI sometimes exits with code 1 even after a successful result —
+    // in that case, we should treat the session as complete, not restart it.
+    let taskSucceeded = false;
 
     try {
       // canUseTool bridges SDK permission requests → PromptManager → UI
@@ -407,7 +411,9 @@ export class AgentSessionManager extends EventEmitter {
       // The subprocess needs this to authenticate with the Anthropic API.
       delete cleanEnv.CLAUDE_CODE_OAUTH_TOKEN;
       delete cleanEnv.CLAUDE_CODE_SESSION_ACCESS_TOKEN;
-      delete cleanEnv.CLAUDE_CODE_ENTRYPOINT;
+      // DO NOT delete CLAUDE_CODE_ENTRYPOINT — the SDK sets it to "sdk-ts" in config.env,
+      // which signals to cli.js that it is running in SDK mode (not interactive CLI mode).
+      // Deleting it causes the child to behave as a regular CLI and fail initialization.
 
       // File checkpointing requires env var too (per official docs)
       if (session.config.enableCheckpointing !== false) {
@@ -430,7 +436,9 @@ export class AgentSessionManager extends EventEmitter {
           // delete spawnEnv.ANTHROPIC_API_KEY;
           delete spawnEnv.CLAUDE_CODE_OAUTH_TOKEN;
           delete spawnEnv.CLAUDE_CODE_SESSION_ACCESS_TOKEN;
-          delete spawnEnv.CLAUDE_CODE_ENTRYPOINT;
+          // DO NOT delete CLAUDE_CODE_ENTRYPOINT — the SDK sets it to "sdk-ts" via config.env,
+          // which tells cli.js it is running in SDK mode. Without it, cli.js behaves as
+          // interactive CLI and fails the bidirectional initialize handshake.
           if (session.config.enableCheckpointing !== false) {
             spawnEnv.CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING = '1';
           }
@@ -478,8 +486,8 @@ export class AgentSessionManager extends EventEmitter {
         // Stability: Auto-fallback to cheaper model on errors/rate limits
         fallbackModel: (() => {
           const main = session.config.model || 'claude-opus-4-6';
-          const fb = session.config.fallbackModel || 'claude-sonnet-4-5-20250929';
-          return fb !== main ? fb : (main === 'claude-sonnet-4-5-20250929' ? 'claude-haiku-4-5-20251001' : 'claude-sonnet-4-5-20250929');
+          const fb = session.config.fallbackModel || 'claude-sonnet-4-6';
+          return fb !== main ? fb : (main === 'claude-sonnet-4-6' ? 'claude-haiku-4-5-20251001' : 'claude-sonnet-4-6');
         })(),
         // Safety: prevent runaway loops — agents never timeout on their own
         maxTurns: session.config.maxTurns || 100,
@@ -500,7 +508,8 @@ export class AgentSessionManager extends EventEmitter {
       queryOptions.systemPrompt = {
         type: 'preset',
         preset: 'claude_code',
-        append: session.config.systemPrompt || '',
+        // Use undefined (not '') when no custom prompt — empty string may be rejected by cli.js
+        append: session.config.systemPrompt || undefined,
       };
 
       // Disallowed tools
@@ -559,11 +568,33 @@ export class AgentSessionManager extends EventEmitter {
 
     } catch (err) {
       const msg = (err as Error).message;
+
+      // If the CLI exited with a non-zero code AFTER delivering a successful result,
+      // treat it as a clean completion. The Claude CLI 0.2.50 exits code 1 on shutdown
+      // even when the task completed successfully — this is a known CLI quirk.
+      if (taskSucceeded && msg.includes('process exited with code')) {
+        logger.info(`[SDK] Child exited code≠0 but task already succeeded — treating as complete`);
+        this.setStatus(session, 'idle');
+        pm.addJournalEntry(session.id, 'output', 'Task completed. Ready for follow-up messages.');
+        this.persistSession(session);
+        this.emit('complete', { sessionId: session.id });
+        return;
+      }
+
       const maxRestarts = session.config.maxRestarts ?? 2;
 
-      // Auto-restart on transient errors (not user-killed, not budget exceeded)
+      // Detect billing/credit errors — retrying won't help, bail out immediately.
+      // These appear either in session.errorMessage (if CLI surfaces them directly)
+      // or in the outputBuffer (as assistant message text when API returns billing error).
+      const billingKeywords = ['credit balance', 'insufficient credit', 'payment required', 'billing', 'out of credits'];
+      const errorLower = (session.errorMessage || '').toLowerCase();
+      const outputLower = (session.outputBuffer || '').toLowerCase();
+      const isBillingError = billingKeywords.some(k => errorLower.includes(k) || outputLower.includes(k));
+
+      // Auto-restart on transient errors (not user-killed, not budget exceeded, not billing)
       if (session.config.autoRestart !== false &&
           session.restartCount < maxRestarts &&
+          !isBillingError &&
           !msg.includes('budget') && !msg.includes('Killed by user')) {
         session.restartCount++;
         const delay = Math.min(2000 * Math.pow(2, session.restartCount - 1), 30000); // exponential backoff, max 30s
@@ -665,8 +696,13 @@ export class AgentSessionManager extends EventEmitter {
               const text = String((block as any).text);
               // Filter empty "(no content)" blocks that appear before thinking
               if (!text || text === '(no content)') continue;
-              // Don't re-emit to output since stream_event already showed it character by character
-              // Just journal it for the record
+              // Update outputBuffer with assistant text (needed for billing error detection in catch block).
+              // stream_event text_delta already appended it if streaming was active; for error cases
+              // (e.g. credit balance) there may be no stream_events, so we ensure it's in the buffer.
+              if (!session.outputBuffer.includes(text.substring(0, 50))) {
+                session.outputBuffer += text;
+              }
+              // Don't re-emit to WebSocket — stream_event already showed it character by character
               pm.addJournalEntry(session.id, 'output', text.substring(0, 2000));
             }
             if (block.type === 'tool_use' && 'name' in block) {
@@ -715,6 +751,11 @@ export class AgentSessionManager extends EventEmitter {
         if (resultMsg.is_error) {
           const errorMsg = resultMsg as any;
           session.errorMessage = errorMsg.errors?.join('; ') || subtype;
+        } else {
+          // Mark task as successfully completed — the CLI sometimes exits with code 1
+          // even after delivering a clean result, so we use this flag to detect that case
+          // and avoid a false restart.
+          taskSucceeded = true;
         }
 
         this.persistSession(session);

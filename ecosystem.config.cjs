@@ -7,6 +7,13 @@ module.exports = {
     cwd: __dirname,
     env: {
       NODE_ENV: 'production',
+      // Explicitly unset Claude Code session vars — prevents "nested session" error
+      // when PIA server is started from within a Claude Code session
+      CLAUDECODE: '',
+      CLAUDE_CODE_ENTRYPOINT: '',
+      CLAUDE_CODE_SESSION: '',
+      CLAUDE_CODE_OAUTH_TOKEN: '',
+      CLAUDE_CODE_SESSION_ACCESS_TOKEN: '',
     },
     watch: false,
     autorestart: true,

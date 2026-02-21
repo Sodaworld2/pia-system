@@ -133,15 +133,22 @@ export class TaskQueue {
   /**
    * Assign a task to an agent and set it in_progress.
    */
-  assign(taskId: string, agentId: string): TaskRecord {
+  assign(taskId: string, agentId?: string | null): TaskRecord {
     const db = getDatabase();
     const now = Math.floor(Date.now() / 1000);
 
-    db.prepare(`
-      UPDATE tasks SET agent_id = ?, status = 'in_progress', started_at = ? WHERE id = ?
-    `).run(agentId, now, taskId);
+    if (agentId) {
+      // Only set agent_id when a real agent ID is provided (avoids FK constraint failure)
+      db.prepare(`
+        UPDATE tasks SET agent_id = ?, status = 'in_progress', started_at = ? WHERE id = ?
+      `).run(agentId, now, taskId);
+    } else {
+      db.prepare(`
+        UPDATE tasks SET status = 'in_progress', started_at = ? WHERE id = ?
+      `).run(now, taskId);
+    }
 
-    logger.info(`Assigned task ${taskId} to agent ${agentId}`);
+    logger.info(`Assigned task ${taskId} to agent ${agentId || 'system'}`);
     return this.getById(taskId)!;
   }
 

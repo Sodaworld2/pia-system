@@ -125,6 +125,7 @@
 | `research/CLAUDE-CODE-MULTI-AGENT-NATIVE-SYNTHESIS.md` | Full synthesis: Claude Code native multi-agent tools (team_create, task_*, send_message, agent sandboxes, E2B) |
 | `research/MASTER_VISION.md` | **Comprehensive vision document** — full system diagram, all agent specs (12 agents), 5 architectural patterns, intelligence pipeline, messaging system, build order |
 | `research/AGENT_PRODUCT_SHEETS.md` | Internal product sheet per agent — soul, trigger, inputs, outputs, training notes (for AI training) *(created by sub-agent Session 5)* |
+| `research/SOUL_ENRICHMENT_SPEC.md` | **Complete soul enrichment system spec** — 8 parts, 9 build phases, all component designs (roster grid, editor form, memory panel, preview), 8 PIA integration points, full data flow, build order *(Session 6, 2026-02-21)* |
 | `research/BUILD_LIST.md` | **Master build list** — 53 items across 7 priority tiers, dependency graph, quick wins *(created Session 8)* |
 | `research/DOCUMENT_INDEX.md` | Index of all documents in InvestorDome, sodalabs, sodaworld, and PIA research folders |
 | `research/USER_WORKING_STYLE.md` | Agent training rules + working style analysis — 9 methodology frameworks, Mic's communication rules |
@@ -171,6 +172,7 @@
 | File | Purpose | Served At |
 |------|---------|-----------|
 | `public/mission-control.html` | **Main dashboard** — Agent control, terminal, journal (~3000 lines) | `/mission-control.html` |
+| `public/soul-enrichment.html` | **Soul Enrichment UI** — roster grid (12 agents with health scores), soul editor (6-section form), memory panel, system prompt preview | `/soul-enrichment.html` |
 | `public/mission-control-cli.html` | CLI version of Mission Control | `/mission-control-cli.html` |
 | `public/visor.html` | Visor panel | `/visor.html` |
 | `public/index.html` | Landing page | `/` |

@@ -189,8 +189,8 @@ export class ExecutionEngine {
     const costTracker = getCostTracker();
     const aiRouter = getAIRouter();
 
-    // Mark as in_progress
-    queue.assign(task.id, task.agent_id || 'orchestrator');
+    // Mark as in_progress (pass null when no agent assigned — avoids FK constraint failure)
+    queue.assign(task.id, task.agent_id || null);
 
     // Update agent status if assigned
     if (task.agent_id) {

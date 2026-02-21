@@ -42,7 +42,7 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "@anthropic-ai/claude-agent-sdk": "^0.2.42",
+    "@anthropic-ai/claude-agent-sdk": "^0.2.50",
     "@anthropic-ai/sdk": "^0.74.0",
     "@hapi/boom": "^10.0.1",
     "@playwright/mcp": "^0.0.68",
