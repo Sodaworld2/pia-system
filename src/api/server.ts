@@ -73,8 +73,9 @@ try {
 // NOTE: This middleware is mounted at app.use('/api', ...) so req.path is relative to /api
 // (e.g., '/files/list' not '/api/files/list'). Use req.originalUrl for full-path checks.
 async function validateApiToken(req: Request, res: Response, next: NextFunction): Promise<void> {
-  // Skip DAO auth routes (handled by Firebase internally)
-  if (req.originalUrl.startsWith('/api/dao/auth')) {
+  // Skip public endpoints
+  if (req.originalUrl === '/api/health' ||                   // Health check for monitoring tools
+      req.originalUrl.startsWith('/api/dao/auth')) {         // DAO auth (Firebase)
     next();
     return;
   }
