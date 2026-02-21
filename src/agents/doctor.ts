@@ -64,6 +64,8 @@ export class Doctor {
   private lastReport: HealthReport | null = null;
   private intervalId: ReturnType<typeof setInterval> | null = null;
   private running = false;
+  // Dedup: track last alert time per (type:targetId) — don't re-alert within 10 minutes
+  private lastAlertedAt: Map<string, number> = new Map();
 
   constructor() {
     logger.info('Doctor initialized');
@@ -119,6 +121,9 @@ export class Doctor {
     const erroredAgents = allAgents.filter(a => a.status === 'error');
     const workingAgents = allAgents.filter(a => a.status === 'working' || a.status === 'idle');
 
+    const now = Math.floor(Date.now() / 1000);
+    const ALERT_DEDUP_TTL = 600; // Don't re-alert same issue within 10 minutes
+
     // Auto-heal stuck agents
     for (const agent of stuckAgents) {
       agentWarnings.push(`Agent ${agent.name} stuck for >5min`);
@@ -126,12 +131,17 @@ export class Doctor {
       const action = this.healAgent(agent.id, 'restart');
       actions.push(action);
 
-      createAlert({
-        agent_id: agent.id,
-        machine_id: agent.machine_id,
-        type: 'agent_stuck',
-        message: `Auto-restarted stuck agent: ${agent.name}`,
-      });
+      const dedupKey = `agent_stuck:${agent.id}`;
+      const lastAlerted = this.lastAlertedAt.get(dedupKey) || 0;
+      if (now - lastAlerted > ALERT_DEDUP_TTL) {
+        createAlert({
+          agent_id: agent.id,
+          machine_id: agent.machine_id,
+          type: 'agent_stuck',
+          message: `Auto-restarted stuck agent: ${agent.name}`,
+        });
+        this.lastAlertedAt.set(dedupKey, now);
+      }
     }
 
     // Alert on errored agents
@@ -143,16 +153,21 @@ export class Doctor {
         targetId: agent.id,
         targetName: agent.name,
         reason: 'Agent in error state',
-        timestamp: Math.floor(Date.now() / 1000),
+        timestamp: now,
         success: true,
       });
 
-      createAlert({
-        agent_id: agent.id,
-        machine_id: agent.machine_id,
-        type: 'agent_error',
-        message: `Agent in error state: ${agent.name}`,
-      });
+      const dedupKey = `agent_error:${agent.id}`;
+      const lastAlerted = this.lastAlertedAt.get(dedupKey) || 0;
+      if (now - lastAlerted > ALERT_DEDUP_TTL) {
+        createAlert({
+          agent_id: agent.id,
+          machine_id: agent.machine_id,
+          type: 'agent_error',
+          message: `Agent in error state: ${agent.name}`,
+        });
+        this.lastAlertedAt.set(dedupKey, now);
+      }
     }
 
     // --- Machine Health ---
@@ -170,15 +185,20 @@ export class Doctor {
         targetId: machine.id,
         targetName: machine.name,
         reason: 'Machine went offline',
-        timestamp: Math.floor(Date.now() / 1000),
+        timestamp: now,
         success: true,
       });
 
-      createAlert({
-        machine_id: machine.id,
-        type: 'machine_offline',
-        message: `Machine offline: ${machine.name} (${machine.hostname})`,
-      });
+      const dedupKey = `machine_offline:${machine.id}`;
+      const lastAlerted = this.lastAlertedAt.get(dedupKey) || 0;
+      if (now - lastAlerted > ALERT_DEDUP_TTL) {
+        createAlert({
+          machine_id: machine.id,
+          type: 'machine_offline',
+          message: `Machine offline: ${machine.name} (${machine.hostname})`,
+        });
+        this.lastAlertedAt.set(dedupKey, now);
+      }
     }
 
     // Build report
