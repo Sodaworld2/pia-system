@@ -89,12 +89,24 @@ class TimBucService {
 
       const db = getDatabase();
 
-      // Extract produced and consumed files from journal entries
+      // Resolve result — SDK mode fires 'complete' without a result object.
+      // Fall back to session-level tracking in that case.
+      const result = evt.result || {
+        success: session.status === 'idle',
+        summary: session.outputBuffer.substring(0, 500) || 'SDK session completed',
+        costUsd: session.cost || 0,
+        toolCalls: session.toolCalls || 0,
+        inputTokens: session.tokensIn,
+        outputTokens: session.tokensOut,
+        entries: undefined,
+      };
+
+      // Extract produced and consumed files from journal entries (API mode only)
       const produced: string[] = [];
       const consumed: string[] = [];
 
-      if (evt.result.entries) {
-        for (const entry of evt.result.entries) {
+      if (result.entries) {
+        for (const entry of result.entries) {
           if (entry.type === 'tool_call' && entry.tool) {
             const inp = entry.input as Record<string, unknown> | undefined;
             if ((entry.tool === 'Write' || entry.tool === 'NotebookEdit') && inp?.file_path) {
@@ -116,10 +128,15 @@ class TimBucService {
       const cwd = session.config.cwd || '';
       const project = cwd.split(/[/\\]/).filter(Boolean).pop() || 'unknown';
 
+      // Agent name: prefer soul ID, else task preview
+      const agentName = (session.config as any).soulId
+        || session.config.task?.substring(0, 50)
+        || session.id;
+
       // Quality score: simple heuristic
       let qualityScore: number | null = null;
       let qualityVerdict: string | null = null;
-      if (evt.result.success) {
+      if (result.success) {
         qualityScore = produced.length > 0 ? 80 : 70;
         qualityVerdict = 'PASS';
       } else {
@@ -129,19 +146,19 @@ class TimBucService {
 
       const record: AgentRecordInput = {
         session_id: evt.sessionId,
-        agent: session.config.task?.substring(0, 50) || session.id,
+        agent: agentName,
         machine_id: session.config.machineId || 'local',
         project,
         task_summary: session.config.task?.substring(0, 200) || '',
-        cost_usd: evt.result.costUsd || 0,
+        cost_usd: result.costUsd || 0,
         tokens_in: session.tokensIn || 0,
         tokens_out: session.tokensOut || 0,
-        tool_calls: evt.result.toolCalls || 0,
+        tool_calls: result.toolCalls || 0,
         quality_score: qualityScore,
         quality_verdict: qualityVerdict,
         produced_files: JSON.stringify([...new Set(produced)]),
         consumed_files: JSON.stringify([...new Set(consumed)]),
-        summary: evt.result.summary || (evt.result.success ? 'Session completed successfully' : 'Session failed'),
+        summary: result.summary || (result.success ? 'Session completed successfully' : 'Session failed'),
         filed_by: 'tim_buc',
       };
 
