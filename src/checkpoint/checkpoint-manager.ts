@@ -3,7 +3,7 @@
  * Saves session state periodically so work can resume after memory limits
  */
 
-import { existsSync, mkdirSync, writeFileSync, readFileSync, readdirSync } from 'fs';
+import { existsSync, mkdirSync, writeFileSync, readFileSync, readdirSync, unlinkSync } from 'fs';
 import { join } from 'path';
 import { createLogger } from '../utils/logger.js';
 import { getDataDir } from '../electron-paths.js';
@@ -306,7 +306,7 @@ Please acknowledge this handoff and continue the work.
         const checkpoint: Checkpoint = JSON.parse(data);
 
         if (now - checkpoint.timestamp > maxAgeMs) {
-          require('fs').unlinkSync(filepath);
+          unlinkSync(filepath);
           cleaned++;
         }
       }

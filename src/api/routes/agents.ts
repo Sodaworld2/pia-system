@@ -65,7 +65,7 @@ router.get('/:id', (req: Request, res: Response) => {
 });
 
 // POST /api/agents - Create a new agent
-router.post('/', (req: Request, res: Response) => {
+router.post('/', async (req: Request, res: Response) => {
   try {
     const { machine_id, name, type, metadata } = req.body as AgentInput;
 
@@ -79,7 +79,7 @@ router.post('/', (req: Request, res: Response) => {
 
     // Notify via WebSocket
     try {
-      const { getWebSocketServer } = require('../../tunnel/websocket-server.js');
+      const { getWebSocketServer } = await import('../../tunnel/websocket-server.js');
       const ws = getWebSocketServer();
       ws.sendAgentUpdate(agent.id, {
         status: agent.status,
@@ -99,7 +99,7 @@ router.post('/', (req: Request, res: Response) => {
 });
 
 // PATCH /api/agents/:id - Update agent
-router.patch('/:id', (req: Request, res: Response) => {
+router.patch('/:id', async (req: Request, res: Response) => {
   try {
     const agent = getAgentById(req.params.id as string);
     if (!agent) {
@@ -123,7 +123,7 @@ router.patch('/:id', (req: Request, res: Response) => {
 
     // Notify via WebSocket
     try {
-      const { getWebSocketServer } = require('../../tunnel/websocket-server.js');
+      const { getWebSocketServer } = await import('../../tunnel/websocket-server.js');
       const ws = getWebSocketServer();
       ws.sendAgentUpdate(agent.id, {
         status: updated?.status,

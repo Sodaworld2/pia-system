@@ -82,11 +82,7 @@ async function startHub(): Promise<void> {
   const { initExecutionEngine } = await import('./orchestrator/execution-engine.js');
   initExecutionEngine({ autoStart: true });
 
-  // Start Doctor (auto-healing)
-  logger.info('Starting Doctor (auto-healer)...');
-  const { getDoctor } = await import('./agents/doctor.js');
-  const doctor = getDoctor();
-  doctor.start(60000); // Check every 60 seconds
+  // Note: Doctor (auto-healing) is started by ExecutionEngine (enableDoctor: true, autoStart: true) above.
 
   // Seed default Agent Souls
   logger.info('Seeding Agent Souls...');

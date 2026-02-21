@@ -617,3 +617,41 @@ No new deps. Pure logic fixes. Auto-restart behavior fix is server-side.
 ### Desktop App Impact
 No new native deps. Records/Calendar API routes will be needed by React UI. Model ID fix is critical — prevents 400 errors on all AI calls.
 
+
+---
+
+## Session 8: Autonomous Deep Audit — ESM Fixes + Startup Cleanup
+
+### Bugs Fixed
+
+1. **Doctor double-start ("Doctor already running" on every boot)**
+   - Root cause: `ExecutionEngine` (autoStart=true, enableDoctor=true) already starts Doctor in `start()` — then `src/index.ts` lines 85-89 called `doctor.start()` again
+   - Fix: removed redundant `doctor.start()` block from `src/index.ts` (ExecutionEngine handles it, with guard `if (!doctor.isRunning())`)
+
+2. **`require()` in ESM modules — silent WebSocket notification failures**
+   - Root cause: `"type": "module"` in package.json means `require()` is undefined at runtime. 8 calls across 4 files were silently failing — WebSocket agent/alert/hook notifications were never sent to dashboard
+   - Files affected: `agents.ts`, `alerts.ts`, `hooks.ts`, `machines.ts`, `checkpoint-manager.ts`
+   - Fix: converted all to `await import()`, made route handlers `async` where needed
+   - Impact: Dashboard now receives real-time WebSocket events from agent creation, update, alert creation, and hook events
+
+3. **hooks.ts `ws.broadcast()` called with JSON string instead of object**
+   - Root cause: `ws.broadcast(JSON.stringify({...}))` — wrong type (OutgoingMessage expects object, not string)
+   - Fix: changed to `(ws.broadcast as any)({ type: '...', payload: ... })`
+
+4. **Schedule modal — hardcoded agent list**
+   - Root cause: `<select id="schedAgent">` had 5 hardcoded options — didn't reflect actual souls in DB
+   - Fix: `openScheduleModal()` made async; now fetches `GET /api/souls` on open and populates dynamically with fallback to defaults if API fails
+
+### Files Changed
+| File | Change |
+|---|---|
+| `src/index.ts` | Removed redundant `doctor.start()` (ExecutionEngine handles it) |
+| `src/api/routes/agents.ts` | `require()` → `await import()`, made POST+PATCH async |
+| `src/api/routes/alerts.ts` | `require()` → `await import()`, made POST async |
+| `src/api/routes/hooks.ts` | `require()` → `await import()`, fixed broadcast call type |
+| `src/api/routes/machines.ts` | `require()` → `await import()`, made heartbeat+spawn async |
+| `src/checkpoint/checkpoint-manager.ts` | `require('fs')` → used existing `unlinkSync` import |
+| `public/mission-control.html` | Schedule modal: dynamic soul list from `/api/souls` |
+
+### Desktop App Impact
+No new deps. The WS notification fixes mean the React UI's real-time events will work correctly. The schedule modal fix is dashboard-only (React will have its own implementation).

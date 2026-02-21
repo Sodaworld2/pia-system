@@ -75,7 +75,7 @@ router.get('/:id', (req: Request, res: Response) => {
 });
 
 // POST /api/alerts - Create new alert
-router.post('/', (req: Request, res: Response) => {
+router.post('/', async (req: Request, res: Response) => {
   try {
     const { machine_id, agent_id, type, message } = req.body as AlertInput;
 
@@ -89,7 +89,7 @@ router.post('/', (req: Request, res: Response) => {
 
     // Notify via WebSocket
     try {
-      const { getWebSocketServer } = require('../../tunnel/websocket-server.js');
+      const { getWebSocketServer } = await import('../../tunnel/websocket-server.js');
       const ws = getWebSocketServer();
       ws.sendAlert({
         id: alert.id,

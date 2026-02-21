@@ -23,7 +23,7 @@ interface HookEvent {
 
 
 // POST /api/hooks/events - Receive hook event from Claude Code
-router.post('/events', (req: Request, res: Response) => {
+router.post('/events', async (req: Request, res: Response) => {
   try {
     const {
       session_id,
@@ -75,12 +75,9 @@ router.post('/events', (req: Request, res: Response) => {
 
     // Broadcast via WebSocket to dashboard
     try {
-      const wsModule = require('../../tunnel/websocket-server.js');
+      const wsModule = await import('../../tunnel/websocket-server.js');
       const ws = wsModule.getWebSocketServer();
-      ws.broadcast(JSON.stringify({
-        type: 'hook_event',
-        data: event,
-      }));
+      (ws.broadcast as any)({ type: 'hook_event', payload: event });
     } catch {
       // WebSocket not available
     }
@@ -94,7 +91,7 @@ router.post('/events', (req: Request, res: Response) => {
 });
 
 // POST /api/hooks/done - Agent finished notification
-router.post('/done', (req: Request, res: Response) => {
+router.post('/done', async (req: Request, res: Response) => {
   try {
     const { session_id, message } = req.body;
 
@@ -124,12 +121,9 @@ router.post('/done', (req: Request, res: Response) => {
 
     // Broadcast
     try {
-      const wsModule = require('../../tunnel/websocket-server.js');
+      const wsModule = await import('../../tunnel/websocket-server.js');
       const ws = wsModule.getWebSocketServer();
-      ws.broadcast(JSON.stringify({
-        type: 'agent_done',
-        data: hookEvent,
-      }));
+      (ws.broadcast as any)({ type: 'agent_done', payload: hookEvent });
     } catch {
       // WebSocket not available
     }

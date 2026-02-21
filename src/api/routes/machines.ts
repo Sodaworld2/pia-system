@@ -79,7 +79,7 @@ router.post('/', (req: Request, res: Response) => {
 });
 
 // POST /api/machines/:id/heartbeat - Update machine heartbeat
-router.post('/:id/heartbeat', (req: Request, res: Response) => {
+router.post('/:id/heartbeat', async (req: Request, res: Response) => {
   try {
     const machine = getMachineById(req.params.id as string);
     if (!machine) {
@@ -92,7 +92,7 @@ router.post('/:id/heartbeat', (req: Request, res: Response) => {
 
     // If agents are provided, update them
     if (agents && Array.isArray(agents)) {
-      const { updateAgentStatus } = require('../../db/queries/agents.js');
+      const { updateAgentStatus } = await import('../../db/queries/agents.js');
       for (const agent of agents) {
         if (agent.id && agent.status) {
           updateAgentStatus(agent.id, agent.status, {
@@ -314,7 +314,7 @@ router.get('/:id/agents', (req: Request, res: Response) => {
 });
 
 // POST /api/machines/:id/spawn - Spawn an agent on a specific machine
-router.post('/:id/spawn', (req: Request, res: Response) => {
+router.post('/:id/spawn', async (req: Request, res: Response) => {
   try {
     const machine = getMachineById(req.params.id as string);
     if (!machine) {
@@ -329,7 +329,7 @@ router.post('/:id/spawn', (req: Request, res: Response) => {
     }
 
     // Use the agent factory to spawn on this machine
-    const { getAgentFactory } = require('../../agents/agent-factory.js');
+    const { getAgentFactory } = await import('../../agents/agent-factory.js');
     const factory = getAgentFactory();
     const result = factory.spawn(template, {
       machineId: machine.id,

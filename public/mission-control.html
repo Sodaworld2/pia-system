@@ -1352,11 +1352,7 @@
       <h2>Schedule Agent Run</h2>
       <label>Agent Soul</label>
       <select id="schedAgent" style="margin-bottom:8px;">
-        <option value="farcake">Farcake — Research</option>
-        <option value="ziggi">Ziggi — Quality Audit</option>
-        <option value="eliyahu">Eliyahu — Briefing</option>
-        <option value="fisher2050">Fisher2050 — Planning</option>
-        <option value="andy">Andy — Editorial</option>
+        <option value="">Loading souls…</option>
       </select>
       <label>Task Description</label>
       <textarea id="schedTask" placeholder="What should the agent do?" rows="3" style="margin-bottom:8px;width:100%;box-sizing:border-box;background:#0d1117;border:1px solid #2a2a3e;color:#e2e8f0;border-radius:6px;padding:8px;font-family:monospace;font-size:12px;resize:vertical;"></textarea>
@@ -3897,13 +3893,37 @@ async function cancelCalendarEvent(id) {
   }
 }
 
-function openScheduleModal() {
+async function openScheduleModal() {
   // Set default time to 1 hour from now
   const d = new Date(Date.now() + 3600000);
   const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
   document.getElementById('schedTime').value = local;
   document.getElementById('schedTask').value = '';
   document.getElementById('schedContext').value = '';
+
+  // Populate agent dropdown from souls API
+  try {
+    const souls = await api('/api/souls');
+    const sel = document.getElementById('schedAgent');
+    const prev = sel.value;
+    sel.innerHTML = '';
+    if (Array.isArray(souls) && souls.length > 0) {
+      souls.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = `${s.name} — ${s.role || s.id}`;
+        sel.appendChild(opt);
+      });
+      if (prev && souls.find(s => s.id === prev)) sel.value = prev;
+    } else {
+      ['farcake','ziggi','eliyahu','fisher2050','andy'].forEach(id => {
+        const opt = document.createElement('option');
+        opt.value = id; opt.textContent = id;
+        sel.appendChild(opt);
+      });
+    }
+  } catch (_) { /* keep whatever was there */ }
+
   document.getElementById('scheduleModal').classList.add('visible');
 }
 
