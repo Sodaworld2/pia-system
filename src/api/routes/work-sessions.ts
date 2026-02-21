@@ -264,7 +264,7 @@ router.post('/:id/end', async (req: Request, res: Response): Promise<void> => {
             `assess code quality, and write a brief review report.`,
           soulId: 'ziggi',
           projectDir: session.project_path,
-          model: 'claude-sonnet-4-5-20250929',
+          model: 'claude-sonnet-4-6',
           maxBudgetUsd: 1.0,
         }).then(() => {
           db.prepare('UPDATE work_sessions SET review_status = ?, review_task_id = ? WHERE id = ?')

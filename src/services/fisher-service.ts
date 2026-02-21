@@ -33,7 +33,7 @@ export interface FisherServiceConfig {
   memoryCron: string;       // default: '0 3 * * 0'    (3am Sundays — weekly memory prune)
   timezone: string;         // default: 'Asia/Jerusalem'
   maxBudgetPerJob: number;  // default: 1.0
-  model: string;            // default: 'claude-sonnet-4-5-20250929'
+  model: string;            // default: 'claude-sonnet-4-6'
 }
 
 // ---------------------------------------------------------------------------

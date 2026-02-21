@@ -233,11 +233,11 @@ export class MultiModelPanel {
     const startTime = Date.now();
 
     try {
-      const output = await this.claude.reviewCode(code, context, 'claude-sonnet-4-5-20250929');
+      const output = await this.claude.reviewCode(code, context, 'claude-sonnet-4-6');
 
       return {
         provider: 'claude',
-        model: 'claude-sonnet-4-5-20250929',
+        model: 'claude-sonnet-4-6',
         perspective: 'Deep Logic & Security',
         findings: this.parseFindings(output),
         rawOutput: output,
@@ -246,7 +246,7 @@ export class MultiModelPanel {
     } catch (error) {
       return {
         provider: 'claude',
-        model: 'claude-sonnet-4-5-20250929',
+        model: 'claude-sonnet-4-6',
         perspective: 'Deep Logic & Security',
         findings: [],
         rawOutput: '',
@@ -345,7 +345,7 @@ export class MultiModelPanel {
     try {
       const output = await this.claude.generate(
         `Red team this code. Think like an attacker. How would you exploit it? What data could you exfiltrate?\n\`\`\`\n${code}\n\`\`\``,
-        'claude-sonnet-4-5-20250929',
+        'claude-sonnet-4-6',
         {
           system: 'You are a red team security specialist. Find attack vectors, exploitation paths, and defense weaknesses. Mark severity: **CRITICAL**, **HIGH**, **MEDIUM**, **LOW**. Be thorough.',
           temperature: 0.4,
@@ -355,7 +355,7 @@ export class MultiModelPanel {
 
       return {
         provider: 'claude',
-        model: 'claude-sonnet-4-5-20250929',
+        model: 'claude-sonnet-4-6',
         perspective: 'Red Team Analysis',
         findings: this.parseFindings(output),
         rawOutput: output,
@@ -364,7 +364,7 @@ export class MultiModelPanel {
     } catch (error) {
       return {
         provider: 'claude',
-        model: 'claude-sonnet-4-5-20250929',
+        model: 'claude-sonnet-4-6',
         perspective: 'Red Team Analysis',
         findings: [],
         rawOutput: '',
@@ -439,7 +439,7 @@ export class MultiModelPanel {
     // Collect findings by source
     const ollamaFindings = reviews.find(r => r.provider === 'ollama')?.findings || [];
     const haikuFindings = reviews.find(r => r.model === 'claude-haiku-4-5-20251001')?.findings || [];
-    const sonnetFindings = reviews.find(r => r.model === 'claude-sonnet-4-5-20250929')?.findings || [];
+    const sonnetFindings = reviews.find(r => r.model === 'claude-sonnet-4-6')?.findings || [];
 
     const allFindings = [...ollamaFindings, ...haikuFindings, ...sonnetFindings];
 
@@ -471,7 +471,7 @@ export class MultiModelPanel {
     result.totalCost = 0;
     for (const review of reviews) {
       if (review.model === 'claude-haiku-4-5-20251001') result.totalCost += 0.002;
-      else if (review.model === 'claude-sonnet-4-5-20250929') result.totalCost += 0.01;
+      else if (review.model === 'claude-sonnet-4-6') result.totalCost += 0.01;
       // Ollama is free
     }
 

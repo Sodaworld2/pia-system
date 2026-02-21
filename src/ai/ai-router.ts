@@ -79,7 +79,7 @@ export class AIRouter {
     this.providers.set('claude-sonnet', {
       name: 'claude',
       tier: 2,
-      model: 'claude-sonnet-4-5-20250929',
+      model: 'claude-sonnet-4-6',
       costPer1KTokens: 0.003,
       available: this.claude.isConfigured(),
     });
@@ -177,7 +177,7 @@ export class AIRouter {
       if (this.providers.get('claude-sonnet')!.available) {
         return {
           provider: 'claude',
-          model: 'claude-sonnet-4-5-20250929',
+          model: 'claude-sonnet-4-6',
           reason: 'Security tasks require deep reasoning (Claude Sonnet)',
           estimatedCost: 0.02,
           fallback: 'claude-haiku-4-5-20251001',
@@ -205,7 +205,7 @@ export class AIRouter {
         model: 'claude-haiku-4-5-20251001',
         reason: 'Using Claude Haiku for medium complexity task',
         estimatedCost: 0.002,
-        fallback: 'claude-sonnet-4-5-20250929',
+        fallback: 'claude-sonnet-4-6',
       };
     }
 
@@ -214,7 +214,7 @@ export class AIRouter {
     if (sonnetProvider.available) {
       return {
         provider: 'claude',
-        model: 'claude-sonnet-4-5-20250929',
+        model: 'claude-sonnet-4-6',
         reason: `Using Claude Sonnet for ${complexity} task`,
         estimatedCost: 0.01,
       };

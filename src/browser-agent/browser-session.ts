@@ -67,7 +67,7 @@ export function spawnBrowserAgent(opts: BrowserTaskOptions): string {
     task,
     cwd: opts.cwd || getAppRoot(),
     approvalMode: opts.approvalMode || 'auto',
-    model: opts.model || 'claude-sonnet-4-5-20250929', // Sonnet is fast enough for browser tasks
+    model: opts.model || 'claude-sonnet-4-6', // Sonnet is fast enough for browser tasks
     maxBudgetUsd: opts.maxBudgetUsd || 2.00,
     systemPrompt: BROWSER_SYSTEM_PROMPT,
     mcpServers: [PLAYWRIGHT_MCP_SERVER],

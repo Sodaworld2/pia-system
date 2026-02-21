@@ -42,7 +42,7 @@ router.get('/status', async (_req: Request, res: Response) => {
       availability: Object.fromEntries(availability),
       claude: {
         configured: claude.isConfigured(),
-        models: ['claude-haiku-4-5-20251001', 'claude-sonnet-4-5-20250929'],
+        models: ['claude-haiku-4-5-20251001', 'claude-sonnet-4-6'],
       },
       ollama: {
         available: ollamaAvailable,
@@ -335,7 +335,7 @@ router.get('/claude/status', async (_req: Request, res: Response): Promise<void>
       configured: claude.isConfigured(),
       models: [
         { id: 'claude-haiku-4-5-20251001', name: 'Claude Haiku 4.5', tier: 'cheap' },
-        { id: 'claude-sonnet-4-5-20250929', name: 'Claude Sonnet 4.5', tier: 'medium' },
+        { id: 'claude-sonnet-4-6', name: 'Claude Sonnet 4.5', tier: 'medium' },
         { id: 'claude-opus-4-6', name: 'Claude Opus 4.6', tier: 'premium' },
       ],
       envVars: {

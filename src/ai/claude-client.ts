@@ -30,7 +30,7 @@ export interface ClaudeResponse {
 }
 
 export type ClaudeModel =
-  | 'claude-sonnet-4-5-20250929'
+  | 'claude-sonnet-4-6'
   | 'claude-haiku-4-5-20251001'
   | 'claude-opus-4-6';
 
@@ -51,7 +51,7 @@ export const CLAUDE_MODELS: ClaudeModelInfo[] = [
     costPer1MOutput: 4.00,
   },
   {
-    id: 'claude-sonnet-4-5-20250929',
+    id: 'claude-sonnet-4-6',
     name: 'Claude Sonnet 4.5',
     tier: 'medium',
     costPer1MInput: 3.00,
@@ -211,7 +211,7 @@ Be specific and actionable. Reference line numbers where possible.`;
       ? `Context: ${context}\n\nCode to review:\n\`\`\`\n${code}\n\`\`\``
       : `Review this code:\n\`\`\`\n${code}\n\`\`\``;
 
-    return this.generate(prompt, model || 'claude-sonnet-4-5-20250929', {
+    return this.generate(prompt, model || 'claude-sonnet-4-6', {
       system,
       temperature: 0.3,
       maxTokens: 4096,

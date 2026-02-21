@@ -300,10 +300,10 @@ async function executeTool(name: string, input: Record<string, unknown>, task: W
 function calculateCost(model: string, inputTokens: number, outputTokens: number): number {
   const costs: Record<string, { input: number; output: number }> = {
     'claude-haiku-4-5-20251001': { input: 0.80, output: 4.00 },
-    'claude-sonnet-4-5-20250929': { input: 3.00, output: 15.00 },
+    'claude-sonnet-4-6': { input: 3.00, output: 15.00 },
     'claude-opus-4-6': { input: 15.00, output: 75.00 },
   };
-  const rate = costs[model] || costs['claude-sonnet-4-5-20250929'];
+  const rate = costs[model] || costs['claude-sonnet-4-6'];
   return (inputTokens / 1_000_000) * rate.input + (outputTokens / 1_000_000) * rate.output;
 }
 
@@ -362,7 +362,7 @@ export async function runAutonomousTask(task: WorkerTask): Promise<WorkerResult>
     };
   }
 
-  const model = task.model || 'claude-sonnet-4-5-20250929';
+  const model = task.model || 'claude-sonnet-4-6';
   const maxTurns = task.maxTurns || 30;
   const maxBudget = task.maxBudgetUsd || 2.00;
   const log: WorkerLogEntry[] = [];

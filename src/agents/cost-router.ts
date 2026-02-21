@@ -78,7 +78,7 @@ function buildTiers(): TierConfig[] {
       tier: 'medium',
       rank: 2,
       provider: 'claude',
-      model: 'claude-sonnet-4-5-20250929',
+      model: 'claude-sonnet-4-6',
       costPer1MInput: 3.00,
       costPer1MOutput: 15.00,
       costLabel: 'MEDIUM (~$0.01/req)',
