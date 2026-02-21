@@ -1316,6 +1316,59 @@
       </div>
     </div>
 
+    <!-- Calendar / Schedule Panel -->
+    <div class="prompt-panel" id="calendarPanel" style="margin-top:8px;">
+      <div class="panel-header" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleCalendarPanel()">
+        <span>Schedule</span>
+        <span id="calendarBadge" style="font-size:11px;color:#58a6ff;">0 upcoming</span>
+      </div>
+      <div id="calendarBody">
+        <div id="calendarList" style="padding:4px 0;font-size:12px;max-height:160px;overflow-y:auto;"></div>
+        <div style="padding:4px 8px 8px;">
+          <button class="btn ghost" style="font-size:11px;padding:4px 8px;width:100%;" onclick="openScheduleModal()">+ Schedule Agent Run</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tim Buc Records Panel -->
+    <div class="prompt-panel" id="recordsPanel" style="margin-top:8px;">
+      <div class="panel-header" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleRecordsPanel()">
+        <span>Tim Buc Records</span>
+        <span id="recordsBadge" style="font-size:11px;color:#8b949e;">0 filed</span>
+      </div>
+      <div id="recordsBody">
+        <div id="recordsList" style="padding:4px 0;font-size:11px;max-height:200px;overflow-y:auto;"></div>
+        <div style="padding:4px 8px 6px;">
+          <button class="btn ghost" style="font-size:10px;padding:3px 8px;" onclick="fetchRecords()">Refresh</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Schedule Modal -->
+  <div class="modal-overlay" id="scheduleModal">
+    <div class="modal" style="max-width:460px;">
+      <h2>Schedule Agent Run</h2>
+      <label>Agent Soul</label>
+      <select id="schedAgent" style="margin-bottom:8px;">
+        <option value="farcake">Farcake — Research</option>
+        <option value="ziggi">Ziggi — Quality Audit</option>
+        <option value="eliyahu">Eliyahu — Briefing</option>
+        <option value="fisher2050">Fisher2050 — Planning</option>
+        <option value="andy">Andy — Editorial</option>
+      </select>
+      <label>Task Description</label>
+      <textarea id="schedTask" placeholder="What should the agent do?" rows="3" style="margin-bottom:8px;width:100%;box-sizing:border-box;background:#0d1117;border:1px solid #2a2a3e;color:#e2e8f0;border-radius:6px;padding:8px;font-family:monospace;font-size:12px;resize:vertical;"></textarea>
+      <label>Scheduled At (local time)</label>
+      <input type="datetime-local" id="schedTime" style="margin-bottom:8px;width:100%;box-sizing:border-box;background:#0d1117;border:1px solid #2a2a3e;color:#e2e8f0;border-radius:6px;padding:8px;">
+      <label>Context (optional JSON)</label>
+      <textarea id="schedContext" placeholder='{"key":"value"}' rows="2" style="margin-bottom:12px;width:100%;box-sizing:border-box;background:#0d1117;border:1px solid #2a2a3e;color:#e2e8f0;border-radius:6px;padding:8px;font-family:monospace;font-size:11px;resize:vertical;"></textarea>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn ghost" onclick="document.getElementById('scheduleModal').classList.remove('visible')">Cancel</button>
+        <button class="btn purple" onclick="createScheduleEvent()">Schedule</button>
+      </div>
+    </div>
   </div>
 
   <!-- SPAWN MODAL -->
@@ -3723,6 +3776,13 @@ async function init() {
   // Initial Fisher status load
   fetchFisherStatus();
 
+  // Initial Records + Calendar load
+  fetchRecords();
+  fetchCalendarEvents();
+
+  // Refresh Records + Calendar every 60s
+  setInterval(() => { fetchRecords(); fetchCalendarEvents(); }, 60000);
+
   // Refresh agents every 5s
   setInterval(async () => {
     await fetchAgents();
@@ -3740,6 +3800,139 @@ async function init() {
 
   // Refresh Fisher status every 30s
   setInterval(() => fetchFisherStatus(), 30000);
+}
+
+// ── Records (Tim Buc) ──────────────────────────────────────────────────────
+let recordsPanelOpen = true;
+
+function toggleRecordsPanel() {
+  recordsPanelOpen = !recordsPanelOpen;
+  document.getElementById('recordsBody').style.display = recordsPanelOpen ? 'block' : 'none';
+}
+
+async function fetchRecords() {
+  try {
+    const data = await api('/api/fisher/records?limit=30');
+    const records = data.records || [];
+    const badge = document.getElementById('recordsBadge');
+    badge.textContent = `${records.length} filed`;
+    badge.style.color = records.length > 0 ? '#3fb950' : '#8b949e';
+
+    const list = document.getElementById('recordsList');
+    if (records.length === 0) {
+      list.innerHTML = '<div style="color:#64748b;padding:8px 12px;">No records yet. Agents will be filed here after completing sessions.</div>';
+      return;
+    }
+
+    list.innerHTML = records.map(r => {
+      const dt = r.created_at ? new Date(r.created_at * 1000).toLocaleString([], {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '?';
+      const verdictColor = r.quality_verdict === 'PASS' ? '#3fb950' : r.quality_verdict === 'FAIL' ? '#f85149' : '#8b949e';
+      const cost = r.cost_usd ? `$${Number(r.cost_usd).toFixed(4)}` : '$0';
+      const agent = esc(r.agent || 'unknown').substring(0, 30);
+      const project = esc(r.project || '—');
+      return `<div style="padding:5px 10px;border-bottom:1px solid #1a1a2a;cursor:default;" title="${esc(r.summary || '')}">
+        <div style="display:flex;justify-content:space-between;margin-bottom:2px;">
+          <span style="color:#e2e8f0;font-weight:600;">${agent}</span>
+          <span style="color:${verdictColor};font-size:10px;">${r.quality_verdict || '—'} ${r.quality_score != null ? r.quality_score : ''}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;color:#64748b;font-size:10px;">
+          <span>${project} · ${cost}</span>
+          <span>${dt}</span>
+        </div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    document.getElementById('recordsList').innerHTML = `<div style="color:#f85149;padding:8px 12px;">Error: ${esc(String(e))}</div>`;
+  }
+}
+
+// ── Calendar / Schedule ────────────────────────────────────────────────────
+let calendarPanelOpen = true;
+
+function toggleCalendarPanel() {
+  calendarPanelOpen = !calendarPanelOpen;
+  document.getElementById('calendarBody').style.display = calendarPanelOpen ? 'block' : 'none';
+}
+
+async function fetchCalendarEvents() {
+  try {
+    const data = await api('/api/fisher/calendar?status=upcoming');
+    const events = data.events || [];
+    const badge = document.getElementById('calendarBadge');
+    badge.textContent = `${events.length} upcoming`;
+    badge.style.color = events.length > 0 ? '#58a6ff' : '#8b949e';
+
+    const list = document.getElementById('calendarList');
+    if (events.length === 0) {
+      list.innerHTML = '<div style="color:#64748b;padding:6px 12px;font-size:11px;">No upcoming events. Use "+ Schedule Agent Run" to create one.</div>';
+      return;
+    }
+
+    const now = Math.floor(Date.now() / 1000);
+    list.innerHTML = events.map(e => {
+      const dt = e.scheduled_at ? new Date(e.scheduled_at * 1000).toLocaleString([], {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '?';
+      const isOverdue = e.scheduled_at && e.scheduled_at < now && e.status === 'pending';
+      const statusColor = e.status === 'running' ? '#3fb950' : isOverdue ? '#f85149' : '#58a6ff';
+      return `<div style="padding:5px 10px;border-bottom:1px solid #1a1a2a;display:flex;align-items:center;gap:6px;">
+        <span style="width:6px;height:6px;border-radius:50%;background:${statusColor};flex-shrink:0;"></span>
+        <div style="flex:1;min-width:0;">
+          <div style="color:#e2e8f0;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(e.agent)} — ${esc((e.task||'').substring(0,40))}</div>
+          <div style="color:#64748b;font-size:10px;">${dt}${isOverdue ? ' (overdue)' : ''}</div>
+        </div>
+        <button onclick="cancelCalendarEvent('${esc(e.id)}')" style="background:none;border:none;color:#484f58;cursor:pointer;font-size:14px;padding:0 2px;" title="Cancel">×</button>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    document.getElementById('calendarList').innerHTML = `<div style="color:#f85149;padding:6px 12px;">Error: ${esc(String(e))}</div>`;
+  }
+}
+
+async function cancelCalendarEvent(id) {
+  if (!confirm('Cancel this scheduled event?')) return;
+  try {
+    await api(`/api/fisher/calendar/${id}`, { method: 'DELETE' });
+    await fetchCalendarEvents();
+  } catch (e) {
+    alert('Failed to cancel: ' + e.message);
+  }
+}
+
+function openScheduleModal() {
+  // Set default time to 1 hour from now
+  const d = new Date(Date.now() + 3600000);
+  const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  document.getElementById('schedTime').value = local;
+  document.getElementById('schedTask').value = '';
+  document.getElementById('schedContext').value = '';
+  document.getElementById('scheduleModal').classList.add('visible');
+}
+
+async function createScheduleEvent() {
+  const agent = document.getElementById('schedAgent').value;
+  const task = document.getElementById('schedTask').value.trim();
+  const timeVal = document.getElementById('schedTime').value;
+  const ctxRaw = document.getElementById('schedContext').value.trim();
+
+  if (!task) { alert('Task description is required'); return; }
+  if (!timeVal) { alert('Scheduled time is required'); return; }
+
+  let context = {};
+  if (ctxRaw) {
+    try { context = JSON.parse(ctxRaw); } catch { alert('Context must be valid JSON'); return; }
+  }
+
+  const scheduled_at = new Date(timeVal).toISOString();
+
+  try {
+    await api('/api/fisher/calendar', {
+      method: 'POST',
+      body: { agent, task, scheduled_at, context },
+    });
+    document.getElementById('scheduleModal').classList.remove('visible');
+    await fetchCalendarEvents();
+  } catch (e) {
+    alert('Failed to schedule: ' + e.message);
+  }
 }
 
 init();

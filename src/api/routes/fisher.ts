@@ -77,4 +77,131 @@ router.post('/run', async (req: Request, res: Response): Promise<void> => {
   }
 });
 
+/**
+ * GET /api/fisher/records
+ * Returns recent agent_records filed by Tim Buc.
+ * ?limit=N (default 50)
+ */
+router.get('/records', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { getDatabase } = await import('../../db/database.js');
+    const db = getDatabase();
+    const limit = Math.min(parseInt(String(req.query.limit || '50')), 200);
+    const rows = db.prepare(`
+      SELECT * FROM agent_records
+      ORDER BY created_at DESC
+      LIMIT ?
+    `).all(limit);
+    res.json({ records: rows, total: rows.length });
+  } catch (err) {
+    logger.error(`Fisher records error: ${err}`);
+    res.status(500).json({ error: String(err) });
+  }
+});
+
+/**
+ * GET /api/fisher/calendar
+ * Returns upcoming calendar_events.
+ * ?status=pending|running|completed|all (default: pending+running)
+ */
+router.get('/calendar', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { getDatabase } = await import('../../db/database.js');
+    const db = getDatabase();
+    const status = String(req.query.status || 'upcoming');
+    let rows;
+    if (status === 'all') {
+      rows = db.prepare(`SELECT * FROM calendar_events ORDER BY scheduled_at ASC LIMIT 100`).all();
+    } else if (status === 'upcoming') {
+      rows = db.prepare(`
+        SELECT * FROM calendar_events
+        WHERE status IN ('pending', 'running')
+        ORDER BY scheduled_at ASC
+        LIMIT 100
+      `).all();
+    } else {
+      rows = db.prepare(`SELECT * FROM calendar_events WHERE status = ? ORDER BY scheduled_at DESC LIMIT 100`).all(status);
+    }
+    res.json({ events: rows, total: rows.length });
+  } catch (err) {
+    logger.error(`Fisher calendar error: ${err}`);
+    res.status(500).json({ error: String(err) });
+  }
+});
+
+/**
+ * POST /api/fisher/calendar
+ * Schedule a new agent run.
+ * Body: { agent, task, scheduled_at (ISO or unix), context?, machine_id? }
+ */
+router.post('/calendar', async (req: Request, res: Response): Promise<void> => {
+  const { agent, task, scheduled_at, context, machine_id } = req.body as {
+    agent: string;
+    task: string;
+    scheduled_at: string | number;
+    context?: Record<string, unknown>;
+    machine_id?: string;
+  };
+
+  if (!agent || !task || !scheduled_at) {
+    res.status(400).json({ error: 'agent, task, and scheduled_at are required' });
+    return;
+  }
+
+  try {
+    const { getDatabase } = await import('../../db/database.js');
+    const { nanoid } = await import('nanoid');
+    const db = getDatabase();
+
+    const id = nanoid();
+    const scheduledTs = typeof scheduled_at === 'number'
+      ? scheduled_at
+      : Math.floor(new Date(scheduled_at).getTime() / 1000);
+
+    if (isNaN(scheduledTs)) {
+      res.status(400).json({ error: 'Invalid scheduled_at date' });
+      return;
+    }
+
+    db.prepare(`
+      INSERT INTO calendar_events (id, agent, task, context_json, scheduled_at, machine_id, created_by)
+      VALUES (?, ?, ?, ?, ?, ?, 'dashboard')
+    `).run(id, agent, task, JSON.stringify(context || {}), scheduledTs, machine_id || null);
+
+    const created = db.prepare('SELECT * FROM calendar_events WHERE id = ?').get(id);
+    logger.info(`Calendar event created: ${agent} — "${task}" at ${new Date(scheduledTs * 1000).toISOString()}`);
+    res.json({ ok: true, event: created });
+  } catch (err) {
+    logger.error(`Fisher calendar create error: ${err}`);
+    res.status(500).json({ error: String(err) });
+  }
+});
+
+/**
+ * DELETE /api/fisher/calendar/:id
+ * Cancel a pending calendar event.
+ */
+router.delete('/calendar/:id', async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params;
+  try {
+    const { getDatabase } = await import('../../db/database.js');
+    const db = getDatabase();
+    const evt = db.prepare(`SELECT * FROM calendar_events WHERE id = ?`).get(id) as { status: string } | undefined;
+    if (!evt) {
+      res.status(404).json({ error: 'Event not found' });
+      return;
+    }
+    if (evt.status === 'running') {
+      res.status(409).json({ error: 'Cannot cancel a running event' });
+      return;
+    }
+    db.prepare(`UPDATE calendar_events SET status = 'cancelled' WHERE id = ?`).run(id);
+    logger.info(`Calendar event cancelled: ${id}`);
+    res.json({ ok: true });
+  } catch (err) {
+    logger.error(`Fisher calendar cancel error: ${err}`);
+    res.status(500).json({ error: String(err) });
+  }
+});
+
 export default router;
