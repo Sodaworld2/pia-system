@@ -62,10 +62,28 @@ export class CalendarSpawnService {
           model: (soul?.config?.model as string | undefined) || 'claude-sonnet-4-6',
         });
 
-        db.prepare(`UPDATE calendar_events SET status = 'completed', completed_at = ? WHERE id = ?`)
-          .run(Math.floor(Date.now() / 1000), event.id);
+        // Don't mark completed immediately — session is still running.
+        // Listen for completion/error events on the session.
+        const eventId = event.id;
+        const onComplete = (evt: { sessionId: string }) => {
+          if (evt.sessionId !== session.id) return;
+          db.prepare(`UPDATE calendar_events SET status = 'completed', completed_at = ? WHERE id = ?`)
+            .run(Math.floor(Date.now() / 1000), eventId);
+          manager.off('complete', onComplete);
+          manager.off('error', onError);
+          logger.info(`Calendar event ${eventId} completed (session ${session.id})`);
+        };
+        const onError = (evt: { sessionId: string }) => {
+          if (evt.sessionId !== session.id) return;
+          db.prepare(`UPDATE calendar_events SET status = 'failed' WHERE id = ?`).run(eventId);
+          manager.off('complete', onComplete);
+          manager.off('error', onError);
+          logger.info(`Calendar event ${eventId} failed (session ${session.id})`);
+        };
+        manager.on('complete', onComplete);
+        manager.on('error', onError);
 
-        logger.info(`Calendar event ${event.id} → session ${session.id}`);
+        logger.info(`Calendar event ${event.id} → session ${session.id} (waiting for completion)`);
       } catch (err) {
         logger.error(`Failed to spawn for calendar event ${event.id}: ${err}`);
         db.prepare(`UPDATE calendar_events SET status = 'failed' WHERE id = ?`).run(event.id);
