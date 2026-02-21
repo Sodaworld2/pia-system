@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PIA — Soul Enrichment</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #050508;
+      color: #e2e8f0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: linear-gradient(135deg, #0a0a12 0%, #12121e 100%);
+      border-bottom: 1px solid #1e1e2e;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-size: 18px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #9b4dca, #58a6ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .header-links { display: flex; gap: 12px; align-items: center; }
+    .header-links a {
+      color: #64748b;
+      text-decoration: none;
+      font-size: 12px;
+      padding: 4px 10px;
+      border: 1px solid #1e1e2e;
+      border-radius: 4px;
+      transition: all 0.15s;
+    }
+    .header-links a:hover { color: #e2e8f0; border-color: #4a4a6a; }
+    .header-stat { font-size: 12px; color: #64748b; }
+    .header-stat span { color: #58a6ff; font-weight: 600; }
+
+    /* ── Main Layout ── */
+    .main { display: flex; flex: 1; overflow: hidden; }
+
+    /* ── Roster Panel ── */
+    .roster {
+      width: 360px;
+      flex-shrink: 0;
+      border-right: 1px solid #1e1e2e;
+      overflow-y: auto;
+      background: #07070f;
+    }
+    .roster-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid #1e1e2e;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      background: #07070f;
+      z-index: 10;
+    }
+    .roster-header h2 { font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.08em; }
+    .tier-label {
+      padding: 6px 16px 4px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #4a4a6a;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      border-bottom: 1px solid #0f0f1a;
+    }
+
+    .soul-card {
+      padding: 12px 16px;
+      border-bottom: 1px solid #0f0f1a;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: background 0.1s;
+    }
+    .soul-card:hover { background: #0d0d1a; }
+    .soul-card.active { background: #0f0f20; border-left: 2px solid #9b4dca; }
+
+    .soul-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .tier-m1 { background: #1a1a3a; color: #58a6ff; }
+    .tier-m2 { background: #1e1a10; color: #f59e0b; }
+    .tier-m3 { background: #1a1030; color: #a855f7; }
+    .tier-qa  { background: #101a18; color: #10b981; }
+    .tier-dc  { background: #1a1010; color: #ef4444; }
+
+    .soul-info { flex: 1; min-width: 0; }
+    .soul-name { font-size: 13px; font-weight: 700; color: #e2e8f0; }
+    .soul-role { font-size: 11px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+    .soul-meta { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
+    .badge {
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-weight: 600;
+    }
+    .badge-m1 { background: #1a1a3a; color: #58a6ff; }
+    .badge-m2 { background: #1e1a10; color: #f59e0b; }
+    .badge-m3 { background: #1a1030; color: #a855f7; }
+    .badge-dc { background: #1a1010; color: #ef4444; }
+    .badge-status-active { background: #0a2010; color: #22c55e; }
+    .badge-status-inactive { background: #1a1010; color: #ef4444; }
+    .mem-count { font-size: 10px; color: #4a4a6a; }
+
+    /* Health ring */
+    .health-ring { flex-shrink: 0; }
+    .health-ring svg { display: block; }
+
+    /* ── Editor Panel ── */
+    .editor {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .editor-empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #2a2a4a;
+      gap: 8px;
+    }
+    .editor-empty .icon { font-size: 48px; }
+    .editor-empty p { font-size: 14px; }
+
+    .editor-header {
+      padding: 12px 20px;
+      border-bottom: 1px solid #1e1e2e;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #0a0a14;
+      flex-shrink: 0;
+    }
+    .editor-header .agent-title { font-size: 15px; font-weight: 700; color: #e2e8f0; }
+    .editor-header .agent-role { font-size: 12px; color: #64748b; margin-top: 2px; }
+    .editor-actions { display: flex; gap: 8px; }
+    .btn {
+      padding: 6px 14px;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.15s;
+    }
+    .btn-save { background: #9b4dca; color: #fff; }
+    .btn-save:hover { background: #7c3aab; }
+    .btn-secondary { background: #1e1e2e; color: #94a3b8; border: 1px solid #2a2a3e; }
+    .btn-secondary:hover { background: #2a2a3e; color: #e2e8f0; }
+
+    /* ── Editor Body (split left/right) ── */
+    .editor-body {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+    .editor-form {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .editor-preview {
+      width: 340px;
+      flex-shrink: 0;
+      border-left: 1px solid #1e1e2e;
+      display: flex;
+      flex-direction: column;
+      background: #07070f;
+    }
+    .preview-header {
+      padding: 10px 14px;
+      border-bottom: 1px solid #1e1e2e;
+      font-size: 11px;
+      font-weight: 700;
+      color: #4a4a6a;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .preview-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 14px;
+      font-size: 11px;
+      line-height: 1.6;
+      color: #64748b;
+      white-space: pre-wrap;
+      font-family: 'Cascadia Code', 'Consolas', monospace;
+    }
+    .preview-stats {
+      padding: 8px 14px;
+      border-top: 1px solid #1e1e2e;
+      font-size: 11px;
+      color: #4a4a6a;
+      display: flex;
+      gap: 12px;
+    }
+    .preview-stats .warn { color: #f59e0b; }
+
+    /* ── Form Sections ── */
+    .section {
+      border-bottom: 1px solid #0f0f1a;
+      padding-bottom: 16px;
+      margin-bottom: 16px;
+    }
+    .section:last-child { border-bottom: none; }
+    .section-title {
+      font-size: 10px;
+      font-weight: 700;
+      color: #4a4a6a;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-num {
+      width: 18px;
+      height: 18px;
+      background: #1e1e2e;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: #64748b;
+    }
+
+    .field-row { display: flex; gap: 12px; margin-bottom: 10px; }
+    .field { flex: 1; }
+    .field label { display: block; font-size: 11px; color: #64748b; margin-bottom: 4px; }
+    .field input, .field select, .field textarea {
+      width: 100%;
+      background: #0a0a14;
+      border: 1px solid #1e1e2e;
+      border-radius: 5px;
+      color: #e2e8f0;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      border-color: #4a4a7a;
+    }
+    .field textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+    .field textarea.tall { min-height: 140px; }
+    .field-hint { font-size: 10px; color: #3a3a5a; margin-top: 3px; }
+    .field-hint.warn { color: #f59e0b; }
+    .field-hint.ok { color: #22c55e; }
+
+    /* Goals list */
+    .goals-list { display: flex; flex-direction: column; gap: 6px; }
+    .goal-item { display: flex; align-items: center; gap: 8px; }
+    .goal-item input {
+      flex: 1;
+      background: #0a0a14;
+      border: 1px solid #1e1e2e;
+      border-radius: 5px;
+      color: #e2e8f0;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-family: inherit;
+      outline: none;
+    }
+    .goal-item input:focus { border-color: #4a4a7a; }
+    .goal-drag { color: #2a2a4a; cursor: grab; font-size: 14px; }
+    .goal-del { color: #3a3a5a; cursor: pointer; font-size: 14px; padding: 0 4px; transition: color 0.15s; }
+    .goal-del:hover { color: #ef4444; }
+    .add-btn {
+      margin-top: 6px;
+      background: none;
+      border: 1px dashed #2a2a3e;
+      color: #4a4a6a;
+      padding: 5px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 11px;
+      font-family: inherit;
+      transition: all 0.15s;
+      align-self: flex-start;
+    }
+    .add-btn:hover { border-color: #9b4dca; color: #9b4dca; }
+
+    /* Relationships table */
+    .rel-list { display: flex; flex-direction: column; gap: 6px; }
+    .rel-item { display: flex; align-items: center; gap: 6px; }
+    .rel-key { width: 120px; flex-shrink: 0; }
+    .rel-val { flex: 1; }
+    .rel-key input, .rel-val input {
+      width: 100%;
+      background: #0a0a14;
+      border: 1px solid #1e1e2e;
+      border-radius: 5px;
+      color: #e2e8f0;
+      padding: 6px 8px;
+      font-size: 11px;
+      font-family: inherit;
+      outline: none;
+    }
+    .rel-key input:focus, .rel-val input:focus { border-color: #4a4a7a; }
+
+    /* Config toggles */
+    .config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .config-item {
+      background: #0a0a14;
+      border: 1px solid #1e1e2e;
+      border-radius: 6px;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .config-key { font-size: 11px; color: #94a3b8; }
+    .config-val { font-size: 11px; color: #58a6ff; font-family: monospace; }
+
+    /* Memory panel */
+    .memory-section { background: #0a0a14; border: 1px solid #1e1e2e; border-radius: 8px; padding: 12px; }
+    .memory-tabs { display: flex; gap: 4px; margin-bottom: 12px; }
+    .mem-tab {
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+      color: #64748b;
+      border: 1px solid transparent;
+      transition: all 0.15s;
+    }
+    .mem-tab.active { background: #1e1e2e; color: #e2e8f0; border-color: #2a2a3e; }
+    .mem-tab:hover:not(.active) { color: #94a3b8; }
+
+    .mem-add { display: flex; flex-direction: column; gap: 8px; }
+    .mem-add textarea {
+      background: #050508;
+      border: 1px solid #1e1e2e;
+      border-radius: 5px;
+      color: #e2e8f0;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 60px;
+      outline: none;
+    }
+    .mem-row { display: flex; gap: 8px; align-items: center; }
+    .mem-row select, .mem-row input[type="range"] { flex: 1; }
+    .mem-row select {
+      background: #050508;
+      border: 1px solid #1e1e2e;
+      border-radius: 5px;
+      color: #e2e8f0;
+      padding: 5px 8px;
+      font-size: 11px;
+      font-family: inherit;
+      outline: none;
+    }
+    .imp-label { font-size: 11px; color: #64748b; min-width: 40px; text-align: right; }
+
+    .mem-list { display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto; }
+    .mem-item {
+      background: #050508;
+      border: 1px solid #0f0f1a;
+      border-radius: 5px;
+      padding: 7px 10px;
+      font-size: 11px;
+      line-height: 1.5;
+    }
+    .mem-item-meta { display: flex; gap: 6px; margin-bottom: 3px; }
+    .mem-cat { color: #9b4dca; font-size: 10px; text-transform: uppercase; font-weight: 600; }
+    .mem-imp { color: #f59e0b; font-size: 10px; }
+    .mem-date { color: #3a3a5a; font-size: 10px; }
+    .mem-content { color: #94a3b8; }
+    .empty-state { color: #2a2a4a; font-size: 12px; text-align: center; padding: 20px; }
+
+    /* Toast */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #22c55e;
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 100;
+    }
+    #toast.show { opacity: 1; }
+    #toast.error { background: #ef4444; }
+
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #1e1e2e; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>✦ Soul Enrichment</h1>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <span class="header-stat">Fleet: <span id="statTotal">—</span> agents</span>
+    <span class="header-stat">Active: <span id="statActive">—</span></span>
+    <span class="header-stat">Avg health: <span id="statHealth">—</span></span>
+    <div class="header-links">
+      <a href="/mission-control.html">← Mission Control</a>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- ── Soul Roster ── -->
+  <div class="roster" id="roster">
+    <div class="roster-header">
+      <h2>Agent Roster</h2>
+      <span id="rosterCount" style="font-size:11px;color:#4a4a6a;">loading...</span>
+    </div>
+    <div id="rosterList">
+      <div style="padding:24px;text-align:center;color:#2a2a4a;font-size:12px;">Loading souls...</div>
+    </div>
+  </div>
+
+  <!-- ── Editor ── -->
+  <div class="editor" id="editorPanel">
+    <div class="editor-empty" id="editorEmpty">
+      <div class="icon">✦</div>
+      <p>Select an agent to edit their soul</p>
+    </div>
+
+    <div id="editorContent" style="display:none;flex:1;flex-direction:column;overflow:hidden;">
+
+      <div class="editor-header">
+        <div>
+          <div class="agent-title" id="edTitle">—</div>
+          <div class="agent-role" id="edRole">—</div>
+        </div>
+        <div class="editor-actions">
+          <button class="btn btn-secondary" onclick="loadPromptPreview()">↻ Preview</button>
+          <button class="btn btn-save" onclick="saveSoul()">Save Soul</button>
+        </div>
+      </div>
+
+      <div class="editor-body">
+        <!-- Form -->
+        <div class="editor-form" id="editorForm">
+
+          <!-- Section 1: Identity -->
+          <div class="section">
+            <div class="section-title"><span class="section-num">1</span> Identity</div>
+            <div class="field-row">
+              <div class="field">
+                <label>Name</label>
+                <input type="text" id="fName" oninput="debouncedPreview()">
+              </div>
+              <div class="field">
+                <label>Email</label>
+                <input type="text" id="fEmail" placeholder="agent@sodalabs.ai" oninput="debouncedPreview()">
+              </div>
+            </div>
+            <div class="field">
+              <label>Role</label>
+              <input type="text" id="fRole" oninput="debouncedPreview()">
+            </div>
+            <div class="field" style="margin-top:10px;">
+              <label>Status</label>
+              <select id="fStatus">
+                <option value="active">● Active</option>
+                <option value="inactive">○ Inactive</option>
+                <option value="archived">▪ Archived</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Section 2: Character -->
+          <div class="section">
+            <div class="section-title"><span class="section-num">2</span> Character — personality</div>
+            <div class="field">
+              <label>Who are they? Communication style, traits, quirks, catch-phrases.</label>
+              <textarea class="tall" id="fPersonality" oninput="updateCharCount('fPersonality','persCount');debouncedPreview()"></textarea>
+              <div class="field-hint" id="persCount"></div>
+            </div>
+          </div>
+
+          <!-- Section 3: Mission -->
+          <div class="section">
+            <div class="section-title"><span class="section-num">3</span> Mission — system_prompt</div>
+            <div class="field">
+              <label>Operational instructions. Step-by-step: when triggered, what do you do?</label>
+              <textarea class="tall" id="fSystemPrompt" oninput="updateCharCount('fSystemPrompt','promptCount');debouncedPreview()"></textarea>
+              <div class="field-hint" id="promptCount"></div>
+            </div>
+          </div>
+
+          <!-- Section 4: Goals -->
+          <div class="section">
+            <div class="section-title"><span class="section-num">4</span> Goals <span id="goalCount" style="font-weight:400;color:#4a4a6a;"></span></div>
+            <div class="goals-list" id="goalsList"></div>
+            <button class="add-btn" onclick="addGoal()">+ Add Goal</button>
+          </div>
+
+          <!-- Section 5: Relationships -->
+          <div class="section">
+            <div class="section-title"><span class="section-num">5</span> Relationships <span id="relCount" style="font-weight:400;color:#4a4a6a;"></span></div>
+            <div class="rel-list" id="relList"></div>
+            <button class="add-btn" onclick="addRelationship()">+ Add Relationship</button>
+          </div>
+
+          <!-- Section 6: Config -->
+          <div class="section">
+            <div class="section-title"><span class="section-num">6</span> Config</div>
+            <div class="config-grid" id="configGrid"></div>
+          </div>
+
+          <!-- Memory Panel -->
+          <div class="section">
+            <div class="section-title"><span class="section-num">✦</span> Memory Bank <span id="memCountLabel" style="font-weight:400;color:#4a4a6a;"></span></div>
+            <div class="memory-section">
+              <div class="memory-tabs">
+                <div class="mem-tab active" onclick="switchMemTab('add',this)">Add Memory</div>
+                <div class="mem-tab" onclick="switchMemTab('view',this)">View Memories</div>
+              </div>
+
+              <div id="memAddPane" class="mem-add">
+                <select id="memCategory">
+                  <option value="experience">experience — something happened</option>
+                  <option value="decision">decision — a choice was made</option>
+                  <option value="learning">learning — something discovered</option>
+                  <option value="interaction">interaction — with agent or Mic</option>
+                  <option value="observation">observation — pattern noticed</option>
+                  <option value="goal_progress">goal_progress — toward a goal</option>
+                </select>
+                <textarea id="memContent" placeholder="What should this agent remember?"></textarea>
+                <div class="mem-row">
+                  <span style="font-size:11px;color:#64748b;">Importance:</span>
+                  <input type="range" id="memImportance" min="1" max="10" value="5" oninput="document.getElementById('impVal').textContent=this.value">
+                  <span class="imp-label" id="impVal">5</span>
+                </div>
+                <input type="text" id="memContext" placeholder="Context (optional): e.g. Project: SodaWorld, Date: 2026-02-21"
+                  style="background:#050508;border:1px solid #1e1e2e;border-radius:5px;color:#e2e8f0;padding:6px 10px;font-size:11px;font-family:inherit;outline:none;width:100%">
+                <button class="btn btn-save" style="align-self:flex-end;" onclick="saveMemory()">Save Memory</button>
+              </div>
+
+              <div id="memViewPane" style="display:none;">
+                <div class="mem-list" id="memList">
+                  <div class="empty-state">No memories yet</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /editor-form -->
+
+        <!-- Preview -->
+        <div class="editor-preview">
+          <div class="preview-header">
+            <span>System Prompt Preview</span>
+            <button class="btn btn-secondary" style="padding:3px 8px;font-size:10px;" onclick="copyPrompt()">Copy</button>
+          </div>
+          <div class="preview-body" id="previewBody">Select an agent and click ↻ Preview</div>
+          <div class="preview-stats" id="previewStats"></div>
+        </div>
+
+      </div><!-- /editor-body -->
+    </div><!-- /editorContent -->
+  </div><!-- /editor -->
+
+</div><!-- /main -->
+
+<div id="toast"></div>
+
+<script>
+// ─── State ───────────────────────────────────────────────────────────────────
+let souls = [];
+let currentSoulId = null;
+let previewTimer = null;
+
+// Tier config
+const TIERS = [
+  { label: 'M1 STRATEGIC', ids: ['controller','fisher2050','eliyahu','tim_buc','owl','monitor'] },
+  { label: 'QUALITY GATE', ids: ['ziggi'] },
+  { label: 'M3 EXECUTION', ids: ['farcake','andy','wingspan'] },
+  { label: 'M2 ORCHESTRATION', ids: ['bird_fountain'] },
+  { label: 'DEDICATED', ids: ['coder_machine'] },
+];
+const TIER_CLASS = {
+  controller:'tier-m1', fisher2050:'tier-m1', eliyahu:'tier-m1', tim_buc:'tier-m1', owl:'tier-m1', monitor:'tier-m1',
+  ziggi:'tier-qa',
+  farcake:'tier-m3', andy:'tier-m3', wingspan:'tier-m3',
+  bird_fountain:'tier-m2',
+  coder_machine:'tier-dc',
+};
+const MACHINE_BADGE = {
+  M1:'badge-m1', M2:'badge-m2', M3:'badge-m3', dedicated:'badge-dc'
+};
+
+// ─── Health Score ─────────────────────────────────────────────────────────────
+function calcHealth(soul, memCount = 0) {
+  let score = 0;
+  if ((soul.personality || '').length >= 200) score += 20;
+  if ((soul.system_prompt || '').length >= 300) score += 20;
+  if ((soul.goals || []).length >= 3) score += 20;
+  if (Object.keys(soul.relationships || {}).length >= 3) score += 20;
+  if (soul.config && soul.config.machine) score += 10;
+  if (memCount >= 5) score += 10;
+  return score;
+}
+
+function healthColor(score) {
+  if (score >= 90) return '#22c55e';
+  if (score >= 70) return '#f59e0b';
+  if (score >= 40) return '#f97316';
+  return '#ef4444';
+}
+
+function healthRing(score) {
+  const c = healthColor(score);
+  const r = 14; const circ = 2 * Math.PI * r;
+  const dash = (score / 100) * circ;
+  return `<svg width="36" height="36" class="health-ring">
+    <circle cx="18" cy="18" r="${r}" fill="none" stroke="#1e1e2e" stroke-width="3"/>
+    <circle cx="18" cy="18" r="${r}" fill="none" stroke="${c}" stroke-width="3"
+      stroke-dasharray="${dash} ${circ}" stroke-dashoffset="${circ/4}" stroke-linecap="round"/>
+    <text x="18" y="22" text-anchor="middle" fill="${c}" font-size="9" font-weight="700" font-family="Segoe UI,sans-serif">${score}</text>
+  </svg>`;
+}
+
+// ─── Load Souls ──────────────────────────────────────────────────────────────
+async function loadSouls() {
+  try {
+    const res = await fetch('/api/souls');
+    souls = await res.json();
+    renderRoster();
+    updateHeaderStats();
+  } catch (e) {
+    document.getElementById('rosterList').innerHTML = '<div style="padding:20px;color:#ef4444;font-size:12px;">Failed to load souls: ' + e.message + '</div>';
+  }
+}
+
+function renderRoster() {
+  const list = document.getElementById('rosterList');
+  list.innerHTML = '';
+
+  // Sort souls by tier order
+  const soulMap = {};
+  souls.forEach(s => soulMap[s.id] = s);
+
+  TIERS.forEach(tier => {
+    const tieredSouls = tier.ids.map(id => soulMap[id]).filter(Boolean);
+    if (!tieredSouls.length) return;
+
+    const tl = document.createElement('div');
+    tl.className = 'tier-label';
+    tl.textContent = tier.label;
+    list.appendChild(tl);
+
+    tieredSouls.forEach(soul => {
+      const score = calcHealth(soul);
+      const machine = soul.config?.machine || '?';
+      const badgeCls = MACHINE_BADGE[machine] || 'badge-m1';
+      const tierCls = TIER_CLASS[soul.id] || 'tier-m1';
+      const initials = soul.name.split(' ').map(w => w[0]).join('').substring(0,2).toUpperCase();
+
+      const card = document.createElement('div');
+      card.className = 'soul-card' + (soul.id === currentSoulId ? ' active' : '');
+      card.id = 'card-' + soul.id;
+      card.onclick = () => openSoul(soul.id);
+      card.innerHTML = `
+        <div class="soul-avatar ${tierCls}">${initials}</div>
+        <div class="soul-info">
+          <div class="soul-name">${soul.name}</div>
+          <div class="soul-role">${soul.role}</div>
+          <div class="soul-meta">
+            <span class="badge ${badgeCls}">${machine}</span>
+            <span class="badge badge-status-${soul.status}">${soul.status}</span>
+            <span class="mem-count">0 mem</span>
+          </div>
+        </div>
+        ${healthRing(score)}
+      `;
+      list.appendChild(card);
+    });
+  });
+
+  document.getElementById('rosterCount').textContent = souls.length + ' agents';
+}
+
+function updateHeaderStats() {
+  document.getElementById('statTotal').textContent = souls.length;
+  document.getElementById('statActive').textContent = souls.filter(s => s.status === 'active').length;
+  const avg = Math.round(souls.reduce((a, s) => a + calcHealth(s), 0) / souls.length);
+  document.getElementById('statHealth').textContent = avg + '%';
+}
+
+// ─── Open Soul ────────────────────────────────────────────────────────────────
+async function openSoul(id) {
+  currentSoulId = id;
+  const soul = souls.find(s => s.id === id);
+  if (!soul) return;
+
+  // Update active card
+  document.querySelectorAll('.soul-card').forEach(c => c.classList.remove('active'));
+  const card = document.getElementById('card-' + id);
+  if (card) card.classList.add('active');
+
+  // Show editor
+  document.getElementById('editorEmpty').style.display = 'none';
+  const ec = document.getElementById('editorContent');
+  ec.style.display = 'flex';
+
+  // Populate fields
+  document.getElementById('edTitle').textContent = soul.name;
+  document.getElementById('edRole').textContent = soul.role;
+  document.getElementById('fName').value = soul.name || '';
+  document.getElementById('fEmail').value = soul.email || '';
+  document.getElementById('fRole').value = soul.role || '';
+  document.getElementById('fStatus').value = soul.status || 'active';
+  document.getElementById('fPersonality').value = soul.personality || '';
+  document.getElementById('fSystemPrompt').value = soul.system_prompt || '';
+
+  updateCharCount('fPersonality', 'persCount');
+  updateCharCount('fSystemPrompt', 'promptCount');
+
+  // Goals
+  renderGoals(soul.goals || []);
+
+  // Relationships
+  renderRelationships(soul.relationships || {});
+
+  // Config
+  renderConfig(soul.config || {});
+
+  // Load memories
+  loadMemories(id);
+
+  // Load preview
+  loadPromptPreview();
+}
+
+// ─── Goals ────────────────────────────────────────────────────────────────────
+function renderGoals(goals) {
+  const list = document.getElementById('goalsList');
+  list.innerHTML = '';
+  goals.forEach((g, i) => {
+    const row = document.createElement('div');
+    row.className = 'goal-item';
+    row.innerHTML = `
+      <span class="goal-drag">⠿</span>
+      <input type="text" value="${escHtml(g)}" data-goal-idx="${i}" oninput="debouncedPreview()">
+      <span class="goal-del" onclick="removeGoal(${i})">✕</span>
+    `;
+    list.appendChild(row);
+  });
+  document.getElementById('goalCount').textContent = '(' + goals.length + ')';
+}
+
+function addGoal() {
+  const goals = getGoals();
+  goals.push('');
+  renderGoals(goals);
+  // Focus last
+  const inputs = document.querySelectorAll('#goalsList input');
+  if (inputs.length) inputs[inputs.length - 1].focus();
+}
+
+function removeGoal(idx) {
+  const goals = getGoals();
+  goals.splice(idx, 1);
+  renderGoals(goals);
+}
+
+function getGoals() {
+  return Array.from(document.querySelectorAll('#goalsList input')).map(i => i.value).filter(v => v.trim());
+}
+
+// ─── Relationships ─────────────────────────────────────────────────────────────
+function renderRelationships(rels) {
+  const list = document.getElementById('relList');
+  list.innerHTML = '';
+  Object.entries(rels).forEach(([k, v]) => {
+    addRelRow(k, v);
+  });
+  updateRelCount();
+}
+
+function addRelRow(key = '', val = '') {
+  const list = document.getElementById('relList');
+  const row = document.createElement('div');
+  row.className = 'rel-item';
+  row.innerHTML = `
+    <div class="rel-key"><input type="text" value="${escHtml(key)}" placeholder="Agent name" oninput="updateRelCount();debouncedPreview()"></div>
+    <div class="rel-val"><input type="text" value="${escHtml(val)}" placeholder="Relationship description" oninput="debouncedPreview()"></div>
+    <span class="goal-del" onclick="this.parentElement.remove();updateRelCount()">✕</span>
+  `;
+  list.appendChild(row);
+}
+
+function addRelationship() { addRelRow(); }
+
+function getRels() {
+  const rels = {};
+  document.querySelectorAll('#relList .rel-item').forEach(row => {
+    const [k, v] = row.querySelectorAll('input');
+    if (k.value.trim()) rels[k.value.trim()] = v.value;
+  });
+  return rels;
+}
+
+function updateRelCount() {
+  const count = document.querySelectorAll('#relList .rel-item').length;
+  document.getElementById('relCount').textContent = '(' + count + ')';
+}
+
+// ─── Config ───────────────────────────────────────────────────────────────────
+function renderConfig(config) {
+  const grid = document.getElementById('configGrid');
+  grid.innerHTML = '';
+  Object.entries(config).forEach(([k, v]) => {
+    const item = document.createElement('div');
+    item.className = 'config-item';
+    item.innerHTML = `<span class="config-key">${k}</span><span class="config-val">${JSON.stringify(v)}</span>`;
+    grid.appendChild(item);
+  });
+}
+
+// ─── Char Count ──────────────────────────────────────────────────────────────
+function updateCharCount(fieldId, countId) {
+  const len = document.getElementById(fieldId).value.length;
+  const el = document.getElementById(countId);
+  if (fieldId === 'fPersonality') {
+    if (len < 200) { el.textContent = len + ' chars — ⚠ thin (aim for 500+)'; el.className = 'field-hint warn'; }
+    else if (len < 500) { el.textContent = len + ' chars — developing'; el.className = 'field-hint warn'; }
+    else { el.textContent = len + ' chars ✓'; el.className = 'field-hint ok'; }
+  } else {
+    if (len === 0) { el.textContent = '⚠ MISSING — agent has no operational instructions'; el.className = 'field-hint warn'; }
+    else if (len < 300) { el.textContent = len + ' chars — ⚠ thin (aim for 500+)'; el.className = 'field-hint warn'; }
+    else { el.textContent = len + ' chars ✓'; el.className = 'field-hint ok'; }
+  }
+}
+
+// ─── Save ────────────────────────────────────────────────────────────────────
+async function saveSoul() {
+  if (!currentSoulId) return;
+  const updates = {
+    name: document.getElementById('fName').value,
+    role: document.getElementById('fRole').value,
+    email: document.getElementById('fEmail').value || null,
+    personality: document.getElementById('fPersonality').value,
+    system_prompt: document.getElementById('fSystemPrompt').value,
+    goals: getGoals(),
+    relationships: getRels(),
+  };
+  try {
+    const res = await fetch('/api/souls/' + currentSoulId, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const updated = await res.json();
+    // Update local cache
+    const idx = souls.findIndex(s => s.id === currentSoulId);
+    if (idx >= 0) souls[idx] = updated;
+    renderRoster();
+    showToast('Soul saved ✓');
+  } catch (e) {
+    showToast('Save failed: ' + e.message, true);
+  }
+}
+
+// ─── Preview ─────────────────────────────────────────────────────────────────
+function debouncedPreview() {
+  clearTimeout(previewTimer);
+  previewTimer = setTimeout(loadPromptPreview, 600);
+}
+
+async function loadPromptPreview() {
+  if (!currentSoulId) return;
+  const preview = document.getElementById('previewBody');
+  const stats = document.getElementById('previewStats');
+  preview.textContent = 'Loading...';
+  try {
+    const res = await fetch('/api/souls/' + currentSoulId + '/prompt');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const text = data.prompt || data.systemPrompt || JSON.stringify(data, null, 2);
+    preview.textContent = text;
+    const chars = text.length;
+    const tokens = Math.round(chars / 4);
+    let warnHtml = '';
+    if (tokens > 8000) warnHtml = '<span class="warn">⚠ Very large prompt</span>';
+    else if (tokens > 4000) warnHtml = '<span class="warn">⚠ Large prompt</span>';
+    stats.innerHTML = `<span>${chars.toLocaleString()} chars</span><span>~${tokens.toLocaleString()} tokens</span>${warnHtml}`;
+  } catch (e) {
+    preview.textContent = 'Could not load preview: ' + e.message;
+    stats.innerHTML = '';
+  }
+}
+
+async function copyPrompt() {
+  const text = document.getElementById('previewBody').textContent;
+  await navigator.clipboard.writeText(text);
+  showToast('Copied ✓');
+}
+
+// ─── Memories ────────────────────────────────────────────────────────────────
+async function loadMemories(soulId) {
+  try {
+    const res = await fetch('/api/souls/' + soulId + '/memories?limit=50');
+    const mems = await res.json();
+    const label = document.getElementById('memCountLabel');
+    label.textContent = '(' + mems.length + ')';
+
+    const list = document.getElementById('memList');
+    if (!mems.length) {
+      list.innerHTML = '<div class="empty-state">No memories yet — add the first one below</div>';
+      return;
+    }
+    list.innerHTML = '';
+    mems.forEach(m => {
+      const date = new Date(m.created_at * 1000).toISOString().split('T')[0];
+      const item = document.createElement('div');
+      item.className = 'mem-item';
+      item.innerHTML = `
+        <div class="mem-item-meta">
+          <span class="mem-cat">${m.category}</span>
+          <span class="mem-imp">imp:${m.importance}</span>
+          <span class="mem-date">${date}</span>
+        </div>
+        <div class="mem-content">${escHtml(m.content)}</div>
+      `;
+      list.appendChild(item);
+    });
+  } catch (e) {
+    document.getElementById('memList').innerHTML = '<div class="empty-state">Error loading memories</div>';
+  }
+}
+
+async function saveMemory() {
+  if (!currentSoulId) return;
+  const content = document.getElementById('memContent').value.trim();
+  if (!content) return;
+  const body = {
+    category: document.getElementById('memCategory').value,
+    content,
+    importance: parseInt(document.getElementById('memImportance').value),
+    context: document.getElementById('memContext').value.trim() || undefined,
+  };
+  try {
+    const res = await fetch('/api/souls/' + currentSoulId + '/memories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    document.getElementById('memContent').value = '';
+    document.getElementById('memContext').value = '';
+    await loadMemories(currentSoulId);
+    showToast('Memory saved ✓');
+  } catch (e) {
+    showToast('Memory save failed: ' + e.message, true);
+  }
+}
+
+function switchMemTab(tab, el) {
+  document.querySelectorAll('.mem-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('memAddPane').style.display = tab === 'add' ? 'flex' : 'none';
+  document.getElementById('memViewPane').style.display = tab === 'view' ? 'block' : 'none';
+  if (tab === 'view' && currentSoulId) loadMemories(currentSoulId);
+}
+
+// ─── Utils ────────────────────────────────────────────────────────────────────
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = isError ? 'show error' : 'show';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.className = '', 2500);
+}
+
+// ─── Boot ─────────────────────────────────────────────────────────────────────
+loadSouls();
+</script>
+</body>
+</html>
