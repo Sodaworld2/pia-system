@@ -536,3 +536,84 @@ Mic left the session autonomous. Goal: fully diagnose and fix SDK agent spawn (c
 
 ### Desktop App Impact
 No new deps. Pure logic fixes. Auto-restart behavior fix is server-side.
+
+---
+
+## Session 7: Autonomous Bug Hunt + Dashboard Records/Calendar
+
+**Context**: Mic granted full control. Session continues with all fixes deployed, still no API credits.
+
+### Bugs Found and Fixed (No API Credits Needed)
+
+**Bug 5 — Auth middleware bypass (FIXED — commit cd34fb2)**
+- `validateApiToken` mounted at `app.use('/api', ...)` → `req.path` is relative (e.g. `/files/list`)
+- Old skip check: `!req.path.startsWith('/api')` was **always true** → auth bypassed for ALL requests
+- Wrong tokens were accepted exactly like correct tokens
+- Fix: use `req.originalUrl.startsWith('/api/dao/auth')` only; removed broken health-check bypass
+- Verified: no-token → 401, wrong-token → 401, correct-token → 200
+
+**Bug 6 — `taskSucceeded` scope error (FIXED — commit cd34fb2)**
+- `taskSucceeded` declared as local `let` in `runSdkMode()` but referenced in `handleSdkMessage()` (separate method)
+- TypeScript error: "Cannot find name 'taskSucceeded'" at line 758
+- Fix: moved to `session.taskSucceeded?: boolean` on the `AgentSession` interface
+
+**Bug 7 — FisherService uses `require()` in ESM module (FIXED — commit cd34fb2)**
+- `buildEliyahuPrompt()` used `require('../db/database.js')` — fails in ESM
+- Fix: `await import('../db/database.js')`, made method `async`, updated `scheduleJob()` signature
+
+**Bug 8 — FisherService/AutonomousWorker invalid model ID (FIXED — commit 981f678)**
+- `claude-sonnet-4-5-20250929` was NEVER a valid model — would cause API 400 for ALL cron jobs
+- Fixed across 10 files: fisher-service, autonomous-worker, ai-router, claude-client, cost-router, multi-model-panel, ai.ts, work-sessions, browser-session, cost-tracker
+- Fixed to: `claude-sonnet-4-6`
+
+**Bug 9 — CalendarSpawnService marks events completed before session finishes (FIXED — commit 39671fc)**
+- `db.prepare("UPDATE calendar_events SET status = 'completed'...").run()` fired right after `manager.spawn()`
+- Session was still running! Status should only update when session actually completes or fails
+- Fix: attach `manager.on('complete', ...)` and `manager.on('error', ...)` event listeners keyed to session ID
+
+**Bug 10 — Doctor creates duplicate alerts every 60s (FIXED — commit 05a48cb)**
+- For each errored agent or offline machine, Doctor created a new alert row EVERY 60s → 1919 rows in 1 day
+- Fix: Added `lastAlertedAt: Map<string, number>` — re-alert TTL = 10 minutes per (type:targetId)
+- Also: cleaned errrored M2-activation agent in DB (status → completed), deleted 1854 stale alerts
+
+**Bug 11 — Tim Buc can't file SDK sessions (FIXED — commit ab89f82)**
+- AgentSessionManager emits `complete` in two shapes: SDK mode has NO `result` object
+  - API mode: `{ sessionId, result: { success, costUsd, toolCalls, entries } }`
+  - SDK mode: `{ sessionId }` ← no result!
+- Tim Buc called `evt.result.success` → TypeError, silently ignored → zero SDK sessions ever filed
+- Fix: fall back to `session.cost`, `session.toolCalls`, `session.outputBuffer` when `evt.result` is undefined
+- Also: use `session.config.soulId` as agent name when available
+
+### Features Added
+
+**Records + Calendar in Mission Control (commit 04785a4)**
+- 4 new API routes in `fisher.ts`:
+  - `GET  /api/fisher/records` — Tim Buc filings (last 50 agent_records)
+  - `GET  /api/fisher/calendar` — upcoming calendar_events
+  - `POST /api/fisher/calendar` — create scheduled agent run
+  - `DELETE /api/fisher/calendar/:id` — cancel event
+- **Tim Buc Records panel** in right sidebar: shows all filings (agent, project, verdict, score, cost, timestamp)
+- **Calendar panel** in right sidebar: shows upcoming events, overdue highlighting, per-event cancel
+- **Schedule modal**: soul selector, task textarea, datetime-local picker, optional JSON context
+
+### Total Git Commits This Session
+| Hash | What |
+|---|---|
+| `cd34fb2` | fix: auth bypass + taskSucceeded scope + fisher ESM |
+| `981f678` | fix: invalid model IDs across 10 files |
+| `39671fc` | fix: CalendarSpawn premature completed status |
+| `04785a4` | feat: Records + Calendar in Mission Control |
+| `05a48cb` | fix: Doctor alert deduplication |
+| `ab89f82` | fix: Tim Buc SDK session filing |
+
+### What Remains (Mic Action Needed)
+| Action | Priority | Notes |
+|---|---|---|
+| **Add Anthropic credits** | 🔴 CRITICAL | console.anthropic.com/settings/billing — ALL SDK agent spawns blocked until fixed |
+| **M2 git pull + pm2 restart** | 🔴 HIGH | Gets all today's fixes |
+| SENDGRID_API_KEY in .env | ⚠️ MEDIUM | For Eliyahu email service |
+| Ziggi agent in agents table | ⚠️ MEDIUM | Not in DB — FK constraint will fail if Fisher tries to assign Ziggi tasks |
+
+### Desktop App Impact
+No new native deps. Records/Calendar API routes will be needed by React UI. Model ID fix is critical — prevents 400 errors on all AI calls.
+
