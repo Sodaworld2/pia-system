@@ -167,6 +167,7 @@ export interface AgentSession {
   errorMessage?: string;
   claudeSessionId?: string;  // Claude CLI session ID for --resume
   restartCount: number;
+  taskSucceeded?: boolean;   // Set by handleSdkMessage result handler; checked in runSdkMode catch block
 }
 
 // ---------------------------------------------------------------------------
@@ -322,7 +323,8 @@ export class AgentSessionManager extends EventEmitter {
     // Track whether the SDK delivered a successful result message.
     // The Claude CLI sometimes exits with code 1 even after a successful result —
     // in that case, we should treat the session as complete, not restart it.
-    let taskSucceeded = false;
+    // Stored on session so handleSdkMessage() (separate method) can set it.
+    session.taskSucceeded = false;
 
     try {
       // canUseTool bridges SDK permission requests → PromptManager → UI
@@ -572,7 +574,7 @@ export class AgentSessionManager extends EventEmitter {
       // If the CLI exited with a non-zero code AFTER delivering a successful result,
       // treat it as a clean completion. The Claude CLI 0.2.50 exits code 1 on shutdown
       // even when the task completed successfully — this is a known CLI quirk.
-      if (taskSucceeded && msg.includes('process exited with code')) {
+      if (session.taskSucceeded && msg.includes('process exited with code')) {
         logger.info(`[SDK] Child exited code≠0 but task already succeeded — treating as complete`);
         this.setStatus(session, 'idle');
         pm.addJournalEntry(session.id, 'output', 'Task completed. Ready for follow-up messages.');
@@ -755,7 +757,7 @@ export class AgentSessionManager extends EventEmitter {
           // Mark task as successfully completed — the CLI sometimes exits with code 1
           // even after delivering a clean result, so we use this flag to detect that case
           // and avoid a false restart.
-          taskSucceeded = true;
+          session.taskSucceeded = true;
         }
 
         this.persistSession(session);

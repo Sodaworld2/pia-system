@@ -54,7 +54,7 @@ export class FisherService {
       memoryCron:    config?.memoryCron    ?? '0 3 * * 0',
       timezone:      config?.timezone      ?? 'Asia/Jerusalem',
       maxBudgetPerJob: config?.maxBudgetPerJob ?? 1.0,
-      model:         config?.model         ?? 'claude-sonnet-4-5-20250929',
+      model:         config?.model         ?? 'claude-sonnet-4-6',
     };
   }
 
@@ -227,7 +227,7 @@ export class FisherService {
     name: string,
     cronExpr: string,
     soulId: string,
-    promptBuilder: () => string,
+    promptBuilder: () => string | Promise<string>,
     onComplete?: (result: Awaited<ReturnType<typeof runAutonomousTask>>) => Promise<void>,
   ): void {
     if (!cron.validate(cronExpr)) {
@@ -242,7 +242,7 @@ export class FisherService {
         try {
           const result = await runAutonomousTask({
             id: nanoid(),
-            description: promptBuilder(),
+            description: await promptBuilder(),
             soulId,
             model: this.config.model,
             maxBudgetUsd: this.config.maxBudgetPerJob,
@@ -404,14 +404,15 @@ Be meticulous. Flag architecture smells. Stay in character as Ziggi.
 End with your signature: "Ziggi's Verdict: [PASS/CONCERN/FAIL] — [one sentence]"`;
   }
 
-  private buildEliyahuPrompt(): string {
+  private async buildEliyahuPrompt(): Promise<string> {
     const dateStr = new Date().toISOString().split('T')[0];
     const yesterday = Math.floor((Date.now() - 86400000) / 1000);
 
-    // Pull last 24h agent_records from Tim Buc's archive
+    // Pull last 24h agent_records from Tim Buc's archive (sync — DB already initialized)
     let recentRecords: string = '(no records yet — Tim Buc may not have filed any sessions)';
     try {
-      const { getDatabase } = require('../db/database.js');
+      // Note: getDatabase() is sync — use direct import at module level to avoid require() in ESM
+      const { getDatabase } = await import('../db/database.js');
       const db = getDatabase();
       const rows = db.prepare(`
         SELECT agent, project, task_summary, cost_usd, tool_calls,
