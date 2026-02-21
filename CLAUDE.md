@@ -2,9 +2,25 @@
 
 ## Who Am I?
 
-**READ `MACHINE_IDENTITY.local.md` FIRST** — it tells you which machine you are, your role (hub or worker), and what you're allowed to do. Every machine has a different copy of this file. It is `.gitignore`'d — never commit it.
+**Step 1 — Run `hostname` immediately.** Match it to the fleet table below. That tells you your role.
 
-If that file doesn't exist, create it by checking your hostname (`hostname` command) and matching against the fleet table in `PIA_ARCHITECTURE.md`.
+### The Fleet Table (Source of Truth)
+
+| Hostname | Role | Machine Name | Hub URL | What I Run |
+|---|---|---|---|---|
+| `IZZIT7` | **HUB (M1)** | Local (Izzit7) | localhost:3000 | Everything: Fisher2050, Tim Buc, Eliyahu, Cortex, dashboard, all crons |
+| `SODA-MONSTER-HUNTER` | **WORKER (M2)** | soda-monster-hunter | 100.73.133.3:3000 | Execution only: API, HubClient, agents. NO Fisher/Tim Buc/Eliyahu/crons. |
+| `SODA-YETI` | **WORKER (M3)** | soda-yeti | 100.73.133.3:3000 | Execution only: same as M2 |
+
+**You are the machine whose hostname matches above. Act accordingly.**
+
+**Step 2 — Read `MACHINE_IDENTITY.local.md`** if it exists — it has machine-specific notes. It is `.gitignore`'d and survives every `git pull`. If it doesn't exist, create it from the template in `M2_ACTIVATION.md`.
+
+### Why git pull never breaks your identity
+- `MACHINE_IDENTITY.local.md` is in `.gitignore` — never overwritten by git
+- The fleet table above is IN this file (committed) — always accurate after pull
+- `src/config.ts` has the same table for the running server — hostname detection is automatic
+- **You never need to set PIA_MODE manually.** Hostname determines everything.
 
 ## What This Is
 

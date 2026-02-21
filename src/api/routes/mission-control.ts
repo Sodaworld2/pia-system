@@ -4,12 +4,13 @@
  */
 
 import { Router, Request, Response } from 'express';
+import os from 'os';
 import { nanoid } from 'nanoid';
 import { createLogger } from '../../utils/logger.js';
 import { getAgentSessionManager } from '../../mission-control/agent-session.js';
 import { getPromptManager } from '../../mission-control/prompt-manager.js';
 import { getDatabase } from '../../db/database.js';
-import { getAllMachines, deleteMachine, cleanupStaleMachines } from '../../db/queries/machines.js';
+import { getAllMachines, deleteMachine, cleanupStaleMachines, getMachineByHostname } from '../../db/queries/machines.js';
 import { getAllAgents, getAgentsByMachine } from '../../db/queries/agents.js';
 
 const router = Router();
@@ -80,8 +81,9 @@ router.post('/agents', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Remote spawn: if machineId is not 'local', forward to the remote machine
-    if (machineId && machineId !== 'local') {
+    // Remote spawn: if machineId is not 'local' AND not this machine's own ID, forward to the remote machine
+    const isLocal = !machineId || machineId === 'local' || machineId === localMachineId();
+    if (machineId && !isLocal) {
       try {
         const { getWebSocketServer } = await import('../../tunnel/websocket-server.js');
         const ws = getWebSocketServer();
@@ -586,8 +588,6 @@ router.get('/machines/:id/files/search', async (req: Request, res: Response): Pr
 // Helper: get local machine ID for comparison
 function localMachineId(): string {
   try {
-    const { getMachineByHostname } = require('../../db/queries/machines.js');
-    const os = require('os');
     const machine = getMachineByHostname(os.hostname());
     return machine?.id || '';
   } catch { return ''; }
@@ -813,16 +813,20 @@ router.get('/agents/:id/journal', (req: Request, res: Response) => {
  */
 router.delete('/agents/:id', (req: Request, res: Response) => {
   try {
+    const agentId = req.params.id as string;
     const mgr = getAgentSessionManager();
-    const session = mgr.getSession(req.params.id as string);
+    const session = mgr.getSession(agentId);
 
-    if (!session) {
-      res.status(404).json({ error: 'Agent session not found' });
-      return;
+    if (session) {
+      // Live in-memory session — kill it (also removes from map)
+      mgr.kill(agentId);
+    } else {
+      // Stale/remote agent — purge from DB directly
+      const db = getDatabase();
+      db.prepare('DELETE FROM agents WHERE id = ?').run(agentId);
     }
 
-    mgr.kill(req.params.id as string);
-    res.json({ success: true, message: `Agent ${req.params.id as string} killed` });
+    res.json({ success: true, message: `Agent ${agentId} removed` });
   } catch (error) {
     logger.error(`Failed to kill agent: ${error}`);
     res.status(500).json({ error: 'Failed to kill agent' });

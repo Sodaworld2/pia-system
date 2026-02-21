@@ -438,12 +438,25 @@ export class AgentSessionManager extends EventEmitter {
           // With ELECTRON_RUN_AS_NODE=1 (from getNodeSpawnEnv()), it acts as Node.js.
           // Use our own stored cwd — the SDK strips backslashes from config.cwd on Windows
           const spawnCwd = session.config.cwd || config.cwd || process.cwd();
-          logger.info(`[SDK spawn] command=${config.command} args=${JSON.stringify(config.args?.slice(0, 5))} cwd=${spawnCwd} execPath=${process.execPath}`);
-          const child = spawn(process.execPath, config.args || [], {
+          // Use config.command directly (SDK resolves to bundled cli.js in script mode,
+          // or native claude binary in native mode). In Electron packaged mode, override
+          // with process.execPath + ELECTRON_RUN_AS_NODE=1 (Electron acts as Node.js).
+          const spawnCmd = !!process.env.ELECTRON_PACKAGED ? process.execPath : config.command;
+          // Enable SDK debug output via env var — writes extra info to stderr
+          spawnEnv.DEBUG_CLAUDE_AGENT_SDK = '1';
+          logger.info(`[SDK spawn] spawnCmd=${spawnCmd} args=${JSON.stringify(config.args)} cwd=${spawnCwd} CLAUDECODE=${spawnEnv.CLAUDECODE} ANTHROPIC_KEY=${spawnEnv.ANTHROPIC_API_KEY ? 'SET' : 'MISSING'}`);
+          const child = spawn(spawnCmd, config.args || [], {
             cwd: spawnCwd,
             env: spawnEnv,
             stdio: ['pipe', 'pipe', 'pipe'],
           });
+          // Capture stderr — DEBUG_CLAUDE_AGENT_SDK=1 makes cli.js write diagnostic info here
+          if (child.stderr) {
+            child.stderr.on('data', (data: Buffer) => {
+              const text = data.toString().trim();
+              if (text) logger.warn(`[SDK child stderr] ${text.substring(0, 1000)}`);
+            });
+          }
           child.on('error', (err: Error) => {
             logger.error(`Child process error: ${err.message} (code: ${(err as any).code})`);
           });
@@ -457,7 +470,9 @@ export class AgentSessionManager extends EventEmitter {
         // Load CLAUDE.md + project settings for context.
         // Auto + Yolo use bypassPermissions so settings permission rules don't interfere.
         // Only skip if explicitly disabled or yolo (yolo agents should be zero-friction).
-        settingSources: (session.config.approvalMode === 'yolo' || session.config.loadProjectSettings === false) ? [] : ['project'],
+        // SDK bug: empty array [] is truthy → SDK pushes "--setting-sources ''" → cli.js crashes.
+        // Use undefined to skip the flag entirely when no sources are needed.
+        settingSources: (session.config.approvalMode === 'yolo' || session.config.loadProjectSettings === false) ? undefined : ['project'],
         // Stability: File checkpointing for rewindFiles() rollback
         enableFileCheckpointing: session.config.enableCheckpointing !== false,
         // Stability: Auto-fallback to cheaper model on errors/rate limits
@@ -1091,7 +1106,8 @@ export class AgentSessionManager extends EventEmitter {
     this.persistSession(session);
 
     this.emit('complete', { sessionId, killed: true });
-    logger.info(`Agent session ${sessionId} killed`);
+    this.sessions.delete(sessionId);
+    logger.info(`Agent session ${sessionId} killed and removed`);
   }
 
   getSession(sessionId: string): AgentSession | undefined {

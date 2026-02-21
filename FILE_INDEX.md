@@ -86,7 +86,9 @@
 | `AGENT_PROMPT_VISION_PRO_EXPLORATION.md` | Prompt: Vision Pro spatial view research |
 | `MISSION_CONTROL_AGENT_BRIEFING.md` | Mission Control specific briefing |
 | `DAO_AGENT_BRIEFING.md` | DAO agent briefing |
-| `MACHINE_2_SETUP_BRIEFING.md` | Machine 2 (soda-monster-hunter) setup instructions |
+| `M2_ACTIVATION.md` | **CURRENT** — M2 activation guide: identity, services, steps, troubleshooting (Feb 21) |
+| `setup-machine.sh` | **NEW** — Run once per machine: auto-detects hostname, creates MACHINE_IDENTITY.local.md |
+| `MACHINE_2_SETUP_BRIEFING.md` | Machine 2 (soda-monster-hunter) setup instructions (older) |
 | `MACHINE_2_INSTRUCTIONS.md` | Machine 2 detailed instructions (v2) |
 | `MACHINE_3_INSTRUCTIONS.md` | Machine 3 detailed instructions (v2) |
 | `MACHINE_SETUP_GUIDE.md` | General machine setup guide |

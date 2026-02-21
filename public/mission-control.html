@@ -2022,7 +2022,7 @@ function renderMachines() {
         </div>
         ${mAgents.length > 0 ? `
           <div class="machine-agents">
-            ${mAgents.map(a => `<span class="agent-chip ${a.status}">${esc(a.name)}: ${a.status}</span>`).join('')}
+            ${mAgents.map(a => `<span class="agent-chip ${a.status}" onclick="event.stopPropagation();selectAgent('${esc(a.id)}')" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;">${esc(a.name)}: ${a.status}<button onclick="event.stopPropagation();killAgentById('${esc(a.id)}')" style="background:none;border:none;color:inherit;opacity:.6;cursor:pointer;font-size:11px;padding:0 2px;line-height:1;" title="Kill this agent">&times;</button></span>`).join('')}
           </div>
         ` : ''}
         <div class="machine-mode">
@@ -2795,6 +2795,19 @@ async function fetchGitBranch() {
   }
 }
 
+// ── KILL SPECIFIC AGENT BY ID ──
+async function killAgentById(agentId) {
+  try {
+    await api(`/api/mc/agents/${agentId}`, { method: 'DELETE' });
+    showToast('Agent removed');
+    if (selectedAgent === agentId) selectedAgent = null;
+    await fetchAgents();
+    renderAll();
+  } catch (e) {
+    showToast('Kill failed: ' + (e.message || e));
+  }
+}
+
 // ── KILL ALL / KILL DONE / KILL ERRORS (Change 4) ──
 async function killAll() {
   if (!agents.length) { showToast('No agents to kill'); return; }
@@ -3414,6 +3427,7 @@ function renderGridView() {
             ${branchHtml}
             <span class="badge mode-${a.mode[0]}">${a.mode}</span>
             <span class="badge cost">$${(a.cost || 0).toFixed(2)}</span>
+            <button onclick="event.stopPropagation();killAgentById('${esc(a.id)}')" style="background:#2a0f0f;border:1px solid #f85149;border-radius:4px;color:#f85149;font-size:11px;font-weight:700;padding:1px 7px;cursor:pointer;line-height:1.4;" title="Kill agent">&times;</button>
           </div>
         </div>
         <div class="grid-tile-body" id="gridBody-${esc(a.id)}">

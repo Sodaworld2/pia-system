@@ -2276,3 +2276,71 @@ Run the full loop 5 consecutive business days unattended. Fix what breaks. This 
 
 ### Desktop App Impact
 No native deps added. New tables (calendar_events, agent_records, agent_messages) need API routes and React widgets. PM2 production mode changes how the process is managed — Electron packaging needs to account for PM2 or use its own process manager.
+
+## Session 32: Autonomous Mode — M2 Fix + Tim Buc + Parallel Agents
+
+### What Kicked This Off
+Mic challenged: "use what we built, work autonomously, keep a journal". Handing over to autonomous operation.
+
+### Actions Log
+- Killed 4 stale error agents from grid (haiku test agents)
+- **Root cause found for M2 agent failures**: `ecosystem.config.cjs` had `PIA_MODE: 'hub'` hardcoded in PM2 env, overriding fleet detection on M2
+- Fixed: removed `PIA_MODE` from PM2 env, fleet detection now authoritative
+- Fixed: `config.ts` — `fleetEntry?.mode` now takes priority over process.env.PIA_MODE (PM2 can't override hostname-based identity)
+- Committed + pushed both fixes (commit 4aada49)
+- M2 needs: `git pull && npx pm2 restart pia-hub --update-env`
+
+### Now Running In Parallel
+1. Deep repo explorer agent — full codebase audit, gap analysis vs V1_DEFINITION, top 10 suggestions
+2. Tim Buc wiring build — starting now (session:ended event → agent_records row)
+
+### Next Build Queue (Tim Buc → Email → Eliyahu)
+See below for Tim Buc implementation plan.
+
+### Session 32 Builds (Autonomous Run)
+
+| Item | Status | Commit |
+|---|---|---|
+| Tim Buc service | ✅ DONE | c89003d |
+| Email outbound (SendGrid) | ✅ DONE | 9a526ca |
+| Eliyahu 6am email | ✅ DONE | 9a526ca |
+| agent_messages TTL cleanup | ✅ DONE | 597ccae |
+| M2 fleet auto-detection | ✅ DONE | dd07ba9 |
+| PM2 PIA_MODE override fix | ✅ DONE | 4aada49 |
+
+### V1 Completion Status (Updated)
+| Item | Status |
+|---|---|
+| Fisher2050 in main process | ✅ |
+| Owl/task persistence | ✅ |
+| PM2 | ✅ |
+| DB migrations (all tables) | ✅ |
+| CalendarSpawnService | ✅ |
+| Soul system (12 souls) | ✅ |
+| Tim Buc wiring | ✅ |
+| Email outbound service | ✅ |
+| Eliyahu email | ✅ |
+| agent_messages TTL | ✅ |
+| Fleet auto-detection | ✅ |
+| ANTHROPIC_API_KEY | ✅ (in .env) |
+| SENDGRID_API_KEY | ⚠️ needs user action |
+| M2 agent spawning working | 🟡 fix pushed, M2 needs git pull |
+| 5-day soak test | 🔴 not started |
+
+### Files Changed This Session
+| File | Change |
+|---|---|
+| src/services/tim-buc-service.ts | NEW — session archivist |
+| src/services/email-service.ts | NEW — SendGrid wrapper |
+| src/services/fisher-service.ts | Eliyahu email + TTL cron |
+| src/index.ts | Tim Buc wired |
+| src/config.ts | Fleet detection authoritative over PM2 env |
+| ecosystem.config.cjs | Removed PIA_MODE override |
+
+### Desktop App Impact
+No native deps. Tim Buc + email service are pure TypeScript. agent_records table now populating — needs React widget in dashboard to display.
+
+### What Still Needs User Action
+1. `SENDGRID_API_KEY` in .env to activate email sending
+2. `EMAIL_MIC` in .env (default: mic@sodalabs.ai)
+3. M2: `git pull && npx pm2 restart pia-hub --update-env`
