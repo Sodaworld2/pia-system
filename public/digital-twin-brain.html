@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Digital Twin Brain — Architecture &amp; Flow</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #08080c;
+    color: #d0d0d0;
+    font-family: 'Outfit', sans-serif;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+  }
+
+  /* ── Globals ── */
+  :root {
+    --purple: #a78bfa; --purple-dim: rgba(139,92,246,0.15);
+    --pink: #f472b6;   --pink-dim: rgba(236,72,153,0.12);
+    --amber: #fbbf24;  --amber-dim: rgba(245,158,11,0.12);
+    --green: #4ade80;  --green-dim: rgba(34,197,94,0.12);
+    --cyan: #22d3ee;   --cyan-dim: rgba(6,182,212,0.12);
+    --red: #f87171;    --red-dim: rgba(239,68,68,0.12);
+    --blue: #60a5fa;   --blue-dim: rgba(96,165,250,0.12);
+    --card-bg: rgba(255,255,255,0.025);
+    --card-border: rgba(255,255,255,0.07);
+  }
+
+  /* ── Hero ── */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center;
+    padding: 2rem;
+    position: relative;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    width: 700px; height: 700px;
+    background: radial-gradient(circle, rgba(139,92,246,0.1) 0%, rgba(236,72,153,0.05) 40%, transparent 70%);
+    top: -150px; left: 50%; transform: translateX(-50%);
+    pointer-events: none;
+  }
+  .hero h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 800;
+    background: linear-gradient(135deg, #c084fc, #f472b6, #fbbf24);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1.1;
+    margin-bottom: 1.2rem;
+  }
+  .hero .sub {
+    font-size: clamp(1rem, 2.5vw, 1.35rem);
+    color: #888;
+    max-width: 620px;
+    line-height: 1.7;
+  }
+  .hero .tag {
+    display: inline-block;
+    margin-top: 1.5rem;
+    padding: 0.4rem 1rem;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    background: var(--purple-dim);
+    border: 1px solid rgba(139,92,246,0.3);
+    color: var(--purple);
+  }
+  .scroll-hint {
+    position: absolute; bottom: 2rem;
+    color: #444; font-size: 0.85rem;
+    animation: bounce 2s infinite;
+  }
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(8px)} }
+
+  /* ── Sections ── */
+  section { padding: 4rem 2rem; max-width: 1100px; margin: 0 auto; }
+  .sec-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(1.7rem, 4vw, 2.6rem);
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+  }
+  .sec-sub { color: #777; font-size: 1.05rem; margin-bottom: 2.5rem; max-width: 700px; line-height: 1.6; }
+
+  /* ── Divider ── */
+  .divider {
+    height: 1px; margin: 2rem auto; max-width: 1100px;
+    background: linear-gradient(90deg, transparent, rgba(139,92,246,0.25), transparent);
+  }
+
+  /* ── Brain SVG: The Architecture ── */
+  .brain-wrap {
+    width: 100%; max-width: 900px; margin: 0 auto 3rem;
+    position: relative;
+  }
+  .brain-wrap svg { width: 100%; height: auto; display: block; }
+
+  /* ── Layer Cards ── */
+  .layer-row {
+    display: grid; gap: 1.5rem; margin: 2rem 0;
+  }
+  .layer-row.three { grid-template-columns: repeat(3, 1fr); }
+  .layer-row.two { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 700px) { .layer-row.three, .layer-row.two { grid-template-columns: 1fr; } }
+
+  .layer-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 1.6rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s, transform 0.2s;
+  }
+  .layer-card:hover { transform: translateY(-2px); }
+  .layer-card .lc-icon { font-size: 1.8rem; margin-bottom: 0.6rem; }
+  .layer-card h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.1rem; font-weight: 600;
+    margin-bottom: 0.4rem;
+  }
+  .layer-card .lc-tag {
+    display: inline-block; padding: 2px 10px;
+    border-radius: 50px; font-size: 0.7rem; font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+  .layer-card p { color: #999; font-size: 0.9rem; line-height: 1.6; }
+  .layer-card .detail { color: #666; font-size: 0.8rem; margin-top: 0.6rem; line-height: 1.5; font-style: italic; }
+
+  /* ── Flow Pipeline ── */
+  .pipeline { margin: 3rem 0; }
+  .pipe-step {
+    display: flex; gap: 1.2rem; align-items: flex-start;
+  }
+  .pipe-line { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+  .pipe-dot {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.95rem; flex-shrink: 0;
+  }
+  .pipe-connector { width: 2px; height: 40px; }
+  .pipe-content { padding-bottom: 1.8rem; }
+  .pipe-content h4 { font-family: 'Space Grotesk', sans-serif; font-size: 1.05rem; font-weight: 600; margin-bottom: 0.25rem; }
+  .pipe-content p { color: #999; font-size: 0.9rem; line-height: 1.6; }
+  .pipe-content .tag-sm {
+    display: inline-block; margin-top: 0.4rem; padding: 3px 10px;
+    border-radius: 50px; font-size: 0.75rem; font-weight: 500;
+  }
+
+  /* Theme colors */
+  .t-purple .pipe-dot { background: var(--purple-dim); color: var(--purple); border: 2px solid rgba(139,92,246,0.4); }
+  .t-purple .pipe-connector { background: rgba(139,92,246,0.15); }
+  .t-purple .tag-sm { background: var(--purple-dim); color: #c4b5fd; }
+  .t-pink .pipe-dot { background: var(--pink-dim); color: var(--pink); border: 2px solid rgba(236,72,153,0.4); }
+  .t-pink .pipe-connector { background: rgba(236,72,153,0.15); }
+  .t-pink .tag-sm { background: var(--pink-dim); color: #f9a8d4; }
+  .t-amber .pipe-dot { background: var(--amber-dim); color: var(--amber); border: 2px solid rgba(245,158,11,0.4); }
+  .t-amber .pipe-connector { background: rgba(245,158,11,0.15); }
+  .t-amber .tag-sm { background: var(--amber-dim); color: #fcd34d; }
+  .t-green .pipe-dot { background: var(--green-dim); color: var(--green); border: 2px solid rgba(34,197,94,0.4); }
+  .t-green .pipe-connector { background: rgba(34,197,94,0.15); }
+  .t-green .tag-sm { background: var(--green-dim); color: #86efac; }
+  .t-cyan .pipe-dot { background: var(--cyan-dim); color: var(--cyan); border: 2px solid rgba(6,182,212,0.4); }
+  .t-cyan .pipe-connector { background: rgba(6,182,212,0.15); }
+  .t-cyan .tag-sm { background: var(--cyan-dim); color: #67e8f9; }
+  .t-red .pipe-dot { background: var(--red-dim); color: var(--red); border: 2px solid rgba(239,68,68,0.4); }
+  .t-red .pipe-connector { background: rgba(239,68,68,0.15); }
+  .t-red .tag-sm { background: var(--red-dim); color: #fca5a5; }
+  .t-blue .pipe-dot { background: var(--blue-dim); color: var(--blue); border: 2px solid rgba(96,165,250,0.4); }
+  .t-blue .pipe-connector { background: rgba(96,165,250,0.15); }
+  .t-blue .tag-sm { background: var(--blue-dim); color: #93c5fd; }
+
+  /* ── Callout ── */
+  .callout {
+    padding: 1.5rem 2rem; border-radius: 16px; margin: 2rem 0;
+  }
+  .callout.purple { background: var(--purple-dim); border: 1px solid rgba(139,92,246,0.25); }
+  .callout.pink { background: var(--pink-dim); border: 1px solid rgba(236,72,153,0.25); }
+  .callout.amber { background: var(--amber-dim); border: 1px solid rgba(245,158,11,0.25); }
+  .callout h3 { font-family: 'Space Grotesk', sans-serif; font-size: 1.05rem; margin-bottom: 0.4rem; }
+  .callout p { font-size: 0.9rem; color: #bbb; line-height: 1.6; }
+
+  /* ── Schema Table ── */
+  .schema-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.85rem;
+  }
+  .schema-table th {
+    text-align: left;
+    padding: 0.7rem 1rem;
+    background: rgba(139,92,246,0.08);
+    border-bottom: 1px solid rgba(139,92,246,0.2);
+    color: var(--purple);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+  }
+  .schema-table td {
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: #aaa;
+  }
+  .schema-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .schema-table code {
+    background: rgba(139,92,246,0.1);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    color: #c4b5fd;
+  }
+
+  /* ── Pulse ── */
+  @keyframes pulse { 0%,100%{r:5;opacity:0.7} 50%{r:8;opacity:1} }
+  .pulse { animation: pulse 2.5s ease-in-out infinite; }
+
+  /* ── Footer ── */
+  footer {
+    text-align: center; padding: 3rem 2rem; color: #444;
+    font-size: 0.82rem; border-top: 1px solid rgba(255,255,255,0.04);
+    margin-top: 3rem;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════ HERO ═══════════════════════════════════ -->
+<div class="hero">
+  <h1>The Digital Twin Brain</h1>
+  <p class="sub">
+    A system that learns to think like a specific person. Not by copying them — by understanding their patterns, values, decisions, and boundaries. Then reasoning with that knowledge.
+  </p>
+  <span class="tag">Architecture + Data Flow</span>
+  <div class="scroll-hint">Scroll to see the brain</div>
+</div>
+
+<!-- ═══════════════════ 1. THE BRAIN — TOP-DOWN VIEW ═════════════════════════ -->
+<section>
+  <div class="sec-title" style="background:linear-gradient(135deg,#c084fc,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">
+    1. The Brain — Top-Down View
+  </div>
+  <p class="sec-sub">
+    The brain has 7 distinct organs. Each does one job. Together, they think.
+  </p>
+
+  <div class="brain-wrap">
+    <svg viewBox="0 0 900 620" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="bg-glow" cx="50%" cy="40%" r="55%">
+          <stop offset="0%" stop-color="rgba(139,92,246,0.06)"/>
+          <stop offset="100%" stop-color="transparent"/>
+        </radialGradient>
+        <filter id="glow"><feGaussianBlur stdDeviation="4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="rgba(255,255,255,0.2)"/>
+        </marker>
+      </defs>
+      <rect width="900" height="620" fill="url(#bg-glow)"/>
+
+      <!-- ── OUTER BRAIN SHAPE ── -->
+      <ellipse cx="450" cy="310" rx="400" ry="270" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1" stroke-dasharray="6,8"/>
+
+      <!-- ═══ TOP ROW: INPUT ═══ -->
+      <!-- 1. Raw Input (Top Left) -->
+      <g transform="translate(80,60)">
+        <rect width="200" height="100" rx="16" fill="rgba(6,182,212,0.08)" stroke="rgba(6,182,212,0.3)" stroke-width="1.5"/>
+        <circle cx="25" cy="25" r="5" fill="#22d3ee" class="pulse"/>
+        <text x="100" y="38" text-anchor="middle" fill="#67e8f9" font-family="Space Grotesk" font-size="13" font-weight="700">RAW INPUT</text>
+        <text x="100" y="58" text-anchor="middle" fill="#1a8fa0" font-family="Outfit" font-size="10">Documents, emails, notes</text>
+        <text x="100" y="73" text-anchor="middle" fill="#1a8fa0" font-family="Outfit" font-size="10">meetings, decisions, artifacts</text>
+        <text x="100" y="92" text-anchor="middle" fill="#0e5f6e" font-family="Outfit" font-size="9">Everything the person produces</text>
+      </g>
+
+      <!-- Arrow: Input → Ingestion -->
+      <line x1="280" y1="110" x2="350" y2="110" stroke="rgba(255,255,255,0.15)" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+      <!-- 2. Ingestion + Tagging -->
+      <g transform="translate(360,60)">
+        <rect width="200" height="100" rx="16" fill="rgba(96,165,250,0.08)" stroke="rgba(96,165,250,0.3)" stroke-width="1.5"/>
+        <circle cx="25" cy="25" r="5" fill="#60a5fa" class="pulse" style="animation-delay:0.3s"/>
+        <text x="100" y="35" text-anchor="middle" fill="#93c5fd" font-family="Space Grotesk" font-size="13" font-weight="700">INGESTION</text>
+        <text x="100" y="55" text-anchor="middle" fill="#4a7ec0" font-family="Outfit" font-size="10">Normalise text + structure</text>
+        <text x="100" y="70" text-anchor="middle" fill="#4a7ec0" font-family="Outfit" font-size="10">Tag PII + sensitivity level</text>
+        <text x="100" y="85" text-anchor="middle" fill="#4a7ec0" font-family="Outfit" font-size="10">Set consent scope + access</text>
+        <text x="100" y="97" text-anchor="middle" fill="#2d5080" font-family="Outfit" font-size="9">Assign IDs + hashes</text>
+      </g>
+
+      <!-- Arrow: Ingestion → Evidence -->
+      <line x1="560" y1="110" x2="630" y2="110" stroke="rgba(255,255,255,0.15)" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+      <!-- 3. Evidence Store (immutable) -->
+      <g transform="translate(640,45)">
+        <rect width="220" height="130" rx="16" fill="rgba(34,197,94,0.08)" stroke="rgba(34,197,94,0.35)" stroke-width="2"/>
+        <circle cx="25" cy="25" r="5" fill="#4ade80" class="pulse" style="animation-delay:0.6s"/>
+        <text x="110" y="32" text-anchor="middle" fill="#86efac" font-family="Space Grotesk" font-size="14" font-weight="700">EVIDENCE STORE</text>
+        <text x="110" y="50" text-anchor="middle" fill="#3a9d6a" font-family="Outfit" font-size="9" font-weight="600">IMMUTABLE — never changes</text>
+        <line x1="20" y1="60" x2="200" y2="60" stroke="rgba(34,197,94,0.15)" stroke-width="1"/>
+        <text x="110" y="78" text-anchor="middle" fill="#3a9d6a" font-family="Outfit" font-size="10">Raw text snippets</text>
+        <text x="110" y="93" text-anchor="middle" fill="#3a9d6a" font-family="Outfit" font-size="10">Source document links</text>
+        <text x="110" y="108" text-anchor="middle" fill="#3a9d6a" font-family="Outfit" font-size="10">Timestamps + authorship</text>
+        <text x="110" y="123" text-anchor="middle" fill="#3a9d6a" font-family="Outfit" font-size="10">Sensitivity tags</text>
+        <!-- Lock icon representation -->
+        <rect x="185" y="10" width="25" height="20" rx="4" fill="none" stroke="rgba(34,197,94,0.4)" stroke-width="1.5"/>
+        <path d="M 192 10 L 192 4 C 192 -2 205 -2 205 4 L 205 10" fill="none" stroke="rgba(34,197,94,0.4)" stroke-width="1.5"/>
+      </g>
+
+      <!-- ═══ MIDDLE ROW: THE BRAIN CORE ═══ -->
+
+      <!-- Arrow: Evidence → Claim Extraction -->
+      <path d="M 750 175 C 750 205, 530 200, 530 230" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+      <!-- 4. CLAIM EXTRACTION + HUMAN REVIEW (center) -->
+      <g transform="translate(320,230)">
+        <rect width="280" height="130" rx="20" fill="rgba(139,92,246,0.1)" stroke="rgba(139,92,246,0.4)" stroke-width="2"/>
+        <!-- Glow effect -->
+        <ellipse cx="140" cy="65" rx="100" ry="40" fill="rgba(139,92,246,0.05)"/>
+        <circle cx="30" cy="30" r="6" fill="#a78bfa" class="pulse" style="animation-delay:0.9s"/>
+        <text x="140" y="35" text-anchor="middle" fill="#c4b5fd" font-family="Space Grotesk" font-size="15" font-weight="700">CLAIM EXTRACTION</text>
+        <text x="140" y="55" text-anchor="middle" fill="#8b6cc8" font-family="Outfit" font-size="10" font-weight="600">+ Human Review Gate</text>
+        <line x1="30" y1="65" x2="250" y2="65" stroke="rgba(139,92,246,0.15)" stroke-width="1"/>
+        <text x="140" y="82" text-anchor="middle" fill="#8b6cc8" font-family="Outfit" font-size="10">"This person prefers X over Y"</text>
+        <text x="140" y="97" text-anchor="middle" fill="#8b6cc8" font-family="Outfit" font-size="10">Assign confidence (0–1)</text>
+        <text x="140" y="112" text-anchor="middle" fill="#8b6cc8" font-family="Outfit" font-size="10">Mark stability: volatile / contextual / stable</text>
+        <text x="140" y="125" text-anchor="middle" fill="#6b4ca8" font-family="Outfit" font-size="9">Human signs off high-impact claims</text>
+      </g>
+
+      <!-- ═══ BOTTOM ROW: THE THREE STORES ═══ -->
+
+      <!-- Arrows from Claim Extraction to the three stores -->
+      <path d="M 390 360 C 390 390, 160 380, 160 410" fill="none" stroke="rgba(245,158,11,0.2)" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <path d="M 460 360 C 460 390, 460 390, 460 410" fill="none" stroke="rgba(236,72,153,0.2)" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <path d="M 530 360 C 530 390, 740 380, 740 410" fill="none" stroke="rgba(239,68,68,0.2)" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+      <!-- 5a. TRAITS + METHODS -->
+      <g transform="translate(40,410)">
+        <rect width="240" height="120" rx="16" fill="rgba(245,158,11,0.08)" stroke="rgba(245,158,11,0.35)" stroke-width="1.5"/>
+        <circle cx="25" cy="25" r="5" fill="#fbbf24" class="pulse" style="animation-delay:1.2s"/>
+        <text x="120" y="32" text-anchor="middle" fill="#fcd34d" font-family="Space Grotesk" font-size="13" font-weight="700">TRAITS + METHODS</text>
+        <text x="120" y="50" text-anchor="middle" fill="#c88e10" font-family="Outfit" font-size="9" font-weight="600">Versioned — evolves over time</text>
+        <line x1="20" y1="58" x2="220" y2="58" stroke="rgba(245,158,11,0.15)" stroke-width="1"/>
+        <text x="120" y="74" text-anchor="middle" fill="#c88e10" font-family="Outfit" font-size="10">Personality dimensions (Big 5)</text>
+        <text x="120" y="89" text-anchor="middle" fill="#c88e10" font-family="Outfit" font-size="10">Decision heuristics + playbooks</text>
+        <text x="120" y="104" text-anchor="middle" fill="#c88e10" font-family="Outfit" font-size="10">Motivation patterns (SDT)</text>
+        <text x="120" y="117" text-anchor="middle" fill="#a07510" font-family="Outfit" font-size="9">Narrative identity / "personal myth"</text>
+      </g>
+
+      <!-- 5b. CLAIMS STORE -->
+      <g transform="translate(330,410)">
+        <rect width="240" height="120" rx="16" fill="rgba(236,72,153,0.08)" stroke="rgba(236,72,153,0.35)" stroke-width="1.5"/>
+        <circle cx="25" cy="25" r="5" fill="#ec4899" class="pulse" style="animation-delay:1.5s"/>
+        <text x="120" y="32" text-anchor="middle" fill="#f9a8d4" font-family="Space Grotesk" font-size="13" font-weight="700">CLAIMS STORE</text>
+        <text x="120" y="50" text-anchor="middle" fill="#c06090" font-family="Outfit" font-size="9" font-weight="600">Append-only evidence links</text>
+        <line x1="20" y1="58" x2="220" y2="58" stroke="rgba(236,72,153,0.15)" stroke-width="1"/>
+        <text x="120" y="74" text-anchor="middle" fill="#c06090" font-family="Outfit" font-size="10">Values, preferences, aversions</text>
+        <text x="120" y="89" text-anchor="middle" fill="#c06090" font-family="Outfit" font-size="10">Habits, triggers, boundaries</text>
+        <text x="120" y="104" text-anchor="middle" fill="#c06090" font-family="Outfit" font-size="10">Confidence score + validity window</text>
+        <text x="120" y="117" text-anchor="middle" fill="#a04070" font-family="Outfit" font-size="9">Counter-evidence tracked separately</text>
+      </g>
+
+      <!-- 5c. ETHICS BOUNDARIES -->
+      <g transform="translate(620,410)">
+        <rect width="240" height="120" rx="16" fill="rgba(239,68,68,0.08)" stroke="rgba(239,68,68,0.4)" stroke-width="2"/>
+        <circle cx="25" cy="25" r="5" fill="#f87171" class="pulse" style="animation-delay:1.8s"/>
+        <text x="120" y="32" text-anchor="middle" fill="#fca5a5" font-family="Space Grotesk" font-size="13" font-weight="700">ETHICS BOUNDARIES</text>
+        <text x="120" y="50" text-anchor="middle" fill="#dc4545" font-family="Outfit" font-size="9" font-weight="600">Hard rules — the conscience</text>
+        <line x1="20" y1="58" x2="220" y2="58" stroke="rgba(239,68,68,0.15)" stroke-width="1"/>
+        <text x="120" y="74" text-anchor="middle" fill="#dc4545" font-family="Outfit" font-size="10">"Never invent facts"</text>
+        <text x="120" y="89" text-anchor="middle" fill="#dc4545" font-family="Outfit" font-size="10">"Never leak private data"</text>
+        <text x="120" y="104" text-anchor="middle" fill="#dc4545" font-family="Outfit" font-size="10">"Refuse + explain + redirect"</text>
+        <text x="120" y="117" text-anchor="middle" fill="#b03030" font-family="Outfit" font-size="9">Hard vs Soft severity levels</text>
+      </g>
+
+      <!-- ═══ BOTTOM: RETRIEVAL + OUTPUT ═══ -->
+
+      <!-- Arrows from stores to Retrieval -->
+      <path d="M 160 530 C 160 555, 350 555, 350 570" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1" marker-end="url(#arrow)"/>
+      <path d="M 450 530 C 450 555, 450 555, 450 570" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1" marker-end="url(#arrow)"/>
+      <path d="M 740 530 C 740 555, 550 555, 550 570" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1" marker-end="url(#arrow)"/>
+
+      <!-- 6. RETRIEVAL LAYER -->
+      <g transform="translate(270,570)">
+        <rect width="360" height="40" rx="20" fill="rgba(139,92,246,0.12)" stroke="rgba(139,92,246,0.35)" stroke-width="1.5"/>
+        <text x="180" y="26" text-anchor="middle" fill="#c4b5fd" font-family="Space Grotesk" font-size="12" font-weight="700">RETRIEVAL: Vector Search + Structured Query + Policy Filter</text>
+      </g>
+
+      <!-- ═══ FEEDBACK LOOP ═══ -->
+      <!-- Arrow from Evidence Store back around to Claim Extraction -->
+      <path d="M 750 175 C 880 200, 880 290, 600 360" fill="none" stroke="rgba(34,197,94,0.12)" stroke-width="1" stroke-dasharray="4,4"/>
+      <text x="850" y="260" fill="#3a9d6a" font-family="Outfit" font-size="8" transform="rotate(60,850,260)">feedback</text>
+
+      <!-- Arrow: audit loop from bottom back to top -->
+      <path d="M 270 590 C 30 590, 10 300, 10 110 C 10 40, 60 40, 80 70" fill="none" stroke="rgba(96,165,250,0.12)" stroke-width="1" stroke-dasharray="4,4" marker-end="url(#arrow)"/>
+      <text x="20" y="350" fill="#4a7ec0" font-family="Outfit" font-size="8" transform="rotate(-90,20,350)">audit + learning loop</text>
+
+      <!-- Layer labels on left side -->
+      <g transform="translate(0, 100)">
+        <text fill="rgba(6,182,212,0.3)" font-family="Space Grotesk" font-size="10" font-weight="700" transform="rotate(-90)" x="-30" y="15">INPUT</text>
+      </g>
+      <g transform="translate(0, 330)">
+        <text fill="rgba(139,92,246,0.3)" font-family="Space Grotesk" font-size="10" font-weight="700" transform="rotate(-90)" x="-30" y="15">PROCESS</text>
+      </g>
+      <g transform="translate(0, 510)">
+        <text fill="rgba(236,72,153,0.3)" font-family="Space Grotesk" font-size="10" font-weight="700" transform="rotate(-90)" x="-30" y="15">STORE</text>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════ 2. THE SEVEN ORGANS — DETAIL CARDS ══════════════════ -->
+<section>
+  <div class="sec-title" style="background:linear-gradient(135deg,#fbbf24,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">
+    2. The Seven Organs
+  </div>
+  <p class="sec-sub">Each organ in the brain does one thing. Here's what each one is, and what's inside it.</p>
+
+  <!-- Row 1: Input Layer -->
+  <div class="layer-row three">
+    <div class="layer-card" style="border-color: rgba(6,182,212,0.2);">
+      <div class="lc-icon">📥</div>
+      <span class="lc-tag" style="background:var(--cyan-dim);color:var(--cyan);border:1px solid rgba(6,182,212,0.3);">Layer 1: Input</span>
+      <h3 style="color:#67e8f9">Raw Input</h3>
+      <p>Everything the person creates: documents, emails, Slack messages, meeting notes, code commits, design decisions, personal notes they consented to include.</p>
+      <p class="detail">Think of this as the eyes and ears. The brain can only know what it receives.</p>
+    </div>
+
+    <div class="layer-card" style="border-color: rgba(96,165,250,0.2);">
+      <div class="lc-icon">🔬</div>
+      <span class="lc-tag" style="background:var(--blue-dim);color:var(--blue);border:1px solid rgba(96,165,250,0.3);">Layer 1: Input</span>
+      <h3 style="color:#93c5fd">Ingestion Pipeline</h3>
+      <p>Cleans and organises everything. Strips out private info. Tags sensitivity levels. Assigns permanent IDs. Creates integrity hashes so nothing can be tampered with.</p>
+      <p class="detail">Like digestion — raw food goes in, nutrients come out, waste is filtered.</p>
+    </div>
+
+    <div class="layer-card" style="border-color: rgba(34,197,94,0.25);">
+      <div class="lc-icon">🗄️</div>
+      <span class="lc-tag" style="background:var(--green-dim);color:var(--green);border:1px solid rgba(34,197,94,0.3);">Layer 1: Input</span>
+      <h3 style="color:#86efac">Evidence Store</h3>
+      <p>The vault. Stores every snippet <strong>forever, unchanged</strong>. Each piece links back to exactly where it came from. You can always trace any claim back to its source.</p>
+      <p class="detail">Immutable = can never be edited. Like a blockchain for knowledge. This is the brain's long-term factual memory.</p>
+    </div>
+  </div>
+
+  <!-- Row 2: Processing Layer -->
+  <div class="layer-row two" style="margin-top: 1.5rem;">
+    <div class="layer-card" style="border-color: rgba(139,92,246,0.3);">
+      <div class="lc-icon">🧪</div>
+      <span class="lc-tag" style="background:var(--purple-dim);color:var(--purple);border:1px solid rgba(139,92,246,0.3);">Layer 2: Processing</span>
+      <h3 style="color:#c4b5fd">Claim Extraction</h3>
+      <p>The thinking engine. Reads evidence and extracts patterns:<br>
+      "In strategy meetings, this person always asks for the one-sentence success metric before approving anything."</p>
+      <p>Each claim gets: a confidence score (how sure), a stability label (volatile / contextual / stable), a validity window (when does this expire?), and linked evidence.</p>
+      <p class="detail">This is where raw data becomes understanding. Evidence is facts. Claims are knowledge.</p>
+    </div>
+
+    <div class="layer-card" style="border-color: rgba(139,92,246,0.3);">
+      <div class="lc-icon">👤</div>
+      <span class="lc-tag" style="background:var(--purple-dim);color:var(--purple);border:1px solid rgba(139,92,246,0.3);">Layer 2: Processing</span>
+      <h3 style="color:#c4b5fd">Human Review Gate</h3>
+      <p>High-impact claims (moral boundaries, core identity, things that affect real decisions) <strong>must be signed off by a human</strong> before the brain treats them as truth.</p>
+      <p>The brain cannot elevate its own guesses to "stable" without approval.</p>
+      <p class="detail">This is the check against hallucination. The brain has to earn trust before it gets authority.</p>
+    </div>
+  </div>
+
+  <!-- Row 3: Storage Layer -->
+  <div class="layer-row three" style="margin-top: 1.5rem;">
+    <div class="layer-card" style="border-color: rgba(245,158,11,0.25);">
+      <div class="lc-icon">🧬</div>
+      <span class="lc-tag" style="background:var(--amber-dim);color:var(--amber);border:1px solid rgba(245,158,11,0.3);">Layer 3: Storage</span>
+      <h3 style="color:#fcd34d">Traits + Methods</h3>
+      <p><strong>Traits:</strong> Personality dimensions (Big Five), motivation structure (autonomy, mastery, connection), moral foundations (care, fairness, loyalty).</p>
+      <p><strong>Methods:</strong> Reusable playbooks — "when faced with ambiguity, this person does X, then Y, then Z."</p>
+      <p class="detail">This is the personality. Not a label — a set of predictive constraints on behaviour.</p>
+    </div>
+
+    <div class="layer-card" style="border-color: rgba(236,72,153,0.25);">
+      <div class="lc-icon">📋</div>
+      <span class="lc-tag" style="background:var(--pink-dim);color:var(--pink);border:1px solid rgba(236,72,153,0.3);">Layer 3: Storage</span>
+      <h3 style="color:#f9a8d4">Claims Store</h3>
+      <p>The canonical knowledge units. Each claim is a normalised statement: "In context X, this person tends to Y."</p>
+      <p>Claims have: type (value, heuristic, habit, trigger, boundary), evidence links, counter-evidence links, confidence, stability, and an expiry date.</p>
+      <p class="detail">When two claims contradict? They don't delete each other. They fork: "In crisis = X. In exploration = Y."</p>
+    </div>
+
+    <div class="layer-card" style="border-color: rgba(239,68,68,0.3);">
+      <div class="lc-icon">🛡️</div>
+      <span class="lc-tag" style="background:var(--red-dim);color:var(--red);border:1px solid rgba(239,68,68,0.3);">Layer 3: Storage</span>
+      <h3 style="color:#fca5a5">Ethics Boundaries</h3>
+      <p>The conscience. Hard rules that cannot be overridden by any prompt, any agent, any tool.</p>
+      <p>Each boundary has: the rule, the rationale, allowed alternatives, an enforcement template (refuse + explain + redirect), and a severity (hard = never, soft = ask first).</p>
+      <p class="detail">This is the amygdala — it fires before thinking. "Never trade trust for speed."</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════ 3. DATA FLOW — THE PIPELINE ═════════════════════════ -->
+<section>
+  <div class="sec-title" style="background:linear-gradient(135deg,#22d3ee,#4ade80);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">
+    3. How Data Flows Through the Brain
+  </div>
+  <p class="sec-sub">
+    Two flows run constantly. The <strong>Learning Flow</strong> (input → knowledge) and the <strong>Thinking Flow</strong> (question → answer).
+  </p>
+
+  <!-- LEARNING FLOW -->
+  <div style="background:rgba(34,197,94,0.04); border:1px solid rgba(34,197,94,0.15); border-radius:20px; padding:2.5rem; margin-bottom:2.5rem;">
+    <h2 style="font-family:'Space Grotesk'; font-size:1.4rem; color:#86efac; margin-bottom:1.5rem;">
+      Learning Flow: Building Knowledge
+    </h2>
+    <p style="color:#777; margin-bottom:1.5rem; font-size:0.95rem;">This runs whenever new information enters the system. It's how the brain learns.</p>
+
+    <div class="pipeline">
+      <div class="pipe-step t-cyan">
+        <div class="pipe-line"><div class="pipe-dot">1</div><div class="pipe-connector"></div></div>
+        <div class="pipe-content">
+          <h4 style="color:#67e8f9">New artifact arrives</h4>
+          <p>A new document, email, transcript, or note enters the system. Could be manual upload or automatic feed.</p>
+          <span class="tag-sm">Source: human-created content</span>
+        </div>
+      </div>
+
+      <div class="pipe-step t-blue">
+        <div class="pipe-line"><div class="pipe-dot">2</div><div class="pipe-connector"></div></div>
+        <div class="pipe-content">
+          <h4 style="color:#93c5fd">Ingestion + classification</h4>
+          <p>Text is extracted and normalised. PII is tagged. Sensitivity level is assigned. Access control and consent scope are set. A hash is created for integrity.</p>
+          <span class="tag-sm">Output: classified document record</span>
+        </div>
+      </div>
+
+      <div class="pipe-step t-green">
+        <div class="pipe-line"><div class="pipe-dot">3</div><div class="pipe-connector"></div></div>
+        <div class="pipe-content">
+          <h4 style="color:#86efac">Snippet extraction</h4>
+          <p>The document is broken into meaningful chunks — "evidence snippets." Each snippet is stored immutably with its exact position in the source doc, authorship, and timestamp.</p>
+          <span class="tag-sm">Output: immutable evidence records</span>
+        </div>
+      </div>
+
+      <div class="pipe-step t-purple">
+        <div class="pipe-line"><div class="pipe-dot">4</div><div class="pipe-connector"></div></div>
+        <div class="pipe-content">
+          <h4 style="color:#c4b5fd">Claim extraction</h4>
+          <p>AI reads snippets and proposes "claims" — normalised statements about the person's behaviour. Each claim links to its supporting evidence and gets a confidence score.</p>
+          <span class="tag-sm">Output: draft claims with evidence links</span>
+        </div>
+      </div>
+
+      <div class="pipe-step t-amber">
+        <div class="pipe-line"><div class="pipe-dot">5</div><div class="pipe-connector"></div></div>
+        <div class="pipe-content">
+          <h4 style="color:#fcd34d">Confidence + stability scoring</h4>
+          <p>Confidence = f(frequency, recency, cross-context consistency). Stability = how many different contexts the claim holds in. A claim seen once is "volatile." Seen across 5 projects over 2 years = "stable."</p>
+          <span class="tag-sm">Output: scored, labelled claims</span>
+        </div>
+      </div>
+
+      <div class="pipe-step t-pink">
+        <div class="pipe-line"><div class="pipe-dot">6</div><div class="pipe-connector"></div></div>
+        <div class="pipe-content">
+          <h4 style="color:#f9a8d4">Human review (if high-impact)</h4>
+          <p>Claims about moral boundaries, core identity, or things that would change real decisions must get human sign-off. Low-impact claims (preference for dark mode) don't need review.</p>
+          <span class="tag-sm">Output: approved or flagged claims</span>
+        </div>
+      </div>
+
+      <div class="pipe-step t-red">
+        <div class="pipe-line"><div class="pipe-dot">7</div><div class="pipe-connector"></div></div>
+        <div class="pipe-content">
+          <h4 style="color:#fca5a5">Storage + indexing</h4>
+          <p>Approved claims flow into the Claims Store, Trait Vectors, Methods Playbook, or Ethics Boundaries — depending on type. Everything is versioned. Old versions are never deleted.</p>
+          <span class="tag-sm">Output: brain gets smarter</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- THINKING FLOW -->
+  <div style="background:rgba(139,92,246,0.04); border:1px solid rgba(139,92,246,0.15); border-radius:20px; padding:2.5rem;">
+    <h2 style="font-family:'Space Grotesk'; font-size:1.4rem; color:#c4b5fd; margin-bottom:1.5rem;">
+      Thinking Flow: Answering a Question
+    </h2>
+    <p style="color:#777; margin-bottom:1.5rem; font-size:0.95rem;">This runs every time someone asks the brain to think, decide, or produce output.</p>
+
+    <div class="pipeline">
+      <div class="pipe-step t-cyan">
+        <div class="pipe-line"><div class="pipe-dot">1</div><div class="pipe-connector"></div></div>
+        <div class="pipe-content">
+          <h4 style="color:#67e8f9">Query arrives</h4>
+          <p>"Write a response to this investor email." or "What would Mic decide about X?" or "Draft a strategy memo in Mic's voice."</p>
+        </div>
+      </div>
+
+      <div class="pipe-step t-purple">
+        <div class="pipe-line"><div class="pipe-dot">2</div><div class="pipe-connector"></div></div>
+        <div class="pipe-content">
+          <h4 style="color:#c4b5fd">Retrieval</h4>
+          <p>The brain searches: (1) relevant claims, (2) matching method playbooks, (3) applicable ethics boundaries, (4) any contradictory claims. Uses vector similarity + structured query.</p>
+          <span class="tag-sm">Hybrid: semantic search + database lookup</span>
+        </div>
+      </div>
+
+      <div class="pipe-step t-red">
+        <div class="pipe-line"><div class="pipe-dot">3</div><div class="pipe-connector"></div></div>
+        <div class="pipe-content">
+          <h4 style="color:#fca5a5">Boundary check</h4>
+          <p>Before generating: does this query violate any ethics boundary? Does it require restricted data? Does it need human approval first? If yes — stop, refuse, redirect.</p>
+          <span class="tag-sm">Fires before thinking, like an amygdala</span>
+        </div>
+      </div>
+
+      <div class="pipe-step t-amber">
+        <div class="pipe-line"><div class="pipe-dot">4</div><div class="pipe-connector"></div></div>
+        <div class="pipe-content">
+          <h4 style="color:#fcd34d">Confidence check</h4>
+          <p>Are the retrieved claims confident enough? If below threshold: shift to "ask/clarify" mode. The brain says "I'm not sure — here's what I'd need to know" instead of guessing.</p>
+          <span class="tag-sm">Non-invention rule: never make up traits</span>
+        </div>
+      </div>
+
+      <div class="pipe-step t-green">
+        <div class="pipe-line"><div class="pipe-dot">5</div><div class="pipe-connector"></div></div>
+        <div class="pipe-content">
+          <h4 style="color:#86efac">Generate response</h4>
+          <p>Apply method playbooks. Render in voice style rules (sentence length, directness, formatting, metaphors). Cite claim IDs. Include confidence level and "what would raise confidence."</p>
+          <span class="tag-sm">Grounded output, not free generation</span>
+        </div>
+      </div>
+
+      <div class="pipe-step t-blue">
+        <div class="pipe-line"><div class="pipe-dot">6</div><div class="pipe-connector"></div></div>
+        <div class="pipe-content">
+          <h4 style="color:#93c5fd">Safety filter + audit</h4>
+          <p>Final pass: privacy redaction (no raw restricted snippets), boundary compliance check, tool permission check. Then log everything — what was retrieved, what was used, what was generated.</p>
+          <span class="tag-sm">Complete audit trail for every output</span>
+        </div>
+      </div>
+
+      <div class="pipe-step t-pink">
+        <div class="pipe-line"><div class="pipe-dot">7</div><div class="pipe-connector"></div></div>
+        <div class="pipe-content">
+          <h4 style="color:#f9a8d4">Feedback loop</h4>
+          <p>Was the output accepted, edited, or rejected? Feedback signals flow back to update claim confidence. Rejection = counter-evidence. Acceptance = reinforcement. The brain learns from its own output.</p>
+          <span class="tag-sm">Continuous learning cycle</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════ 4. WHAT MAKES THIS BRAIN UNIQUE ═════════════════════ -->
+<section>
+  <div class="sec-title" style="background:linear-gradient(135deg,#f87171,#fbbf24);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">
+    4. What Makes a Person's Brain Unique
+  </div>
+  <p class="sec-sub">
+    The architecture is the same for everyone. What makes each brain different is the content of five dimensions.
+  </p>
+
+  <div class="layer-row three">
+    <div class="layer-card" style="border-color:rgba(139,92,246,0.2)">
+      <div class="lc-icon">🎯</div>
+      <h3 style="color:#c4b5fd">Optimisation Signature</h3>
+      <p>What do they consistently optimise for? Truth? Speed? Harmony? Elegance? Safety? And what do they refuse to trade away?</p>
+      <p class="detail">"Mic always optimises for clarity and speed. He'll sacrifice polish but never trust."</p>
+    </div>
+    <div class="layer-card" style="border-color:rgba(236,72,153,0.2)">
+      <div class="lc-icon">🗜️</div>
+      <h3 style="color:#f9a8d4">Compression Style</h3>
+      <p>How do they reduce complexity? First principles? Analogies? Checklists? Systems thinking? Metaphors?</p>
+      <p class="detail">"Mic compresses through metaphors and analogies — 'build compasses, not maps.'"</p>
+    </div>
+    <div class="layer-card" style="border-color:rgba(245,158,11,0.2)">
+      <div class="lc-icon">🔥</div>
+      <h3 style="color:#fcd34d">Stress Posture</h3>
+      <p>Under pressure, do they become more cautious? More decisive? More collaborative? More controlling? More humorous?</p>
+      <p class="detail">"Under pressure, Mic becomes more decisive and direct. Less consensus, more command."</p>
+    </div>
+  </div>
+  <div class="layer-row two" style="margin-top: 1.5rem;">
+    <div class="layer-card" style="border-color:rgba(34,197,94,0.2)">
+      <div class="lc-icon">🔄</div>
+      <h3 style="color:#86efac">Error-Correction Loop</h3>
+      <p>How fast do they notice mistakes? Pre-mortems or post-mortems? Rapid iteration or careful planning?</p>
+      <p class="detail">"Mic prefers rapid iteration — ship fast, fix fast, learn fast."</p>
+    </div>
+    <div class="layer-card" style="border-color:rgba(6,182,212,0.2)">
+      <div class="lc-icon">📖</div>
+      <h3 style="color:#67e8f9">Narrative Identity</h3>
+      <p>The story they live by. Builder? Protector? Explorer? Reformer? What symbols and metaphors keep recurring?</p>
+      <p class="detail">"Mic's narrative: the builder-reformer. Using technology to dismantle old gatekeeping structures."</p>
+    </div>
+  </div>
+
+  <div class="callout purple" style="margin-top:2rem;">
+    <h3>The Key Insight</h3>
+    <p>
+      You don't need to read someone's mind to model their brain. You just need their <strong>decisions</strong> (what they chose), their <strong>language</strong> (how they express it), and their <strong>context</strong> (when and why). The five dimensions above can all be measured from artifacts — no psychology degree required.
+    </p>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════ 5. THE THREE LAWS ═══════════════════════════════════ -->
+<section>
+  <div class="sec-title" style="background:linear-gradient(135deg,#f87171,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">
+    5. Three Laws the Brain Must Obey
+  </div>
+  <p class="sec-sub">
+    Without these rules, the brain becomes dangerous. With them, it becomes trustworthy.
+  </p>
+
+  <div class="layer-row three">
+    <div class="layer-card" style="border-color:rgba(239,68,68,0.3); border-width:2px;">
+      <div class="lc-icon">🚫</div>
+      <h3 style="color:#fca5a5">Law 1: Non-Invention</h3>
+      <p>The brain must <strong>never make up facts</strong> about the person. If it doesn't have evidence, it says "I don't know" — not "I think..."</p>
+      <p class="detail">Every claim must trace back to real evidence. No evidence = no claim.</p>
+    </div>
+    <div class="layer-card" style="border-color:rgba(245,158,11,0.3); border-width:2px;">
+      <div class="lc-icon">🔒</div>
+      <h3 style="color:#fcd34d">Law 2: Provenance</h3>
+      <p>Every piece of knowledge must know <strong>where it came from</strong>, who created it, and when. No orphan knowledge. No floating claims.</p>
+      <p class="detail">Entity → Activity → Agent. Like a chain of custody for ideas.</p>
+    </div>
+    <div class="layer-card" style="border-color:rgba(139,92,246,0.3); border-width:2px;">
+      <div class="lc-icon">⚖️</div>
+      <h3 style="color:#c4b5fd">Law 3: Governance</h3>
+      <p>High-impact decisions require <strong>human approval</strong>. The brain can suggest, but cannot unilaterally change someone's identity, boundaries, or core values.</p>
+      <p class="detail">The brain earns authority through demonstrated accuracy, not through assumption.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════ 6. THE ONE-LINE SUMMARY ═════════════════════════════ -->
+<section style="text-align:center; padding:5rem 2rem;">
+  <div class="sec-title" style="background:linear-gradient(135deg,#c084fc,#f472b6,#fbbf24);-webkit-background-clip:text;-webkit-text-fill-color:transparent; font-size:clamp(1.8rem,4.5vw,3rem); max-width:800px; margin:0 auto; line-height:1.3;">
+    Evidence in. Claims out. Boundaries always.
+  </div>
+  <p style="color:#777; font-size:1.1rem; margin-top:1.5rem; max-width:600px; margin-left:auto; margin-right:auto; line-height:1.7;">
+    Raw artifacts enter the brain. They become evidence. Evidence becomes claims. Claims become personality, methods, and boundaries. The brain retrieves, checks, generates, and learns — in that order, every time.
+  </p>
+  <p style="color:#555; font-size:0.95rem; margin-top:1.5rem;">
+    The architecture never changes. The content is what makes each brain unique.
+  </p>
+</section>
+
+<footer>
+  <p>Digital Twin Brain Architecture &mdash; SodaLabs AI / SodaWorld</p>
+  <p style="margin-top:0.3rem;">Designed for understanding. Built for implementation.</p>
+</footer>
+
+</body>
+</html>

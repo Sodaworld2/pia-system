@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multi-Lens Perception Engine — Thinking Frameworks Module</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: #0a0a0a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+  svg { width: 100vw; height: 100vh; }
+</style>
+</head>
+<body>
+<svg viewBox="0 0 1600 1000" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Glows -->
+    <radialGradient id="faceGlow" cx="50%" cy="42%" r="30%">
+      <stop offset="0%" stop-color="rgba(245,158,11,0.10)"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+    <radialGradient id="permaGlow" cx="50%" cy="88%" r="22%">
+      <stop offset="0%" stop-color="rgba(16,185,129,0.08)"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+    <radialGradient id="mindGlow" cx="15%" cy="50%" r="18%">
+      <stop offset="0%" stop-color="rgba(78,205,196,0.06)"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+    <radialGradient id="soulGlow" cx="85%" cy="50%" r="18%">
+      <stop offset="0%" stop-color="rgba(200,168,78,0.06)"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+    <radialGradient id="centerGlow" cx="50%" cy="42%" r="8%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.06)"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+
+    <filter id="soft"><feGaussianBlur stdDeviation="3"/></filter>
+    <filter id="softer"><feGaussianBlur stdDeviation="6"/></filter>
+    <filter id="glow-orange"><feGaussianBlur stdDeviation="4"/></filter>
+    <filter id="glow-green"><feGaussianBlur stdDeviation="4"/></filter>
+
+    <!-- Arrow markers -->
+    <marker id="arr-orange" viewBox="0 0 7 10" refX="7" refY="5" markerWidth="5" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L7 5 L0 10z" fill="rgba(245,158,11,0.4)"/>
+    </marker>
+    <marker id="arr-green" viewBox="0 0 7 10" refX="7" refY="5" markerWidth="5" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L7 5 L0 10z" fill="rgba(16,185,129,0.4)"/>
+    </marker>
+    <marker id="arr-teal" viewBox="0 0 7 10" refX="7" refY="5" markerWidth="5" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L7 5 L0 10z" fill="rgba(78,205,196,0.4)"/>
+    </marker>
+    <marker id="arr-gold" viewBox="0 0 7 10" refX="7" refY="5" markerWidth="5" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L7 5 L0 10z" fill="rgba(200,168,78,0.4)"/>
+    </marker>
+    <marker id="arr-white" viewBox="0 0 7 10" refX="7" refY="5" markerWidth="5" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L7 5 L0 10z" fill="rgba(255,255,255,0.25)"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1600" height="1000" fill="#0a0a0a"/>
+  <rect width="1600" height="1000" fill="url(#faceGlow)"/>
+  <rect width="1600" height="1000" fill="url(#permaGlow)"/>
+  <rect width="1600" height="1000" fill="url(#mindGlow)"/>
+  <rect width="1600" height="1000" fill="url(#soulGlow)"/>
+  <rect width="1600" height="1000" fill="url(#centerGlow)"/>
+
+  <!-- ================================================================== -->
+  <!--  TITLE                                                             -->
+  <!-- ================================================================== -->
+  <text x="800" y="32" text-anchor="middle" fill="#666" font-family="Space Grotesk" font-size="14" font-weight="700" letter-spacing="5">MULTI-LENS PERCEPTION ENGINE</text>
+  <text x="800" y="50" text-anchor="middle" fill="#3a3a3a" font-family="Outfit" font-size="10" letter-spacing="1">Ten Faces of Innovation + Positive Psychology  |  Thinking Frameworks Module for the Digital Twin Brain</text>
+
+  <!-- ================================================================== -->
+  <!--  CENTER: SITUATION INPUT NODE                                      -->
+  <!-- ================================================================== -->
+  <g>
+    <!-- Pulsing center -->
+    <circle cx="800" cy="390" r="42" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.12)" stroke-width="1.5">
+      <animate attributeName="r" values="40;44;40" dur="4s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="800" cy="390" r="28" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>
+    <circle cx="800" cy="390" r="4" fill="rgba(255,255,255,0.7)">
+      <animate attributeName="opacity" values="0.5;1;0.5" dur="3s" repeatCount="indefinite"/>
+    </circle>
+    <text x="800" y="383" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-family="Space Grotesk" font-size="8" font-weight="600" letter-spacing="2">ANY</text>
+    <text x="800" y="396" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-family="Space Grotesk" font-size="8" font-weight="600" letter-spacing="2">SITUATION</text>
+  </g>
+
+  <!-- ================================================================== -->
+  <!--  TEN FACES CONSTELLATION (arranged in wheel around center)         -->
+  <!-- ================================================================== -->
+
+  <!-- Category labels: arcs -->
+  <!-- LEARNING (top) -->
+  <text x="800" y="115" text-anchor="middle" fill="rgba(245,158,11,0.3)" font-family="Space Grotesk" font-size="9" font-weight="600" letter-spacing="3">LEARNING LENSES</text>
+  <!-- ORGANIZING (right) -->
+  <text x="1148" y="392" text-anchor="middle" fill="rgba(245,158,11,0.3)" font-family="Space Grotesk" font-size="9" font-weight="600" letter-spacing="3" transform="rotate(90,1148,392)">ORGANIZING LENSES</text>
+  <!-- BUILDING (bottom-left arc) -->
+  <text x="520" y="680" text-anchor="middle" fill="rgba(245,158,11,0.3)" font-family="Space Grotesk" font-size="9" font-weight="600" letter-spacing="3">BUILDING LENSES</text>
+
+  <!-- Orbital ring (faint) -->
+  <circle cx="800" cy="390" r="240" fill="none" stroke="rgba(245,158,11,0.06)" stroke-width="1"/>
+  <circle cx="800" cy="390" r="242" fill="none" stroke="rgba(245,158,11,0.03)" stroke-width="0.5"/>
+
+  <!-- ===== FACE 1: ANTHROPOLOGIST (top, 90deg = straight up) ===== -->
+  <g>
+    <line x1="800" y1="348" x2="800" y2="185" stroke="rgba(245,158,11,0.12)" stroke-width="0.5"/>
+    <rect x="725" y="130" width="150" height="50" rx="8" fill="rgba(245,158,11,0.06)" stroke="rgba(245,158,11,0.25)" stroke-width="1"/>
+    <circle cx="742" cy="148" r="4" fill="#F59E0B" opacity="0.7">
+      <animate attributeName="opacity" values="0.4;0.9;0.4" dur="3s" repeatCount="indefinite"/>
+    </circle>
+    <text x="752" y="151" fill="#F59E0B" font-family="Space Grotesk" font-size="10" font-weight="700">1. Anthropologist</text>
+    <text x="735" y="167" fill="rgba(245,158,11,0.5)" font-family="Outfit" font-size="7.5">What do people ACTUALLY do?</text>
+    <text x="735" y="177" fill="rgba(245,158,11,0.3)" font-family="Outfit" font-size="6.5">Observe. Find the gap. Vuja De.</text>
+  </g>
+
+  <!-- ===== FACE 2: EXPERIMENTER (top-right, 54deg) ===== -->
+  <g>
+    <line x1="824" y1="350" x2="960" y2="208" stroke="rgba(245,158,11,0.12)" stroke-width="0.5"/>
+    <rect x="920" y="143" width="150" height="50" rx="8" fill="rgba(245,158,11,0.06)" stroke="rgba(245,158,11,0.25)" stroke-width="1"/>
+    <circle cx="937" cy="161" r="4" fill="#F59E0B" opacity="0.7">
+      <animate attributeName="opacity" values="0.4;0.9;0.4" dur="3s" repeatCount="indefinite" begin="0.3s"/>
+    </circle>
+    <text x="947" y="164" fill="#F59E0B" font-family="Space Grotesk" font-size="10" font-weight="700">2. Experimenter</text>
+    <text x="930" y="178" fill="rgba(245,158,11,0.5)" font-family="Outfit" font-size="7.5">What can we prototype TODAY?</text>
+    <text x="930" y="188" fill="rgba(245,158,11,0.3)" font-family="Outfit" font-size="6.5">Crude > polished. Test, don't debate.</text>
+  </g>
+
+  <!-- ===== FACE 3: CROSS-POLLINATOR (right-upper, 18deg) ===== -->
+  <g>
+    <line x1="840" y1="375" x2="1040" y2="310" stroke="rgba(245,158,11,0.12)" stroke-width="0.5"/>
+    <rect x="1040" y="278" width="155" height="50" rx="8" fill="rgba(245,158,11,0.06)" stroke="rgba(245,158,11,0.25)" stroke-width="1"/>
+    <circle cx="1057" cy="296" r="4" fill="#F59E0B" opacity="0.7">
+      <animate attributeName="opacity" values="0.4;0.9;0.4" dur="3s" repeatCount="indefinite" begin="0.6s"/>
+    </circle>
+    <text x="1067" y="299" fill="#F59E0B" font-family="Space Grotesk" font-size="10" font-weight="700">3. Cross-Pollinator</text>
+    <text x="1050" y="313" fill="rgba(245,158,11,0.5)" font-family="Outfit" font-size="7.5">What other industry solved this?</text>
+    <text x="1050" y="323" fill="rgba(245,158,11,0.3)" font-family="Outfit" font-size="6.5">T-shaped thinking. Metaphors.</text>
+  </g>
+
+  <!-- ===== FACE 4: HURDLER (right, -18deg) ===== -->
+  <g>
+    <line x1="840" y1="405" x2="1040" y2="440" stroke="rgba(245,158,11,0.12)" stroke-width="0.5"/>
+    <rect x="1040" y="415" width="155" height="50" rx="8" fill="rgba(245,158,11,0.06)" stroke="rgba(245,158,11,0.25)" stroke-width="1"/>
+    <circle cx="1057" cy="433" r="4" fill="#F59E0B" opacity="0.7">
+      <animate attributeName="opacity" values="0.4;0.9;0.4" dur="3s" repeatCount="indefinite" begin="0.9s"/>
+    </circle>
+    <text x="1067" y="436" fill="#F59E0B" font-family="Space Grotesk" font-size="10" font-weight="700">4. Hurdler</text>
+    <text x="1050" y="450" fill="rgba(245,158,11,0.5)" font-family="Outfit" font-size="7.5">Constraint = our advantage</text>
+    <text x="1050" y="460" fill="rgba(245,158,11,0.3)" font-family="Outfit" font-size="6.5">$99 orders. Invisible persistence.</text>
+  </g>
+
+  <!-- ===== FACE 5: COLLABORATOR (lower-right, -54deg) ===== -->
+  <g>
+    <line x1="824" y1="428" x2="960" y2="550" stroke="rgba(245,158,11,0.12)" stroke-width="0.5"/>
+    <rect x="920" y="530" width="155" height="50" rx="8" fill="rgba(245,158,11,0.06)" stroke="rgba(245,158,11,0.25)" stroke-width="1"/>
+    <circle cx="937" cy="548" r="4" fill="#F59E0B" opacity="0.7">
+      <animate attributeName="opacity" values="0.4;0.9;0.4" dur="3s" repeatCount="indefinite" begin="1.2s"/>
+    </circle>
+    <text x="947" y="551" fill="#F59E0B" font-family="Space Grotesk" font-size="10" font-weight="700">5. Collaborator</text>
+    <text x="930" y="565" fill="rgba(245,158,11,0.5)" font-family="Outfit" font-size="7.5">Who needs to be in the room?</text>
+    <text x="930" y="575" fill="rgba(245,158,11,0.3)" font-family="Outfit" font-size="6.5">Corporate jujitsu. Baton pass.</text>
+  </g>
+
+  <!-- ===== FACE 6: DIRECTOR (bottom, -90deg) ===== -->
+  <g>
+    <line x1="800" y1="432" x2="800" y2="600" stroke="rgba(245,158,11,0.12)" stroke-width="0.5"/>
+    <rect x="725" y="600" width="150" height="50" rx="8" fill="rgba(245,158,11,0.06)" stroke="rgba(245,158,11,0.25)" stroke-width="1"/>
+    <circle cx="742" cy="618" r="4" fill="#F59E0B" opacity="0.7">
+      <animate attributeName="opacity" values="0.4;0.9;0.4" dur="3s" repeatCount="indefinite" begin="1.5s"/>
+    </circle>
+    <text x="752" y="621" fill="#F59E0B" font-family="Space Grotesk" font-size="10" font-weight="700">6. Director</text>
+    <text x="735" y="635" fill="rgba(245,158,11,0.5)" font-family="Outfit" font-size="7.5">Who's the dream team?</text>
+    <text x="735" y="645" fill="rgba(245,158,11,0.3)" font-family="Outfit" font-size="6.5">90% casting. Strategic sequencing.</text>
+  </g>
+
+  <!-- ===== FACE 7: EXPERIENCE ARCHITECT (lower-left, -126deg) ===== -->
+  <g>
+    <line x1="776" y1="428" x2="640" y2="550" stroke="rgba(245,158,11,0.12)" stroke-width="0.5"/>
+    <rect x="520" y="530" width="165" height="50" rx="8" fill="rgba(245,158,11,0.06)" stroke="rgba(245,158,11,0.25)" stroke-width="1"/>
+    <circle cx="537" cy="548" r="4" fill="#F59E0B" opacity="0.7">
+      <animate attributeName="opacity" values="0.4;0.9;0.4" dur="3s" repeatCount="indefinite" begin="1.8s"/>
+    </circle>
+    <text x="547" y="551" fill="#F59E0B" font-family="Space Grotesk" font-size="10" font-weight="700">7. Experience Architect</text>
+    <text x="530" y="565" fill="rgba(245,158,11,0.5)" font-family="Outfit" font-size="7.5">What's the TRIGGER POINT?</text>
+    <text x="530" y="575" fill="rgba(245,158,11,0.3)" font-family="Outfit" font-size="6.5">Remove annoyances. Hammock factor.</text>
+  </g>
+
+  <!-- ===== FACE 8: SET DESIGNER (left, -162deg) ===== -->
+  <g>
+    <line x1="760" y1="405" x2="560" y2="440" stroke="rgba(245,158,11,0.12)" stroke-width="0.5"/>
+    <rect x="400" y="415" width="160" height="50" rx="8" fill="rgba(245,158,11,0.06)" stroke="rgba(245,158,11,0.25)" stroke-width="1"/>
+    <circle cx="417" cy="433" r="4" fill="#F59E0B" opacity="0.7">
+      <animate attributeName="opacity" values="0.4;0.9;0.4" dur="3s" repeatCount="indefinite" begin="2.1s"/>
+    </circle>
+    <text x="427" y="436" fill="#F59E0B" font-family="Space Grotesk" font-size="10" font-weight="700">8. Set Designer</text>
+    <text x="410" y="450" fill="rgba(245,158,11,0.5)" font-family="Outfit" font-size="7.5">How does environment shape this?</text>
+    <text x="410" y="460" fill="rgba(245,158,11,0.3)" font-family="Outfit" font-size="6.5">Space is never neutral. Story in walls.</text>
+  </g>
+
+  <!-- ===== FACE 9: CAREGIVER (upper-left, -198deg) ===== -->
+  <g>
+    <line x1="760" y1="375" x2="560" y2="310" stroke="rgba(245,158,11,0.12)" stroke-width="0.5"/>
+    <rect x="400" y="278" width="160" height="50" rx="8" fill="rgba(245,158,11,0.06)" stroke="rgba(245,158,11,0.25)" stroke-width="1"/>
+    <circle cx="417" cy="296" r="4" fill="#F59E0B" opacity="0.7">
+      <animate attributeName="opacity" values="0.4;0.9;0.4" dur="3s" repeatCount="indefinite" begin="2.4s"/>
+    </circle>
+    <text x="427" y="299" fill="#F59E0B" font-family="Space Grotesk" font-size="10" font-weight="700">9. Caregiver</text>
+    <text x="410" y="313" fill="rgba(245,158,11,0.5)" font-family="Outfit" font-size="7.5">What barriers are we removing?</text>
+    <text x="410" y="323" fill="rgba(245,158,11,0.3)" font-family="Outfit" font-size="6.5">Doorbell effect. 3-min threshold.</text>
+  </g>
+
+  <!-- ===== FACE 10: STORYTELLER (top-left, -234deg) ===== -->
+  <g>
+    <line x1="776" y1="350" x2="640" y2="208" stroke="rgba(245,158,11,0.12)" stroke-width="0.5"/>
+    <rect x="520" y="143" width="155" height="50" rx="8" fill="rgba(245,158,11,0.06)" stroke="rgba(245,158,11,0.25)" stroke-width="1"/>
+    <circle cx="537" cy="161" r="4" fill="#F59E0B" opacity="0.7">
+      <animate attributeName="opacity" values="0.4;0.9;0.4" dur="3s" repeatCount="indefinite" begin="2.7s"/>
+    </circle>
+    <text x="547" y="164" fill="#F59E0B" font-family="Space Grotesk" font-size="10" font-weight="700">10. Storyteller</text>
+    <text x="530" y="178" fill="rgba(245,158,11,0.5)" font-family="Outfit" font-size="7.5">What makes people FEEL first?</text>
+    <text x="530" y="188" fill="rgba(245,158,11,0.3)" font-family="Outfit" font-size="6.5">True vs authentic. Fortune cookie.</text>
+  </g>
+
+  <!-- ================================================================== -->
+  <!--  CATEGORY GROUPING ARCS (subtle background)                        -->
+  <!-- ================================================================== -->
+
+  <!-- Learning arc (faces 1-3, top) -->
+  <path d="M 680 165 A 260 260 0 0 1 1050 290" fill="none" stroke="rgba(245,158,11,0.08)" stroke-width="18" stroke-linecap="round"/>
+  <!-- Organizing arc (faces 4-6, right-bottom) -->
+  <path d="M 1050 420 A 260 260 0 0 1 780 640" fill="none" stroke="rgba(245,158,11,0.08)" stroke-width="18" stroke-linecap="round"/>
+  <!-- Building arc (faces 7-10, bottom-left) -->
+  <path d="M 710 640 A 260 260 0 0 1 550 290" fill="none" stroke="rgba(245,158,11,0.08)" stroke-width="18" stroke-linecap="round"/>
+
+  <!-- ================================================================== -->
+  <!--  POSITIVE PSYCHOLOGY / PERMA FOUNDATION LAYER                      -->
+  <!-- ================================================================== -->
+
+  <!-- Foundation band -->
+  <rect x="140" y="730" width="1320" height="165" rx="14"
+        fill="rgba(16,185,129,0.03)" stroke="rgba(16,185,129,0.18)" stroke-width="1.5"/>
+
+  <!-- Foundation label -->
+  <text x="170" y="755" fill="#10B981" font-family="Space Grotesk" font-size="14" font-weight="700">POSITIVE PSYCHOLOGY FOUNDATION</text>
+  <text x="170" y="770" fill="rgba(16,185,129,0.45)" font-family="Outfit" font-size="9">Martin Seligman  |  The orientation that makes multi-lens thinking generative, not paralytic</text>
+
+  <!-- PERMA gauges -->
+  <!-- P: Positive Emotion -->
+  <g>
+    <rect x="170" y="785" width="220" height="42" rx="6" fill="rgba(16,185,129,0.06)" stroke="rgba(16,185,129,0.15)" stroke-width="1"/>
+    <text x="185" y="803" fill="#10B981" font-family="Space Grotesk" font-size="18" font-weight="800">P</text>
+    <text x="208" y="800" fill="#10B981" font-family="Space Grotesk" font-size="9" font-weight="600">POSITIVE EMOTION</text>
+    <text x="208" y="815" fill="rgba(16,185,129,0.4)" font-family="Outfit" font-size="7">Joy, gratitude, serenity, hope</text>
+    <text x="340" y="815" fill="rgba(16,185,129,0.3)" font-family="Outfit" font-size="6.5">Seek what's working first</text>
+  </g>
+
+  <!-- E: Engagement -->
+  <g>
+    <rect x="405" y="785" width="220" height="42" rx="6" fill="rgba(16,185,129,0.06)" stroke="rgba(16,185,129,0.15)" stroke-width="1"/>
+    <text x="420" y="803" fill="#10B981" font-family="Space Grotesk" font-size="18" font-weight="800">E</text>
+    <text x="441" y="800" fill="#10B981" font-family="Space Grotesk" font-size="9" font-weight="600">ENGAGEMENT</text>
+    <text x="441" y="815" fill="rgba(16,185,129,0.4)" font-family="Outfit" font-size="7">Flow states. Time stops. Strengths meet challenges.</text>
+  </g>
+
+  <!-- R: Relationships -->
+  <g>
+    <rect x="640" y="785" width="220" height="42" rx="6" fill="rgba(16,185,129,0.06)" stroke="rgba(16,185,129,0.15)" stroke-width="1"/>
+    <text x="655" y="803" fill="#10B981" font-family="Space Grotesk" font-size="18" font-weight="800">R</text>
+    <text x="676" y="800" fill="#10B981" font-family="Space Grotesk" font-size="9" font-weight="600">RELATIONSHIPS</text>
+    <text x="676" y="815" fill="rgba(16,185,129,0.4)" font-family="Outfit" font-size="7">Happiness is social. "I am because we are."</text>
+  </g>
+
+  <!-- M: Meaning -->
+  <g>
+    <rect x="875" y="785" width="220" height="42" rx="6" fill="rgba(16,185,129,0.06)" stroke="rgba(16,185,129,0.15)" stroke-width="1"/>
+    <text x="890" y="803" fill="#10B981" font-family="Space Grotesk" font-size="18" font-weight="800">M</text>
+    <text x="913" y="800" fill="#10B981" font-family="Space Grotesk" font-size="9" font-weight="600">MEANING & PURPOSE</text>
+    <text x="913" y="815" fill="rgba(16,185,129,0.4)" font-family="Outfit" font-size="7">Part of something larger. Future-oriented.</text>
+  </g>
+
+  <!-- A: Accomplishment -->
+  <g>
+    <rect x="1110" y="785" width="220" height="42" rx="6" fill="rgba(16,185,129,0.06)" stroke="rgba(16,185,129,0.15)" stroke-width="1"/>
+    <text x="1125" y="803" fill="#10B981" font-family="Space Grotesk" font-size="18" font-weight="800">A</text>
+    <text x="1148" y="800" fill="#10B981" font-family="Space Grotesk" font-size="9" font-weight="600">ACCOMPLISHMENT</text>
+    <text x="1148" y="815" fill="rgba(16,185,129,0.4)" font-family="Outfit" font-size="7">Mastery, grit, action-oriented.</text>
+  </g>
+
+  <!-- Key insights row -->
+  <rect x="170" y="840" width="380" height="42" rx="6" fill="rgba(16,185,129,0.03)" stroke="rgba(16,185,129,0.08)" stroke-width="0.5" stroke-dasharray="4,3"/>
+  <text x="185" y="856" fill="rgba(16,185,129,0.5)" font-family="Space Grotesk" font-size="8" font-weight="600">CORE INSIGHT:</text>
+  <text x="280" y="856" fill="rgba(16,185,129,0.35)" font-family="Outfit" font-size="7.5">Helplessness is the DEFAULT. Mastery is LEARNED.</text>
+  <text x="185" y="872" fill="rgba(16,185,129,0.35)" font-family="Outfit" font-size="7">Don't undo problems. Build the experience of having control.</text>
+
+  <rect x="570" y="840" width="340" height="42" rx="6" fill="rgba(16,185,129,0.03)" stroke="rgba(16,185,129,0.08)" stroke-width="0.5" stroke-dasharray="4,3"/>
+  <text x="585" y="856" fill="rgba(16,185,129,0.5)" font-family="Space Grotesk" font-size="8" font-weight="600">SPECIES:</text>
+  <text x="640" y="856" fill="rgba(16,185,129,0.35)" font-family="Outfit" font-size="7.5">Homo Prospectus, not Homo Sapiens.</text>
+  <text x="585" y="872" fill="rgba(16,185,129,0.35)" font-family="Outfit" font-size="7">We are future-imaginers. The brain's default circuit = imagination.</text>
+
+  <rect x="930" y="840" width="400" height="42" rx="6" fill="rgba(16,185,129,0.03)" stroke="rgba(16,185,129,0.08)" stroke-width="0.5" stroke-dasharray="4,3"/>
+  <text x="945" y="856" fill="rgba(16,185,129,0.5)" font-family="Space Grotesk" font-size="8" font-weight="600">EVIDENCE:</text>
+  <text x="1005" y="856" fill="rgba(16,185,129,0.35)" font-family="Outfit" font-size="7.5">Well-being is measurable AND buildable AND sticky.</text>
+  <text x="945" y="872" fill="rgba(16,185,129,0.35)" font-family="Outfit" font-size="7">700K children in Peru: PERMA schools = happier AND higher academic scores.</text>
+
+  <!-- ================================================================== -->
+  <!--  FLOW ARROWS: PERMA feeds upward into Ten Faces                    -->
+  <!-- ================================================================== -->
+
+  <!-- Central upward energy from PERMA to center -->
+  <line x1="800" y1="730" x2="800" y2="432" stroke="rgba(16,185,129,0.2)" stroke-width="2" marker-end="url(#arr-green)"/>
+  <text x="815" y="700" fill="rgba(16,185,129,0.25)" font-family="Outfit" font-size="7">orientation + energy</text>
+
+  <!-- Side flows from PERMA to faces -->
+  <path d="M 350 730 C 350 680, 500 640, 580 560" fill="none" stroke="rgba(16,185,129,0.1)" stroke-width="1" stroke-dasharray="4,3"/>
+  <path d="M 1250 730 C 1250 680, 1100 640, 1000 560" fill="none" stroke="rgba(16,185,129,0.1)" stroke-width="1" stroke-dasharray="4,3"/>
+
+  <!-- ================================================================== -->
+  <!--  LEFT PANEL: MIND LAYER CONNECTION                                 -->
+  <!-- ================================================================== -->
+
+  <rect x="40" y="130" width="310" height="240" rx="14"
+        fill="rgba(78,205,196,0.03)" stroke="rgba(78,205,196,0.18)" stroke-width="1.5"/>
+
+  <text x="60" y="155" fill="#4ECDC4" font-family="Space Grotesk" font-size="13" font-weight="700">MIND LAYER</text>
+  <text x="60" y="170" fill="rgba(78,205,196,0.45)" font-family="Outfit" font-size="8">Strategic Synthesizer — where Ten Faces lives</text>
+
+  <!-- Mind layer modules -->
+  <rect x="60" y="185" width="270" height="30" rx="5" fill="rgba(245,158,11,0.08)" stroke="rgba(245,158,11,0.2)" stroke-width="1"/>
+  <circle cx="76" cy="200" r="4" fill="#F59E0B" opacity="0.6">
+    <animate attributeName="opacity" values="0.3;0.8;0.3" dur="3s" repeatCount="indefinite"/>
+  </circle>
+  <text x="86" y="203" fill="#F59E0B" font-family="Space Grotesk" font-size="9" font-weight="600">Multi-Lens Perception Engine</text>
+  <text x="258" y="203" fill="rgba(245,158,11,0.35)" font-family="Outfit" font-size="7">NEW</text>
+
+  <rect x="60" y="222" width="270" height="26" rx="5" fill="rgba(78,205,196,0.05)" stroke="rgba(78,205,196,0.12)" stroke-width="0.5"/>
+  <circle cx="76" cy="235" r="3" fill="#4ECDC4" opacity="0.4"/>
+  <text x="86" y="238" fill="rgba(78,205,196,0.5)" font-family="Space Grotesk" font-size="8" font-weight="600">Perspective Mapping Engine</text>
+
+  <rect x="60" y="254" width="270" height="26" rx="5" fill="rgba(78,205,196,0.05)" stroke="rgba(78,205,196,0.12)" stroke-width="0.5"/>
+  <circle cx="76" cy="267" r="3" fill="#4ECDC4" opacity="0.4"/>
+  <text x="86" y="270" fill="rgba(78,205,196,0.5)" font-family="Space Grotesk" font-size="8" font-weight="600">Narrative Framing Engine</text>
+
+  <rect x="60" y="286" width="270" height="26" rx="5" fill="rgba(78,205,196,0.05)" stroke="rgba(78,205,196,0.12)" stroke-width="0.5"/>
+  <circle cx="76" cy="299" r="3" fill="#4ECDC4" opacity="0.4"/>
+  <text x="86" y="302" fill="rgba(78,205,196,0.5)" font-family="Space Grotesk" font-size="8" font-weight="600">Leverage + Systems Synthesizer</text>
+
+  <!-- Arrow: Mind Layer to center -->
+  <path d="M 350 250 C 420 250, 500 320, 560 350" fill="none" stroke="rgba(78,205,196,0.2)" stroke-width="1.5" marker-end="url(#arr-teal)"/>
+  <text x="420" y="280" fill="rgba(78,205,196,0.2)" font-family="Outfit" font-size="7">feeds strategy</text>
+
+  <!-- ================================================================== -->
+  <!--  RIGHT PANEL: SOUL LAYER + AFRICAN WORLDVIEW CONNECTION            -->
+  <!-- ================================================================== -->
+
+  <rect x="1250" y="130" width="310" height="240" rx="14"
+        fill="rgba(200,168,78,0.03)" stroke="rgba(200,168,78,0.18)" stroke-width="1.5"/>
+
+  <text x="1270" y="155" fill="#C8A84E" font-family="Space Grotesk" font-size="13" font-weight="700">SOUL LAYER</text>
+  <text x="1270" y="170" fill="rgba(200,168,78,0.45)" font-family="Outfit" font-size="8">Purpose Core — where PERMA orientation lives</text>
+
+  <!-- Soul layer modules -->
+  <rect x="1270" y="185" width="270" height="30" rx="5" fill="rgba(16,185,129,0.08)" stroke="rgba(16,185,129,0.2)" stroke-width="1"/>
+  <circle cx="1286" cy="200" r="4" fill="#10B981" opacity="0.6">
+    <animate attributeName="opacity" values="0.3;0.8;0.3" dur="3s" repeatCount="indefinite" begin="0.5s"/>
+  </circle>
+  <text x="1296" y="203" fill="#10B981" font-family="Space Grotesk" font-size="9" font-weight="600">PERMA Orientation Bias</text>
+  <text x="1468" y="203" fill="rgba(16,185,129,0.35)" font-family="Outfit" font-size="7">NEW</text>
+
+  <rect x="1270" y="222" width="270" height="26" rx="5" fill="rgba(239,68,68,0.04)" stroke="rgba(239,68,68,0.1)" stroke-width="0.5"/>
+  <circle cx="1286" cy="235" r="3" fill="rgba(239,68,68,0.5)" opacity="0.5">
+    <animate attributeName="opacity" values="0.3;0.7;0.3" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  <text x="1296" y="238" fill="rgba(239,68,68,0.5)" font-family="Space Grotesk" font-size="8" font-weight="600">Ethics & Dignity Guard</text>
+  <text x="1445" y="238" fill="rgba(239,68,68,0.3)" font-family="Outfit" font-size="6.5">always on</text>
+
+  <rect x="1270" y="254" width="270" height="26" rx="5" fill="rgba(200,168,78,0.05)" stroke="rgba(200,168,78,0.12)" stroke-width="0.5"/>
+  <circle cx="1286" cy="267" r="3" fill="#C8A84E" opacity="0.4"/>
+  <text x="1296" y="270" fill="rgba(200,168,78,0.5)" font-family="Space Grotesk" font-size="8" font-weight="600">African Worldview Lens</text>
+
+  <rect x="1270" y="286" width="270" height="26" rx="5" fill="rgba(200,168,78,0.05)" stroke="rgba(200,168,78,0.12)" stroke-width="0.5"/>
+  <circle cx="1286" cy="299" r="3" fill="#C8A84E" opacity="0.4"/>
+  <text x="1296" y="302" fill="rgba(200,168,78,0.5)" font-family="Space Grotesk" font-size="8" font-weight="600">Soul of Humans</text>
+  <text x="1400" y="302" fill="rgba(200,168,78,0.3)" font-family="Outfit" font-size="6.5">values, wounds, hope</text>
+
+  <!-- Arrow: Soul Layer to center -->
+  <path d="M 1250 250 C 1180 250, 1100 320, 1040 350" fill="none" stroke="rgba(200,168,78,0.2)" stroke-width="1.5" marker-end="url(#arr-gold)"/>
+  <text x="1110" y="280" fill="rgba(200,168,78,0.2)" font-family="Outfit" font-size="7">feeds purpose</text>
+
+  <!-- ================================================================== -->
+  <!--  AFRICAN WORLDVIEW CONNECTION ARROWS                               -->
+  <!-- ================================================================== -->
+
+  <!-- AWM detail box -->
+  <rect x="1250" y="410" width="310" height="145" rx="10"
+        fill="rgba(200,168,78,0.02)" stroke="rgba(200,168,78,0.12)" stroke-width="1" stroke-dasharray="5,4"/>
+
+  <text x="1270" y="432" fill="#C8A84E" font-family="Space Grotesk" font-size="10" font-weight="700">AFRICAN WORLDVIEW MODULE</text>
+  <text x="1270" y="444" fill="rgba(200,168,78,0.35)" font-family="Outfit" font-size="7">Provides cultural sensemaking context</text>
+
+  <!-- 5 lenses compact -->
+  <text x="1270" y="464" fill="rgba(200,168,78,0.4)" font-family="Outfit" font-size="7.5">Coloniality & Power Memory</text>
+  <text x="1270" y="478" fill="rgba(200,168,78,0.4)" font-family="Outfit" font-size="7.5">Community-First Logic (Ubuntu)</text>
+  <text x="1270" y="492" fill="rgba(200,168,78,0.4)" font-family="Outfit" font-size="7.5">Spiritual Realism</text>
+  <text x="1270" y="506" fill="rgba(200,168,78,0.4)" font-family="Outfit" font-size="7.5">Patronage vs Bureaucracy</text>
+  <text x="1270" y="520" fill="rgba(200,168,78,0.4)" font-family="Outfit" font-size="7.5">Urban Hybridity</text>
+
+  <!-- Dots between entries -->
+  <circle cx="1262" cy="461" r="2" fill="rgba(200,168,78,0.25)"/>
+  <circle cx="1262" cy="475" r="2" fill="rgba(200,168,78,0.25)"/>
+  <circle cx="1262" cy="489" r="2" fill="rgba(200,168,78,0.25)"/>
+  <circle cx="1262" cy="503" r="2" fill="rgba(200,168,78,0.25)"/>
+  <circle cx="1262" cy="517" r="2" fill="rgba(200,168,78,0.25)"/>
+
+  <!-- Arrow from AWM to center constellation -->
+  <path d="M 1250 480 C 1180 480, 1100 440, 1040 420" fill="none" stroke="rgba(200,168,78,0.15)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arr-gold)"/>
+  <text x="1130" y="460" fill="rgba(200,168,78,0.2)" font-family="Outfit" font-size="7">cultural context</text>
+
+  <!-- ================================================================== -->
+  <!--  THE SYNERGY EQUATION (center bottom)                              -->
+  <!-- ================================================================== -->
+
+  <rect x="440" y="670" width="720" height="40" rx="8"
+        fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+
+  <text x="460" y="690" fill="#F59E0B" font-family="Space Grotesk" font-size="10" font-weight="700">TEN FACES</text>
+  <text x="550" y="690" fill="rgba(255,255,255,0.3)" font-family="Outfit" font-size="10">give you angles</text>
+  <text x="680" y="690" fill="rgba(255,255,255,0.15)" font-family="Space Grotesk" font-size="12" font-weight="300">+</text>
+  <text x="710" y="690" fill="#10B981" font-family="Space Grotesk" font-size="10" font-weight="700">PERMA</text>
+  <text x="760" y="690" fill="rgba(255,255,255,0.3)" font-family="Outfit" font-size="10">gives you orientation</text>
+  <text x="920" y="690" fill="rgba(255,255,255,0.15)" font-family="Space Grotesk" font-size="12" font-weight="300">=</text>
+  <text x="950" y="690" fill="rgba(255,255,255,0.6)" font-family="Space Grotesk" font-size="10" font-weight="700">MULTI-LENS PERCEPTION</text>
+
+  <!-- ================================================================== -->
+  <!--  COUNTER-MATRIX: Devil's Advocate vs Ten Faces (compact)           -->
+  <!-- ================================================================== -->
+
+  <rect x="40" y="410" width="310" height="285" rx="10"
+        fill="rgba(239,68,68,0.02)" stroke="rgba(239,68,68,0.1)" stroke-width="1"/>
+
+  <text x="60" y="432" fill="#fca5a5" font-family="Space Grotesk" font-size="10" font-weight="700">DEVIL'S ADVOCATE COUNTER-MATRIX</text>
+  <text x="60" y="444" fill="rgba(239,68,68,0.3)" font-family="Outfit" font-size="7">Every objection triggers a constructive lens</text>
+
+  <!-- Table rows -->
+  <g fill="rgba(255,255,255,0.35)" font-family="Outfit" font-size="7">
+    <text x="60" y="466">"That'll never work"</text>
+    <text x="200" y="466" fill="#F59E0B" font-family="Space Grotesk" font-size="7" font-weight="600">Experimenter</text>
+    <text x="280" y="466" fill="rgba(255,255,255,0.25)">"Let's test it"</text>
+
+    <text x="60" y="484">"Customers don't want that"</text>
+    <text x="200" y="484" fill="#F59E0B" font-family="Space Grotesk" font-size="7" font-weight="600">Anthropologist</text>
+    <text x="280" y="484" fill="rgba(255,255,255,0.25)">"I observed..."</text>
+
+    <text x="60" y="502">"We've never done that"</text>
+    <text x="200" y="502" fill="#F59E0B" font-family="Space Grotesk" font-size="7" font-weight="600">Cross-Pollinator</text>
+    <text x="280" y="502" fill="rgba(255,255,255,0.25)">"But X has..."</text>
+
+    <text x="60" y="520">"No resources"</text>
+    <text x="200" y="520" fill="#F59E0B" font-family="Space Grotesk" font-size="7" font-weight="600">Hurdler</text>
+    <text x="280" y="520" fill="rgba(255,255,255,0.25)">"I'll find a way"</text>
+
+    <text x="60" y="538">"Not our department"</text>
+    <text x="200" y="538" fill="#F59E0B" font-family="Space Grotesk" font-size="7" font-weight="600">Collaborator</text>
+    <text x="280" y="538" fill="rgba(255,255,255,0.25)">"Bring them in"</text>
+
+    <text x="60" y="556">"Who's going to do it?"</text>
+    <text x="200" y="556" fill="#F59E0B" font-family="Space Grotesk" font-size="7" font-weight="600">Director</text>
+    <text x="280" y="556" fill="rgba(255,255,255,0.25)">"Here's the team"</text>
+
+    <text x="60" y="574">"Too complicated"</text>
+    <text x="200" y="574" fill="#F59E0B" font-family="Space Grotesk" font-size="7" font-weight="600">Exp. Architect</text>
+    <text x="280" y="574" fill="rgba(255,255,255,0.25)">"The trigger point"</text>
+
+    <text x="60" y="592">"Where would we do this?"</text>
+    <text x="200" y="592" fill="#F59E0B" font-family="Space Grotesk" font-size="7" font-weight="600">Set Designer</text>
+    <text x="280" y="592" fill="rgba(255,255,255,0.25)">"Design the space"</text>
+
+    <text x="60" y="610">"Users won't understand"</text>
+    <text x="200" y="610" fill="#F59E0B" font-family="Space Grotesk" font-size="7" font-weight="600">Caregiver</text>
+    <text x="280" y="610" fill="rgba(255,255,255,0.25)">"Remove barriers"</text>
+
+    <text x="60" y="628">"Nobody will care"</text>
+    <text x="200" y="628" fill="#F59E0B" font-family="Space Grotesk" font-size="7" font-weight="600">Storyteller</text>
+    <text x="280" y="628" fill="rgba(255,255,255,0.25)">"Let me tell you..."</text>
+  </g>
+
+  <!-- Divider lines between rows -->
+  <g stroke="rgba(255,255,255,0.04)" stroke-width="0.5">
+    <line x1="55" y1="472" x2="340" y2="472"/>
+    <line x1="55" y1="490" x2="340" y2="490"/>
+    <line x1="55" y1="508" x2="340" y2="508"/>
+    <line x1="55" y1="526" x2="340" y2="526"/>
+    <line x1="55" y1="544" x2="340" y2="544"/>
+    <line x1="55" y1="562" x2="340" y2="562"/>
+    <line x1="55" y1="580" x2="340" y2="580"/>
+    <line x1="55" y1="598" x2="340" y2="598"/>
+    <line x1="55" y1="616" x2="340" y2="616"/>
+  </g>
+
+  <!-- Struck-through devil's advocate label -->
+  <g>
+    <text x="195" y="660" text-anchor="middle" fill="rgba(239,68,68,0.2)" font-family="Outfit" font-size="7" font-style="italic">"The Devil's Advocate is the biggest innovation killer" — Tom Kelley</text>
+  </g>
+
+  <!-- ================================================================== -->
+  <!--  DATA FLOW ANNOTATION                                              -->
+  <!-- ================================================================== -->
+
+  <!-- Flow label near center -->
+  <text x="800" y="435" text-anchor="middle" fill="rgba(255,255,255,0.15)" font-family="Outfit" font-size="6.5" letter-spacing="1">rotate through lenses</text>
+
+  <!-- Output arrow from center going down -->
+  <path d="M 800 434 L 800 460 L 800 480" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1" marker-end="url(#arr-white)"/>
+  <text x="820" y="475" fill="rgba(255,255,255,0.2)" font-family="Outfit" font-size="7">multi-perspective output</text>
+
+  <!-- ================================================================== -->
+  <!--  PERMA x FACES INTEGRATION MAP (small, center-right)               -->
+  <!-- ================================================================== -->
+
+  <rect x="1250" y="580" width="310" height="130" rx="10"
+        fill="rgba(255,255,255,0.015)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+
+  <text x="1270" y="600" fill="rgba(255,255,255,0.5)" font-family="Space Grotesk" font-size="9" font-weight="700">PERMA x FACES INTEGRATION</text>
+
+  <g font-family="Outfit" font-size="7">
+    <text x="1270" y="620" fill="#10B981">P</text>
+    <text x="1285" y="620" fill="rgba(255,255,255,0.3)">Positive Emotion</text>
+    <text x="1400" y="620" fill="rgba(245,158,11,0.4)">Storyteller + Caregiver</text>
+
+    <text x="1270" y="636" fill="#10B981">E</text>
+    <text x="1285" y="636" fill="rgba(255,255,255,0.3)">Engagement</text>
+    <text x="1400" y="636" fill="rgba(245,158,11,0.4)">Exp. Architect + Set Designer</text>
+
+    <text x="1270" y="652" fill="#10B981">R</text>
+    <text x="1285" y="652" fill="rgba(255,255,255,0.3)">Relationships</text>
+    <text x="1400" y="652" fill="rgba(245,158,11,0.4)">Collaborator + Anthropologist</text>
+
+    <text x="1270" y="668" fill="#10B981">M</text>
+    <text x="1285" y="668" fill="rgba(255,255,255,0.3)">Meaning</text>
+    <text x="1400" y="668" fill="rgba(245,158,11,0.4)">Director + Cross-Pollinator</text>
+
+    <text x="1270" y="684" fill="#10B981">A</text>
+    <text x="1285" y="684" fill="rgba(255,255,255,0.3)">Accomplishment</text>
+    <text x="1400" y="684" fill="rgba(245,158,11,0.4)">Experimenter + Hurdler</text>
+  </g>
+
+  <!-- ================================================================== -->
+  <!--  TOP RIGHT: Phase Map (compact)                                    -->
+  <!-- ================================================================== -->
+
+  <rect x="40" y="50" width="310" height="68" rx="8"
+        fill="rgba(255,255,255,0.015)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+
+  <text x="60" y="70" fill="rgba(255,255,255,0.45)" font-family="Space Grotesk" font-size="8" font-weight="700" letter-spacing="1">PROJECT PHASE SEQUENCE</text>
+
+  <g font-family="Outfit" font-size="6.5" fill="rgba(255,255,255,0.3)">
+    <text x="60" y="86">Discovery:</text>
+    <text x="110" y="86" fill="rgba(245,158,11,0.45)">Anthropologist + Cross-Pollinator</text>
+    <text x="60" y="97">Build:</text>
+    <text x="110" y="97" fill="rgba(245,158,11,0.45)">Hurdler + Exp. Architect</text>
+    <text x="60" y="108">Launch:</text>
+    <text x="110" y="108" fill="rgba(245,158,11,0.45)">Storyteller + Set Designer</text>
+  </g>
+
+  <!-- ================================================================== -->
+  <!--  SIGNATURE                                                         -->
+  <!-- ================================================================== -->
+
+  <text x="1540" y="985" text-anchor="end" fill="#1a1a1a" font-family="Outfit" font-size="8">SodaLabs AI  /  Multi-Lens Perception Engine  /  Thinking Frameworks Module  /  Feb 2026</text>
+
+</svg>
+</body>
+</html>

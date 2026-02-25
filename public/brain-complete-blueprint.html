@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Complete Digital Twin Brain -- Michael Balkind / SodaWorld</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: #0a0a0a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+  svg { width: 100vw; height: 100vh; }
+</style>
+</head>
+<body>
+<svg viewBox="0 0 2000 1300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Layer ambient glows -->
+    <radialGradient id="soulGlow" cx="50%" cy="14%" r="18%">
+      <stop offset="0%" stop-color="rgba(200,168,78,0.10)"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+    <radialGradient id="mindGlow" cx="50%" cy="35%" r="16%">
+      <stop offset="0%" stop-color="rgba(78,205,196,0.07)"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+    <radialGradient id="brainGlow" cx="50%" cy="56%" r="15%">
+      <stop offset="0%" stop-color="rgba(59,130,246,0.07)"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+    <radialGradient id="memGlow" cx="50%" cy="76%" r="16%">
+      <stop offset="0%" stop-color="rgba(139,92,246,0.07)"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+    <!-- Identity Kernel glow -->
+    <radialGradient id="kernelGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="rgba(200,168,78,0.25)"/>
+      <stop offset="40%" stop-color="rgba(200,168,78,0.08)"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+
+    <filter id="soft"><feGaussianBlur stdDeviation="3"/></filter>
+    <filter id="softer"><feGaussianBlur stdDeviation="6"/></filter>
+    <filter id="glow-strong"><feGaussianBlur stdDeviation="8"/></filter>
+
+    <!-- Arrow markers -->
+    <marker id="arr-gold" viewBox="0 0 8 8" refX="8" refY="4" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 0 L8 4 L0 8z" fill="rgba(200,168,78,0.6)"/>
+    </marker>
+    <marker id="arr-teal" viewBox="0 0 8 8" refX="8" refY="4" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 0 L8 4 L0 8z" fill="rgba(78,205,196,0.6)"/>
+    </marker>
+    <marker id="arr-blue" viewBox="0 0 8 8" refX="8" refY="4" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 0 L8 4 L0 8z" fill="rgba(59,130,246,0.6)"/>
+    </marker>
+    <marker id="arr-purple" viewBox="0 0 8 8" refX="8" refY="4" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 0 L8 4 L0 8z" fill="rgba(139,92,246,0.6)"/>
+    </marker>
+    <marker id="arr-red" viewBox="0 0 8 8" refX="8" refY="4" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 0 L8 4 L0 8z" fill="rgba(239,68,68,0.6)"/>
+    </marker>
+    <marker id="arr-white" viewBox="0 0 8 8" refX="8" refY="4" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 0 L8 4 L0 8z" fill="rgba(255,255,255,0.4)"/>
+    </marker>
+    <marker id="arr-orange" viewBox="0 0 8 8" refX="8" refY="4" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 0 L8 4 L0 8z" fill="rgba(245,158,11,0.6)"/>
+    </marker>
+    <marker id="arr-green" viewBox="0 0 8 8" refX="8" refY="4" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 0 L8 4 L0 8z" fill="rgba(16,185,129,0.6)"/>
+    </marker>
+    <!-- Reverse arrow for feedback loop -->
+    <marker id="arr-feedback" viewBox="0 0 8 8" refX="0" refY="4" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M8 0 L0 4 L8 8z" fill="rgba(245,158,11,0.4)"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="2000" height="1300" fill="#0a0a0a"/>
+  <rect width="2000" height="1300" fill="url(#soulGlow)"/>
+  <rect width="2000" height="1300" fill="url(#mindGlow)"/>
+  <rect width="2000" height="1300" fill="url(#brainGlow)"/>
+  <rect width="2000" height="1300" fill="url(#memGlow)"/>
+
+  <!-- ================================================================== -->
+  <!--  TITLE                                                              -->
+  <!-- ================================================================== -->
+  <text x="1000" y="36" text-anchor="middle" fill="#666" font-family="Space Grotesk" font-size="13" font-weight="600" letter-spacing="6">THE COMPLETE DIGITAL TWIN BRAIN</text>
+  <text x="1000" y="56" text-anchor="middle" fill="#444" font-family="Outfit" font-size="11" letter-spacing="2">Michael Balkind  /  SodaWorld  /  SodaLabs AI  /  February 2026</text>
+
+  <!-- ================================================================== -->
+  <!--  ETHICS & DIGNITY GUARD — Red dashed boundary wrapping everything   -->
+  <!-- ================================================================== -->
+  <rect x="338" y="70" width="750" height="990" rx="24"
+        fill="none" stroke="rgba(239,68,68,0.15)" stroke-width="2.5" stroke-dasharray="10,5"/>
+  <rect x="341" y="73" width="744" height="984" rx="22"
+        fill="none" stroke="rgba(239,68,68,0.06)" stroke-width="1"/>
+
+  <!-- Ethics boundary labels -->
+  <rect x="360" y="58" width="280" height="24" rx="12" fill="#0a0a0a"/>
+  <text x="500" y="74" text-anchor="middle" fill="rgba(239,68,68,0.5)" font-family="Space Grotesk" font-size="11" font-weight="700" letter-spacing="4">ETHICS &amp; DIGNITY GUARD</text>
+  <text x="500" y="86" text-anchor="middle" fill="rgba(239,68,68,0.25)" font-family="Outfit" font-size="7">ALWAYS ON  |  FIRES BEFORE OUTPUT  |  CANNOT BE OVERRIDDEN</text>
+
+  <rect x="400" y="1048" width="620" height="18" rx="9" fill="#0a0a0a"/>
+  <text x="710" y="1061" text-anchor="middle" fill="rgba(239,68,68,0.3)" font-family="Outfit" font-size="7" letter-spacing="0.5">No race / religion / sexuality / tribe inference  |  Observable signals only  |  Probability language  |  Multiple interpretations  |  Non-invention  |  Provenance required</text>
+
+  <!-- ================================================================== -->
+  <!--  LAYER 1: SOUL — Gold (#C8A84E)                                     -->
+  <!-- ================================================================== -->
+  <rect x="365" y="96" width="695" height="220" rx="16"
+        fill="rgba(200,168,78,0.04)" stroke="rgba(200,168,78,0.3)" stroke-width="1.5"/>
+
+  <text x="390" y="120" fill="#C8A84E" font-family="Space Grotesk" font-size="18" font-weight="800">SOUL LAYER</text>
+  <text x="390" y="136" fill="rgba(200,168,78,0.5)" font-family="Outfit" font-size="9">Purpose Core  /  What the twin stands for  /  The compass heading</text>
+
+  <!-- Module: Ethics & Dignity Guard (inside Soul) -->
+  <rect x="390" y="150" width="155" height="52" rx="8"
+        fill="rgba(239,68,68,0.06)" stroke="rgba(239,68,68,0.25)" stroke-width="1"/>
+  <circle cx="404" cy="167" r="4" fill="rgba(239,68,68,0.6)">
+    <animate attributeName="opacity" values="0.4;1;0.4" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  <text x="414" y="170" fill="#fca5a5" font-family="Space Grotesk" font-size="9" font-weight="700">ALWAYS ON</text>
+  <text x="400" y="184" fill="#e8a8a8" font-family="Space Grotesk" font-size="9.5" font-weight="600">Ethics &amp; Dignity Guard</text>
+  <text x="400" y="196" fill="rgba(239,68,68,0.4)" font-family="Outfit" font-size="7">Constitutional AI + OWASP + POPIA</text>
+
+  <!-- Module: African Worldview Lens -->
+  <rect x="560" y="150" width="155" height="52" rx="8"
+        fill="rgba(200,168,78,0.07)" stroke="rgba(200,168,78,0.3)" stroke-width="1"/>
+  <text x="570" y="168" fill="#C8A84E" font-family="Space Grotesk" font-size="9.5" font-weight="700">African Worldview Lens</text>
+  <text x="570" y="181" fill="rgba(200,168,78,0.45)" font-family="Outfit" font-size="7">5 Africa-specific context lenses</text>
+  <text x="570" y="193" fill="rgba(200,168,78,0.35)" font-family="Outfit" font-size="6.5">Coloniality | Ubuntu | Spiritual | Patronage | Urban</text>
+
+  <!-- Module: PERMA Orientation -->
+  <rect x="730" y="150" width="145" height="52" rx="8"
+        fill="rgba(16,185,129,0.06)" stroke="rgba(16,185,129,0.25)" stroke-width="1"/>
+  <text x="740" y="168" fill="#10B981" font-family="Space Grotesk" font-size="9.5" font-weight="700">PERMA Orientation</text>
+  <text x="740" y="181" fill="rgba(16,185,129,0.45)" font-family="Outfit" font-size="7">Positive Psychology bias</text>
+  <text x="740" y="193" fill="rgba(16,185,129,0.35)" font-family="Outfit" font-size="6.5">P + E + R + M + A always active</text>
+
+  <!-- Module: IDENTITY KERNEL (glowing core) -->
+  <g transform="translate(600, 262)">
+    <!-- Outer glow -->
+    <ellipse cx="0" cy="0" rx="110" ry="38" fill="url(#kernelGlow)" filter="url(#softer)"/>
+    <!-- Rings -->
+    <ellipse cx="0" cy="0" rx="100" ry="34" fill="rgba(200,168,78,0.03)" stroke="rgba(200,168,78,0.15)" stroke-width="0.8"/>
+    <ellipse cx="0" cy="0" rx="75" ry="26" fill="rgba(200,168,78,0.04)" stroke="rgba(200,168,78,0.2)" stroke-width="0.8"/>
+    <ellipse cx="0" cy="0" rx="48" ry="18" fill="rgba(200,168,78,0.06)" stroke="rgba(200,168,78,0.25)" stroke-width="1"/>
+    <!-- Glowing center point -->
+    <circle cx="0" cy="0" r="4" fill="#C8A84E" opacity="0.8">
+      <animate attributeName="r" values="3;5;3" dur="4s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.5;1;0.5" dur="4s" repeatCount="indefinite"/>
+    </circle>
+    <!-- Labels -->
+    <text x="0" y="-28" text-anchor="middle" fill="rgba(200,168,78,0.5)" font-family="Space Grotesk" font-size="7" font-weight="600" letter-spacing="3">IDENTITY KERNEL</text>
+    <text x="-35" y="-4" text-anchor="middle" fill="#C8A84E" font-family="Outfit" font-size="7" font-weight="600">Value Core</text>
+    <text x="40" y="-4" text-anchor="middle" fill="rgba(200,168,78,0.6)" font-family="Outfit" font-size="7">Sacred</text>
+    <text x="-35" y="10" text-anchor="middle" fill="rgba(200,168,78,0.5)" font-family="Outfit" font-size="7">Wounds</text>
+    <text x="40" y="10" text-anchor="middle" fill="rgba(200,168,78,0.4)" font-family="Outfit" font-size="7">Hope</text>
+    <text x="0" y="32" text-anchor="middle" fill="rgba(200,168,78,0.25)" font-family="Outfit" font-size="6" font-style="italic">protected  |  versioned  |  human-review only</text>
+  </g>
+
+  <!-- ================================================================== -->
+  <!--  LAYER 2: MIND — Teal (#4ECDC4)                                     -->
+  <!-- ================================================================== -->
+  <rect x="365" y="332" width="695" height="210" rx="16"
+        fill="rgba(78,205,196,0.03)" stroke="rgba(78,205,196,0.25)" stroke-width="1.5"/>
+
+  <text x="390" y="356" fill="#4ECDC4" font-family="Space Grotesk" font-size="18" font-weight="800">MIND LAYER</text>
+  <text x="390" y="372" fill="rgba(78,205,196,0.5)" font-family="Outfit" font-size="9">Strategic Synthesizer  /  How the twin thinks  /  The general's map table</text>
+
+  <!-- Module: Multi-Lens Perception Engine (Ten Faces) -->
+  <rect x="390" y="386" width="200" height="62" rx="8"
+        fill="rgba(245,158,11,0.06)" stroke="rgba(245,158,11,0.25)" stroke-width="1"/>
+  <text x="400" y="402" fill="#F59E0B" font-family="Space Grotesk" font-size="9.5" font-weight="700">Multi-Lens Perception</text>
+  <text x="400" y="414" fill="rgba(245,158,11,0.5)" font-family="Outfit" font-size="7">Ten Faces of Innovation</text>
+  <text x="400" y="426" fill="rgba(245,158,11,0.35)" font-family="Outfit" font-size="6.5">Anthropologist | Experimenter | Cross-Pollinator</text>
+  <text x="400" y="437" fill="rgba(245,158,11,0.35)" font-family="Outfit" font-size="6.5">Hurdler | Collaborator | Director | Architect</text>
+  <text x="400" y="444" fill="rgba(245,158,11,0.25)" font-family="Outfit" font-size="5.5">Set Designer | Caregiver | Storyteller</text>
+
+  <!-- Module: Perspective Mapping Engine -->
+  <rect x="605" y="386" width="175" height="62" rx="8"
+        fill="rgba(78,205,196,0.06)" stroke="rgba(78,205,196,0.2)" stroke-width="1"/>
+  <text x="615" y="402" fill="#4ECDC4" font-family="Space Grotesk" font-size="9.5" font-weight="700">Perspective Mapping</text>
+  <text x="615" y="414" fill="rgba(78,205,196,0.5)" font-family="Outfit" font-size="7">10-axis worldview profiling</text>
+  <text x="615" y="426" fill="rgba(78,205,196,0.35)" font-family="Outfit" font-size="6.5">Stability | Ubuntu | Institution</text>
+  <text x="615" y="437" fill="rgba(78,205,196,0.35)" font-family="Outfit" font-size="6.5">Tradition | Hierarchy | Local-Global</text>
+  <text x="615" y="444" fill="rgba(78,205,196,0.25)" font-family="Outfit" font-size="5.5">Justice | Market | Story | Trauma</text>
+
+  <!-- Module: Narrative + Leverage -->
+  <rect x="795" y="386" width="150" height="62" rx="8"
+        fill="rgba(78,205,196,0.06)" stroke="rgba(78,205,196,0.2)" stroke-width="1"/>
+  <text x="805" y="402" fill="#4ECDC4" font-family="Space Grotesk" font-size="9.5" font-weight="700">Narrative Framing</text>
+  <text x="805" y="414" fill="rgba(78,205,196,0.5)" font-family="Outfit" font-size="7">Story + communication</text>
+  <rect x="795" y="452" width="150" height="38" rx="8"
+        fill="rgba(78,205,196,0.04)" stroke="rgba(78,205,196,0.15)" stroke-width="1"/>
+  <text x="805" y="468" fill="#4ECDC4" font-family="Space Grotesk" font-size="9.5" font-weight="700">Leverage Synthesizer</text>
+  <text x="805" y="480" fill="rgba(78,205,196,0.5)" font-family="Outfit" font-size="7">Strategic shortcuts + connections</text>
+
+  <!-- African Worldview active badge in Mind -->
+  <rect x="390" y="460" width="390" height="26" rx="6"
+        fill="rgba(200,168,78,0.03)" stroke="rgba(200,168,78,0.1)" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="400" y="476" fill="rgba(200,168,78,0.45)" font-family="Space Grotesk" font-size="7.5" font-weight="600">AFRICAN WORLDVIEW + PERMA ACTIVE ACROSS ALL MIND MODULES</text>
+
+  <!-- ================================================================== -->
+  <!--  LAYER 3: BRAIN — Blue (#3B82F6)                                    -->
+  <!-- ================================================================== -->
+  <rect x="365" y="558" width="695" height="170" rx="16"
+        fill="rgba(59,130,246,0.03)" stroke="rgba(59,130,246,0.25)" stroke-width="1.5"/>
+
+  <text x="390" y="582" fill="#3B82F6" font-family="Space Grotesk" font-size="18" font-weight="800">BRAIN LAYER</text>
+  <text x="390" y="598" fill="rgba(59,130,246,0.5)" font-family="Outfit" font-size="9">Execution Engine  /  What the twin does in real-time  /  The surgeon's hands</text>
+
+  <!-- Module: Conversation Planner -->
+  <rect x="390" y="612" width="195" height="50" rx="8"
+        fill="rgba(59,130,246,0.06)" stroke="rgba(59,130,246,0.2)" stroke-width="1"/>
+  <circle cx="404" cy="628" r="4" fill="#3B82F6" opacity="0.6">
+    <animate attributeName="opacity" values="0.3;0.8;0.3" dur="3s" repeatCount="indefinite"/>
+  </circle>
+  <text x="414" y="631" fill="#60A5FA" font-family="Space Grotesk" font-size="9.5" font-weight="600">Conversation Planner</text>
+  <text x="400" y="644" fill="rgba(59,130,246,0.4)" font-family="Outfit" font-size="7">Questions, probes, safe inquiries</text>
+  <text x="400" y="655" fill="rgba(59,130,246,0.3)" font-family="Outfit" font-size="6.5">SDT autonomy-supportive questioning</text>
+
+  <!-- Module: Evidence Extractor -->
+  <rect x="600" y="612" width="195" height="50" rx="8"
+        fill="rgba(59,130,246,0.06)" stroke="rgba(59,130,246,0.2)" stroke-width="1"/>
+  <circle cx="614" cy="628" r="4" fill="#3B82F6" opacity="0.6">
+    <animate attributeName="opacity" values="0.3;0.8;0.3" dur="3s" repeatCount="indefinite" begin="0.5s"/>
+  </circle>
+  <text x="624" y="631" fill="#60A5FA" font-family="Space Grotesk" font-size="9.5" font-weight="600">Evidence Extractor</text>
+  <text x="610" y="644" fill="rgba(59,130,246,0.4)" font-family="Outfit" font-size="7">Quotes, behaviors, observable signals</text>
+  <text x="610" y="655" fill="rgba(59,130,246,0.3)" font-family="Outfit" font-size="6.5">PROV-O provenance on every snippet</text>
+
+  <!-- Module: Uncertainty + Confidence -->
+  <rect x="810" y="612" width="195" height="50" rx="8"
+        fill="rgba(59,130,246,0.06)" stroke="rgba(59,130,246,0.2)" stroke-width="1"/>
+  <circle cx="824" cy="628" r="4" fill="#3B82F6" opacity="0.6">
+    <animate attributeName="opacity" values="0.3;0.8;0.3" dur="3s" repeatCount="indefinite" begin="1s"/>
+  </circle>
+  <text x="834" y="631" fill="#60A5FA" font-family="Space Grotesk" font-size="9.5" font-weight="600">Uncertainty + Confidence</text>
+  <text x="820" y="644" fill="rgba(59,130,246,0.4)" font-family="Outfit" font-size="7">Probability scoring (0-1)</text>
+  <text x="820" y="655" fill="rgba(59,130,246,0.3)" font-family="Outfit" font-size="6.5">Multiple interpretations flagged</text>
+
+  <!-- Ethics report output badge -->
+  <rect x="390" y="674" width="615" height="26" rx="6"
+        fill="rgba(239,68,68,0.03)" stroke="rgba(239,68,68,0.1)" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="400" y="691" fill="rgba(239,68,68,0.4)" font-family="Space Grotesk" font-size="7.5" font-weight="600">ETHICS REPORT:</text>
+  <text x="500" y="691" fill="rgba(239,68,68,0.3)" font-family="Outfit" font-size="7">What was inferred</text>
+  <circle cx="590" cy="689" r="1.5" fill="rgba(239,68,68,0.2)"/>
+  <text x="600" y="691" fill="rgba(239,68,68,0.3)" font-family="Outfit" font-size="7">What was refused</text>
+  <circle cx="690" cy="689" r="1.5" fill="rgba(239,68,68,0.2)"/>
+  <text x="700" y="691" fill="rgba(239,68,68,0.3)" font-family="Outfit" font-size="7">Risky assumptions</text>
+  <circle cx="800" cy="689" r="1.5" fill="rgba(239,68,68,0.2)"/>
+  <text x="810" y="691" fill="rgba(239,68,68,0.3)" font-family="Outfit" font-size="7">What to ask directly</text>
+
+  <!-- ================================================================== -->
+  <!--  LAYER 4: MEMORY — Purple (#8B5CF6)                                 -->
+  <!-- ================================================================== -->
+  <rect x="365" y="744" width="695" height="200" rx="16"
+        fill="rgba(139,92,246,0.03)" stroke="rgba(139,92,246,0.25)" stroke-width="1.5"/>
+
+  <text x="390" y="768" fill="#8B5CF6" font-family="Space Grotesk" font-size="18" font-weight="800">MEMORY LAYER</text>
+  <text x="390" y="784" fill="rgba(139,92,246,0.5)" font-family="Outfit" font-size="9">Storage + Retrieval  /  What the twin knows  /  The living library</text>
+
+  <!-- Module: Person Profiles -->
+  <rect x="390" y="798" width="240" height="56" rx="8"
+        fill="rgba(139,92,246,0.06)" stroke="rgba(139,92,246,0.2)" stroke-width="1"/>
+  <circle cx="404" cy="814" r="4" fill="#8B5CF6" opacity="0.6">
+    <animate attributeName="opacity" values="0.3;0.8;0.3" dur="3s" repeatCount="indefinite" begin="0.2s"/>
+  </circle>
+  <text x="414" y="817" fill="#A78BFA" font-family="Space Grotesk" font-size="9.5" font-weight="600">Person Profiles</text>
+  <text x="400" y="830" fill="rgba(139,92,246,0.4)" font-family="Outfit" font-size="7">Versioned, editable, consent-aware</text>
+  <text x="400" y="842" fill="rgba(139,92,246,0.3)" font-family="Outfit" font-size="6.5">Perspective Map + Soul + Communication Strategy</text>
+  <text x="400" y="852" fill="rgba(139,92,246,0.25)" font-family="Outfit" font-size="6">Each person = living knowledge graph node</text>
+
+  <!-- Module: Context & History Bank -->
+  <rect x="645" y="798" width="240" height="56" rx="8"
+        fill="rgba(139,92,246,0.06)" stroke="rgba(139,92,246,0.2)" stroke-width="1"/>
+  <circle cx="659" cy="814" r="4" fill="#8B5CF6" opacity="0.6">
+    <animate attributeName="opacity" values="0.3;0.8;0.3" dur="3s" repeatCount="indefinite" begin="0.7s"/>
+  </circle>
+  <text x="669" y="817" fill="#A78BFA" font-family="Space Grotesk" font-size="9.5" font-weight="600">Context &amp; History Bank</text>
+  <text x="655" y="830" fill="rgba(139,92,246,0.4)" font-family="Outfit" font-size="7">Temporal knowledge graph</text>
+  <text x="655" y="842" fill="rgba(139,92,246,0.3)" font-family="Outfit" font-size="6.5">Vector + BM25 + structured hybrid retrieval</text>
+  <text x="655" y="852" fill="rgba(139,92,246,0.25)" font-family="Outfit" font-size="6">Knows WHEN things happened, not just WHAT</text>
+
+  <!-- Evidence vs Interpretation separation -->
+  <rect x="390" y="868" width="495" height="48" rx="8"
+        fill="rgba(139,92,246,0.03)" stroke="rgba(139,92,246,0.12)" stroke-width="1"/>
+  <!-- Evidence side -->
+  <rect x="396" y="874" width="235" height="36" rx="6"
+        fill="rgba(34,197,94,0.04)" stroke="rgba(34,197,94,0.15)" stroke-width="0.8"/>
+  <text x="406" y="890" fill="rgba(34,197,94,0.6)" font-family="Space Grotesk" font-size="8" font-weight="600">EVIDENCE STORE (immutable)</text>
+  <text x="406" y="902" fill="rgba(34,197,94,0.35)" font-family="Outfit" font-size="6.5">Raw quotes + documents + signals | Never modified</text>
+  <!-- Interpretation side -->
+  <rect x="640" y="874" width="235" height="36" rx="6"
+        fill="rgba(200,168,78,0.04)" stroke="rgba(200,168,78,0.15)" stroke-width="0.8"/>
+  <text x="650" y="890" fill="rgba(200,168,78,0.6)" font-family="Space Grotesk" font-size="8" font-weight="600">INTERPRETATION STORE (versioned)</text>
+  <text x="650" y="902" fill="rgba(200,168,78,0.35)" font-family="Outfit" font-size="6.5">Claims + traits + methods | Versioned, linked to evidence</text>
+
+  <!-- Provenance note -->
+  <text x="390" y="930" fill="rgba(139,92,246,0.25)" font-family="Outfit" font-size="7" font-style="italic">Every memory traceable to source (PROV-O)  |  Consent flags on every record  |  Version history preserved  |  6 database tables</text>
+
+  <!-- ================================================================== -->
+  <!--  DATA FLOW ARROWS (between layers, center)                          -->
+  <!-- ================================================================== -->
+
+  <!-- Soul -> Mind (commands down) -->
+  <line x1="690" y1="316" x2="690" y2="332" stroke="rgba(200,168,78,0.4)" stroke-width="1.5" marker-end="url(#arr-gold)"/>
+  <line x1="740" y1="316" x2="740" y2="332" stroke="rgba(200,168,78,0.4)" stroke-width="1.5" marker-end="url(#arr-gold)"/>
+  <text x="756" y="326" fill="rgba(200,168,78,0.3)" font-family="Outfit" font-size="7">purpose + ethics</text>
+
+  <!-- Mind -> Brain (commands down) -->
+  <line x1="690" y1="542" x2="690" y2="558" stroke="rgba(78,205,196,0.4)" stroke-width="1.5" marker-end="url(#arr-teal)"/>
+  <line x1="740" y1="542" x2="740" y2="558" stroke="rgba(78,205,196,0.4)" stroke-width="1.5" marker-end="url(#arr-teal)"/>
+  <text x="756" y="552" fill="rgba(78,205,196,0.3)" font-family="Outfit" font-size="7">strategy + framing</text>
+
+  <!-- Brain -> Memory (commands down) -->
+  <line x1="690" y1="728" x2="690" y2="744" stroke="rgba(59,130,246,0.4)" stroke-width="1.5" marker-end="url(#arr-blue)"/>
+  <line x1="740" y1="728" x2="740" y2="744" stroke="rgba(59,130,246,0.4)" stroke-width="1.5" marker-end="url(#arr-blue)"/>
+  <text x="756" y="738" fill="rgba(59,130,246,0.3)" font-family="Outfit" font-size="7">store + query</text>
+
+  <!-- Memory -> Brain (knowledge up) -->
+  <line x1="640" y1="744" x2="640" y2="728" stroke="rgba(139,92,246,0.3)" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#arr-purple)"/>
+  <text x="616" y="738" fill="rgba(139,92,246,0.25)" font-family="Outfit" font-size="7" text-anchor="end">recall</text>
+
+  <!-- Brain -> Mind (evidence up) -->
+  <line x1="640" y1="558" x2="640" y2="542" stroke="rgba(59,130,246,0.3)" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#arr-blue)"/>
+  <text x="616" y="552" fill="rgba(59,130,246,0.25)" font-family="Outfit" font-size="7" text-anchor="end">evidence</text>
+
+  <!-- Mind -> Soul (context up) -->
+  <line x1="640" y1="332" x2="640" y2="316" stroke="rgba(78,205,196,0.3)" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#arr-teal)"/>
+  <text x="616" y="326" fill="rgba(78,205,196,0.25)" font-family="Outfit" font-size="7" text-anchor="end">context</text>
+
+  <!-- ================================================================== -->
+  <!--  LEFT SIDE: INGESTION PIPELINE                                      -->
+  <!-- ================================================================== -->
+
+  <text x="170" y="96" text-anchor="middle" fill="#555" font-family="Space Grotesk" font-size="12" font-weight="700" letter-spacing="3">INGESTION</text>
+  <text x="170" y="112" text-anchor="middle" fill="#383838" font-family="Outfit" font-size="8">How data enters the brain</text>
+
+  <!-- 5 Input sources -->
+  <rect x="60" y="132" width="220" height="36" rx="10"
+        fill="rgba(34,197,94,0.05)" stroke="rgba(34,197,94,0.2)" stroke-width="1"/>
+  <circle cx="80" cy="150" r="5" fill="rgba(34,197,94,0.4)"/>
+  <text x="92" y="146" fill="rgba(34,197,94,0.7)" font-family="Space Grotesk" font-size="9" font-weight="600">Conversations</text>
+  <text x="92" y="160" fill="rgba(34,197,94,0.35)" font-family="Outfit" font-size="7">WhatsApp, Slack, email, transcripts</text>
+
+  <rect x="60" y="176" width="220" height="36" rx="10"
+        fill="rgba(34,197,94,0.05)" stroke="rgba(34,197,94,0.2)" stroke-width="1"/>
+  <circle cx="80" cy="194" r="5" fill="rgba(34,197,94,0.4)"/>
+  <text x="92" y="190" fill="rgba(34,197,94,0.7)" font-family="Space Grotesk" font-size="9" font-weight="600">Documents</text>
+  <text x="92" y="204" fill="rgba(34,197,94,0.35)" font-family="Outfit" font-size="7">PDFs, decks, proposals, markdown</text>
+
+  <rect x="60" y="220" width="220" height="36" rx="10"
+        fill="rgba(34,197,94,0.05)" stroke="rgba(34,197,94,0.2)" stroke-width="1"/>
+  <circle cx="80" cy="238" r="5" fill="rgba(34,197,94,0.4)"/>
+  <text x="92" y="234" fill="rgba(34,197,94,0.7)" font-family="Space Grotesk" font-size="9" font-weight="600">Screenshots</text>
+  <text x="92" y="248" fill="rgba(34,197,94,0.35)" font-family="Outfit" font-size="7">OCR + AI visual extraction</text>
+
+  <rect x="60" y="264" width="220" height="36" rx="10"
+        fill="rgba(34,197,94,0.05)" stroke="rgba(34,197,94,0.2)" stroke-width="1"/>
+  <circle cx="80" cy="282" r="5" fill="rgba(34,197,94,0.4)"/>
+  <text x="92" y="278" fill="rgba(34,197,94,0.7)" font-family="Space Grotesk" font-size="9" font-weight="600">Voice Notes</text>
+  <text x="92" y="292" fill="rgba(34,197,94,0.35)" font-family="Outfit" font-size="7">Speech-to-text transcription</text>
+
+  <rect x="60" y="308" width="220" height="36" rx="10"
+        fill="rgba(34,197,94,0.05)" stroke="rgba(34,197,94,0.2)" stroke-width="1"/>
+  <circle cx="80" cy="326" r="5" fill="rgba(34,197,94,0.4)"/>
+  <text x="92" y="322" fill="rgba(34,197,94,0.7)" font-family="Space Grotesk" font-size="9" font-weight="600">Webhooks / Events</text>
+  <text x="92" y="336" fill="rgba(34,197,94,0.35)" font-family="Outfit" font-size="7">Calendar, GitHub, external systems</text>
+
+  <!-- Pipeline processing steps -->
+  <rect x="90" y="365" width="160" height="170" rx="10"
+        fill="rgba(34,197,94,0.03)" stroke="rgba(34,197,94,0.12)" stroke-width="1"/>
+  <text x="170" y="382" text-anchor="middle" fill="rgba(34,197,94,0.5)" font-family="Space Grotesk" font-size="8" font-weight="600">PROCESSING PIPELINE</text>
+
+  <text x="108" y="400" fill="rgba(34,197,94,0.4)" font-family="Outfit" font-size="7">1. Receive + timestamp</text>
+  <text x="108" y="414" fill="rgba(34,197,94,0.4)" font-family="Outfit" font-size="7">2. Normalize (OCR/STT/parse)</text>
+  <text x="108" y="428" fill="rgba(34,197,94,0.4)" font-family="Outfit" font-size="7">3. Classify (PII + project + person)</text>
+  <text x="108" y="442" fill="rgba(34,197,94,0.4)" font-family="Outfit" font-size="7">4. Chunk (200-500 tokens)</text>
+  <text x="108" y="456" fill="rgba(34,197,94,0.4)" font-family="Outfit" font-size="7">5. Embed (vector + BM25)</text>
+  <text x="108" y="470" fill="rgba(34,197,94,0.4)" font-family="Outfit" font-size="7">6. Extract Claims (AI + review)</text>
+  <text x="108" y="484" fill="rgba(34,197,94,0.4)" font-family="Outfit" font-size="7">7. Store (PROV-O metadata)</text>
+
+  <!-- Arrow from inputs to pipeline -->
+  <line x1="170" y1="344" x2="170" y2="365" stroke="rgba(34,197,94,0.3)" stroke-width="1.5" marker-end="url(#arr-green)"/>
+
+  <!-- Arrow from pipeline into Memory Layer -->
+  <path d="M 250 450 C 280 450, 310 750, 365 810" fill="none" stroke="rgba(34,197,94,0.2)" stroke-width="1.5" marker-end="url(#arr-green)"/>
+  <text x="280" y="620" fill="rgba(34,197,94,0.2)" font-family="Outfit" font-size="7" transform="rotate(-70, 280, 620)">evidence + claims to Memory</text>
+
+  <!-- ================================================================== -->
+  <!--  RIGHT SIDE: OUTPUT PIPELINE                                        -->
+  <!-- ================================================================== -->
+
+  <text x="1250" y="96" text-anchor="middle" fill="#555" font-family="Space Grotesk" font-size="12" font-weight="700" letter-spacing="3">OUTPUT</text>
+  <text x="1250" y="112" text-anchor="middle" fill="#383838" font-family="Outfit" font-size="8">What the brain produces</text>
+
+  <!-- Output types -->
+  <rect x="1140" y="132" width="220" height="44" rx="10"
+        fill="rgba(139,92,246,0.05)" stroke="rgba(139,92,246,0.2)" stroke-width="1"/>
+  <text x="1150" y="152" fill="#A78BFA" font-family="Space Grotesk" font-size="9.5" font-weight="600">Culturally-Aware Responses</text>
+  <text x="1150" y="166" fill="rgba(139,92,246,0.4)" font-family="Outfit" font-size="7">Multi-perspective, cited, calibrated, action-ready</text>
+
+  <rect x="1140" y="184" width="220" height="44" rx="10"
+        fill="rgba(78,205,196,0.05)" stroke="rgba(78,205,196,0.2)" stroke-width="1"/>
+  <text x="1150" y="204" fill="#4ECDC4" font-family="Space Grotesk" font-size="9.5" font-weight="600">Communication Strategies</text>
+  <text x="1150" y="218" fill="rgba(78,205,196,0.4)" font-family="Outfit" font-size="7">Framing + vocabulary + triggers + safe questions</text>
+
+  <rect x="1140" y="236" width="220" height="44" rx="10"
+        fill="rgba(200,168,78,0.05)" stroke="rgba(200,168,78,0.2)" stroke-width="1"/>
+  <text x="1150" y="256" fill="#C8A84E" font-family="Space Grotesk" font-size="9.5" font-weight="600">Perspective Maps</text>
+  <text x="1150" y="270" fill="rgba(200,168,78,0.4)" font-family="Outfit" font-size="7">10-axis worldview radar for each person</text>
+
+  <rect x="1140" y="288" width="220" height="44" rx="10"
+        fill="rgba(239,68,68,0.05)" stroke="rgba(239,68,68,0.15)" stroke-width="1"/>
+  <text x="1150" y="308" fill="#fca5a5" font-family="Space Grotesk" font-size="9.5" font-weight="600">Ethics Reports</text>
+  <text x="1150" y="322" fill="rgba(239,68,68,0.35)" font-family="Outfit" font-size="7">Inferred / refused / risky / ask-directly</text>
+
+  <rect x="1140" y="340" width="220" height="44" rx="10"
+        fill="rgba(245,158,11,0.05)" stroke="rgba(245,158,11,0.2)" stroke-width="1"/>
+  <text x="1150" y="360" fill="#F59E0B" font-family="Space Grotesk" font-size="9.5" font-weight="600">Multi-Lens Analysis</text>
+  <text x="1150" y="374" fill="rgba(245,158,11,0.4)" font-family="Outfit" font-size="7">Ten Faces rotation + PERMA synthesis</text>
+
+  <rect x="1140" y="392" width="220" height="44" rx="10"
+        fill="rgba(59,130,246,0.05)" stroke="rgba(59,130,246,0.2)" stroke-width="1"/>
+  <text x="1150" y="412" fill="#60A5FA" font-family="Space Grotesk" font-size="9.5" font-weight="600">Strategic Recommendations</text>
+  <text x="1150" y="426" fill="rgba(59,130,246,0.4)" font-family="Outfit" font-size="7">Action items + leverage points + next steps</text>
+
+  <!-- Arrow from Brain Layer to Output -->
+  <path d="M 1060 640 C 1090 640, 1110 400, 1140 300" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1.5" marker-end="url(#arr-white)"/>
+  <text x="1100" y="500" fill="rgba(255,255,255,0.15)" font-family="Outfit" font-size="7" transform="rotate(70, 1100, 500)">outputs from all layers</text>
+
+  <!-- ================================================================== -->
+  <!--  FEEDBACK / LEARNING LOOP (cycling back)                            -->
+  <!-- ================================================================== -->
+
+  <!-- Large feedback arrow from Output side back through bottom to Ingestion -->
+  <path d="M 1250 436 C 1250 520, 1300 600, 1350 650
+           C 1400 700, 1420 800, 1400 900
+           C 1380 980, 1300 1050, 1150 1080
+           C 1000 1110, 600 1110, 400 1080
+           C 200 1050, 120 980, 100 900
+           C 80 800, 80 650, 100 560
+           C 120 480, 140 440, 170 400"
+        fill="none" stroke="rgba(245,158,11,0.2)" stroke-width="2" stroke-dasharray="8,5" marker-end="url(#arr-orange)"/>
+
+  <!-- Feedback loop label -->
+  <rect x="560" y="1090" width="300" height="36" rx="12"
+        fill="rgba(245,158,11,0.04)" stroke="rgba(245,158,11,0.12)" stroke-width="1"/>
+  <text x="710" y="1106" text-anchor="middle" fill="rgba(245,158,11,0.5)" font-family="Space Grotesk" font-size="9" font-weight="600">FEEDBACK / LEARNING LOOP</text>
+  <text x="710" y="1120" text-anchor="middle" fill="rgba(245,158,11,0.3)" font-family="Outfit" font-size="7">Every interaction enriches memory  |  Tier 1 (immediate) + Tier 2 (weekly) + Tier 3 (monthly) reflection</text>
+
+  <!-- Small reflection icons along the loop -->
+  <circle cx="1400" cy="800" r="6" fill="rgba(245,158,11,0.08)" stroke="rgba(245,158,11,0.2)" stroke-width="1"/>
+  <text x="1400" y="803" text-anchor="middle" fill="rgba(245,158,11,0.4)" font-family="Space Grotesk" font-size="6" font-weight="700">T1</text>
+  <text x="1420" y="803" fill="rgba(245,158,11,0.25)" font-family="Outfit" font-size="6">after interaction</text>
+
+  <circle cx="800" cy="1110" r="6" fill="rgba(245,158,11,0.08)" stroke="rgba(245,158,11,0.2)" stroke-width="1"/>
+  <text x="800" y="1113" text-anchor="middle" fill="rgba(245,158,11,0.4)" font-family="Space Grotesk" font-size="6" font-weight="700">T2</text>
+  <text x="820" y="1113" fill="rgba(245,158,11,0.25)" font-family="Outfit" font-size="6">weekly synthesis</text>
+
+  <circle cx="200" cy="1000" r="6" fill="rgba(245,158,11,0.08)" stroke="rgba(245,158,11,0.2)" stroke-width="1"/>
+  <text x="200" y="1003" text-anchor="middle" fill="rgba(245,158,11,0.4)" font-family="Space Grotesk" font-size="6" font-weight="700">T3</text>
+  <text x="220" y="1003" fill="rgba(245,158,11,0.25)" font-family="Outfit" font-size="6">deep reassessment</text>
+
+  <!-- ================================================================== -->
+  <!--  RIGHT PANEL: 10-AXIS PERSPECTIVE MAP (radar)                       -->
+  <!-- ================================================================== -->
+
+  <rect x="1140" y="500" width="380" height="310" rx="14"
+        fill="rgba(200,168,78,0.02)" stroke="rgba(200,168,78,0.12)" stroke-width="1"/>
+  <text x="1160" y="522" fill="#C8A84E" font-family="Space Grotesk" font-size="11" font-weight="700">PERSPECTIVE MAP OUTPUT</text>
+  <text x="1160" y="536" fill="rgba(200,168,78,0.35)" font-family="Outfit" font-size="7">10-axis worldview profile (example)</text>
+
+  <!-- Radar chart -->
+  <g transform="translate(1330, 660)">
+    <!-- Concentric rings -->
+    <circle cx="0" cy="0" r="90" fill="none" stroke="rgba(200,168,78,0.06)" stroke-width="0.5"/>
+    <circle cx="0" cy="0" r="65" fill="none" stroke="rgba(200,168,78,0.05)" stroke-width="0.5"/>
+    <circle cx="0" cy="0" r="40" fill="none" stroke="rgba(200,168,78,0.04)" stroke-width="0.5"/>
+    <circle cx="0" cy="0" r="2" fill="#C8A84E" opacity="0.5"/>
+
+    <!-- 10 axis lines -->
+    <line x1="0" y1="0" x2="0" y2="-90" stroke="rgba(200,168,78,0.1)" stroke-width="0.5"/>
+    <line x1="0" y1="0" x2="53" y2="-73" stroke="rgba(200,168,78,0.1)" stroke-width="0.5"/>
+    <line x1="0" y1="0" x2="86" y2="-28" stroke="rgba(200,168,78,0.1)" stroke-width="0.5"/>
+    <line x1="0" y1="0" x2="86" y2="28" stroke="rgba(200,168,78,0.1)" stroke-width="0.5"/>
+    <line x1="0" y1="0" x2="53" y2="73" stroke="rgba(200,168,78,0.1)" stroke-width="0.5"/>
+    <line x1="0" y1="0" x2="0" y2="90" stroke="rgba(200,168,78,0.1)" stroke-width="0.5"/>
+    <line x1="0" y1="0" x2="-53" y2="73" stroke="rgba(200,168,78,0.1)" stroke-width="0.5"/>
+    <line x1="0" y1="0" x2="-86" y2="28" stroke="rgba(200,168,78,0.1)" stroke-width="0.5"/>
+    <line x1="0" y1="0" x2="-86" y2="-28" stroke="rgba(200,168,78,0.1)" stroke-width="0.5"/>
+    <line x1="0" y1="0" x2="-53" y2="-73" stroke="rgba(200,168,78,0.1)" stroke-width="0.5"/>
+
+    <!-- Axis labels -->
+    <text x="0" y="-96" text-anchor="middle" fill="rgba(200,168,78,0.5)" font-family="Outfit" font-size="7">Stability</text>
+    <text x="60" y="-76" fill="rgba(200,168,78,0.5)" font-family="Outfit" font-size="7">Ubuntu</text>
+    <text x="94" y="-22" fill="rgba(200,168,78,0.5)" font-family="Outfit" font-size="7">Institution</text>
+    <text x="94" y="34" fill="rgba(200,168,78,0.5)" font-family="Outfit" font-size="7">Tradition</text>
+    <text x="60" y="82" fill="rgba(200,168,78,0.5)" font-family="Outfit" font-size="7">Hierarchy</text>
+    <text x="0" y="104" text-anchor="middle" fill="rgba(200,168,78,0.5)" font-family="Outfit" font-size="7">Localism</text>
+    <text x="-60" y="82" text-anchor="end" fill="rgba(200,168,78,0.5)" font-family="Outfit" font-size="7">Restorative</text>
+    <text x="-94" y="34" text-anchor="end" fill="rgba(200,168,78,0.5)" font-family="Outfit" font-size="7">Market</text>
+    <text x="-94" y="-22" text-anchor="end" fill="rgba(200,168,78,0.5)" font-family="Outfit" font-size="7">Story-truth</text>
+    <text x="-60" y="-76" text-anchor="end" fill="rgba(200,168,78,0.5)" font-family="Outfit" font-size="7">Trauma-aware</text>
+
+    <!-- Example radar polygon -->
+    <polygon points="0,-58  37,-50  68,-16  54,22  32,53  0,64  -43,48  -58,12  -54,-22  -37,-53"
+             fill="rgba(200,168,78,0.08)" stroke="rgba(200,168,78,0.35)" stroke-width="1"/>
+
+    <!-- Dots -->
+    <circle cx="0" cy="-58" r="2.5" fill="#C8A84E" opacity="0.7"/>
+    <circle cx="37" cy="-50" r="2.5" fill="#C8A84E" opacity="0.7"/>
+    <circle cx="68" cy="-16" r="2.5" fill="#C8A84E" opacity="0.7"/>
+    <circle cx="54" cy="22" r="2.5" fill="#C8A84E" opacity="0.7"/>
+    <circle cx="32" cy="53" r="2.5" fill="#C8A84E" opacity="0.7"/>
+    <circle cx="0" cy="64" r="2.5" fill="#C8A84E" opacity="0.7"/>
+    <circle cx="-43" cy="48" r="2.5" fill="#C8A84E" opacity="0.7"/>
+    <circle cx="-58" cy="12" r="2.5" fill="#C8A84E" opacity="0.7"/>
+    <circle cx="-54" cy="-22" r="2.5" fill="#C8A84E" opacity="0.7"/>
+    <circle cx="-37" cy="-53" r="2.5" fill="#C8A84E" opacity="0.7"/>
+  </g>
+
+  <!-- ================================================================== -->
+  <!--  RIGHT PANEL: RESEARCH BACKBONE                                     -->
+  <!-- ================================================================== -->
+
+  <rect x="1140" y="830" width="380" height="210" rx="14"
+        fill="rgba(255,255,255,0.015)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+  <text x="1160" y="852" fill="#666" font-family="Space Grotesk" font-size="11" font-weight="700">RESEARCH BACKBONE</text>
+  <text x="1160" y="866" fill="#444" font-family="Outfit" font-size="7">20 domains informing the architecture</text>
+
+  <!-- Research domain pills -->
+  <g transform="translate(1155, 878)">
+    <rect x="0" y="0" width="80" height="16" rx="4" fill="rgba(200,168,78,0.06)" stroke="rgba(200,168,78,0.12)" stroke-width="0.5"/>
+    <text x="40" y="11" text-anchor="middle" fill="rgba(200,168,78,0.5)" font-family="Outfit" font-size="6.5">PROV-O</text>
+
+    <rect x="86" y="0" width="65" height="16" rx="4" fill="rgba(200,168,78,0.06)" stroke="rgba(200,168,78,0.12)" stroke-width="0.5"/>
+    <text x="118" y="11" text-anchor="middle" fill="rgba(200,168,78,0.5)" font-family="Outfit" font-size="6.5">Big Five</text>
+
+    <rect x="157" y="0" width="48" height="16" rx="4" fill="rgba(200,168,78,0.06)" stroke="rgba(200,168,78,0.12)" stroke-width="0.5"/>
+    <text x="181" y="11" text-anchor="middle" fill="rgba(200,168,78,0.5)" font-family="Outfit" font-size="6.5">SDT</text>
+
+    <rect x="211" y="0" width="48" height="16" rx="4" fill="rgba(200,168,78,0.06)" stroke="rgba(200,168,78,0.12)" stroke-width="0.5"/>
+    <text x="235" y="11" text-anchor="middle" fill="rgba(200,168,78,0.5)" font-family="Outfit" font-size="6.5">MFT</text>
+
+    <rect x="265" y="0" width="90" height="16" rx="4" fill="rgba(200,168,78,0.06)" stroke="rgba(200,168,78,0.12)" stroke-width="0.5"/>
+    <text x="310" y="11" text-anchor="middle" fill="rgba(200,168,78,0.5)" font-family="Outfit" font-size="6.5">Narrative Identity</text>
+
+    <rect x="0" y="22" width="75" height="16" rx="4" fill="rgba(78,205,196,0.06)" stroke="rgba(78,205,196,0.12)" stroke-width="0.5"/>
+    <text x="37" y="33" text-anchor="middle" fill="rgba(78,205,196,0.5)" font-family="Outfit" font-size="6.5">Heuristics</text>
+
+    <rect x="81" y="22" width="55" height="16" rx="4" fill="rgba(78,205,196,0.06)" stroke="rgba(78,205,196,0.12)" stroke-width="0.5"/>
+    <text x="108" y="33" text-anchor="middle" fill="rgba(78,205,196,0.5)" font-family="Outfit" font-size="6.5">Habits</text>
+
+    <rect x="142" y="22" width="48" height="16" rx="4" fill="rgba(78,205,196,0.06)" stroke="rgba(78,205,196,0.12)" stroke-width="0.5"/>
+    <text x="166" y="33" text-anchor="middle" fill="rgba(78,205,196,0.5)" font-family="Outfit" font-size="6.5">LIWC</text>
+
+    <rect x="196" y="22" width="48" height="16" rx="4" fill="rgba(78,205,196,0.06)" stroke="rgba(78,205,196,0.12)" stroke-width="0.5"/>
+    <text x="220" y="33" text-anchor="middle" fill="rgba(78,205,196,0.5)" font-family="Outfit" font-size="6.5">RAG</text>
+
+    <rect x="250" y="22" width="105" height="16" rx="4" fill="rgba(78,205,196,0.06)" stroke="rgba(78,205,196,0.12)" stroke-width="0.5"/>
+    <text x="302" y="33" text-anchor="middle" fill="rgba(78,205,196,0.5)" font-family="Outfit" font-size="6.5">Vector Similarity</text>
+
+    <rect x="0" y="44" width="100" height="16" rx="4" fill="rgba(239,68,68,0.06)" stroke="rgba(239,68,68,0.12)" stroke-width="0.5"/>
+    <text x="50" y="55" text-anchor="middle" fill="rgba(239,68,68,0.45)" font-family="Outfit" font-size="6.5">Constitutional AI</text>
+
+    <rect x="106" y="44" width="95" height="16" rx="4" fill="rgba(239,68,68,0.06)" stroke="rgba(239,68,68,0.12)" stroke-width="0.5"/>
+    <text x="153" y="55" text-anchor="middle" fill="rgba(239,68,68,0.45)" font-family="Outfit" font-size="6.5">OWASP LLM Top 10</text>
+
+    <rect x="207" y="44" width="90" height="16" rx="4" fill="rgba(239,68,68,0.06)" stroke="rgba(239,68,68,0.12)" stroke-width="0.5"/>
+    <text x="252" y="55" text-anchor="middle" fill="rgba(239,68,68,0.45)" font-family="Outfit" font-size="6.5">Prompt Injection</text>
+
+    <rect x="0" y="66" width="90" height="16" rx="4" fill="rgba(239,68,68,0.06)" stroke="rgba(239,68,68,0.12)" stroke-width="0.5"/>
+    <text x="45" y="77" text-anchor="middle" fill="rgba(239,68,68,0.45)" font-family="Outfit" font-size="6.5">MITRE ATLAS</text>
+
+    <rect x="96" y="66" width="105" height="16" rx="4" fill="rgba(239,68,68,0.06)" stroke="rgba(239,68,68,0.12)" stroke-width="0.5"/>
+    <text x="148" y="77" text-anchor="middle" fill="rgba(239,68,68,0.45)" font-family="Outfit" font-size="6.5">ISO 27001 + 27701</text>
+
+    <rect x="207" y="66" width="65" height="16" rx="4" fill="rgba(239,68,68,0.06)" stroke="rgba(239,68,68,0.12)" stroke-width="0.5"/>
+    <text x="239" y="77" text-anchor="middle" fill="rgba(239,68,68,0.45)" font-family="Outfit" font-size="6.5">EU AI Act</text>
+
+    <rect x="278" y="66" width="58" height="16" rx="4" fill="rgba(239,68,68,0.06)" stroke="rgba(239,68,68,0.12)" stroke-width="0.5"/>
+    <text x="307" y="77" text-anchor="middle" fill="rgba(239,68,68,0.45)" font-family="Outfit" font-size="6.5">POPIA</text>
+
+    <rect x="0" y="88" width="95" height="16" rx="4" fill="rgba(139,92,246,0.06)" stroke="rgba(139,92,246,0.12)" stroke-width="0.5"/>
+    <text x="47" y="99" text-anchor="middle" fill="rgba(139,92,246,0.45)" font-family="Outfit" font-size="6.5">Digital Twin Theory</text>
+
+    <rect x="101" y="88" width="110" height="16" rx="4" fill="rgba(139,92,246,0.06)" stroke="rgba(139,92,246,0.12)" stroke-width="0.5"/>
+    <text x="156" y="99" text-anchor="middle" fill="rgba(139,92,246,0.45)" font-family="Outfit" font-size="6.5">Knowledge Graphs</text>
+
+    <rect x="217" y="88" width="110" height="16" rx="4" fill="rgba(139,92,246,0.06)" stroke="rgba(139,92,246,0.12)" stroke-width="0.5"/>
+    <text x="272" y="99" text-anchor="middle" fill="rgba(139,92,246,0.45)" font-family="Outfit" font-size="6.5">Fine-tuning vs RAG</text>
+
+    <!-- African philosophy row -->
+    <rect x="0" y="110" width="90" height="16" rx="4" fill="rgba(200,168,78,0.08)" stroke="rgba(200,168,78,0.15)" stroke-width="0.5"/>
+    <text x="45" y="121" text-anchor="middle" fill="rgba(200,168,78,0.55)" font-family="Outfit" font-size="6.5">Ubuntu Ethics</text>
+
+    <rect x="96" y="110" width="90" height="16" rx="4" fill="rgba(16,185,129,0.06)" stroke="rgba(16,185,129,0.12)" stroke-width="0.5"/>
+    <text x="141" y="121" text-anchor="middle" fill="rgba(16,185,129,0.5)" font-family="Outfit" font-size="6.5">PERMA / Flourish</text>
+
+    <rect x="192" y="110" width="80" height="16" rx="4" fill="rgba(245,158,11,0.06)" stroke="rgba(245,158,11,0.12)" stroke-width="0.5"/>
+    <text x="232" y="121" text-anchor="middle" fill="rgba(245,158,11,0.5)" font-family="Outfit" font-size="6.5">IDEO Ten Faces</text>
+
+    <rect x="278" y="110" width="78" height="16" rx="4" fill="rgba(59,130,246,0.06)" stroke="rgba(59,130,246,0.12)" stroke-width="0.5"/>
+    <text x="317" y="121" text-anchor="middle" fill="rgba(59,130,246,0.5)" font-family="Outfit" font-size="6.5">Gen. Agents</text>
+  </g>
+
+  <!-- ================================================================== -->
+  <!--  LEFT BOTTOM: THE THREE LAWS                                        -->
+  <!-- ================================================================== -->
+
+  <g transform="translate(60, 580)">
+    <text x="110" y="0" text-anchor="middle" fill="#555" font-family="Space Grotesk" font-size="10" font-weight="700" letter-spacing="3">THREE LAWS</text>
+
+    <circle cx="30" cy="32" r="14" fill="rgba(239,68,68,0.08)" stroke="rgba(239,68,68,0.25)" stroke-width="1.5"/>
+    <text x="30" y="36" text-anchor="middle" fill="#f87171" font-family="Space Grotesk" font-size="11" font-weight="700">1</text>
+    <text x="52" y="28" fill="#fca5a5" font-family="Space Grotesk" font-size="9" font-weight="600">Non-Invention</text>
+    <text x="52" y="40" fill="#777" font-family="Outfit" font-size="7">Never make up what is not evidenced</text>
+
+    <circle cx="30" cy="72" r="14" fill="rgba(245,158,11,0.08)" stroke="rgba(245,158,11,0.25)" stroke-width="1.5"/>
+    <text x="30" y="76" text-anchor="middle" fill="#fbbf24" font-family="Space Grotesk" font-size="11" font-weight="700">2</text>
+    <text x="52" y="68" fill="#fcd34d" font-family="Space Grotesk" font-size="9" font-weight="600">Provenance</text>
+    <text x="52" y="80" fill="#777" font-family="Outfit" font-size="7">Every claim traces back to its source</text>
+
+    <circle cx="30" cy="112" r="14" fill="rgba(139,92,246,0.08)" stroke="rgba(139,92,246,0.25)" stroke-width="1.5"/>
+    <text x="30" y="116" text-anchor="middle" fill="#a78bfa" font-family="Space Grotesk" font-size="11" font-weight="700">3</text>
+    <text x="52" y="108" fill="#c4b5fd" font-family="Space Grotesk" font-size="9" font-weight="600">Governance</text>
+    <text x="52" y="120" fill="#777" font-family="Outfit" font-size="7">High-impact claims need human approval</text>
+  </g>
+
+  <!-- ================================================================== -->
+  <!--  LEFT MIDDLE: DATABASE SCHEMA SUMMARY                               -->
+  <!-- ================================================================== -->
+
+  <g transform="translate(60, 750)">
+    <text x="110" y="0" text-anchor="middle" fill="#555" font-family="Space Grotesk" font-size="10" font-weight="700" letter-spacing="3">6 TABLES</text>
+
+    <rect x="0" y="14" width="220" height="18" rx="4"
+          fill="rgba(34,197,94,0.04)" stroke="rgba(34,197,94,0.12)" stroke-width="0.5"/>
+    <text x="10" y="27" fill="rgba(34,197,94,0.5)" font-family="Outfit" font-size="7">source_document  —  raw docs, hash-verified</text>
+
+    <rect x="0" y="36" width="220" height="18" rx="4"
+          fill="rgba(34,197,94,0.04)" stroke="rgba(34,197,94,0.12)" stroke-width="0.5"/>
+    <text x="10" y="49" fill="rgba(34,197,94,0.5)" font-family="Outfit" font-size="7">evidence_snippet  —  immutable quotes + signals</text>
+
+    <rect x="0" y="58" width="220" height="18" rx="4"
+          fill="rgba(200,168,78,0.04)" stroke="rgba(200,168,78,0.12)" stroke-width="0.5"/>
+    <text x="10" y="71" fill="rgba(200,168,78,0.5)" font-family="Outfit" font-size="7">claim  —  versioned interpretations + confidence</text>
+
+    <rect x="0" y="80" width="220" height="18" rx="4"
+          fill="rgba(200,168,78,0.04)" stroke="rgba(200,168,78,0.12)" stroke-width="0.5"/>
+    <text x="10" y="93" fill="rgba(200,168,78,0.5)" font-family="Outfit" font-size="7">trait_vector  —  personality + worldview scores</text>
+
+    <rect x="0" y="102" width="220" height="18" rx="4"
+          fill="rgba(78,205,196,0.04)" stroke="rgba(78,205,196,0.12)" stroke-width="0.5"/>
+    <text x="10" y="115" fill="rgba(78,205,196,0.5)" font-family="Outfit" font-size="7">methods_playbook  —  reusable procedures</text>
+
+    <rect x="0" y="124" width="220" height="18" rx="4"
+          fill="rgba(239,68,68,0.04)" stroke="rgba(239,68,68,0.12)" stroke-width="0.5"/>
+    <text x="10" y="137" fill="rgba(239,68,68,0.45)" font-family="Outfit" font-size="7">ethics_boundary  —  hard + soft rules</text>
+  </g>
+
+  <!-- ================================================================== -->
+  <!--  LEGEND                                                             -->
+  <!-- ================================================================== -->
+
+  <rect x="1560" y="70" width="390" height="220" rx="14"
+        fill="rgba(255,255,255,0.015)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+  <text x="1580" y="92" fill="#666" font-family="Space Grotesk" font-size="11" font-weight="700" letter-spacing="3">LEGEND</text>
+
+  <!-- Color key -->
+  <rect x="1580" y="106" width="12" height="12" rx="3" fill="rgba(200,168,78,0.4)"/>
+  <text x="1600" y="116" fill="rgba(200,168,78,0.7)" font-family="Outfit" font-size="9">Soul Layer (Gold) -- Purpose + Ethics + Orientation</text>
+
+  <rect x="1580" y="126" width="12" height="12" rx="3" fill="rgba(78,205,196,0.4)"/>
+  <text x="1600" y="136" fill="rgba(78,205,196,0.7)" font-family="Outfit" font-size="9">Mind Layer (Teal) -- Strategic Thinking</text>
+
+  <rect x="1580" y="146" width="12" height="12" rx="3" fill="rgba(59,130,246,0.4)"/>
+  <text x="1600" y="156" fill="rgba(59,130,246,0.7)" font-family="Outfit" font-size="9">Brain Layer (Blue) -- Execution Engine</text>
+
+  <rect x="1580" y="166" width="12" height="12" rx="3" fill="rgba(139,92,246,0.4)"/>
+  <text x="1600" y="176" fill="rgba(139,92,246,0.7)" font-family="Outfit" font-size="9">Memory Layer (Purple) -- Storage + Retrieval</text>
+
+  <rect x="1580" y="190" width="12" height="12" rx="3" fill="none" stroke="rgba(239,68,68,0.5)" stroke-width="1.5" stroke-dasharray="3,2"/>
+  <text x="1600" y="200" fill="rgba(239,68,68,0.6)" font-family="Outfit" font-size="9">Ethics &amp; Dignity Guard (Red dashed) -- Always on boundary</text>
+
+  <rect x="1580" y="210" width="12" height="12" rx="3" fill="rgba(245,158,11,0.4)"/>
+  <text x="1600" y="220" fill="rgba(245,158,11,0.7)" font-family="Outfit" font-size="9">Ten Faces / Feedback Loop (Orange) -- Innovation lenses + learning</text>
+
+  <rect x="1580" y="230" width="12" height="12" rx="3" fill="rgba(16,185,129,0.4)"/>
+  <text x="1600" y="240" fill="rgba(16,185,129,0.7)" font-family="Outfit" font-size="9">PERMA / Ingestion (Green) -- Positive orientation + data entry</text>
+
+  <rect x="1580" y="254" width="12" height="12" rx="3" fill="rgba(200,168,78,0.6)"/>
+  <text x="1600" y="264" fill="rgba(200,168,78,0.7)" font-family="Outfit" font-size="9">Identity Kernel (Glowing Gold) -- Protected core identity</text>
+
+  <!-- Arrow legend -->
+  <line x1="1590" y1="280" x2="1620" y2="280" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" marker-end="url(#arr-white)"/>
+  <text x="1630" y="283" fill="rgba(255,255,255,0.4)" font-family="Outfit" font-size="8">Solid = commands (downward)</text>
+
+  <line x1="1590" y1="295" x2="1620" y2="295" stroke="rgba(255,255,255,0.3)" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#arr-white)"/>
+  <text x="1630" y="298" fill="rgba(255,255,255,0.35)" font-family="Outfit" font-size="8">Dashed = knowledge (upward)</text>
+
+  <!-- ================================================================== -->
+  <!--  BOTTOM: VERSION + SIGNATURE                                        -->
+  <!-- ================================================================== -->
+
+  <line x1="100" y1="1160" x2="1900" y2="1160" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+
+  <text x="1000" y="1185" text-anchor="middle" fill="#333" font-family="Space Grotesk" font-size="10" font-weight="600" letter-spacing="2">THE COMPLETE DIGITAL TWIN BRAIN</text>
+  <text x="1000" y="1200" text-anchor="middle" fill="#262626" font-family="Outfit" font-size="8">Michael Balkind  /  SodaWorld  /  SodaLabs AI  /  Architecture v1.0  /  February 25, 2026</text>
+  <text x="1000" y="1215" text-anchor="middle" fill="#1f1f1f" font-family="Outfit" font-size="7">Soul + Mind + Brain + Memory  |  Ingestion Pipeline  |  Feedback Loop  |  Ethics Boundary  |  Identity Kernel  |  20 Research Domains</text>
+  <text x="1000" y="1240" text-anchor="middle" fill="#1a1a1a" font-family="Outfit" font-size="7" font-style="italic">Full specification: DIGITAL_TWIN_COMPLETE_BLUEPRINT.md</text>
+
+</svg>
+</body>
+</html>

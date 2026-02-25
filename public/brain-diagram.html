@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Digital Twin Brain</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: #08080c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+  svg { width: 100vw; height: 100vh; }
+</style>
+</head>
+<body>
+<svg viewBox="0 0 1400 900" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Ambient glow behind head -->
+    <radialGradient id="headglow" cx="42%" cy="48%" r="38%">
+      <stop offset="0%" stop-color="rgba(139,92,246,0.07)"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+    <!-- Soft blur for glow effects -->
+    <filter id="soft"><feGaussianBlur stdDeviation="6"/></filter>
+    <filter id="softer"><feGaussianBlur stdDeviation="12"/></filter>
+    <!-- Arrow marker -->
+    <marker id="arr" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0 0 L10 3.5 L0 7z" fill="rgba(255,255,255,0.35)"/>
+    </marker>
+    <marker id="arr-green" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0 0 L10 3.5 L0 7z" fill="rgba(34,197,94,0.5)"/>
+    </marker>
+    <marker id="arr-purple" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0 0 L10 3.5 L0 7z" fill="rgba(139,92,246,0.5)"/>
+    </marker>
+    <marker id="arr-red" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0 0 L10 3.5 L0 7z" fill="rgba(239,68,68,0.5)"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1400" height="900" fill="#08080c"/>
+  <rect width="1400" height="900" fill="url(#headglow)"/>
+
+  <!-- Title -->
+  <text x="700" y="48" text-anchor="middle" fill="#666" font-family="Space Grotesk" font-size="14" font-weight="600" letter-spacing="4">THE DIGITAL TWIN BRAIN</text>
+  <text x="700" y="72" text-anchor="middle" fill="#444" font-family="Outfit" font-size="11">How an AI learns to think like a specific person</text>
+
+  <!-- ╔══════════════════════════════════════════════════════╗ -->
+  <!-- ║              HEAD OUTLINE (side view)                ║ -->
+  <!-- ╚══════════════════════════════════════════════════════╝ -->
+  <g>
+    <!-- Head silhouette — side profile facing right -->
+    <path d="
+      M 320 180
+      C 280 180, 200 220, 185 300
+      C 170 380, 180 460, 200 520
+      C 215 560, 240 580, 260 600
+      C 270 610, 275 640, 265 670
+      L 265 710
+      C 265 730, 280 740, 310 740
+      L 380 740
+      C 400 740, 410 730, 410 710
+      C 410 680, 405 660, 420 640
+      C 440 610, 470 600, 490 570
+      C 530 520, 560 470, 570 410
+      C 580 350, 570 280, 540 230
+      C 510 180, 440 160, 380 165
+      C 350 168, 330 175, 320 180 Z
+    " fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.08)" stroke-width="1.5"/>
+
+    <!-- Eye -->
+    <ellipse cx="465" cy="420" rx="22" ry="10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+    <circle cx="470" cy="420" r="5" fill="rgba(139,92,246,0.2)" stroke="rgba(139,92,246,0.3)" stroke-width="1"/>
+
+    <!-- Ear hint -->
+    <path d="M 195 400 C 180 390, 175 420, 185 435" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1.5"/>
+  </g>
+
+  <!-- ╔══════════════════════════════════════════════════════╗ -->
+  <!-- ║              BRAIN REGIONS INSIDE HEAD               ║ -->
+  <!-- ╚══════════════════════════════════════════════════════╝ -->
+
+  <!-- Brain outline inside head -->
+  <path d="
+    M 370 195
+    C 310 200, 240 250, 225 320
+    C 210 390, 230 460, 270 510
+    C 300 540, 350 555, 400 555
+    C 450 555, 500 530, 520 490
+    C 545 450, 550 390, 540 340
+    C 530 280, 490 230, 440 210
+    C 410 195, 385 193, 370 195 Z
+  " fill="rgba(139,92,246,0.03)" stroke="rgba(139,92,246,0.12)" stroke-width="1.5"/>
+
+  <!-- Wrinkle lines (brain folds) -->
+  <path d="M 280 300 C 310 290, 350 310, 380 295" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+  <path d="M 300 350 C 340 340, 380 360, 420 345" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+  <path d="M 260 400 C 300 395, 350 410, 400 400" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+  <path d="M 390 220 C 400 260, 410 300, 400 350" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+
+  <!-- ── REGION 1: EVIDENCE STORE (back of brain — occipital, largest) ── -->
+  <ellipse cx="290" cy="340" rx="70" ry="85" fill="rgba(34,197,94,0.06)" stroke="rgba(34,197,94,0.25)" stroke-width="1.5" filter="url(#soft)" opacity="0.5"/>
+  <ellipse cx="290" cy="340" rx="70" ry="85" fill="rgba(34,197,94,0.06)" stroke="rgba(34,197,94,0.25)" stroke-width="1.5"/>
+  <circle cx="290" cy="300" r="4" fill="#4ade80" opacity="0.8">
+    <animate attributeName="opacity" values="0.5;1;0.5" dur="3s" repeatCount="indefinite"/>
+  </circle>
+  <text x="290" y="325" text-anchor="middle" fill="#86efac" font-family="Space Grotesk" font-size="13" font-weight="700">EVIDENCE</text>
+  <text x="290" y="342" text-anchor="middle" fill="#86efac" font-family="Space Grotesk" font-size="13" font-weight="700">STORE</text>
+  <text x="290" y="362" text-anchor="middle" fill="#3a9d6a" font-family="Outfit" font-size="9">raw facts</text>
+  <text x="290" y="374" text-anchor="middle" fill="#3a9d6a" font-family="Outfit" font-size="9">immutable</text>
+
+  <!-- ── REGION 2: CLAIM EXTRACTION (top/frontal — thinking area) ── -->
+  <ellipse cx="410" cy="270" rx="75" ry="55" fill="rgba(139,92,246,0.06)" stroke="rgba(139,92,246,0.3)" stroke-width="1.5" filter="url(#soft)" opacity="0.5"/>
+  <ellipse cx="410" cy="270" rx="75" ry="55" fill="rgba(139,92,246,0.06)" stroke="rgba(139,92,246,0.3)" stroke-width="1.5"/>
+  <circle cx="410" cy="240" r="4" fill="#a78bfa" opacity="0.8">
+    <animate attributeName="opacity" values="0.5;1;0.5" dur="3s" repeatCount="indefinite" begin="0.5s"/>
+  </circle>
+  <text x="410" y="262" text-anchor="middle" fill="#c4b5fd" font-family="Space Grotesk" font-size="13" font-weight="700">CLAIM</text>
+  <text x="410" y="278" text-anchor="middle" fill="#c4b5fd" font-family="Space Grotesk" font-size="13" font-weight="700">EXTRACTION</text>
+  <text x="410" y="298" text-anchor="middle" fill="#8b6cc8" font-family="Outfit" font-size="9">pattern recognition</text>
+  <text x="410" y="310" text-anchor="middle" fill="#8b6cc8" font-family="Outfit" font-size="9">+ human review</text>
+
+  <!-- ── REGION 3: TRAITS & METHODS (mid brain) ── -->
+  <ellipse cx="380" cy="410" rx="55" ry="40" fill="rgba(245,158,11,0.06)" stroke="rgba(245,158,11,0.25)" stroke-width="1.5" filter="url(#soft)" opacity="0.5"/>
+  <ellipse cx="380" cy="410" rx="55" ry="40" fill="rgba(245,158,11,0.06)" stroke="rgba(245,158,11,0.25)" stroke-width="1.5"/>
+  <circle cx="380" cy="390" r="4" fill="#fbbf24" opacity="0.8">
+    <animate attributeName="opacity" values="0.5;1;0.5" dur="3s" repeatCount="indefinite" begin="1s"/>
+  </circle>
+  <text x="380" y="408" text-anchor="middle" fill="#fcd34d" font-family="Space Grotesk" font-size="12" font-weight="700">TRAITS +</text>
+  <text x="380" y="423" text-anchor="middle" fill="#fcd34d" font-family="Space Grotesk" font-size="12" font-weight="700">METHODS</text>
+  <text x="380" y="440" text-anchor="middle" fill="#c88e10" font-family="Outfit" font-size="9">personality</text>
+
+  <!-- ── REGION 4: ETHICS BOUNDARIES (deep brain — amygdala position) ── -->
+  <ellipse cx="340" cy="490" rx="48" ry="32" fill="rgba(239,68,68,0.06)" stroke="rgba(239,68,68,0.3)" stroke-width="1.5" filter="url(#soft)" opacity="0.5"/>
+  <ellipse cx="340" cy="490" rx="48" ry="32" fill="rgba(239,68,68,0.06)" stroke="rgba(239,68,68,0.3)" stroke-width="1.5"/>
+  <circle cx="340" cy="475" r="4" fill="#f87171" opacity="0.8">
+    <animate attributeName="opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  <text x="340" y="490" text-anchor="middle" fill="#fca5a5" font-family="Space Grotesk" font-size="11" font-weight="700">ETHICS</text>
+  <text x="340" y="504" text-anchor="middle" fill="#fca5a5" font-family="Space Grotesk" font-size="11" font-weight="700">BOUNDARIES</text>
+  <text x="340" y="518" text-anchor="middle" fill="#b04040" font-family="Outfit" font-size="8">conscience</text>
+
+  <!-- ── REGION 5: RETRIEVAL (brain stem area) ── -->
+  <rect x="410" y="500" width="95" height="40" rx="20" fill="rgba(6,182,212,0.06)" stroke="rgba(6,182,212,0.25)" stroke-width="1.5"/>
+  <circle cx="425" cy="520" r="3" fill="#22d3ee" opacity="0.8">
+    <animate attributeName="opacity" values="0.5;1;0.5" dur="3s" repeatCount="indefinite" begin="1.5s"/>
+  </circle>
+  <text x="457" y="524" text-anchor="middle" fill="#67e8f9" font-family="Space Grotesk" font-size="11" font-weight="700">RETRIEVAL</text>
+
+  <!-- ╔══════════════════════════════════════════════════════╗ -->
+  <!-- ║              INTERNAL FLOW ARROWS                    ║ -->
+  <!-- ╚══════════════════════════════════════════════════════╝ -->
+
+  <!-- Evidence → Claims (knowledge flows up to thinking) -->
+  <path d="M 335 300 C 355 285, 365 275, 380 270" fill="none" stroke="rgba(34,197,94,0.3)" stroke-width="1.5" marker-end="url(#arr-green)"/>
+
+  <!-- Claims → Traits (patterns become personality) -->
+  <path d="M 400 320 C 395 350, 390 370, 385 385" fill="none" stroke="rgba(139,92,246,0.3)" stroke-width="1.5" marker-end="url(#arr-purple)"/>
+
+  <!-- Claims → Ethics (some claims become boundaries) -->
+  <path d="M 380 320 C 365 380, 355 430, 348 460" fill="none" stroke="rgba(239,68,68,0.25)" stroke-width="1.2" marker-end="url(#arr-red)"/>
+
+  <!-- All stores → Retrieval -->
+  <path d="M 310 420 C 350 480, 400 510, 420 515" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1" stroke-dasharray="3,4"/>
+  <path d="M 380 445 C 410 480, 430 505, 435 510" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1" stroke-dasharray="3,4"/>
+  <path d="M 375 510 C 390 515, 405 518, 415 520" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1" stroke-dasharray="3,4"/>
+
+
+  <!-- ╔══════════════════════════════════════════════════════╗ -->
+  <!-- ║         LEFT SIDE: INPUT FLOW (Learning)             ║ -->
+  <!-- ╚══════════════════════════════════════════════════════╝ -->
+
+  <!-- Input arrow coming into the ear/back of head -->
+  <path d="M 80 340 L 210 340" fill="none" stroke="rgba(34,197,94,0.4)" stroke-width="2" marker-end="url(#arr-green)"/>
+
+  <!-- Input label -->
+  <text x="68" y="310" text-anchor="end" fill="#86efac" font-family="Space Grotesk" font-size="14" font-weight="700">INPUT</text>
+  <text x="68" y="328" text-anchor="end" fill="#3a9d6a" font-family="Outfit" font-size="10">documents</text>
+  <text x="68" y="342" text-anchor="end" fill="#3a9d6a" font-family="Outfit" font-size="10">emails</text>
+  <text x="68" y="356" text-anchor="end" fill="#3a9d6a" font-family="Outfit" font-size="10">decisions</text>
+  <text x="68" y="370" text-anchor="end" fill="#3a9d6a" font-family="Outfit" font-size="10">conversations</text>
+
+  <!-- Small ingestion box on the path -->
+  <rect x="115" y="310" width="80" height="28" rx="14" fill="rgba(96,165,250,0.08)" stroke="rgba(96,165,250,0.25)" stroke-width="1"/>
+  <text x="155" y="328" text-anchor="middle" fill="#93c5fd" font-family="Outfit" font-size="8" font-weight="600">INGESTION</text>
+  <text x="155" y="350" text-anchor="middle" fill="#4a7ec0" font-family="Outfit" font-size="7">clean + classify</text>
+
+
+  <!-- ╔══════════════════════════════════════════════════════╗ -->
+  <!-- ║        RIGHT SIDE: OUTPUT FLOW (Thinking)            ║ -->
+  <!-- ╚══════════════════════════════════════════════════════╝ -->
+
+  <!-- Output arrow from mouth area -->
+  <path d="M 505 530 C 560 550, 610 560, 660 560" fill="none" stroke="rgba(139,92,246,0.4)" stroke-width="2" marker-end="url(#arr-purple)"/>
+
+  <!-- Output label -->
+  <text x="680" y="545" fill="#c4b5fd" font-family="Space Grotesk" font-size="14" font-weight="700">OUTPUT</text>
+  <text x="680" y="563" fill="#8b6cc8" font-family="Outfit" font-size="10">decisions in their voice</text>
+  <text x="680" y="577" fill="#8b6cc8" font-family="Outfit" font-size="10">with cited evidence</text>
+  <text x="680" y="591" fill="#8b6cc8" font-family="Outfit" font-size="10">and confidence levels</text>
+
+  <!-- Feedback loop: output curves back to evidence store -->
+  <path d="M 680 600 C 680 680, 400 720, 200 680 C 100 660, 80 550, 100 420 C 110 380, 130 360, 160 345"
+        fill="none" stroke="rgba(245,158,11,0.2)" stroke-width="1.5" stroke-dasharray="6,5" marker-end="url(#arr)"/>
+  <text x="200" y="700" fill="#c88e10" font-family="Outfit" font-size="9" font-weight="500">feedback loop — learn from every output</text>
+
+
+  <!-- ╔══════════════════════════════════════════════════════╗ -->
+  <!-- ║        RIGHT SIDE: CALLOUT LABELS (leader lines)     ║ -->
+  <!-- ╚══════════════════════════════════════════════════════╝ -->
+
+  <!-- Leader line: Evidence Store -->
+  <line x1="250" y1="280" x2="150" y2="180" stroke="rgba(34,197,94,0.2)" stroke-width="1"/>
+  <circle cx="150" cy="180" r="3" fill="rgba(34,197,94,0.4)"/>
+  <text x="148" y="170" text-anchor="end" fill="#86efac" font-family="Space Grotesk" font-size="11" font-weight="600">Evidence Store</text>
+  <text x="148" y="184" text-anchor="end" fill="#3a9d6a" font-family="Outfit" font-size="9">Raw snippets from real documents</text>
+  <text x="148" y="197" text-anchor="end" fill="#3a9d6a" font-family="Outfit" font-size="9">Immutable — never changes once stored</text>
+  <text x="148" y="210" text-anchor="end" fill="#3a9d6a" font-family="Outfit" font-size="9">Every piece traceable to its source</text>
+
+  <!-- Leader line: Claim Extraction -->
+  <line x1="470" y1="240" x2="610" y2="170" stroke="rgba(139,92,246,0.2)" stroke-width="1"/>
+  <circle cx="610" cy="170" r="3" fill="rgba(139,92,246,0.4)"/>
+  <text x="618" y="150" fill="#c4b5fd" font-family="Space Grotesk" font-size="11" font-weight="600">Claim Extraction</text>
+  <text x="618" y="164" fill="#8b6cc8" font-family="Outfit" font-size="9">AI reads evidence, proposes patterns</text>
+  <text x="618" y="177" fill="#8b6cc8" font-family="Outfit" font-size="9">"This person prefers X in context Y"</text>
+  <text x="618" y="190" fill="#8b6cc8" font-family="Outfit" font-size="9">Each claim scored for confidence (0–1)</text>
+  <text x="618" y="203" fill="#8b6cc8" font-family="Outfit" font-size="9">High-impact claims need human sign-off</text>
+
+  <!-- Leader line: Traits + Methods -->
+  <line x1="435" y1="410" x2="610" y2="340" stroke="rgba(245,158,11,0.2)" stroke-width="1"/>
+  <circle cx="610" cy="340" r="3" fill="rgba(245,158,11,0.4)"/>
+  <text x="618" y="310" fill="#fcd34d" font-family="Space Grotesk" font-size="11" font-weight="600">Traits + Methods</text>
+  <text x="618" y="324" fill="#c88e10" font-family="Outfit" font-size="9">Personality — what they optimise for</text>
+  <text x="618" y="337" fill="#c88e10" font-family="Outfit" font-size="9">Decision playbooks — how they solve problems</text>
+  <text x="618" y="350" fill="#c88e10" font-family="Outfit" font-size="9">Communication style — their voice</text>
+  <text x="618" y="363" fill="#c88e10" font-family="Outfit" font-size="9">Narrative identity — the story they live by</text>
+
+  <!-- Leader line: Ethics Boundaries -->
+  <line x1="295" y1="500" x2="150" y2="550" stroke="rgba(239,68,68,0.2)" stroke-width="1"/>
+  <circle cx="150" cy="550" r="3" fill="rgba(239,68,68,0.4)"/>
+  <text x="148" y="540" text-anchor="end" fill="#fca5a5" font-family="Space Grotesk" font-size="11" font-weight="600">Ethics Boundaries</text>
+  <text x="148" y="554" text-anchor="end" fill="#b04040" font-family="Outfit" font-size="9">Hard rules — the conscience</text>
+  <text x="148" y="567" text-anchor="end" fill="#b04040" font-family="Outfit" font-size="9">"Never invent facts about a person"</text>
+  <text x="148" y="580" text-anchor="end" fill="#b04040" font-family="Outfit" font-size="9">"Never leak private data"</text>
+  <text x="148" y="593" text-anchor="end" fill="#b04040" font-family="Outfit" font-size="9">Fires before output — blocks instantly</text>
+
+  <!-- Leader line: Retrieval -->
+  <line x1="500" y1="525" x2="610" y2="460" stroke="rgba(6,182,212,0.2)" stroke-width="1"/>
+  <circle cx="610" cy="460" r="3" fill="rgba(6,182,212,0.4)"/>
+  <text x="618" y="445" fill="#67e8f9" font-family="Space Grotesk" font-size="11" font-weight="600">Retrieval Layer</text>
+  <text x="618" y="459" fill="#1a8fa0" font-family="Outfit" font-size="9">Searches all stores at once</text>
+  <text x="618" y="472" fill="#1a8fa0" font-family="Outfit" font-size="9">Vector similarity + structured query</text>
+  <text x="618" y="485" fill="#1a8fa0" font-family="Outfit" font-size="9">Filters by access level + consent</text>
+  <text x="618" y="498" fill="#1a8fa0" font-family="Outfit" font-size="9">Assembles context for response</text>
+
+
+  <!-- ╔══════════════════════════════════════════════════════╗ -->
+  <!-- ║              BOTTOM: THE THREE LAWS                  ║ -->
+  <!-- ╚══════════════════════════════════════════════════════╝ -->
+
+  <line x1="200" y1="790" x2="1200" y2="790" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+
+  <!-- Law 1 -->
+  <circle cx="350" cy="835" r="18" fill="rgba(239,68,68,0.08)" stroke="rgba(239,68,68,0.25)" stroke-width="1.5"/>
+  <text x="350" y="839" text-anchor="middle" fill="#f87171" font-family="Space Grotesk" font-size="12" font-weight="700">1</text>
+  <text x="385" y="828" fill="#fca5a5" font-family="Space Grotesk" font-size="11" font-weight="600">Non-Invention</text>
+  <text x="385" y="843" fill="#777" font-family="Outfit" font-size="9">Never make up what isn't evidenced</text>
+
+  <!-- Law 2 -->
+  <circle cx="650" cy="835" r="18" fill="rgba(245,158,11,0.08)" stroke="rgba(245,158,11,0.25)" stroke-width="1.5"/>
+  <text x="650" y="839" text-anchor="middle" fill="#fbbf24" font-family="Space Grotesk" font-size="12" font-weight="700">2</text>
+  <text x="685" y="828" fill="#fcd34d" font-family="Space Grotesk" font-size="11" font-weight="600">Provenance</text>
+  <text x="685" y="843" fill="#777" font-family="Outfit" font-size="9">Every claim traces back to its source</text>
+
+  <!-- Law 3 -->
+  <circle cx="950" cy="835" r="18" fill="rgba(139,92,246,0.08)" stroke="rgba(139,92,246,0.25)" stroke-width="1.5"/>
+  <text x="950" y="839" text-anchor="middle" fill="#a78bfa" font-family="Space Grotesk" font-size="12" font-weight="700">3</text>
+  <text x="985" y="828" fill="#c4b5fd" font-family="Space Grotesk" font-size="11" font-weight="600">Governance</text>
+  <text x="985" y="843" fill="#777" font-family="Outfit" font-size="9">High-impact claims need human approval</text>
+
+  <text x="700" y="875" text-anchor="middle" fill="#333" font-family="Outfit" font-size="9">SodaLabs AI — Digital Twin Architecture</text>
+
+</svg>
+</body>
+</html>

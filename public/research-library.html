@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIA Research Library</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08080c;--card:rgba(255,255,255,0.025);--border:rgba(255,255,255,0.07);
+  --purple:#a78bfa;--pink:#f472b6;--amber:#fbbf24;--green:#4ade80;--cyan:#22d3ee;--red:#f87171;--blue:#60a5fa;
+}
+body{background:var(--bg);color:#d0d0d0;font-family:'Outfit',sans-serif}
+a{color:inherit;text-decoration:none}
+
+/* ── Nav ── */
+.nav{position:sticky;top:0;z-index:50;background:rgba(8,8,12,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0.8rem 2rem;display:flex;align-items:center;gap:1.5rem;overflow-x:auto}
+.nav-title{font-family:'Space Grotesk';font-weight:800;font-size:1.1rem;white-space:nowrap;background:linear-gradient(135deg,var(--purple),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav-pill{padding:0.3rem 0.8rem;border-radius:50px;font-size:0.75rem;font-weight:500;white-space:nowrap;cursor:pointer;transition:all 0.2s;border:1px solid transparent}
+.nav-pill:hover,.nav-pill.active{background:rgba(139,92,246,0.12);border-color:rgba(139,92,246,0.3);color:var(--purple)}
+
+/* ── Hero ── */
+.hero{padding:4rem 2rem 2rem;text-align:center;position:relative}
+.hero::before{content:'';position:absolute;width:600px;height:600px;background:radial-gradient(circle,rgba(139,92,246,0.06)0%,transparent 70%);top:-200px;left:50%;transform:translateX(-50%);pointer-events:none}
+.hero h1{font-family:'Space Grotesk';font-size:clamp(2rem,5vw,3.5rem);font-weight:800;background:linear-gradient(135deg,var(--purple),var(--pink),var(--amber));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:0.5rem}
+.hero p{color:#777;font-size:1rem;max-width:600px;margin:0 auto;line-height:1.6}
+.stats{display:flex;gap:2rem;justify-content:center;margin-top:1.5rem;flex-wrap:wrap}
+.stat{text-align:center}
+.stat .num{font-family:'Space Grotesk';font-size:1.8rem;font-weight:800;color:var(--purple)}
+.stat .label{font-size:0.75rem;color:#666}
+
+/* ── Sections ── */
+.section{padding:2rem 2rem 1rem;max-width:1200px;margin:0 auto}
+.section-head{display:flex;align-items:center;gap:0.8rem;margin-bottom:1.5rem}
+.section-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
+.section-head h2{font-family:'Space Grotesk';font-size:1.4rem;font-weight:700}
+.section-head .count{font-size:0.75rem;color:#666;margin-left:auto;white-space:nowrap}
+
+/* ── Cards Grid ── */
+.grid{display:grid;gap:1rem;margin-bottom:2rem}
+.grid-3{grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
+.grid-2{grid-template-columns:repeat(auto-fill,minmax(400px,1fr))}
+
+/* ── Topic Card ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.4rem;transition:border-color 0.3s,transform 0.2s;position:relative;overflow:hidden}
+.card:hover{border-color:rgba(139,92,246,0.3);transform:translateY(-1px)}
+.card .tag{display:inline-block;padding:2px 8px;border-radius:50px;font-size:0.65rem;font-weight:600;margin-bottom:0.6rem}
+.card h3{font-family:'Space Grotesk';font-size:1rem;font-weight:600;margin-bottom:0.4rem}
+.card .plain{color:#999;font-size:0.85rem;line-height:1.6;margin-bottom:0.8rem}
+.card .why{color:#777;font-size:0.78rem;line-height:1.5;padding:0.6rem;background:rgba(255,255,255,0.02);border-radius:8px;border-left:2px solid rgba(139,92,246,0.3);margin-bottom:0.8rem}
+.card .papers{display:flex;flex-direction:column;gap:0.3rem}
+.paper-link{display:flex;align-items:center;gap:0.5rem;padding:0.35rem 0.6rem;border-radius:8px;font-size:0.75rem;color:#aaa;transition:background 0.2s}
+.paper-link:hover{background:rgba(255,255,255,0.04);color:#ddd}
+.paper-link .yr{color:#666;font-size:0.7rem;min-width:35px}
+.paper-link .icon{font-size:0.7rem;opacity:0.4}
+
+/* ── Doc Link Cards ── */
+.doc-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem 1.2rem;display:flex;align-items:center;gap:1rem;transition:all 0.2s;cursor:pointer}
+.doc-card:hover{border-color:rgba(139,92,246,0.3);background:rgba(255,255,255,0.04)}
+.doc-card .d-icon{font-size:1.4rem;flex-shrink:0}
+.doc-card .d-info{flex:1;min-width:0}
+.doc-card .d-info h4{font-family:'Space Grotesk';font-size:0.9rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.doc-card .d-info p{font-size:0.75rem;color:#777;line-height:1.4}
+.doc-card .d-type{font-size:0.6rem;padding:2px 8px;border-radius:50px;white-space:nowrap}
+
+/* ── Color themes for tags ── */
+.t-psych .tag{background:rgba(236,72,153,0.12);color:var(--pink);border:1px solid rgba(236,72,153,0.25)}
+.t-ai .tag{background:rgba(139,92,246,0.12);color:var(--purple);border:1px solid rgba(139,92,246,0.25)}
+.t-sec .tag{background:rgba(239,68,68,0.12);color:var(--red);border:1px solid rgba(239,68,68,0.25)}
+.t-legal .tag{background:rgba(245,158,11,0.12);color:var(--amber);border:1px solid rgba(245,158,11,0.25)}
+.t-arch .tag{background:rgba(6,182,212,0.12);color:var(--cyan);border:1px solid rgba(6,182,212,0.25)}
+.t-agent .tag{background:rgba(34,197,94,0.12);color:var(--green);border:1px solid rgba(34,197,94,0.25)}
+
+/* ── Divider ── */
+.divider{height:1px;max-width:1200px;margin:1rem auto;background:linear-gradient(90deg,transparent,rgba(139,92,246,0.2),transparent)}
+
+/* ── Footer ── */
+footer{text-align:center;padding:2rem;color:#444;font-size:0.8rem;border-top:1px solid var(--border);margin-top:2rem}
+
+/* ── Filter hidden ── */
+.hidden{display:none !important}
+
+@media(max-width:700px){
+  .grid-3,.grid-2{grid-template-columns:1fr}
+  .stats{gap:1rem}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ NAV ══ -->
+<nav class="nav">
+  <span class="nav-title">PIA Research Library</span>
+  <span class="nav-pill active" data-filter="all">All</span>
+  <span class="nav-pill" data-filter="psych">Psychology</span>
+  <span class="nav-pill" data-filter="ai">AI / ML</span>
+  <span class="nav-pill" data-filter="sec">Security</span>
+  <span class="nav-pill" data-filter="legal">Legal / Privacy</span>
+  <span class="nav-pill" data-filter="arch">Architecture</span>
+  <span class="nav-pill" data-filter="agent">Agent Systems</span>
+  <span class="nav-pill" data-filter="docs">PIA Docs</span>
+</nav>
+
+<!-- ══ HERO ══ -->
+<div class="hero">
+  <h1>The Knowledge Behind the Brain</h1>
+  <p>Every paper, framework, and concept we're building on — explained simply, with links to the originals and all PIA documents.</p>
+  <div class="stats">
+    <div class="stat"><div class="num">20</div><div class="label">Research Topics</div></div>
+    <div class="stat"><div class="num">80+</div><div class="label">Source Papers</div></div>
+    <div class="stat"><div class="num">6</div><div class="label">Categories</div></div>
+    <div class="stat"><div class="num">3</div><div class="label">Brain Diagrams</div></div>
+  </div>
+</div>
+
+<!-- ══════════════════ PSYCHOLOGY ══════════════════ -->
+<div class="section" id="sec-psych" data-cat="psych">
+  <div class="section-head">
+    <div class="section-icon" style="background:rgba(236,72,153,0.12)">🧠</div>
+    <h2 style="color:var(--pink)">Understanding People</h2>
+    <span class="count">Psychology foundations</span>
+  </div>
+  <div class="grid grid-3">
+
+    <div class="card t-psych" data-cat="psych">
+      <span class="tag">Personality</span>
+      <h3>Big Five Personality Model</h3>
+      <p class="plain">Everyone's personality can be described across 5 dimensions: Openness, Conscientiousness, Extraversion, Agreeableness, Neuroticism. It's the most scientifically validated personality model we have.</p>
+      <div class="why">For the brain: This is the personality scaffold. Score the person across all 5, then the AI calibrates its responses to match. New research shows these can be "dialed" in LLMs like intensity knobs.</div>
+      <div class="papers">
+        <a class="paper-link" href="https://onlinelibrary.wiley.com/doi/abs/10.1111/j.1467-6494.1992.tb00970.x" target="_blank"><span class="yr">1992</span> McCrae & Costa — Five-Factor Model Intro <span class="icon">↗</span></a>
+        <a class="paper-link" href="https://aclanthology.org/2025.acl-long.999.pdf" target="_blank"><span class="yr">2025</span> PSYCHSTEER — Personality Steering in LLMs <span class="icon">↗</span></a>
+        <a class="paper-link" href="https://arxiv.org/abs/2503.15497" target="_blank"><span class="yr">2025</span> Big Five Impact on AI Agent Decisions <span class="icon">↗</span></a>
+      </div>
+    </div>
+
+    <div class="card t-psych" data-cat="psych">
+      <span class="tag">Motivation</span>
+      <h3>Self-Determination Theory</h3>
+      <p class="plain">People are driven by 3 core needs: Autonomy (freedom to choose), Competence (feeling capable), and Relatedness (feeling connected). When these are met, people thrive. When blocked, they shut down.</p>
+      <div class="why">For the brain: Encode what motivates the person. Does Mic value autonomy over everything? Does Beth need competence-affirming communication? The brain uses these to shape responses.</div>
+      <div class="papers">
+        <a class="paper-link" href="https://selfdeterminationtheory.org/SDT/documents/2000_RyanDeci_SDT.pdf" target="_blank"><span class="yr">2000</span> Ryan & Deci — Intrinsic Motivation <span class="icon">↗</span></a>
+        <a class="paper-link" href="https://selfdeterminationtheory.org/wp-content/uploads/2021/05/2021_YangAurisicchio_DesigningConversational.pdf" target="_blank"><span class="yr">2021</span> SDT for Conversational Agent Design <span class="icon">↗</span></a>
+      </div>
+    </div>
+
+    <div class="card t-psych" data-cat="psych">
+      <span class="tag">Ethics</span>
+      <h3>Moral Foundations Theory</h3>
+      <p class="plain">Morality isn't one thing. People weigh 6 different moral foundations differently: Care, Fairness, Loyalty, Authority, Sanctity, Liberty. Your unique blend = your moral fingerprint.</p>
+      <div class="why">For the brain: The conscience layer. If the person values Fairness above Authority, the brain won't recommend hierarchical power plays. It respects THEIR moral intuitions, not generic ethics.</div>
+      <div class="papers">
+        <a class="paper-link" href="https://fbaum.unc.edu/teaching/articles/JPSP-2009-Moral-Foundations.pdf" target="_blank"><span class="yr">2009</span> Graham, Haidt & Nosek — Moral Foundations <span class="icon">↗</span></a>
+        <a class="paper-link" href="https://dl.acm.org/doi/10.1145/3613904.3642712" target="_blank"><span class="yr">2024</span> Moral Foundations in AI Behaviour (CHI) <span class="icon">↗</span></a>
+      </div>
+    </div>
+
+    <div class="card t-psych" data-cat="psych">
+      <span class="tag">Identity</span>
+      <h3>Narrative Identity</h3>
+      <p class="plain">Your identity isn't just traits — it's the STORY you tell about yourself. Your origin story, turning points, redemption arcs. Dan McAdams showed identity = internalized life narrative.</p>
+      <div class="why">For the brain: The most powerful tool for making the twin feel like a PERSON. Store their key stories: origin, turning points, what villain they're fighting. Frame all outputs through their narrative.</div>
+      <div class="papers">
+        <a class="paper-link" href="https://journals.sagepub.com/doi/10.1037/1089-2680.5.2.100" target="_blank"><span class="yr">2001</span> McAdams — The Psychology of Life Stories <span class="icon">↗</span></a>
+        <a class="paper-link" href="https://journals.sagepub.com/doi/10.1177/0963721413475622" target="_blank"><span class="yr">2013</span> McAdams & McLean — Narrative Identity <span class="icon">↗</span></a>
+      </div>
+    </div>
+
+    <div class="card t-psych" data-cat="psych">
+      <span class="tag">Decision Making</span>
+      <h3>Heuristics &amp; Biases</h3>
+      <p class="plain">Kahneman & Tversky proved we all use mental shortcuts (heuristics) that lead to predictable errors (biases). System 1 = fast/intuitive. System 2 = slow/logical. We run on System 1 most of the time.</p>
+      <div class="why">For the brain: Model the SPECIFIC biases of the person. Are they anchored by first impressions? Overconfident about timelines? Loss-averse in deals? The brain applies their biases for authentic decisions.</div>
+      <div class="papers">
+        <a class="paper-link" href="https://www.science.org/doi/10.1126/science.185.4157.1124" target="_blank"><span class="yr">1974</span> Tversky & Kahneman — Judgment Under Uncertainty <span class="icon">↗</span></a>
+        <a class="paper-link" href="https://arxiv.org/html/2407.21202v1" target="_blank"><span class="yr">2024</span> Cognitive and AI Biases — LLMs Have Them Too <span class="icon">↗</span></a>
+      </div>
+    </div>
+
+    <div class="card t-psych" data-cat="psych">
+      <span class="tag">Behaviour</span>
+      <h3>Habit Research</h3>
+      <p class="plain">Habits are automatic responses triggered by cues. Cue → Routine → Reward. Your brain automates repeated actions so it can focus on new stuff. 40% of daily behaviour is habitual.</p>
+      <div class="why">For the brain: The "System 1" layer. Map the person's habit loops (time/place/emotion → automatic action → reward) and fire them automatically when context matches.</div>
+      <div class="papers">
+        <a class="paper-link" href="https://www.annualreviews.org/content/journals/10.1146/annurev-psych-122414-033417" target="_blank"><span class="yr">2016</span> Wood & Runger — Psychology of Habit <span class="icon">↗</span></a>
+        <a class="paper-link" href="https://www.pnas.org/doi/10.1073/pnas.2216115120" target="_blank"><span class="yr">2023</span> Machine Learning + Habit Formation <span class="icon">↗</span></a>
+      </div>
+    </div>
+
+    <div class="card t-psych" data-cat="psych">
+      <span class="tag">Voice</span>
+      <h3>LIWC — Linguistic Fingerprinting</h3>
+      <p class="plain">LIWC counts word types in your writing: emotion words, certainty words, "I" vs "we", cognitive complexity. It creates a numerical fingerprint of how you communicate.</p>
+      <div class="why">For the brain: The voice fingerprint. Run LIWC on the person's writing → extract their unique style → constrain the brain's output to match their word patterns.</div>
+      <div class="papers">
+        <a class="paper-link" href="https://journals.sagepub.com/doi/10.1177/0261927X09351676" target="_blank"><span class="yr">2010</span> Tausczik & Pennebaker — LIWC Method <span class="icon">↗</span></a>
+        <a class="paper-link" href="https://www.liwc.app/" target="_blank"><span class="yr">2022</span> LIWC-22 — Latest Version (Tool) <span class="icon">↗</span></a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ══════════════════ AI / ML ══════════════════ -->
+<div class="section" id="sec-ai" data-cat="ai">
+  <div class="section-head">
+    <div class="section-icon" style="background:rgba(139,92,246,0.12)">⚡</div>
+    <h2 style="color:var(--purple)">AI Architecture</h2>
+    <span class="count">How the brain actually works</span>
+  </div>
+  <div class="grid grid-3">
+
+    <div class="card t-ai" data-cat="ai">
+      <span class="tag">Core Pattern</span>
+      <h3>RAG — Retrieval-Augmented Generation</h3>
+      <p class="plain">Instead of cramming everything into the AI's memory, RAG searches a knowledge base and pulls in relevant info just when needed. Like Googling your own brain before answering.</p>
+      <div class="why">For the brain: THE core architecture. Don't fine-tune on someone's data — store it, search it, retrieve it at answer time. ID-RAG (2025) specifically solves persona drift in long conversations.</div>
+      <div class="papers">
+        <a class="paper-link" href="https://arxiv.org/abs/2005.11401" target="_blank"><span class="yr">2020</span> Meta — Original RAG Paper <span class="icon">↗</span></a>
+        <a class="paper-link" href="https://arxiv.org/abs/2002.08909" target="_blank"><span class="yr">2020</span> Google — REALM Pre-Training <span class="icon">↗</span></a>
+        <a class="paper-link" href="https://arxiv.org/abs/2509.25299" target="_blank"><span class="yr">2025</span> ID-RAG — Persona Coherence <span class="icon">↗</span></a>
+        <a class="paper-link" href="https://arxiv.org/pdf/2511.17467" target="_blank"><span class="yr">2025</span> PersonaAgent + GraphRAG <span class="icon">↗</span></a>
+        <a class="paper-link" href="https://arxiv.org/abs/2404.16130" target="_blank"><span class="yr">2024</span> Microsoft GraphRAG <span class="icon">↗</span></a>
+      </div>
+    </div>
+
+    <div class="card t-ai" data-cat="ai">
+      <span class="tag">Memory</span>
+      <h3>Vector Similarity Search</h3>
+      <p class="plain">How the brain finds relevant memories. Your question gets turned into a number (vector), then the system finds the closest matching numbers in its knowledge base. Like pattern matching at superhuman speed.</p>
+      <div class="why">For the brain: The long-term memory retrieval engine. FAISS (Meta) or HNSW for the index. Chunk personal documents by meaning, not length. Each chunk carries metadata linking to its source.</div>
+      <div class="papers">
+        <a class="paper-link" href="https://github.com/facebookresearch/faiss" target="_blank"><span class="yr">2017</span> Meta — FAISS Library <span class="icon">↗</span></a>
+        <a class="paper-link" href="https://arxiv.org/abs/1603.09320" target="_blank"><span class="yr">2018</span> HNSW Graphs — Malkov & Yashunin <span class="icon">↗</span></a>
+        <a class="paper-link" href="https://arxiv.org/abs/1908.10396" target="_blank"><span class="yr">2020</span> Google ScaNN <span class="icon">↗</span></a>
+      </div>
+    </div>
+
+    <div class="card t-ai" data-cat="ai">
+      <span class="tag">Ethics Engine</span>
+      <h3>Constitutional AI</h3>
+      <p class="plain">Anthropic's method for giving AI a conscience. Write rules in plain English ("never invent facts") and the AI critiques and corrects itself against those rules. No need for thousands of human labels.</p>
+      <div class="why">For the brain: How we encode the ethics boundaries. Write the twin's "constitution" in natural language. Transparent, auditable, modifiable. Collective Constitutional AI even lets groups vote on rules.</div>
+      <div class="papers">
+        <a class="paper-link" href="https://arxiv.org/abs/2212.08073" target="_blank"><span class="yr">2022</span> Anthropic — Constitutional AI Paper <span class="icon">↗</span></a>
+        <a class="paper-link" href="https://arxiv.org/abs/2406.07814" target="_blank"><span class="yr">2024</span> Collective Constitutional AI (1,000 people) <span class="icon">↗</span></a>
+        <a class="paper-link" href="https://www.anthropic.com/news/claudes-constitution" target="_blank"><span class="yr">2024</span> Claude's Published Constitution <span class="icon">↗</span></a>
+      </div>
+    </div>
+
+    <div class="card t-ai" data-cat="ai">
+      <span class="tag">Provenance</span>
+      <h3>PROV-O — Where Knowledge Comes From</h3>
+      <p class="plain">A W3C standard for tracking who created what, when, and how. Every piece of knowledge has a chain of custody: Entity (the thing) → Activity (how it was made) → Agent (who made it).</p>
+      <div class="why">For the brain: Every claim MUST have provenance. "Mic prefers direct communication" — says who? From what document? When? Without this, the brain can't explain itself or be audited.</div>
+      <div class="papers">
+        <a class="paper-link" href="https://www.w3.org/TR/prov-o/" target="_blank"><span class="yr">2013</span> W3C — PROV-O Ontology Spec <span class="icon">↗</span></a>
+        <a class="paper-link" href="https://www.w3.org/TR/prov-overview/" target="_blank"><span class="yr">2013</span> W3C — PROV Family Overview <span class="icon">↗</span></a>
+      </div>
+    </div>
+
+    <div class="card t-ai" data-cat="ai">
+      <span class="tag">Graphs</span>
+      <h3>Knowledge Graphs for People</h3>
+      <p class="plain">Store a person's traits, beliefs, decisions, and habits as connected nodes in a graph database (like Neo4j). Every node links to evidence. You can traverse relationships to find patterns.</p>
+      <div class="why">For the brain: The structured claims store. Claims connect to evidence, traits connect to claims, methods connect to triggers. Graph traversal finds patterns that flat databases miss.</div>
+      <div class="papers">
+        <a class="paper-link" href="https://arxiv.org/abs/2404.16130" target="_blank"><span class="yr">2024</span> Microsoft — GraphRAG Approach <span class="icon">↗</span></a>
+        <a class="paper-link" href="https://arxiv.org/pdf/2511.17467" target="_blank"><span class="yr">2025</span> PersonaAgent + Knowledge Graphs <span class="icon">↗</span></a>
+      </div>
+    </div>
+
+    <div class="card t-ai" data-cat="ai">
+      <span class="tag">Twins</span>
+      <h3>Digital Twin Concept</h3>
+      <p class="plain">Born at NASA in the 1960s — a virtual copy of a physical system (spacecraft). Now adapted for people: a "cognitive digital twin" that models how someone thinks and decides, not just what they look like.</p>
+      <div class="why">For the brain: Stanford's Generative Agents (2023) showed observation-planning-reflection creates believable human behaviour. Our brain follows the same pattern but adds provenance and governance.</div>
+      <div class="papers">
+        <a class="paper-link" href="https://arxiv.org/abs/2304.03442" target="_blank"><span class="yr">2023</span> Stanford — Generative Agents (25 AI "people") <span class="icon">↗</span></a>
+      </div>
+    </div>
+
+    <div class="card t-ai" data-cat="ai">
+      <span class="tag">Training</span>
+      <h3>Fine-Tuning vs RAG</h3>
+      <p class="plain">Two ways to teach AI about a person. Fine-tuning = bake it into the model's weights (permanent). RAG = search and retrieve at runtime (flexible). Best approach: use BOTH in layers.</p>
+      <div class="why">For the brain: RAG for knowledge (facts, decisions, context). Fine-tuning for VOICE (how they write, their rhythm). The recommended 4-layer hybrid: fine-tune voice → RAG knowledge → graph traits → constitutional rules.</div>
+      <div class="papers">
+        <a class="paper-link" href="https://arxiv.org/abs/2310.08560" target="_blank"><span class="yr">2025</span> CharLoRA — Character LoRA Fine-Tuning <span class="icon">↗</span></a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ══════════════════ SECURITY ══════════════════ -->
+<div class="section" id="sec-sec" data-cat="sec">
+  <div class="section-head">
+    <div class="section-icon" style="background:rgba(239,68,68,0.12)">🛡️</div>
+    <h2 style="color:var(--red)">Security &amp; Threats</h2>
+    <span class="count">What can go wrong</span>
+  </div>
+  <div class="grid grid-3">
+
+    <div class="card t-sec" data-cat="sec">
+      <span class="tag">Critical</span>
+      <h3>OWASP Top 10 for LLMs (2025)</h3>
+      <p class="plain">The official list of the 10 worst things that can happen to AI systems. #1 is Prompt Injection (tricking the AI into doing something bad). New in 2025: System Prompt Leakage and Vector DB attacks.</p>
+      <div class="why">For the brain: Every entry applies to us. The twin holds deeply personal info. Prompt injection = someone tricks it into revealing secrets. This list is our security audit checklist.</div>
+      <div class="papers">
+        <a class="paper-link" href="https://genai.owasp.org/resource/owasp-top-10-for-llm-applications-2025/" target="_blank"><span class="yr">2025</span> OWASP Top 10 for LLM Applications <span class="icon">↗</span></a>
+      </div>
+    </div>
+
+    <div class="card t-sec" data-cat="sec">
+      <span class="tag">Unsolved</span>
+      <h3>Prompt Injection</h3>
+      <p class="plain">The biggest unsolved problem in AI security. AIs can't reliably tell the difference between "instructions from the operator" and "instructions hidden in data." They're "confused deputies" executing whatever sounds authoritative.</p>
+      <div class="why">For the brain: Someone could embed instructions in an email that trick the twin into revealing private data. Defence: treat all external content as untrusted, drop permissions, context firewalling.</div>
+      <div class="papers">
+        <a class="paper-link" href="https://arxiv.org/abs/2302.12173" target="_blank"><span class="yr">2023</span> Not What You've Signed Up For — Indirect Injection <span class="icon">↗</span></a>
+      </div>
+    </div>
+
+    <div class="card t-sec" data-cat="sec">
+      <span class="tag">Red Team</span>
+      <h3>MITRE ATLAS</h3>
+      <p class="plain">Like a map of every way someone can attack an AI system. 15 tactics, 66 techniques, 46 sub-techniques. Made by the same people who created the cybersecurity threat frameworks used by governments.</p>
+      <div class="why">For the brain: Map every component (retriever, KB, prompt policy, tool layer) to known attack techniques. Build tests into development. This is how we red-team the twin.</div>
+      <div class="papers">
+        <a class="paper-link" href="https://atlas.mitre.org/" target="_blank"><span class="yr">2024</span> MITRE ATLAS Framework <span class="icon">↗</span></a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ══════════════════ LEGAL ══════════════════ -->
+<div class="section" id="sec-legal" data-cat="legal">
+  <div class="section-head">
+    <div class="section-icon" style="background:rgba(245,158,11,0.12)">⚖️</div>
+    <h2 style="color:var(--amber)">Legal &amp; Privacy</h2>
+    <span class="count">What we must comply with</span>
+  </div>
+  <div class="grid grid-3">
+
+    <div class="card t-legal" data-cat="legal">
+      <span class="tag">SA Law</span>
+      <h3>POPIA — SA Data Protection</h3>
+      <p class="plain">South Africa's data protection law. Important finding: behavioral characterization (modeling how someone thinks) falls under POPIA's BIOMETRIC definition. This means the digital twin is legally classified as biometric data.</p>
+      <div class="why">For the brain: Section 71 restricts automated decision-making. We need explicit consent, purpose limitation, and the right for the person to contest any automated decisions the twin makes.</div>
+      <div class="papers">
+        <a class="paper-link" href="https://www.gov.za/documents/protection-personal-information-act" target="_blank"><span class="yr">2013</span> POPIA — Full Act <span class="icon">↗</span></a>
+      </div>
+    </div>
+
+    <div class="card t-legal" data-cat="legal">
+      <span class="tag">EU</span>
+      <h3>EU AI Act</h3>
+      <p class="plain">The world's first comprehensive AI law. 4 risk categories from minimal to unacceptable. Digital twins are explicitly mentioned in the regulation text. Compliance deadlines roll out through 2027.</p>
+      <div class="why">For the brain: If we ever serve EU clients, we need to comply. The twin likely falls in "high risk" category. Requires transparency, human oversight, and technical documentation.</div>
+      <div class="papers">
+        <a class="paper-link" href="https://artificialintelligenceact.eu/" target="_blank"><span class="yr">2024</span> EU AI Act — Full Text <span class="icon">↗</span></a>
+      </div>
+    </div>
+
+    <div class="card t-legal" data-cat="legal">
+      <span class="tag">Standards</span>
+      <h3>ISO 27001 + 27701</h3>
+      <p class="plain">International standards for information security (27001) and privacy management (27701). 2025 revision of 27701 is now standalone + has new AI-specific controls. Plus ISO 42001 for AI governance.</p>
+      <div class="why">For the brain: The governance framework. Access controls, audit logging, incident response, data classification — all structured by these standards. Makes the twin enterprise-ready.</div>
+      <div class="papers">
+        <a class="paper-link" href="https://www.iso.org/standard/27001" target="_blank"><span class="yr">2022</span> ISO/IEC 27001 — Info Security <span class="icon">↗</span></a>
+        <a class="paper-link" href="https://www.iso.org/standard/71670.html" target="_blank"><span class="yr">2025</span> ISO/IEC 27701 — Privacy Management <span class="icon">↗</span></a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ══════════════════ AGENT SYSTEMS ══════════════════ -->
+<div class="section" id="sec-agent" data-cat="agent">
+  <div class="section-head">
+    <div class="section-icon" style="background:rgba(34,197,94,0.12)">🤖</div>
+    <h2 style="color:var(--green)">Agent Systems</h2>
+    <span class="count">How agents feel "alive"</span>
+  </div>
+  <div class="grid grid-3">
+
+    <div class="card t-agent" data-cat="agent">
+      <span class="tag">Viral</span>
+      <h3>OpenClaw — 200K Stars</h3>
+      <p class="plain">An AI agent that feels alive because of one trick: time as input. Heartbeats fire every 30 min, crons fire on schedule, webhooks fire from external events. It's not thinking — it's reacting to timers. But it LOOKS autonomous.</p>
+      <div class="why">For PIA: We already have the harder stuff (multi-machine, souls, memory). We need to add heartbeats + crons + webhooks to complete the "alive" pattern. That's the gap.</div>
+      <div class="papers">
+        <a class="paper-link" href="https://github.com/openclaw/openclaw" target="_blank"><span class="yr">2026</span> OpenClaw GitHub (200K+ stars) <span class="icon">↗</span></a>
+        <a class="paper-link" href="https://docs.openclaw.ai" target="_blank"><span class="yr">2026</span> OpenClaw Documentation <span class="icon">↗</span></a>
+        <a class="paper-link" href="https://blogs.cisco.com/ai/personal-ai-agents-like-openclaw-are-a-security-nightmare" target="_blank"><span class="yr">2026</span> Cisco — "Security Nightmare" Analysis <span class="icon">↗</span></a>
+        <a class="paper-link" href="https://steipete.me/posts/2026/openclaw" target="_blank"><span class="yr">2026</span> Steinberger Blog — Joins OpenAI <span class="icon">↗</span></a>
+      </div>
+    </div>
+
+    <div class="card t-agent" data-cat="agent">
+      <span class="tag">Formula</span>
+      <h3>The "Alive" Pattern</h3>
+      <p class="plain">Every agent framework that feels alive uses the same formula: Scheduled Events + Human Messages + External Webhooks + Internal Hooks + Agent-to-Agent Messages → Event Queue → Process → Persist State → Loop.</p>
+      <div class="why">For PIA: We have 4 of 5 input types. Missing: heartbeats (timed agent prompts), crons (scheduled tasks), webhook ingestion (external events). Adding these 3 completes the pattern.</div>
+    </div>
+
+    <div class="card t-agent" data-cat="agent">
+      <span class="tag">Security</span>
+      <h3>OpenClaw Security Findings</h3>
+      <p class="plain">Cisco found 26% of 31K skills have vulnerabilities. The #1 ranked skill ("What Would Elon Do?") was actual MALWARE — silent data exfiltration, prompt injection, command injection. 400+ malicious skills found since Jan 2026.</p>
+      <div class="why">For PIA: Security from day one, not bolted on. Scan all skills. Assume the LLM can be tricked. Sandbox untrusted sessions. Scope permissions per channel.</div>
+      <div class="papers">
+        <a class="paper-link" href="https://www.crowdstrike.com/en-us/blog/what-security-teams-need-to-know-about-openclaw-ai-super-agent/" target="_blank"><span class="yr">2026</span> CrowdStrike — Security Analysis <span class="icon">↗</span></a>
+        <a class="paper-link" href="https://www.esecurityplanet.com/threats/over-41-of-popular-openclaw-skills-found-to-contain-security-vulnerabilities/" target="_blank"><span class="yr">2026</span> eSecurity Planet — 41% Vulnerable <span class="icon">↗</span></a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ══════════════════ PIA DOCUMENTS ══════════════════ -->
+<div class="section" id="sec-docs" data-cat="docs">
+  <div class="section-head">
+    <div class="section-icon" style="background:rgba(6,182,212,0.12)">📚</div>
+    <h2 style="color:var(--cyan)">PIA Documents &amp; Visualizations</h2>
+    <span class="count">Everything we've built</span>
+  </div>
+
+  <h3 style="color:#888;font-size:0.9rem;margin-bottom:1rem;font-weight:400">Brain Diagrams</h3>
+  <div class="grid grid-3" style="margin-bottom:2rem">
+    <a href="/brain-diagram.html" class="doc-card" data-cat="docs">
+      <span class="d-icon">🧠</span>
+      <div class="d-info"><h4>Brain Diagram — Single Page</h4><p>The illustrated textbook view. One picture, all components, input→output flow.</p></div>
+      <span class="d-type" style="background:rgba(139,92,246,0.12);color:var(--purple)">HTML</span>
+    </a>
+    <a href="/digital-twin-brain.html" class="doc-card" data-cat="docs">
+      <span class="d-icon">🔬</span>
+      <div class="d-info"><h4>Digital Twin Brain — Detailed</h4><p>Full architecture: 7 organs, learning flow, thinking flow, 5 uniqueness dimensions.</p></div>
+      <span class="d-type" style="background:rgba(139,92,246,0.12);color:var(--purple)">HTML</span>
+    </a>
+    <a href="/pia-brain-explained.html" class="doc-card" data-cat="docs">
+      <span class="d-icon">💡</span>
+      <div class="d-info"><h4>PIA Brain Explained</h4><p>Maps PIA's components to human brain regions. Interactive SVG with tooltips.</p></div>
+      <span class="d-type" style="background:rgba(139,92,246,0.12);color:var(--purple)">HTML</span>
+    </a>
+  </div>
+
+  <h3 style="color:#888;font-size:0.9rem;margin-bottom:1rem;font-weight:400">Research Documents</h3>
+  <div class="grid grid-3" style="margin-bottom:2rem">
+    <div class="doc-card" data-cat="docs">
+      <span class="d-icon">📋</span>
+      <div class="d-info"><h4>Research Knowledge Base</h4><p>20 topics, 80+ papers. Full foundation research for the digital twin brain.</p></div>
+      <span class="d-type" style="background:rgba(34,197,94,0.12);color:var(--green)">MD</span>
+    </div>
+    <div class="doc-card" data-cat="docs">
+      <span class="d-icon">🔧</span>
+      <div class="d-info"><h4>OpenClaw Patterns for PIA</h4><p>5 input types, alive formula, gap analysis, what PIA should absorb.</p></div>
+      <span class="d-type" style="background:rgba(34,197,94,0.12);color:var(--green)">MD</span>
+    </div>
+    <div class="doc-card" data-cat="docs">
+      <span class="d-icon">🕵️</span>
+      <div class="d-info"><h4>OpenClaw Deep Dive</h4><p>GitHub repo, Cisco security, Steinberger → OpenAI, framework comparison.</p></div>
+      <span class="d-type" style="background:rgba(34,197,94,0.12);color:var(--green)">MD</span>
+    </div>
+    <div class="doc-card" data-cat="docs">
+      <span class="d-icon">📖</span>
+      <div class="d-info"><h4>Deep Research Report</h4><p>The original report: digital twin profile blueprint, schema, prompts, risk model.</p></div>
+      <span class="d-type" style="background:rgba(34,197,94,0.12);color:var(--green)">MD</span>
+    </div>
+  </div>
+
+  <h3 style="color:#888;font-size:0.9rem;margin-bottom:1rem;font-weight:400">PIA System Docs</h3>
+  <div class="grid grid-3" style="margin-bottom:2rem">
+    <a href="/pia-manual.html" class="doc-card" data-cat="docs">
+      <span class="d-icon">📘</span>
+      <div class="d-info"><h4>PIA Manual — 12 Chapters</h4><p>The complete printable white paper. Vision, concepts, system, infrastructure, roadmap.</p></div>
+      <span class="d-type" style="background:rgba(6,182,212,0.12);color:var(--cyan)">HTML</span>
+    </a>
+    <a href="/pia-diagram.html" class="doc-card" data-cat="docs">
+      <span class="d-icon">📊</span>
+      <div class="d-info"><h4>Architecture Diagram</h4><p>Now vs After, to-do list, agent ecosystem.</p></div>
+      <span class="d-type" style="background:rgba(6,182,212,0.12);color:var(--cyan)">HTML</span>
+    </a>
+    <a href="/pia-mindmap.html" class="doc-card" data-cat="docs">
+      <span class="d-icon">🗺️</span>
+      <div class="d-info"><h4>Interactive Mind Map</h4><p>D3.js zoomable mind map of full PIA architecture.</p></div>
+      <span class="d-type" style="background:rgba(6,182,212,0.12);color:var(--cyan)">HTML</span>
+    </a>
+    <a href="/pia-souls.html" class="doc-card" data-cat="docs">
+      <span class="d-icon">👻</span>
+      <div class="d-info"><h4>Soul System Reference</h4><p>All 12 souls in full detail. Anatomy, relationships, wiring.</p></div>
+      <span class="d-type" style="background:rgba(6,182,212,0.12);color:var(--cyan)">HTML</span>
+    </a>
+    <a href="/pia-fleet.html" class="doc-card" data-cat="docs">
+      <span class="d-icon">🖥️</span>
+      <div class="d-info"><h4>Fleet Architecture</h4><p>3-machine diagram, 5-machine recommendation, per-agent knowledge.</p></div>
+      <span class="d-type" style="background:rgba(6,182,212,0.12);color:var(--cyan)">HTML</span>
+    </a>
+    <a href="/pia-storyboard.html" class="doc-card" data-cat="docs">
+      <span class="d-icon">🎬</span>
+      <div class="d-info"><h4>Club X Storyboard</h4><p>15-scene visualization of all agents working together.</p></div>
+      <span class="d-type" style="background:rgba(6,182,212,0.12);color:var(--cyan)">HTML</span>
+    </a>
+    <a href="/pia-wakeup.html" class="doc-card" data-cat="docs">
+      <span class="d-icon">⏰</span>
+      <div class="d-info"><h4>Agent Wake-Up Schedule</h4><p>D3.js 24-hour timeline of all agents, triggers, intelligence pipeline.</p></div>
+      <span class="d-type" style="background:rgba(6,182,212,0.12);color:var(--cyan)">HTML</span>
+    </a>
+    <a href="/mission-control.html" class="doc-card" data-cat="docs">
+      <span class="d-icon">🎛️</span>
+      <div class="d-info"><h4>Mission Control Dashboard</h4><p>Main agent control dashboard. 3,000 lines. The command center.</p></div>
+      <span class="d-type" style="background:rgba(6,182,212,0.12);color:var(--cyan)">HTML</span>
+    </a>
+    <a href="/soul-enrichment.html" class="doc-card" data-cat="docs">
+      <span class="d-icon">✨</span>
+      <div class="d-info"><h4>Soul Enrichment UI</h4><p>Roster grid, soul editor, memory panel, system prompt preview.</p></div>
+      <span class="d-type" style="background:rgba(6,182,212,0.12);color:var(--cyan)">HTML</span>
+    </a>
+    <a href="/pia-reference.html" class="doc-card" data-cat="docs">
+      <span class="d-icon">📑</span>
+      <div class="d-info"><h4>Owner's Quick Reference</h4><p>9-section non-technical guide. Print-friendly.</p></div>
+      <span class="d-type" style="background:rgba(6,182,212,0.12);color:var(--cyan)">HTML</span>
+    </a>
+    <a href="/docs.html" class="doc-card" data-cat="docs">
+      <span class="d-icon">📄</span>
+      <div class="d-info"><h4>Live Docs Viewer</h4><p>Markdown docs viewer with pinned sidebar. All .md files browsable.</p></div>
+      <span class="d-type" style="background:rgba(6,182,212,0.12);color:var(--cyan)">HTML</span>
+    </a>
+    <a href="/pia-book.html" class="doc-card" data-cat="docs">
+      <span class="d-icon">📕</span>
+      <div class="d-info"><h4>PIA Knowledge Book</h4><p>Visual HTML knowledge base. The project bible.</p></div>
+      <span class="d-type" style="background:rgba(6,182,212,0.12);color:var(--cyan)">HTML</span>
+    </a>
+  </div>
+</div>
+
+<footer>
+  <p>PIA Research Library — SodaLabs AI / SodaWorld — Compiled February 25, 2026</p>
+  <p style="margin-top:0.3rem">20 research topics · 80+ papers · All PIA documents linked</p>
+</footer>
+
+<!-- ══ FILTER SCRIPT ══ -->
+<script>
+const pills = document.querySelectorAll('.nav-pill');
+const sections = document.querySelectorAll('.section');
+
+pills.forEach(pill => {
+  pill.addEventListener('click', () => {
+    pills.forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    const filter = pill.dataset.filter;
+
+    sections.forEach(sec => {
+      if (filter === 'all' || sec.dataset.cat === filter) {
+        sec.classList.remove('hidden');
+      } else {
+        sec.classList.add('hidden');
+      }
+    });
+
+    // Also show/hide dividers
+    document.querySelectorAll('.divider').forEach(d => {
+      d.classList.toggle('hidden', filter !== 'all');
+    });
+  });
+});
+</script>
+
+</body>
+</html>

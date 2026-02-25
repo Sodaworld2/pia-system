@@ -1,6 +1,6 @@
 # PIA System — File Index
 
-> **Last Updated:** 2026-02-19
+> **Last Updated:** 2026-02-25
 > **Maintained by:** AI agents (see CLAUDE.md rules)
 > **Purpose:** Complete index of every `.md` and `.html` file in the repository (excluding `node_modules/`)
 
@@ -36,7 +36,7 @@
 |------|---------|
 | `CLAUDE.md` | **AI agent instructions** — Rules, architecture, tools, journaling |
 | `PIA_KNOWLEDGE_BASE.md` | **Master knowledge base** — Terminology, ideas, spec, capabilities, to-do |
-| `FILE_INDEX.md` | **This file** — Index of every .md and .html |
+| `FILE_INDEX.md` | **This file** — Index of every .md and .html *(last updated 2026-02-25)* |
 | `KNOWLEDGE_BASE.md` | Legacy knowledge base (older version) |
 | `README.md` | Repository README |
 | `START_HERE.md` | Getting started guide |
@@ -58,7 +58,12 @@
 | `SESSION_JOURNAL_2026-02-16.md` | Permission architecture, features, fleet deployment, Electron, Cortex (13 sessions) |
 | `SESSION_JOURNAL_2026-02-16_claude_code.md` | Machine linking, ESM bug fix, all 3 machines online, Cortex Phase 1 |
 | `SESSION_JOURNAL_2026-02-17.md` | Security remediation, remote agent spawning, project registry, Playwright MCP, Context7 audit |
-| `SESSION_JOURNAL_2026-02-20.md` | **Today** — Multi-machine fixes, video research, full system vision planning, storyboard, parallel agents (5 sessions) |
+| `SESSION_JOURNAL_2026-02-20.md` | Multi-machine fixes, video research, full system vision planning, storyboard, parallel agents (5 sessions) |
+| `SESSION_JOURNAL_2026-02-21.md` | Soul system deep audit, soul enrichment spec + UI, soul-enrichment.html built |
+| `SESSION_JOURNAL_2026-02-22.md` | Autonomous Business Swarms research, integration audit, docs.html auth fix, CLAUDE.md updates, WebMCP + Cloudflare research, MCP security scan |
+| `SESSION_JOURNAL_2026-02-23.md` | docs.html fix, WebMCP/Cloudflare research, MCP security audit (8 servers), Mac Mini M4 research commissioned |
+| `SESSION_JOURNAL_2026-02-24.md` | Amama Jazz Club project scoping |
+| `SESSION_JOURNAL_2026-02-25.md` | **MAJOR SESSION** — Digital Twin brain architecture: 20-topic foundation research, OpenClaw pattern extraction, 78% academic validation, African Worldview module, Multi-Lens Perception Engine (Ten Faces + PERMA), Complete Blueprint (1,084 lines), 8 HTML visualizations, Identity Kernel data structure |
 | `JOURNAL_2026-02-10.md` | Early journal |
 | `JOURNAL_2026-02-11.md` | Early journal |
 | `JOURNAL-2026-02-11.md` | Early journal (duplicate naming) |
@@ -102,6 +107,7 @@
 | File | Purpose |
 |------|---------|
 | `V1_DEFINITION.md` | **PIA v1.0 definition of done** — 12 acceptance criteria, 17 build items, 5-week target, explicit v2.0 deferral list |
+| `EMAIL_SETUP.md` | **Step-by-step email activation guide** — SendGrid outbound + Cloudflare Email Routing inbound for v1.0 items 14 & 15 |
 | `SPRINT_PLAN.md` | Sprint plan |
 | `PROJECT_PLAN_AGENT_SHOPS.md` | Agent Shops project plan |
 | `AGENT_TASK_PLANS.md` | Agent task plans |
@@ -136,6 +142,18 @@
 | `research/CURRENT_STATE_AUDIT.md` | **Deep technical audit** — every src/ file read, 28 working capabilities, 7 activation priorities, what's wired vs stub *(Session 26, 2026-02-20)* |
 | `research/CODE_REPOSITORY_MAP.md` | **Complete code ecosystem map** — 26 codebases mapped, 14 with GitHub remotes, stacks, status, relation to PIA |
 | `research/TERMINAL_SEARCH_BRIEFING.md` | **Self-contained prompt for new terminal** — paste into fresh Claude to do deep repo search + produce unification plan |
+| `research/INTEGRATION_RESEARCH.md` | **Integration research** — deep code audit of 6 missing items (B10 spawn wire, Tim Buc loop, handoff protocol, agentic commerce, Coder Machine, integration test) — exact line numbers, complexity estimates, build order *(Session 2, 2026-02-22)* |
+| `research/AUTONOMOUS_BUSINESS_SWARMS.md` | **2026 swarms knowledge base** — 10 sections: concept, macro data, 5 case studies (Emergent $100M, Elladin, Rahhaat Uppaal, VRSEN, HurumoAI), framework comparison, hype vs reality, Dark Factory connection, PIA vs industry comparison, PIA roadmap to swarm *(Session 1, 2026-02-22)* |
+| `research/CLOUDFLARE_KNOWLEDGE_BASE.md` | **Cloudflare integration knowledge base** — comprehensive 2025/2026 research: AI Gateway, Tunnel, Email Routing, R2, Pages, Workers, D1, Queues, Zero Trust — product breakdown table, 3 deep dives, TODAY vs LATER recommendations, pricing comparison vs alternatives *(2026-02-22)* |
+| `research/WEBMCP_CLOUDFLARE_RESEARCH.md` | **WebMCP + Cloudflare combined research** — what WebMCP actually is (W3C browser standard, NOT Anthropic MCP), token bloat problem + lazy loading fix, prompt caching, Pipedream Remote MCP, AI Gateway, Tunnel, Email Routing, community findings, prioritised action plan *(2026-02-22)* |
+| `research/OPENCLAW_PATTERNS.md` | **OpenClaw patterns for PIA** — 5 input types (messages, heartbeats, crons, hooks, webhooks), "alive" formula (Time→Events→Agents→State→Loop), security findings (Cisco: 26% skills vulnerable), PIA gap analysis, what to absorb *(2026-02-25)* |
+| `research/OPENCLAW_ARCHITECTURE.md` | OpenClaw architecture overview (earlier research) |
+| `research/RESEARCH_KNOWLEDGE_BASE.md` | **Digital Twin foundation research (1,132 lines)** — 20 topics: PROV-O, Big Five, SDT, Moral Foundations, Narrative Identity, Heuristics & Biases, Habit Research, LIWC, RAG, Vector Search, Constitutional AI, OWASP LLM Top 10, Prompt Injection, MITRE ATLAS, ISO 27001+27701, EU AI Act, POPIA, Digital Twin concept, Knowledge Graphs, Fine-tuning vs RAG *(2026-02-25)* |
+| `research/RESEARCH_OPENCLAW.md` | **OpenClaw deep dive (745 lines)** — architecture, gateway pattern, 5 input types, event loop, SOUL.md identity, markdown state, agent-to-agent messaging, skills/plugins, Cisco security analysis (26% vulnerable), Peter Steinberger background + OpenAI join, framework comparison matrix *(2026-02-25)* |
+| `research/AFRICAN_WORLDVIEW_MODULE.md` | **African Worldview & Ideology Sensemaking Engine** — full module spec: 10-axis Perspective Map, Communication Strategy, Ethics Report, 5 Africa-specific lenses (Coloniality, Ubuntu, Spiritual Realism, Patronage, Urban Hybridity), Soul of Humans component, ethical guardrails, academic backbone *(2026-02-25)* |
+| `research/THINKING_FRAMEWORKS_MODULE.md` | **Multi-Lens Perception Engine** — Ten Faces of Innovation as AI reasoning lenses + Positive Psychology PERMA as foundational orientation, 10 faces fully specified with activation triggers, Devil's Advocate Counter-Matrix, PERMA-to-Faces integration, Beth Arendse worked example *(2026-02-25)* |
+| `research/DIGITAL_TWIN_COMPLETE_BLUEPRINT.md` | **THE MASTER ARCHITECTURE DOCUMENT (1,084 lines)** — Complete 4-layer spec (Soul, Mind, Brain, Memory), all modules, 6 database tables, ingestion pipeline, 3-tier calibration cycle, feedback loop, ethical boundary, Identity Kernel JSON data structure, complete research citation index (30+ sources). All other documents reference this. *(2026-02-25)* |
+| `research/SESSION_25FEB_FILE_INVENTORY.md` | **Session file inventory** — complete inventory of every file created/modified during Feb 25 session, organized by type (Research, Module Specs, Architecture, HTML, Session Docs) with line counts and purposes *(2026-02-25)* |
 
 ## Data & Knowledge Store
 
@@ -172,11 +190,16 @@
 | File | Purpose | Served At |
 |------|---------|-----------|
 | `public/mission-control.html` | **Main dashboard** — Agent control, terminal, journal (~3000 lines) | `/mission-control.html` |
+| `public/ned.html` | **NED Browser Tester UI** — Dedicated M4 browser control dashboard (navigate, screenshot, extract text, AI tasks, job queue) | `/ned.html` |
 | `public/soul-enrichment.html` | **Soul Enrichment UI** — roster grid (12 agents with health scores), soul editor (6-section form), memory panel, system prompt preview | `/soul-enrichment.html` |
 | `public/mission-control-cli.html` | CLI version of Mission Control | `/mission-control-cli.html` |
 | `public/visor.html` | Visor panel | `/visor.html` |
 | `public/index.html` | Landing page | `/` |
 | `public/pia-admin.html` | PIA admin panel | `/pia-admin.html` |
+| `public/pia-status.html` | **Live agent status** — all 13 agents with current status, machine assignments, triggers | `/pia-status.html` |
+| `public/pia-reference.html` | **Owner's quick reference** — 9-section non-technical guide, print-friendly | `/pia-reference.html` |
+| `public/pia-souls.html` | **Soul system deep reference** — all 12 souls in full detail, anatomy, relationships, wiring gap | `/pia-souls.html` |
+| `public/pia-fleet.html` | **Fleet architecture** — 3-machine diagram, 5-machine recommendation, per-agent knowledge enrichment | `/pia-fleet.html` |
 | `public/pia-book.html` | **Project knowledge book** (visual HTML guide) | `/pia-book.html` |
 | `public/first-run.html` | Electron first-run setup wizard | `/first-run.html` |
 | `public/settings.html` | Electron settings page | `/settings.html` |
@@ -202,11 +225,21 @@
 | File | Purpose | Served At |
 |------|---------|-----------|
 | `public/system-plan.html` | System plan visualization | `/system-plan.html` |
+| `public/pia-manual.html` | **THE COMPLETE MANUAL** — 12-chapter printable white paper: Vision (swarms thesis), Concepts (glossary + memory/context), System (agents, souls, intelligence loop, creative pipeline), Infrastructure (fleet, working with PIA), Roadmap (status + v1.0 finish line) | `/pia-manual.html` |
 | `public/pia-plan-infographic.html` | PIA plan infographic | `/pia-plan-infographic.html` |
 | `public/pia-plan.html` | Visual planning doc (pizza analogy, M1/M2 arch, research) | `/pia-plan.html` |
 | `public/pia-diagram.html` | **Architecture diagram** — Now vs After, to-do list, agent ecosystem | `/pia-diagram.html` |
 | `public/pia-mindmap.html` | **Interactive D3.js mind map** — full PIA × SodaLabs architecture, zoom/pan, click for detail | `/pia-mindmap.html` |
 | `public/pia-storyboard.html` | **15-scene Club X storyboard** — all agents working, live queue panel, auto-play | `/pia-storyboard.html` |
+| `public/pia-wakeup.html` | **Agent wake-up schedule** — D3.js 24-hour timeline: all agents, triggers, first questions, intelligence pipeline flow | `/pia-wakeup.html` |
+| `public/brain-diagram.html` | **Digital Twin brain — single-page illustrated diagram** — side-profile head with 5 brain regions (Evidence Store, Claim Extraction, Traits+Methods, Ethics Boundaries, Retrieval), input/output flow, feedback loop, three laws *(2026-02-25)* | `/brain-diagram.html` |
+| `public/digital-twin-brain.html` | **Digital Twin brain — detailed architecture** — 7 organs, learning flow pipeline (7 steps), thinking flow pipeline (7 steps), 5 uniqueness dimensions, three laws *(2026-02-25)* | `/digital-twin-brain.html` |
+| `public/pia-brain-explained.html` | **PIA mapped to human brain** — educational explainer, interactive SVG brain with hover tooltips, side-by-side comparison cards, body diagram, memory types *(2026-02-25)* | `/pia-brain-explained.html` |
+| `public/research-library.html` | **Research Library** — filterable card-based browser for all 20 research domains, OpenClaw findings, paper links, non-technical explanations, links to all brain diagrams and PIA docs *(2026-02-25)* | `/research-library.html` |
+| `public/brain-analysis.html` | **Brain Architecture Analysis** — Mic's 4-layer model tested against 75+ academic sources, 78% sound verdict, gap analysis, research mapping, suggested evolution with SVG diagram *(2026-02-25)* | `/brain-analysis.html` |
+| `public/brain-architecture-v2.html` | **Evolved Brain Diagram v2** — single-page SVG, 4-layer stack (Soul→Mind→Brain→Memory) with African Worldview module, 10-axis radar chart, ethical guardrails wrapper, data flow arrows, example flow strip *(2026-02-25)* | `/brain-architecture-v2.html` |
+| `public/thinking-frameworks.html` | **Multi-Lens Perception Engine diagram** — single-page SVG, Ten Faces in circular layout (3 categories: Learning/Organizing/Building), PERMA five-gauge dashboard at foundation, integration lines connecting PERMA to Faces, Mind/Soul Layer placement *(2026-02-25)* | `/thinking-frameworks.html` |
+| `public/brain-complete-blueprint.html` | **THE DEFINITIVE MASTER DIAGRAM (723 lines)** — single-page SVG, full 4-layer architecture with all modules, ingestion pipeline (left), feedback loop (right), ethical boundary wrapper, data flow arrows, color-coded: Soul (gold), Mind (teal), Brain (blue), Memory (purple). Companion to DIGITAL_TWIN_COMPLETE_BLUEPRINT.md *(2026-02-25)* | `/brain-complete-blueprint.html` |
 | `public/wireframes.html` | Wireframe designs | `/wireframes.html` |
 | `public/agent-generator.html` | Agent generator tool | `/agent-generator.html` |
 
@@ -256,9 +289,11 @@ The `dao-foundation-files/` directory is a separate project. See `CLAUDE.md` for
 
 ## Statistics
 
-- **Total .md files (excl. node_modules):** ~80+
-- **Total .html files (excl. node_modules):** ~40+
-- **Session journals:** 10 files spanning Feb 10-17, 2026
+- **Total .md files (excl. node_modules):** ~90+
+- **Total .html files (excl. node_modules):** ~50+
+- **Session journals:** 16 files spanning Feb 10-25, 2026
 - **Agent prompts:** 10 briefing/prompt documents
-- **Research docs:** 6 research documents
-- **HTML dashboards/UIs:** 26 pages served by Express
+- **Research docs:** 35+ research documents (including 7 new Digital Twin docs from Feb 25)
+- **HTML dashboards/UIs:** 28 pages served by Express
+- **HTML brain/architecture diagrams:** 8 pages (all created Feb 25)
+- **Digital Twin Brain docs:** 7 markdown files totaling ~4,800 lines + 8 HTML visualizations totaling ~5,820 lines
