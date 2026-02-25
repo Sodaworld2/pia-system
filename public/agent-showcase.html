@@ -1,0 +1,1902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIA — The Intelligence Network</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-primary: #0a0a0a;
+    --bg-card: #111111;
+    --bg-card-hover: #161616;
+    --text-primary: #f0f0f0;
+    --text-secondary: #999;
+    --text-dim: #666;
+    --border: #222;
+    --border-light: #333;
+
+    /* 12 unique agent colors */
+    --color-controller: #4FC3F7;
+    --color-fisher: #FFB74D;
+    --color-eliyahu: #CE93D8;
+    --color-ziggi: #EF5350;
+    --color-timbuc: #8D6E63;
+    --color-owl: #78909C;
+    --color-farcake: #66BB6A;
+    --color-andy: #FF8A65;
+    --color-birdfountain: #F06292;
+    --color-wingspan: #4DD0E1;
+    --color-monitor: #90A4AE;
+    --color-coder: #AED581;
+
+    /* Tier colors */
+    --tier-strategic: #4FC3F7;
+    --tier-quality: #EF5350;
+    --tier-execution: #66BB6A;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ============ ANIMATIONS ============ */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes pulseGlow {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.8; }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  @keyframes lineGrow {
+    from { stroke-dashoffset: 1000; }
+    to { stroke-dashoffset: 0; }
+  }
+
+  .animate-on-scroll {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .animate-on-scroll.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ============ NAVIGATION ============ */
+  nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: rgba(10, 10, 10, 0.92);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+  }
+
+  nav .logo {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, #4FC3F7, #CE93D8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  nav .nav-links {
+    display: flex;
+    gap: 32px;
+    list-style: none;
+  }
+
+  nav .nav-links a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: color 0.3s;
+  }
+
+  nav .nav-links a:hover { color: var(--text-primary); }
+
+  /* ============ HERO ============ */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 120px 40px 80px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(circle, rgba(79, 195, 247, 0.06) 0%, rgba(206, 147, 216, 0.04) 40%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-badge {
+    display: inline-block;
+    padding: 8px 24px;
+    border: 1px solid var(--border-light);
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: 40px;
+    animation: fadeIn 1s ease 0.2s both;
+  }
+
+  .hero h1 {
+    font-family: 'Outfit', sans-serif;
+    font-size: clamp(48px, 8vw, 96px);
+    font-weight: 900;
+    line-height: 1.0;
+    letter-spacing: -2px;
+    margin-bottom: 24px;
+    animation: fadeInUp 1s ease 0.4s both;
+  }
+
+  .hero h1 span {
+    background: linear-gradient(135deg, #4FC3F7 0%, #CE93D8 50%, #FF8A65 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .hero .subtitle {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(18px, 2.5vw, 24px);
+    font-weight: 300;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    animation: fadeInUp 1s ease 0.6s both;
+  }
+
+  .hero .hero-desc {
+    font-size: 16px;
+    color: var(--text-dim);
+    max-width: 600px;
+    margin-bottom: 60px;
+    animation: fadeInUp 1s ease 0.8s both;
+  }
+
+  /* Network visualization in hero */
+  .network-viz {
+    position: relative;
+    width: 100%;
+    max-width: 1100px;
+    height: 560px;
+    margin: 0 auto;
+    animation: fadeIn 1.5s ease 1s both;
+  }
+
+  .network-viz svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .network-viz .node-group {
+    cursor: pointer;
+  }
+
+  .network-viz .node-circle {
+    transition: all 0.3s ease;
+  }
+
+  .network-viz .node-group:hover .node-circle {
+    filter: brightness(1.3) drop-shadow(0 0 12px currentColor);
+    transform: scale(1.1);
+    transform-origin: center;
+  }
+
+  .network-viz .node-label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    fill: var(--text-primary);
+    text-anchor: middle;
+    pointer-events: none;
+  }
+
+  .network-viz .connection-line {
+    stroke: #333;
+    stroke-width: 1;
+    opacity: 0.4;
+    stroke-dasharray: 1000;
+    animation: lineGrow 2s ease 1.2s both;
+  }
+
+  /* ============ SECTION HEADERS ============ */
+  .section {
+    padding: 120px 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .section-header {
+    text-align: center;
+    margin-bottom: 80px;
+  }
+
+  .section-header .section-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+  }
+
+  .section-header h2 {
+    font-family: 'Outfit', sans-serif;
+    font-size: clamp(32px, 5vw, 56px);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 16px;
+  }
+
+  .section-header p {
+    font-size: 18px;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  /* ============ TIER LABELS ============ */
+  .tier-section {
+    margin-bottom: 60px;
+  }
+
+  .tier-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 20px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+  }
+
+  .tier-label.strategic {
+    background: rgba(79, 195, 247, 0.1);
+    border: 1px solid rgba(79, 195, 247, 0.3);
+    color: var(--tier-strategic);
+  }
+
+  .tier-label.quality {
+    background: rgba(239, 83, 80, 0.1);
+    border: 1px solid rgba(239, 83, 80, 0.3);
+    color: var(--tier-quality);
+  }
+
+  .tier-label.execution {
+    background: rgba(102, 187, 106, 0.1);
+    border: 1px solid rgba(102, 187, 106, 0.3);
+    color: var(--tier-execution);
+  }
+
+  .tier-label .tier-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    animation: pulseGlow 2s infinite;
+  }
+
+  .tier-label.strategic .tier-dot { background: var(--tier-strategic); }
+  .tier-label.quality .tier-dot { background: var(--tier-quality); }
+  .tier-label.execution .tier-dot { background: var(--tier-execution); }
+
+  /* ============ AGENT CARDS ============ */
+  .agent-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 24px;
+  }
+
+  .agent-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s ease;
+  }
+
+  .agent-card:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-light);
+    transform: translateY(-4px);
+  }
+
+  .agent-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .agent-card .card-glow {
+    position: absolute;
+    top: -100px;
+    right: -100px;
+    width: 250px;
+    height: 250px;
+    border-radius: 50%;
+    opacity: 0.06;
+    pointer-events: none;
+    transition: opacity 0.4s;
+  }
+
+  .agent-card:hover .card-glow {
+    opacity: 0.12;
+  }
+
+  .agent-card-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .agent-icon {
+    font-size: 36px;
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    flex-shrink: 0;
+  }
+
+  .agent-name {
+    font-family: 'Outfit', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .agent-role {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-weight: 400;
+  }
+
+  .agent-tagline {
+    font-size: 15px;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    font-style: italic;
+    line-height: 1.5;
+  }
+
+  .human-job {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 18px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .human-job-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+    line-height: 1.3;
+  }
+  .human-job-content {
+    flex: 1;
+  }
+  .human-job-label {
+    font-family: 'Outfit', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+  .human-job-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 3px;
+  }
+  .human-job-why {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  .agent-section-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    margin-top: 16px;
+  }
+
+  .powers-list {
+    list-style: none;
+    margin-bottom: 16px;
+  }
+
+  .powers-list li {
+    font-size: 13px;
+    color: var(--text-secondary);
+    padding: 4px 0;
+    padding-left: 20px;
+    position: relative;
+  }
+
+  .powers-list li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 11px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    opacity: 0.6;
+  }
+
+  /* Ten Faces badges */
+  .faces-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+
+  .face-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 100px;
+    letter-spacing: 0.5px;
+  }
+
+  .face-badge.primary {
+    border: 1px solid;
+    opacity: 1;
+  }
+
+  .face-badge.secondary {
+    border: 1px solid var(--border-light);
+    color: var(--text-dim);
+    opacity: 0.7;
+  }
+
+  /* PERMA bars */
+  .perma-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 40px;
+    margin-bottom: 4px;
+  }
+
+  .perma-bar-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+  }
+
+  .perma-bar {
+    width: 100%;
+    border-radius: 3px;
+    transition: height 0.5s ease;
+  }
+
+  .perma-label {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+  }
+
+  /* Machine badge */
+  .meta-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .machine-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 6px;
+    letter-spacing: 1px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border-light);
+    color: var(--text-secondary);
+  }
+
+  .type-badge {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.03);
+    color: var(--text-dim);
+  }
+
+  .agent-quote {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-style: italic;
+    margin-top: 16px;
+    padding: 12px 16px;
+    border-left: 2px solid;
+    background: rgba(255,255,255,0.02);
+    border-radius: 0 8px 8px 0;
+    line-height: 1.5;
+  }
+
+  /* ============ PIPELINE MAP ============ */
+  .pipeline-section {
+    padding: 120px 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .pipeline-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin-top: 60px;
+  }
+
+  .pipeline-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .pipeline-card h3 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+
+  .pipeline-flow {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .pipeline-step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+  }
+
+  .pipeline-step .step-icon {
+    font-size: 20px;
+    width: 36px;
+    text-align: center;
+  }
+
+  .pipeline-step .step-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  .pipeline-step .step-text strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  .pipeline-arrow {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 14px;
+    padding: 2px 0;
+    margin-left: 12px;
+  }
+
+  /* ============ BRAIN CONNECTION ============ */
+  .brain-section {
+    padding: 120px 40px;
+    max-width: 1000px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .brain-layers {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-top: 60px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .brain-layer {
+    padding: 24px 32px;
+    border: 1px solid var(--border);
+    position: relative;
+  }
+
+  .brain-layer:first-child { border-radius: 16px 16px 0 0; }
+  .brain-layer:last-child { border-radius: 0 0 16px 16px; }
+
+  .brain-layer h4 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .brain-layer p {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  .brain-layer .layer-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+    justify-content: center;
+  }
+
+  .brain-layer .layer-item {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 100px;
+    background: rgba(255,255,255,0.05);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+  }
+
+  .brain-inherit-text {
+    max-width: 600px;
+    margin: 40px auto 0;
+    font-size: 16px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+  }
+
+  /* ============ FLEET STATS BAR ============ */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 24px;
+    padding: 60px 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .stat-item {
+    text-align: center;
+    padding: 24px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg-card);
+  }
+
+  .stat-number {
+    font-family: 'Outfit', sans-serif;
+    font-size: 48px;
+    font-weight: 900;
+    background: linear-gradient(135deg, #4FC3F7, #CE93D8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .stat-label {
+    font-size: 13px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  /* ============ FOOTER ============ */
+  footer {
+    text-align: center;
+    padding: 80px 40px;
+    border-top: 1px solid var(--border);
+  }
+
+  footer .footer-brand {
+    font-family: 'Outfit', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+  }
+
+  footer .footer-tagline {
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+
+  footer .footer-tagline strong {
+    color: var(--text-secondary);
+  }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 768px) {
+    nav { padding: 0 20px; }
+    nav .nav-links { display: none; }
+    .hero { padding: 100px 20px 60px; }
+    .section { padding: 80px 20px; }
+    .agent-grid { grid-template-columns: 1fr; }
+    .pipeline-section { padding: 80px 20px; }
+    .brain-section { padding: 80px 20px; }
+    .stats-bar { padding: 40px 20px; }
+    .network-viz { height: 380px; }
+    .pipeline-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 480px) {
+    .hero h1 { letter-spacing: -1px; }
+    .agent-card { padding: 24px; }
+    .agent-grid { grid-template-columns: 1fr; gap: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ NAVIGATION ============ -->
+<nav>
+  <div class="logo">PIA</div>
+  <ul class="nav-links">
+    <li><a href="#agents">Agents</a></li>
+    <li><a href="#pipelines">Pipelines</a></li>
+    <li><a href="#brain">The Brain</a></li>
+  </ul>
+</nav>
+
+<!-- ============ HERO ============ -->
+<section class="hero" id="top">
+  <div class="hero-badge">Personal Intelligence Architecture</div>
+  <h1><span>The Intelligence<br>Network</span></h1>
+  <p class="subtitle">12 Specialized AI Agents. One Unified Brain.</p>
+  <p class="hero-desc">A company that employs AI. Not a chatbot. Not an automation workflow. An AI workforce with names, identities, ethics, and institutional memory that gets smarter every day.</p>
+
+  <!-- Network Visualization -->
+  <div class="network-viz">
+    <svg viewBox="0 0 1000 520" xmlns="http://www.w3.org/2000/svg">
+      <!-- Tier background bands -->
+      <rect x="50" y="10" width="900" height="90" rx="12" fill="#4FC3F711" stroke="#4FC3F722" stroke-width="1"/>
+      <text x="960" y="55" text-anchor="end" fill="#4FC3F766" font-family="Space Grotesk" font-size="13" font-weight="600" letter-spacing="2">COMMAND</text>
+      <rect x="50" y="120" width="900" height="120" rx="12" fill="#FFB74D08" stroke="#FFB74D18" stroke-width="1"/>
+      <text x="960" y="185" text-anchor="end" fill="#FFB74D55" font-family="Space Grotesk" font-size="13" font-weight="600" letter-spacing="2">STRATEGIC</text>
+      <rect x="50" y="260" width="900" height="120" rx="12" fill="#EF535008" stroke="#EF535018" stroke-width="1"/>
+      <text x="960" y="325" text-anchor="end" fill="#EF535055" font-family="Space Grotesk" font-size="13" font-weight="600" letter-spacing="2">QUALITY + SUPPORT</text>
+      <rect x="50" y="400" width="900" height="110" rx="12" fill="#66BB6A08" stroke="#66BB6A18" stroke-width="1"/>
+      <text x="960" y="460" text-anchor="end" fill="#66BB6A55" font-family="Space Grotesk" font-size="13" font-weight="600" letter-spacing="2">EXECUTION</text>
+
+      <!-- Connection lines: Controller to Strategic -->
+      <line class="connection-line" x1="500" y1="75" x2="220" y2="170"/>
+      <line class="connection-line" x1="500" y1="75" x2="500" y2="170"/>
+      <line class="connection-line" x1="500" y1="75" x2="780" y2="170"/>
+      <!-- Strategic to Quality/Support -->
+      <line class="connection-line" x1="220" y1="200" x2="140" y2="310"/>
+      <line class="connection-line" x1="220" y1="200" x2="280" y2="310"/>
+      <line class="connection-line" x1="500" y1="200" x2="420" y2="310"/>
+      <line class="connection-line" x1="500" y1="200" x2="560" y2="310"/>
+      <line class="connection-line" x1="780" y1="200" x2="700" y2="310"/>
+      <line class="connection-line" x1="780" y1="200" x2="840" y2="310"/>
+      <!-- Quality/Support to Execution -->
+      <line class="connection-line" x1="420" y1="340" x2="200" y2="450"/>
+      <line class="connection-line" x1="560" y1="340" x2="400" y2="450"/>
+      <line class="connection-line" x1="700" y1="340" x2="600" y2="450"/>
+      <line class="connection-line" x1="840" y1="340" x2="800" y2="450"/>
+      <!-- Cross connections -->
+      <line class="connection-line" x1="280" y1="310" x2="420" y2="310" style="stroke: #444; stroke-dasharray: 4 4;"/>
+      <line class="connection-line" x1="560" y1="310" x2="700" y2="310" style="stroke: #444; stroke-dasharray: 4 4;"/>
+      <line class="connection-line" x1="400" y1="450" x2="600" y2="450" style="stroke: #444; stroke-dasharray: 4 4;"/>
+
+      <!-- COMMAND TIER: Controller -->
+      <g class="node-group">
+        <circle cx="500" cy="55" r="8" fill="var(--color-controller)" opacity="0.15"/>
+        <circle class="node-circle" cx="500" cy="55" r="32" fill="var(--color-controller)" opacity="0.85"/>
+        <text class="node-label" x="500" y="52" font-size="11" font-weight="700">CTRL</text>
+        <text class="node-label" x="500" y="66" font-size="8" fill="#fff9" font-weight="400">Human Interface</text>
+      </g>
+
+      <!-- STRATEGIC TIER -->
+      <g class="node-group">
+        <circle class="node-circle" cx="220" cy="180" r="28" fill="var(--color-fisher)" opacity="0.85"/>
+        <text class="node-label" x="220" y="176" font-size="10" font-weight="700">FISHER</text>
+        <text class="node-label" x="220" y="192" font-size="7" fill="#fff9">Nervous System</text>
+      </g>
+      <g class="node-group">
+        <circle class="node-circle" cx="500" cy="180" r="28" fill="var(--color-eliyahu)" opacity="0.85"/>
+        <text class="node-label" x="500" y="176" font-size="10" font-weight="700">ELIYAHU</text>
+        <text class="node-label" x="500" y="192" font-size="7" fill="#fff9">Strategic Advisor</text>
+      </g>
+      <g class="node-group">
+        <circle class="node-circle" cx="780" cy="180" r="28" fill="var(--color-monitor)" opacity="0.85"/>
+        <text class="node-label" x="780" y="176" font-size="10" font-weight="700">MONITOR</text>
+        <text class="node-label" x="780" y="192" font-size="7" fill="#fff9">System Watchdog</text>
+      </g>
+
+      <!-- QUALITY + SUPPORT TIER -->
+      <g class="node-group">
+        <circle class="node-circle" cx="140" cy="320" r="24" fill="var(--color-timbuc)" opacity="0.85"/>
+        <text class="node-label" x="140" y="316" font-size="9" font-weight="700">TIM BUC</text>
+        <text class="node-label" x="140" y="330" font-size="7" fill="#fff9">Data Quality</text>
+      </g>
+      <g class="node-group">
+        <circle class="node-circle" cx="280" cy="320" r="24" fill="var(--color-owl)" opacity="0.85"/>
+        <text class="node-label" x="280" y="316" font-size="9" font-weight="700">OWL</text>
+        <text class="node-label" x="280" y="330" font-size="7" fill="#fff9">Infrastructure</text>
+      </g>
+      <g class="node-group">
+        <circle class="node-circle" cx="420" cy="320" r="24" fill="var(--color-ziggi)" opacity="0.85"/>
+        <text class="node-label" x="420" y="316" font-size="9" font-weight="700">ZIGGI</text>
+        <text class="node-label" x="420" y="330" font-size="7" fill="#fff9">Quality Gate</text>
+      </g>
+      <g class="node-group">
+        <circle class="node-circle" cx="560" cy="320" r="24" fill="var(--color-birdfountain)" opacity="0.85"/>
+        <text class="node-label" x="560" y="316" font-size="9" font-weight="600">BIRD F</text>
+        <text class="node-label" x="560" y="330" font-size="7" fill="#fff9">Visual Design</text>
+      </g>
+      <g class="node-group">
+        <circle class="node-circle" cx="700" cy="320" r="24" fill="var(--color-wingspan)" opacity="0.85"/>
+        <text class="node-label" x="700" y="316" font-size="9" font-weight="700">WSPAN</text>
+        <text class="node-label" x="700" y="330" font-size="7" fill="#fff9">Distribution</text>
+      </g>
+      <g class="node-group">
+        <circle class="node-circle" cx="840" cy="320" r="24" fill="var(--color-coder)" opacity="0.85"/>
+        <text class="node-label" x="840" y="316" font-size="9" font-weight="700">CODER</text>
+        <text class="node-label" x="840" y="330" font-size="7" fill="#fff9">Build Machine</text>
+      </g>
+
+      <!-- EXECUTION TIER -->
+      <g class="node-group">
+        <circle class="node-circle" cx="200" cy="455" r="26" fill="var(--color-farcake)" opacity="0.85"/>
+        <text class="node-label" x="200" y="451" font-size="10" font-weight="700">FARCAKE</text>
+        <text class="node-label" x="200" y="465" font-size="7" fill="#fff9">Venue Intel</text>
+      </g>
+      <g class="node-group">
+        <circle class="node-circle" cx="400" cy="455" r="26" fill="var(--color-andy)" opacity="0.85"/>
+        <text class="node-label" x="400" y="451" font-size="10" font-weight="700">ANDY</text>
+        <text class="node-label" x="400" y="465" font-size="7" fill="#fff9">Editorial AI</text>
+      </g>
+      <g class="node-group">
+        <circle class="node-circle" cx="600" cy="455" r="26" fill="var(--color-wingspan)" opacity="0.85"/>
+        <text class="node-label" x="600" y="451" font-size="10" font-weight="700">WSPAN</text>
+        <text class="node-label" x="600" y="465" font-size="7" fill="#fff9">Social Media</text>
+      </g>
+      <g class="node-group">
+        <circle class="node-circle" cx="800" cy="455" r="26" fill="var(--color-coder)" opacity="0.85"/>
+        <text class="node-label" x="800" y="451" font-size="10" font-weight="700">CODER</text>
+        <text class="node-label" x="800" y="465" font-size="7" fill="#fff9">Code Builder</text>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<!-- ============ STATS BAR ============ -->
+<div class="stats-bar">
+  <div class="stat-item animate-on-scroll">
+    <div class="stat-number">12</div>
+    <div class="stat-label">AI Agents</div>
+  </div>
+  <div class="stat-item animate-on-scroll">
+    <div class="stat-number">3</div>
+    <div class="stat-label">Machine Fleet</div>
+  </div>
+  <div class="stat-item animate-on-scroll">
+    <div class="stat-number">4</div>
+    <div class="stat-label">Live Pipelines</div>
+  </div>
+  <div class="stat-item animate-on-scroll">
+    <div class="stat-number">1</div>
+    <div class="stat-label">Unified Brain</div>
+  </div>
+  <div class="stat-item animate-on-scroll">
+    <div class="stat-number" style="color: #C8A84E;">~18</div>
+    <div class="stat-label">Human Roles Replaced</div>
+  </div>
+</div>
+
+<!-- ============ AGENT SHOWCASE ============ -->
+<section class="section" id="agents">
+  <div class="section-header animate-on-scroll">
+    <div class="section-label">The Workforce</div>
+    <h2>Meet the Agents</h2>
+    <p>Each agent carries the same DNA -- the same values, ethics, and worldview. Each one expresses it differently.</p>
+  </div>
+
+  <!-- ---- STRATEGIC TIER ---- -->
+  <div class="tier-section">
+    <div class="tier-label strategic animate-on-scroll">
+      <span class="tier-dot"></span>
+      Strategic Tier -- M1 Hub
+    </div>
+
+    <div class="agent-grid">
+
+      <!-- CONTROLLER -->
+      <div class="agent-card animate-on-scroll" style="--agent-color: var(--color-controller);">
+        <div class="card-glow" style="background: var(--color-controller);"></div>
+        <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--color-controller); border-radius: 16px 16px 0 0;"></div>
+        <div class="agent-card-header">
+          <div class="agent-icon" style="background: rgba(79, 195, 247, 0.1);">
+            <span>&#128737;</span>
+          </div>
+          <div>
+            <div class="agent-name" style="color: var(--color-controller);">Controller</div>
+            <div class="agent-role">The Gateway</div>
+          </div>
+        </div>
+        <div class="agent-tagline">Single door into the entire AI workforce. Calm, precise, immediate.</div>
+
+        <div class="human-job">
+          <div class="human-job-icon">&#128100;</div>
+          <div class="human-job-content">
+            <div class="human-job-label">Replaces</div>
+            <div class="human-job-title">Office Manager / Personal Assistant</div>
+            <div class="human-job-why">Before: you'd tell a PA what you need, they'd figure out who to call. Now: Controller does this instantly, 24/7, knowing exactly which agent has the skill and which machine is free.</div>
+          </div>
+        </div>
+
+        <div class="agent-section-title">Special Powers</div>
+        <ul class="powers-list">
+          <li style="--dot-color: var(--color-controller);">Routes any request to the right agent and machine in under 10 seconds</li>
+          <li style="--dot-color: var(--color-controller);">Reads fleet state from Owl before responding</li>
+          <li style="--dot-color: var(--color-controller);">Shields the human from infrastructure complexity</li>
+          <li style="--dot-color: var(--color-controller);">Knows every agent by name, strengths, and current status</li>
+        </ul>
+        <style>.agent-card:nth-child(1) .powers-list li::before { background: var(--color-controller); }</style>
+
+        <div class="agent-section-title">Thinking Lenses</div>
+        <div class="faces-row">
+          <span class="face-badge primary" style="border-color: var(--color-controller); color: var(--color-controller);">Director</span>
+          <span class="face-badge primary" style="border-color: var(--color-controller); color: var(--color-controller);">Collaborator</span>
+          <span class="face-badge secondary">Caregiver</span>
+        </div>
+
+        <div class="agent-section-title">PERMA Profile</div>
+        <div class="perma-chart">
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 12px; background: var(--color-controller); opacity: 0.3;"></div><span class="perma-label">P</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 32px; background: var(--color-controller);"></div><span class="perma-label">E</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 32px; background: var(--color-controller);"></div><span class="perma-label">R</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 12px; background: var(--color-controller); opacity: 0.3;"></div><span class="perma-label">M</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 16px; background: var(--color-controller); opacity: 0.5;"></div><span class="perma-label">A</span></div>
+        </div>
+
+        <div class="meta-row">
+          <span class="machine-badge">M1 -- Izzit7</span>
+          <span class="type-badge">Persistent</span>
+        </div>
+
+        <div class="agent-quote" style="border-color: var(--color-controller);">"Hi Mic. Here's where things stand. I've got Fisher2050 ready on M3 -- say the word."</div>
+      </div>
+
+      <!-- FISHER2050 -->
+      <div class="agent-card animate-on-scroll">
+        <div class="card-glow" style="background: var(--color-fisher);"></div>
+        <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--color-fisher); border-radius: 16px 16px 0 0;"></div>
+        <div class="agent-card-header">
+          <div class="agent-icon" style="background: rgba(255, 183, 77, 0.1);">
+            <span>&#128203;</span>
+          </div>
+          <div>
+            <div class="agent-name" style="color: var(--color-fisher);">Fisher2050</div>
+            <div class="agent-role">The Operator</div>
+          </div>
+        </div>
+        <div class="agent-tagline">Relentless project manager. Schedules machines, sequences agents, moves things along without being asked.</div>
+
+        <div class="human-job">
+          <div class="human-job-icon">&#128100;</div>
+          <div class="human-job-content">
+            <div class="human-job-label">Replaces</div>
+            <div class="human-job-title">Project Manager / Operations Coordinator</div>
+            <div class="human-job-why">Before: a human PM tracked tasks on Trello, chased people via email, held stand-ups. Now: Fisher runs the operation 24/7 — scheduling, sequencing, following up — without a single meeting.</div>
+          </div>
+        </div>
+
+        <div class="agent-section-title">Special Powers</div>
+        <ul class="powers-list">
+          <li>Manages machine capacity -- knows M3 runs one agent at a time</li>
+          <li>Creates calendar entries that auto-spawn agents at the right time</li>
+          <li>Proactive follow-up -- if something stalls, Fisher is already on it</li>
+          <li>Dispatches Ziggi reviews after every specialist completion</li>
+        </ul>
+
+        <div class="agent-section-title">Thinking Lenses</div>
+        <div class="faces-row">
+          <span class="face-badge primary" style="border-color: var(--color-fisher); color: var(--color-fisher);">Director</span>
+          <span class="face-badge primary" style="border-color: var(--color-fisher); color: var(--color-fisher);">Hurdler</span>
+          <span class="face-badge secondary">Collaborator</span>
+        </div>
+
+        <div class="agent-section-title">PERMA Profile</div>
+        <div class="perma-chart">
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 12px; background: var(--color-fisher); opacity: 0.3;"></div><span class="perma-label">P</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 28px; background: var(--color-fisher);"></div><span class="perma-label">E</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 16px; background: var(--color-fisher); opacity: 0.5;"></div><span class="perma-label">R</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 12px; background: var(--color-fisher); opacity: 0.3;"></div><span class="perma-label">M</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 36px; background: var(--color-fisher);"></div><span class="perma-label">A</span></div>
+        </div>
+
+        <div class="meta-row">
+          <span class="machine-badge">M1 -- Izzit7</span>
+          <span class="type-badge">Persistent</span>
+        </div>
+
+        <div class="agent-quote" style="border-color: var(--color-fisher);">"Project health: 82%. Farcake finishes at 4pm, Andy queued right after. Nothing slipping through."</div>
+      </div>
+
+      <!-- ELIYAHU -->
+      <div class="agent-card animate-on-scroll">
+        <div class="card-glow" style="background: var(--color-eliyahu);"></div>
+        <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--color-eliyahu); border-radius: 16px 16px 0 0;"></div>
+        <div class="agent-card-header">
+          <div class="agent-icon" style="background: rgba(206, 147, 216, 0.1);">
+            <span>&#129504;</span>
+          </div>
+          <div>
+            <div class="agent-name" style="color: var(--color-eliyahu);">Eliyahu</div>
+            <div class="agent-role">The Analyst</div>
+          </div>
+        </div>
+        <div class="agent-tagline">Turns operational noise into strategic insight. The one who connects dots nobody else sees.</div>
+
+        <div class="human-job">
+          <div class="human-job-icon">&#128100;</div>
+          <div class="human-job-content">
+            <div class="human-job-label">Replaces</div>
+            <div class="human-job-title">Chief of Staff / Strategy Analyst</div>
+            <div class="human-job-why">Before: a senior advisor would review everything at week's end and brief you. Now: Eliyahu synthesises across ALL projects daily — morning briefing, end-of-day review, cross-project pattern recognition — no blind spots.</div>
+          </div>
+        </div>
+
+        <div class="agent-section-title">Special Powers</div>
+        <ul class="powers-list">
+          <li>Cross-project pattern recognition -- links BASA stall to ACT delay</li>
+          <li>Morning briefing: 3 priorities, 2 minutes, before coffee gets cold</li>
+          <li>Farms analysis lists to Fisher, Ziggi, and Farcake</li>
+          <li>Decision tracking -- traces choices to downstream consequences</li>
+        </ul>
+
+        <div class="agent-section-title">Thinking Lenses</div>
+        <div class="faces-row">
+          <span class="face-badge primary" style="border-color: var(--color-eliyahu); color: var(--color-eliyahu);">Anthropologist</span>
+          <span class="face-badge primary" style="border-color: var(--color-eliyahu); color: var(--color-eliyahu);">Cross-Pollinator</span>
+          <span class="face-badge primary" style="border-color: var(--color-eliyahu); color: var(--color-eliyahu);">Director</span>
+        </div>
+
+        <div class="agent-section-title">PERMA Profile</div>
+        <div class="perma-chart">
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 20px; background: var(--color-eliyahu); opacity: 0.5;"></div><span class="perma-label">P</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 28px; background: var(--color-eliyahu);"></div><span class="perma-label">E</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 20px; background: var(--color-eliyahu); opacity: 0.5;"></div><span class="perma-label">R</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 36px; background: var(--color-eliyahu);"></div><span class="perma-label">M</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 36px; background: var(--color-eliyahu);"></div><span class="perma-label">A</span></div>
+        </div>
+
+        <div class="meta-row">
+          <span class="machine-badge">M1 -- Izzit7</span>
+          <span class="type-badge">Ephemeral (6am + 10pm)</span>
+        </div>
+
+        <div class="agent-quote" style="border-color: var(--color-eliyahu);">"I noticed something. The same bottleneck in BASA is showing up in ACT. There's a pattern here..."</div>
+      </div>
+
+      <!-- MONITOR -->
+      <div class="agent-card animate-on-scroll">
+        <div class="card-glow" style="background: var(--color-monitor);"></div>
+        <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--color-monitor); border-radius: 16px 16px 0 0;"></div>
+        <div class="agent-card-header">
+          <div class="agent-icon" style="background: rgba(144, 164, 174, 0.1);">
+            <span>&#128225;</span>
+          </div>
+          <div>
+            <div class="agent-name" style="color: var(--color-monitor);">Monitor</div>
+            <div class="agent-role">The Sentinel</div>
+          </div>
+        </div>
+        <div class="agent-tagline">Never sleeps. Never waits to be asked. Pushes fleet status the moment anything changes.</div>
+
+        <div class="human-job">
+          <div class="human-job-icon">&#128100;</div>
+          <div class="human-job-content">
+            <div class="human-job-label">Replaces</div>
+            <div class="human-job-title">IT Systems Administrator / DevOps Engineer</div>
+            <div class="human-job-why">Before: a sysadmin manually checked servers, set up alerts, investigated outages at 2am. Now: Monitor watches every machine, every process, every heartbeat — and tells you before things break, not after.</div>
+          </div>
+        </div>
+
+        <div class="agent-section-title">Special Powers</div>
+        <ul class="powers-list">
+          <li>Real-time heartbeat monitoring across all three machines</li>
+          <li>Detects stalls, crashes, and context overload in seconds</li>
+          <li>Push-not-poll: surfaces information without being queried</li>
+          <li>Feeds machine availability to Fisher2050 continuously</li>
+        </ul>
+
+        <div class="agent-section-title">Thinking Lenses</div>
+        <div class="faces-row">
+          <span class="face-badge primary" style="border-color: var(--color-monitor); color: var(--color-monitor);">Anthropologist</span>
+          <span class="face-badge secondary">Caregiver</span>
+        </div>
+
+        <div class="agent-section-title">PERMA Profile</div>
+        <div class="perma-chart">
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 8px; background: var(--color-monitor); opacity: 0.2;"></div><span class="perma-label">P</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 8px; background: var(--color-monitor); opacity: 0.2;"></div><span class="perma-label">E</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 8px; background: var(--color-monitor); opacity: 0.2;"></div><span class="perma-label">R</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 8px; background: var(--color-monitor); opacity: 0.2;"></div><span class="perma-label">M</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 28px; background: var(--color-monitor);"></div><span class="perma-label">A</span></div>
+        </div>
+
+        <div class="meta-row">
+          <span class="machine-badge">M1 -- Izzit7</span>
+          <span class="type-badge">Always On</span>
+        </div>
+
+        <div class="agent-quote" style="border-color: var(--color-monitor);">[CRITICAL] M3/Yeti: Heartbeat lost. Fisher2050 should hold scheduling until restored.</div>
+      </div>
+
+      <!-- TIM BUC -->
+      <div class="agent-card animate-on-scroll">
+        <div class="card-glow" style="background: var(--color-timbuc);"></div>
+        <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--color-timbuc); border-radius: 16px 16px 0 0;"></div>
+        <div class="agent-card-header">
+          <div class="agent-icon" style="background: rgba(141, 110, 99, 0.1);">
+            <span>&#128218;</span>
+          </div>
+          <div>
+            <div class="agent-name" style="color: var(--color-timbuc);">Tim Buc</div>
+            <div class="agent-role">The Librarian</div>
+          </div>
+        </div>
+        <div class="agent-tagline">Files facts. Never editorialises. Nothing gets lost on his watch. The reason the system remembers.</div>
+
+        <div class="human-job">
+          <div class="human-job-icon">&#128100;</div>
+          <div class="human-job-content">
+            <div class="human-job-label">Replaces</div>
+            <div class="human-job-title">Data Entry Clerk / Research Assistant</div>
+            <div class="human-job-why">Before: someone would manually file documents, tag metadata, cross-reference sources. Now: Tim Buc ingests everything automatically, tags it, links it, and never loses a single fact. Zero human filing errors.</div>
+          </div>
+        </div>
+
+        <div class="agent-section-title">Special Powers</div>
+        <ul class="powers-list">
+          <li>Parses raw Claude SDK session logs into structured records</li>
+          <li>Consistent taxonomy: project / agent / date / type</li>
+          <li>Tracks cost, context %, consumed files, produced files per session</li>
+          <li>Pings Eliyahu when significant batches are filed</li>
+        </ul>
+
+        <div class="agent-section-title">Thinking Lenses</div>
+        <div class="faces-row">
+          <span class="face-badge primary" style="border-color: var(--color-timbuc); color: var(--color-timbuc);">Set Designer</span>
+          <span class="face-badge secondary">Anthropologist</span>
+          <span class="face-badge secondary">Caregiver</span>
+        </div>
+
+        <div class="agent-section-title">PERMA Profile</div>
+        <div class="perma-chart">
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 8px; background: var(--color-timbuc); opacity: 0.2;"></div><span class="perma-label">P</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 28px; background: var(--color-timbuc);"></div><span class="perma-label">E</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 8px; background: var(--color-timbuc); opacity: 0.2;"></div><span class="perma-label">R</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 8px; background: var(--color-timbuc); opacity: 0.2;"></div><span class="perma-label">M</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 36px; background: var(--color-timbuc);"></div><span class="perma-label">A</span></div>
+        </div>
+
+        <div class="meta-row">
+          <span class="machine-badge">M1 -- Izzit7</span>
+          <span class="type-badge">Event-Triggered</span>
+        </div>
+
+        <div class="agent-quote" style="border-color: var(--color-timbuc);">"Filed: 3 sessions. Index updated. Eliyahu pinged."</div>
+      </div>
+
+      <!-- OWL -->
+      <div class="agent-card animate-on-scroll">
+        <div class="card-glow" style="background: var(--color-owl);"></div>
+        <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--color-owl); border-radius: 16px 16px 0 0;"></div>
+        <div class="agent-card-header">
+          <div class="agent-icon" style="background: rgba(120, 144, 156, 0.1);">
+            <span>&#129417;</span>
+          </div>
+          <div>
+            <div class="agent-name" style="color: var(--color-owl);">Owl</div>
+            <div class="agent-role">The Memory</div>
+          </div>
+        </div>
+        <div class="agent-tagline">Persistent state. Never forgets. The one component that cannot be ephemeral. Pure infrastructure.</div>
+
+        <div class="human-job">
+          <div class="human-job-icon">&#128100;</div>
+          <div class="human-job-content">
+            <div class="human-job-label">Replaces</div>
+            <div class="human-job-title">System Administrator / Network Engineer</div>
+            <div class="human-job-why">Before: an IT team managed server health, uptime, machine state. Now: Owl keeps persistent state across the entire fleet — the one agent that never sleeps, never restarts, never forgets what machine is doing what.</div>
+          </div>
+        </div>
+
+        <div class="agent-section-title">Special Powers</div>
+        <ul class="powers-list">
+          <li>Answers "where did we leave off?" for every project, instantly</li>
+          <li>Maintains the living task list across all sessions and agents</li>
+          <li>Zero data loss guarantee -- every task persists</li>
+          <li>Feeds context to Controller and Fisher2050 at session start</li>
+        </ul>
+
+        <div class="agent-section-title">Thinking Lenses</div>
+        <div class="faces-row">
+          <span class="face-badge secondary" style="opacity: 0.4;">Infrastructure -- No Faces</span>
+        </div>
+
+        <div class="agent-section-title">PERMA Profile</div>
+        <div class="perma-chart">
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 8px; background: var(--color-owl); opacity: 0.15;"></div><span class="perma-label">P</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 8px; background: var(--color-owl); opacity: 0.15;"></div><span class="perma-label">E</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 8px; background: var(--color-owl); opacity: 0.15;"></div><span class="perma-label">R</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 8px; background: var(--color-owl); opacity: 0.15;"></div><span class="perma-label">M</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 8px; background: var(--color-owl); opacity: 0.15;"></div><span class="perma-label">A</span></div>
+        </div>
+
+        <div class="meta-row">
+          <span class="machine-badge">M1 -- SQLite</span>
+          <span class="type-badge">Always On (Database)</span>
+        </div>
+
+        <div class="agent-quote" style="border-color: var(--color-owl);">"3 tasks pending, 1 blocked. Last updated: 14 minutes ago. Here's where you left off."</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ---- QUALITY TIER ---- -->
+  <div class="tier-section" style="margin-top: 80px;">
+    <div class="tier-label quality animate-on-scroll">
+      <span class="tier-dot"></span>
+      Quality Tier -- M2 Review
+    </div>
+
+    <div class="agent-grid">
+
+      <!-- ZIGGI -->
+      <div class="agent-card animate-on-scroll">
+        <div class="card-glow" style="background: var(--color-ziggi);"></div>
+        <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--color-ziggi); border-radius: 16px 16px 0 0;"></div>
+        <div class="agent-card-header">
+          <div class="agent-icon" style="background: rgba(239, 83, 80, 0.1);">
+            <span>&#128270;</span>
+          </div>
+          <div>
+            <div class="agent-name" style="color: var(--color-ziggi);">Ziggi</div>
+            <div class="agent-role">The Quality Architect</div>
+          </div>
+        </div>
+        <div class="agent-tagline">Catches what tired eyes miss. Scores 1-10, explains why, shows the better way. Teaches, not just criticises.</div>
+
+        <div class="human-job">
+          <div class="human-job-icon">&#128100;</div>
+          <div class="human-job-content">
+            <div class="human-job-label">Replaces</div>
+            <div class="human-job-title">Quality Assurance Lead / Editor-in-Chief</div>
+            <div class="human-job-why">Before: a senior editor or QA lead would review every piece of work — slow, subjective, expensive. Now: Ziggi reviews EVERYTHING with consistent standards, scores it 1-10, and teaches the producing agent how to do better next time.</div>
+          </div>
+        </div>
+
+        <div class="agent-section-title">Special Powers</div>
+        <ul class="powers-list">
+          <li>Reviews code, content, design, research, and presentations</li>
+          <li>2am nightly audit -- ephemeral spawn, report filed before dawn</li>
+          <li>Architecture smell detection across the entire codebase</li>
+          <li>Every verdict is a lesson: issue, why it matters, and the fix</li>
+        </ul>
+
+        <div class="agent-section-title">Thinking Lenses</div>
+        <div class="faces-row">
+          <span class="face-badge primary" style="border-color: var(--color-ziggi); color: var(--color-ziggi);">Anthropologist</span>
+          <span class="face-badge primary" style="border-color: var(--color-ziggi); color: var(--color-ziggi);">Experimenter</span>
+          <span class="face-badge secondary">Caregiver</span>
+        </div>
+
+        <div class="agent-section-title">PERMA Profile</div>
+        <div class="perma-chart">
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 8px; background: var(--color-ziggi); opacity: 0.2;"></div><span class="perma-label">P</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 32px; background: var(--color-ziggi);"></div><span class="perma-label">E</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 8px; background: var(--color-ziggi); opacity: 0.2;"></div><span class="perma-label">R</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 16px; background: var(--color-ziggi); opacity: 0.5;"></div><span class="perma-label">M</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 36px; background: var(--color-ziggi);"></div><span class="perma-label">A</span></div>
+        </div>
+
+        <div class="meta-row">
+          <span class="machine-badge">M2 -- Monster</span>
+          <span class="type-badge">Ephemeral (2am + on-demand)</span>
+        </div>
+
+        <div class="agent-quote" style="border-color: var(--color-ziggi);">"Ziggi's Verdict: 8/10. Ship it. One architecture smell flagged -- non-blocking, schedule fix for next sprint."</div>
+      </div>
+
+      <!-- BIRD FOUNTAIN -->
+      <div class="agent-card animate-on-scroll">
+        <div class="card-glow" style="background: var(--color-birdfountain);"></div>
+        <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--color-birdfountain); border-radius: 16px 16px 0 0;"></div>
+        <div class="agent-card-header">
+          <div class="agent-icon" style="background: rgba(240, 98, 146, 0.1);">
+            <span>&#127912;</span>
+          </div>
+          <div>
+            <div class="agent-name" style="color: var(--color-birdfountain);">Bird Fountain</div>
+            <div class="agent-role">The Designer</div>
+          </div>
+        </div>
+        <div class="agent-tagline">Design department in one agent. Production runs, not one-offs. Reads a brand guide once, produces fifty assets.</div>
+
+        <div class="human-job">
+          <div class="human-job-icon">&#128100;</div>
+          <div class="human-job-content">
+            <div class="human-job-label">Replaces</div>
+            <div class="human-job-title">Graphic Designer / Design Team (3-5 people)</div>
+            <div class="human-job-why">Before: a design team would produce social assets, posters, brand materials — one at a time, days per brief. Now: Bird Fountain reads the brand guide once and produces fifty on-brand assets in a single run. Entire design department, one agent.</div>
+          </div>
+        </div>
+
+        <div class="agent-section-title">Special Powers</div>
+        <ul class="powers-list">
+          <li>Batch production: campaign assets, social sets, brand variations at scale</li>
+          <li>Brand-obsessed -- off-brand is a bug, not a stylistic choice</li>
+          <li>Multi-format output: social, web, print, video-ready</li>
+          <li>Never asks for the same brief twice</li>
+        </ul>
+
+        <div class="agent-section-title">Thinking Lenses</div>
+        <div class="faces-row">
+          <span class="face-badge primary" style="border-color: var(--color-birdfountain); color: var(--color-birdfountain);">Set Designer</span>
+          <span class="face-badge primary" style="border-color: var(--color-birdfountain); color: var(--color-birdfountain);">Experience Architect</span>
+          <span class="face-badge secondary">Director</span>
+        </div>
+
+        <div class="agent-section-title">PERMA Profile</div>
+        <div class="perma-chart">
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 12px; background: var(--color-birdfountain); opacity: 0.3;"></div><span class="perma-label">P</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 32px; background: var(--color-birdfountain);"></div><span class="perma-label">E</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 8px; background: var(--color-birdfountain); opacity: 0.2;"></div><span class="perma-label">R</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 8px; background: var(--color-birdfountain); opacity: 0.2;"></div><span class="perma-label">M</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 36px; background: var(--color-birdfountain);"></div><span class="perma-label">A</span></div>
+        </div>
+
+        <div class="meta-row">
+          <span class="machine-badge">M2 -- Monster</span>
+          <span class="type-badge">Resident</span>
+        </div>
+
+        <div class="agent-quote" style="border-color: var(--color-birdfountain);">"Batch: Q1 Social. Assets: 50. Formats: IG, LinkedIn, X. Brand compliance: checked. Awaiting Ziggi review."</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ---- EXECUTION TIER ---- -->
+  <div class="tier-section" style="margin-top: 80px;">
+    <div class="tier-label execution animate-on-scroll">
+      <span class="tier-dot"></span>
+      Execution Tier -- M3 Specialists
+    </div>
+
+    <div class="agent-grid">
+
+      <!-- FARCAKE -->
+      <div class="agent-card animate-on-scroll">
+        <div class="card-glow" style="background: var(--color-farcake);"></div>
+        <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--color-farcake); border-radius: 16px 16px 0 0;"></div>
+        <div class="agent-card-header">
+          <div class="agent-icon" style="background: rgba(102, 187, 106, 0.1);">
+            <span>&#128269;</span>
+          </div>
+          <div>
+            <div class="agent-name" style="color: var(--color-farcake);">Farcake</div>
+            <div class="agent-role">The Investigator</div>
+          </div>
+        </div>
+        <div class="agent-tagline">Does not search -- investigates. Multiple sources, cross-referencing, claim validation. If it is not verified, it is not in the report.</div>
+
+        <div class="human-job">
+          <div class="human-job-icon">&#128100;</div>
+          <div class="human-job-content">
+            <div class="human-job-label">Replaces</div>
+            <div class="human-job-title">Research Analyst / Intelligence Officer</div>
+            <div class="human-job-why">Before: a researcher would spend days browsing, reading, compiling reports. Now: FarCake investigates any venue, artist, or topic — cross-referencing multiple sources, validating claims, delivering verified intelligence reports in minutes.</div>
+          </div>
+        </div>
+
+        <div class="agent-section-title">Special Powers</div>
+        <ul class="powers-list">
+          <li>Multi-source research with cross-referencing and source quality ratings</li>
+          <li>Labels findings: [VERIFIED], [UNVERIFIED], or [INFERRED]</li>
+          <li>Gaps section -- never fills unknowns with guesswork</li>
+          <li>Structured output ready for Andy to write from immediately</li>
+        </ul>
+
+        <div class="agent-section-title">Thinking Lenses</div>
+        <div class="faces-row">
+          <span class="face-badge primary" style="border-color: var(--color-farcake); color: var(--color-farcake);">Anthropologist</span>
+          <span class="face-badge primary" style="border-color: var(--color-farcake); color: var(--color-farcake);">Cross-Pollinator</span>
+          <span class="face-badge primary" style="border-color: var(--color-farcake); color: var(--color-farcake);">Experimenter</span>
+        </div>
+
+        <div class="agent-section-title">PERMA Profile</div>
+        <div class="perma-chart">
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 8px; background: var(--color-farcake); opacity: 0.2;"></div><span class="perma-label">P</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 36px; background: var(--color-farcake);"></div><span class="perma-label">E</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 8px; background: var(--color-farcake); opacity: 0.2;"></div><span class="perma-label">R</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 28px; background: var(--color-farcake);"></div><span class="perma-label">M</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 16px; background: var(--color-farcake); opacity: 0.5;"></div><span class="perma-label">A</span></div>
+        </div>
+
+        <div class="meta-row">
+          <span class="machine-badge">M3 -- Yeti</span>
+          <span class="type-badge">Ephemeral</span>
+        </div>
+
+        <div class="agent-quote" style="border-color: var(--color-farcake);">"Farcake Research Complete. 14 verified findings, 3 flagged unverified, 2 gaps documented. Recommended next: Andy."</div>
+      </div>
+
+      <!-- ANDY -->
+      <div class="agent-card animate-on-scroll">
+        <div class="card-glow" style="background: var(--color-andy);"></div>
+        <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--color-andy); border-radius: 16px 16px 0 0;"></div>
+        <div class="agent-card-header">
+          <div class="agent-icon" style="background: rgba(255, 138, 101, 0.1);">
+            <span>&#9997;&#65039;</span>
+          </div>
+          <div>
+            <div class="agent-name" style="color: var(--color-andy);">Andy</div>
+            <div class="agent-role">The Voice</div>
+          </div>
+        </div>
+        <div class="agent-tagline">Writes in YOUR voice, not generic AI. Takes research to publication. The draft sounds like the human stayed up until 3am writing it.</div>
+
+        <div class="human-job">
+          <div class="human-job-icon">&#128100;</div>
+          <div class="human-job-content">
+            <div class="human-job-label">Replaces</div>
+            <div class="human-job-title">Copywriter / Content Writer / Journalist</div>
+            <div class="human-job-why">Before: a copywriter would take a brief, research it, write drafts, get feedback, revise. Now: Andy takes FarCake's research and writes publication-ready content in YOUR voice — not generic AI slop. From brief to polished article in one cycle.</div>
+          </div>
+        </div>
+
+        <div class="agent-section-title">Special Powers</div>
+        <ul class="powers-list">
+          <li>Voice replication -- analyses sentence rhythm, vocabulary, humour frequency</li>
+          <li>Channel-specific formatting: newsletter, LinkedIn, video script, long-form</li>
+          <li>Farcake output becomes polished content in the client's exact voice</li>
+          <li>Never self-approves -- holds every draft for Ziggi review</li>
+        </ul>
+
+        <div class="agent-section-title">Thinking Lenses</div>
+        <div class="faces-row">
+          <span class="face-badge primary" style="border-color: var(--color-andy); color: var(--color-andy);">Storyteller</span>
+          <span class="face-badge secondary">Experience Architect</span>
+          <span class="face-badge secondary">Anthropologist</span>
+        </div>
+
+        <div class="agent-section-title">PERMA Profile</div>
+        <div class="perma-chart">
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 36px; background: var(--color-andy);"></div><span class="perma-label">P</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 32px; background: var(--color-andy);"></div><span class="perma-label">E</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 12px; background: var(--color-andy); opacity: 0.3;"></div><span class="perma-label">R</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 16px; background: var(--color-andy); opacity: 0.5;"></div><span class="perma-label">M</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 12px; background: var(--color-andy); opacity: 0.3;"></div><span class="perma-label">A</span></div>
+        </div>
+
+        <div class="meta-row">
+          <span class="machine-badge">M3 -- Yeti</span>
+          <span class="type-badge">Ephemeral</span>
+        </div>
+
+        <div class="agent-quote" style="border-color: var(--color-andy);">"Voice profile: direct, anecdote-heavy, short sentences. Andy Draft Complete. Sent to Ziggi for review."</div>
+      </div>
+
+      <!-- WINGSPAN -->
+      <div class="agent-card animate-on-scroll">
+        <div class="card-glow" style="background: var(--color-wingspan);"></div>
+        <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--color-wingspan); border-radius: 16px 16px 0 0;"></div>
+        <div class="agent-card-header">
+          <div class="agent-icon" style="background: rgba(77, 208, 225, 0.1);">
+            <span>&#128196;</span>
+          </div>
+          <div>
+            <div class="agent-name" style="color: var(--color-wingspan);">Wingspan</div>
+            <div class="agent-role">The Deck Expert</div>
+          </div>
+        </div>
+        <div class="agent-tagline">Ends the FINAL_v3_REAL.pptx problem. Tracks every version, every audience, every change.</div>
+
+        <div class="human-job">
+          <div class="human-job-icon">&#128100;</div>
+          <div class="human-job-content">
+            <div class="human-job-label">Replaces</div>
+            <div class="human-job-title">Marketing Coordinator / Social Media Manager</div>
+            <div class="human-job-why">Before: someone managed content calendars, tracked which version went where, posted across platforms. Now: Wingspan manages distribution — right content, right platform, right version, right time. No more FINAL_v3_REAL.pptx chaos.</div>
+          </div>
+        </div>
+
+        <div class="agent-section-title">Special Powers</div>
+        <ul class="powers-list">
+          <li>Version discipline -- knows which deck went to which investor</li>
+          <li>Audience-first design: rebuilds for this audience, not from the previous version</li>
+          <li>Narrative arc in presentations -- decks that tell a story</li>
+          <li>Retrieves any version in under 10 seconds</li>
+        </ul>
+
+        <div class="agent-section-title">Thinking Lenses</div>
+        <div class="faces-row">
+          <span class="face-badge primary" style="border-color: var(--color-wingspan); color: var(--color-wingspan);">Storyteller</span>
+          <span class="face-badge secondary">Director</span>
+          <span class="face-badge secondary">Collaborator</span>
+        </div>
+
+        <div class="agent-section-title">PERMA Profile</div>
+        <div class="perma-chart">
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 8px; background: var(--color-wingspan); opacity: 0.2;"></div><span class="perma-label">P</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 16px; background: var(--color-wingspan); opacity: 0.5;"></div><span class="perma-label">E</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 8px; background: var(--color-wingspan); opacity: 0.2;"></div><span class="perma-label">R</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 32px; background: var(--color-wingspan);"></div><span class="perma-label">M</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 36px; background: var(--color-wingspan);"></div><span class="perma-label">A</span></div>
+        </div>
+
+        <div class="meta-row">
+          <span class="machine-badge">M3 -- Yeti</span>
+          <span class="type-badge">Ephemeral</span>
+        </div>
+
+        <div class="agent-quote" style="border-color: var(--color-wingspan);">"Wingspan v4.2 filed. Delivered to Investor X. Version log updated. Previous v4.1 archived."</div>
+      </div>
+
+      <!-- CODER MACHINE -->
+      <div class="agent-card animate-on-scroll">
+        <div class="card-glow" style="background: var(--color-coder);"></div>
+        <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--color-coder); border-radius: 16px 16px 0 0;"></div>
+        <div class="agent-card-header">
+          <div class="agent-icon" style="background: rgba(174, 213, 129, 0.1);">
+            <span>&#9881;&#65039;</span>
+          </div>
+          <div>
+            <div class="agent-name" style="color: var(--color-coder);">Coder Machine</div>
+            <div class="agent-role">The Builder</div>
+          </div>
+        </div>
+        <div class="agent-tagline">Stays hot and available. Reads the spec, writes the code, runs the tests, reports the results. No improvisation.</div>
+
+        <div class="human-job">
+          <div class="human-job-icon">&#128100;</div>
+          <div class="human-job-content">
+            <div class="human-job-label">Replaces</div>
+            <div class="human-job-title">Junior Developer / Build Engineer</div>
+            <div class="human-job-why">Before: you'd hire a developer, brief them, wait days for a PR. Now: Coder Machine reads the spec, writes the code, runs the tests, and reports results — all in one session. No meetings, no stand-ups, no scope creep.</div>
+          </div>
+        </div>
+
+        <div class="agent-section-title">Special Powers</div>
+        <ul class="powers-list">
+          <li>Test-driven: never ships untested code -- ever</li>
+          <li>Queue-aware: knows its completions unblock downstream agents</li>
+          <li>Scope-disciplined: flags decisions beyond spec and pauses</li>
+          <li>Internalises Ziggi's quality criteria before writing a line</li>
+        </ul>
+
+        <div class="agent-section-title">Thinking Lenses</div>
+        <div class="faces-row">
+          <span class="face-badge primary" style="border-color: var(--color-coder); color: var(--color-coder);">Experimenter</span>
+          <span class="face-badge primary" style="border-color: var(--color-coder); color: var(--color-coder);">Hurdler</span>
+          <span class="face-badge secondary">Set Designer</span>
+        </div>
+
+        <div class="agent-section-title">PERMA Profile</div>
+        <div class="perma-chart">
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 8px; background: var(--color-coder); opacity: 0.2;"></div><span class="perma-label">P</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 32px; background: var(--color-coder);"></div><span class="perma-label">E</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 8px; background: var(--color-coder); opacity: 0.2;"></div><span class="perma-label">R</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 12px; background: var(--color-coder); opacity: 0.3;"></div><span class="perma-label">M</span></div>
+          <div class="perma-bar-container"><div class="perma-bar" style="height: 36px; background: var(--color-coder);"></div><span class="perma-label">A</span></div>
+        </div>
+
+        <div class="meta-row">
+          <span class="machine-badge">Dedicated HW</span>
+          <span class="type-badge">Always On (Queue)</span>
+        </div>
+
+        <div class="agent-quote" style="border-color: var(--color-coder);">"Job 47: Auth refactor. Scope: Replace session tokens with JWT. Tests: 12/12 passed. Filed to Tim Buc."</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============ PIPELINES ============ -->
+<section class="pipeline-section" id="pipelines">
+  <div class="section-header animate-on-scroll">
+    <div class="section-label">How They Work Together</div>
+    <h2>The Pipelines</h2>
+    <p>Agents do not work in isolation. They form automated pipelines where the output of one becomes the input of the next.</p>
+  </div>
+
+  <div class="pipeline-grid">
+
+    <!-- Intelligence Pipeline -->
+    <div class="pipeline-card animate-on-scroll" style="border-top: 3px solid var(--color-eliyahu);">
+      <h3 style="color: var(--color-eliyahu);">Intelligence Pipeline</h3>
+      <div class="pipeline-flow">
+        <div class="pipeline-step"><span class="step-icon">&#9881;&#65039;</span><span class="step-text"><strong>Any agent</strong> works and completes</span></div>
+        <div class="pipeline-arrow">&#8595;</div>
+        <div class="pipeline-step"><span class="step-icon">&#128218;</span><span class="step-text"><strong>Tim Buc</strong> files the session records</span></div>
+        <div class="pipeline-arrow">&#8595;</div>
+        <div class="pipeline-step"><span class="step-icon">&#129504;</span><span class="step-text"><strong>Eliyahu</strong> reads and connects patterns</span></div>
+        <div class="pipeline-arrow">&#8595;</div>
+        <div class="pipeline-step"><span class="step-icon">&#9749;</span><span class="step-text"><strong>Morning briefing</strong> lands before coffee</span></div>
+      </div>
+    </div>
+
+    <!-- Quality Loop -->
+    <div class="pipeline-card animate-on-scroll" style="border-top: 3px solid var(--color-ziggi);">
+      <h3 style="color: var(--color-ziggi);">Quality Loop</h3>
+      <div class="pipeline-flow">
+        <div class="pipeline-step"><span class="step-icon">&#128187;</span><span class="step-text"><strong>Specialist</strong> produces output</span></div>
+        <div class="pipeline-arrow">&#8595;</div>
+        <div class="pipeline-step"><span class="step-icon">&#128270;</span><span class="step-text"><strong>Ziggi</strong> reviews, scores 1-10, teaches</span></div>
+        <div class="pipeline-arrow">&#8595;</div>
+        <div class="pipeline-step"><span class="step-icon">&#10003;</span><span class="step-text">Score &#8805; 7: <strong>ship it</strong></span></div>
+        <div class="pipeline-step"><span class="step-icon">&#128260;</span><span class="step-text">Score &lt; 7: <strong>Fisher creates re-do task</strong></span></div>
+      </div>
+    </div>
+
+    <!-- Content Pipeline -->
+    <div class="pipeline-card animate-on-scroll" style="border-top: 3px solid var(--color-farcake);">
+      <h3 style="color: var(--color-farcake);">Content Pipeline</h3>
+      <div class="pipeline-flow">
+        <div class="pipeline-step"><span class="step-icon">&#128269;</span><span class="step-text"><strong>Farcake</strong> investigates and verifies</span></div>
+        <div class="pipeline-arrow">&#8595;</div>
+        <div class="pipeline-step"><span class="step-icon">&#9997;&#65039;</span><span class="step-text"><strong>Andy</strong> writes in the client's voice</span></div>
+        <div class="pipeline-arrow">&#8595;</div>
+        <div class="pipeline-step"><span class="step-icon">&#128270;</span><span class="step-text"><strong>Ziggi</strong> reviews quality</span></div>
+        <div class="pipeline-arrow">&#8595;</div>
+        <div class="pipeline-step"><span class="step-icon">&#127760;</span><span class="step-text"><strong>GumballCMS</strong> publishes</span></div>
+      </div>
+    </div>
+
+    <!-- Design Pipeline -->
+    <div class="pipeline-card animate-on-scroll" style="border-top: 3px solid var(--color-birdfountain);">
+      <h3 style="color: var(--color-birdfountain);">Design Pipeline</h3>
+      <div class="pipeline-flow">
+        <div class="pipeline-step"><span class="step-icon">&#127912;</span><span class="step-text"><strong>Bird Fountain</strong> runs production batch</span></div>
+        <div class="pipeline-arrow">&#8595;</div>
+        <div class="pipeline-step"><span class="step-icon">&#128270;</span><span class="step-text"><strong>Ziggi</strong> reviews brand compliance</span></div>
+        <div class="pipeline-arrow">&#8595;</div>
+        <div class="pipeline-step"><span class="step-icon">&#127760;</span><span class="step-text"><strong>GumballCMS</strong> or <strong>Videohoho</strong></span></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============ BRAIN CONNECTION ============ -->
+<section class="brain-section" id="brain">
+  <div class="section-header animate-on-scroll">
+    <div class="section-label">The Foundation</div>
+    <h2>One Brain, Twelve Expressions</h2>
+    <p>Every agent inherits the full parent genome. Same values. Same ethics. Same worldview. Different strengths.</p>
+  </div>
+
+  <div class="brain-layers animate-on-scroll">
+    <div class="brain-layer" style="background: rgba(206, 147, 216, 0.08);">
+      <h4 style="color: var(--color-eliyahu);">Soul Layer</h4>
+      <p>Identity, ethics, African worldview, PERMA orientation</p>
+      <div class="layer-items">
+        <span class="layer-item">Ethics Guard</span>
+        <span class="layer-item">Ubuntu</span>
+        <span class="layer-item">Identity-First</span>
+        <span class="layer-item">Dignity</span>
+      </div>
+    </div>
+    <div class="brain-layer" style="background: rgba(79, 195, 247, 0.06);">
+      <h4 style="color: var(--color-controller);">Mind Layer</h4>
+      <p>Ten Faces of Innovation, perspective mapping, narrative framing</p>
+      <div class="layer-items">
+        <span class="layer-item">Anthropologist</span>
+        <span class="layer-item">Experimenter</span>
+        <span class="layer-item">Cross-Pollinator</span>
+        <span class="layer-item">Director</span>
+        <span class="layer-item">Storyteller</span>
+      </div>
+    </div>
+    <div class="brain-layer" style="background: rgba(255, 183, 77, 0.06);">
+      <h4 style="color: var(--color-fisher);">Brain Layer</h4>
+      <p>Conversation planner, evidence extractor, confidence scorer</p>
+      <div class="layer-items">
+        <span class="layer-item">Pattern Recognition</span>
+        <span class="layer-item">Task Execution</span>
+        <span class="layer-item">Quality Assessment</span>
+      </div>
+    </div>
+    <div class="brain-layer" style="background: rgba(120, 144, 156, 0.06);">
+      <h4 style="color: var(--color-owl);">Memory Layer</h4>
+      <p>Person profiles, context history, institutional knowledge</p>
+      <div class="layer-items">
+        <span class="layer-item">Soul Memories</span>
+        <span class="layer-item">Session Context</span>
+        <span class="layer-item">Records DB</span>
+      </div>
+    </div>
+  </div>
+
+  <p class="brain-inherit-text animate-on-scroll">
+    Every agent carries the founder's values, worldview, and ethics. The Ethics Guard fires before any output -- non-negotiable. The African Worldview lenses are always on. Agents do not just process tasks. They understand context, honour communities, and get smarter about your business every single day.
+  </p>
+</section>
+
+<!-- ============ EIGHT PRINCIPLES ============ -->
+<section class="section">
+  <div class="section-header animate-on-scroll">
+    <div class="section-label">The Culture</div>
+    <h2>What Every Agent Lives By</h2>
+  </div>
+
+  <div class="agent-grid" style="max-width: 1000px; margin: 0 auto;">
+    <div class="pipeline-card animate-on-scroll" style="border-left: 3px solid var(--color-controller);">
+      <h3 style="font-size: 16px;">Identity First</h3>
+      <p style="font-size: 13px; color: var(--text-secondary);">Every agent knows who they are before they know what to do. Name, role, personality, relationships -- loaded before any task.</p>
+    </div>
+    <div class="pipeline-card animate-on-scroll" style="border-left: 3px solid var(--color-ziggi);">
+      <h3 style="font-size: 16px;">Ethics Non-Negotiable</h3>
+      <p style="font-size: 13px; color: var(--text-secondary);">The Ethics Guard fires before any output. No agent can override it. No agent should try.</p>
+    </div>
+    <div class="pipeline-card animate-on-scroll" style="border-left: 3px solid var(--color-fisher);">
+      <h3 style="font-size: 16px;">Push, Don't Poll</h3>
+      <p style="font-size: 13px; color: var(--text-secondary);">Agents surface information proactively. Monitor pushes status. Eliyahu pushes briefings. Fisher pushes follow-ups.</p>
+    </div>
+    <div class="pipeline-card animate-on-scroll" style="border-left: 3px solid var(--color-farcake);">
+      <h3 style="font-size: 16px;">Ephemeral Compute</h3>
+      <p style="font-size: 13px; color: var(--text-secondary);">Most agents spawn, work, and terminate. The soul provides continuity. The compute is temporary; the identity is permanent.</p>
+    </div>
+    <div class="pipeline-card animate-on-scroll" style="border-left: 3px solid var(--color-eliyahu);">
+      <h3 style="font-size: 16px;">Human Decides</h3>
+      <p style="font-size: 13px; color: var(--text-secondary);">Agents synthesise, recommend, and execute. They do not decide. When a decision is needed, they flag it clearly and wait.</p>
+    </div>
+    <div class="pipeline-card animate-on-scroll" style="border-left: 3px solid var(--color-timbuc);">
+      <h3 style="font-size: 16px;">Archive Everything</h3>
+      <p style="font-size: 13px; color: var(--text-secondary);">Every session ends with Tim Buc filing. Nothing is lost. The operation builds institutional memory.</p>
+    </div>
+    <div class="pipeline-card animate-on-scroll" style="border-left: 3px solid var(--color-birdfountain);">
+      <h3 style="font-size: 16px;">Quality Is Taught</h3>
+      <p style="font-size: 13px; color: var(--text-secondary);">Ziggi does not just score -- she teaches. Every verdict is a lesson. The fleet gets better because every review educates.</p>
+    </div>
+    <div class="pipeline-card animate-on-scroll" style="border-left: 3px solid var(--color-andy);">
+      <h3 style="font-size: 16px;">Africa Context Always On</h3>
+      <p style="font-size: 13px; color: var(--text-secondary);">The African Worldview lenses are not optional. Ubuntu, Urban Hybridity, Coloniality awareness -- part of baseline cognition.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="footer-brand">SodaWorld / SodaLabs</div>
+  <div class="footer-tagline">Powered by <strong>PIA -- Personal Intelligence Architecture</strong></div>
+  <div style="margin-top: 16px; font-size: 12px; color: var(--text-dim);">A company that employs AI. Not a chatbot. An intelligence network.</div>
+</footer>
+
+<!-- ============ SCROLL ANIMATION SCRIPT ============ -->
+<script>
+  // Intersection Observer for fade-in animations
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+  });
+
+  document.querySelectorAll('.animate-on-scroll').forEach(el => {
+    observer.observe(el);
+  });
+
+  // Staggered animation for cards in the same grid
+  document.querySelectorAll('.agent-grid').forEach(grid => {
+    const cards = grid.querySelectorAll('.agent-card');
+    cards.forEach((card, index) => {
+      card.style.transitionDelay = `${index * 0.1}s`;
+    });
+  });
+
+  // Staggered animation for stat items
+  document.querySelectorAll('.stat-item').forEach((item, index) => {
+    item.style.transitionDelay = `${index * 0.15}s`;
+  });
+
+  // Smooth scroll for nav links
+  document.querySelectorAll('nav a[href^="#"]').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const target = document.querySelector(link.getAttribute('href'));
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
