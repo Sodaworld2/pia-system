@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NED — Browser Tester</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg:        #050508;
+      --bg2:       #0a0a12;
+      --bg3:       #10101a;
+      --border:    #1a1a2e;
+      --border2:   #252540;
+      --teal:      #00d9a6;
+      --teal-dim:  #00a87f;
+      --teal-glow: rgba(0, 217, 166, 0.12);
+      --blue:      #58a6ff;
+      --yellow:    #f59e0b;
+      --red:       #ef4444;
+      --green:     #22c55e;
+      --text:      #e2e8f0;
+      --text2:     #94a3b8;
+      --text3:     #475569;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Header ─────────────────────────────────────── */
+    .header {
+      background: linear-gradient(135deg, #060610 0%, #0c0c1a 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      gap: 16px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .ned-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--teal), #0099ff);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+      box-shadow: 0 0 16px rgba(0,217,166,0.3);
+    }
+
+    .header-title h1 {
+      font-size: 17px; font-weight: 800; letter-spacing: 0.05em;
+      background: linear-gradient(135deg, var(--teal), #58a6ff);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .header-title .sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
+
+    .header-status {
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .status-pill {
+      display: flex; align-items: center; gap: 6px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+      border: 1px solid;
+      transition: all 0.3s;
+    }
+    .status-pill .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+    }
+    .status-pill.stopped  { color: var(--text3); border-color: var(--border2); background: rgba(255,255,255,0.03); }
+    .status-pill.stopped .dot { background: var(--text3); }
+    .status-pill.starting { color: var(--yellow); border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.05); }
+    .status-pill.starting .dot { background: var(--yellow); animation: blink 1s infinite; }
+    .status-pill.idle     { color: var(--teal); border-color: rgba(0,217,166,0.35); background: var(--teal-glow); }
+    .status-pill.idle .dot { background: var(--teal); box-shadow: 0 0 8px var(--teal); }
+    .status-pill.busy     { color: var(--blue); border-color: rgba(88,166,255,0.35); background: rgba(88,166,255,0.08); }
+    .status-pill.busy .dot { background: var(--blue); animation: blink 0.7s infinite; }
+    .status-pill.error    { color: var(--red); border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.06); }
+    .status-pill.error .dot { background: var(--red); }
+
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    .header-stats {
+      display: flex; gap: 16px; align-items: center;
+      padding: 0 16px;
+      border-left: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+    }
+    .stat { display: flex; flex-direction: column; align-items: center; }
+    .stat .val { font-size: 15px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+    .stat .lbl { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 1px; }
+    .stat .val.teal { color: var(--teal); }
+    .stat .val.red { color: var(--red); }
+
+    .header-btns { display: flex; gap: 8px; }
+
+    .btn {
+      padding: 6px 14px;
+      border: none; border-radius: 6px;
+      font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: all 0.15s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .btn:active { transform: scale(0.96); }
+    .btn-teal   { background: var(--teal); color: #000; }
+    .btn-teal:hover { background: #00ffbf; }
+    .btn-red    { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+    .btn-red:hover { background: rgba(239,68,68,0.25); }
+    .btn-ghost  { background: rgba(255,255,255,0.05); color: var(--text2); border: 1px solid var(--border2); }
+    .btn-ghost:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+    .btn-blue   { background: rgba(88,166,255,0.15); color: var(--blue); border: 1px solid rgba(88,166,255,0.3); }
+    .btn-blue:hover { background: rgba(88,166,255,0.25); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+
+    .btn-sm { padding: 4px 10px; font-size: 11px; }
+
+    /* ── Main Layout ─────────────────────────────────── */
+    .main {
+      display: grid;
+      grid-template-columns: 280px 1fr 320px;
+      flex: 1;
+      overflow: hidden;
+      gap: 0;
+    }
+
+    /* ── Left Panel — Controls ───────────────────────── */
+    .panel-left {
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      display: flex; flex-direction: column;
+      gap: 0;
+    }
+
+    .panel-section {
+      border-bottom: 1px solid var(--border);
+      padding: 14px 16px;
+    }
+
+    .section-title {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--text3);
+      margin-bottom: 10px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .section-title::before {
+      content: ''; display: block;
+      width: 3px; height: 10px;
+      background: var(--teal);
+      border-radius: 2px;
+    }
+
+    .url-row {
+      display: flex; gap: 6px;
+    }
+
+    .input {
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 12px;
+      padding: 7px 10px;
+      outline: none;
+      transition: border-color 0.15s;
+      font-family: 'Consolas', 'Fira Code', monospace;
+    }
+    .input:focus { border-color: var(--teal-dim); }
+    .input::placeholder { color: var(--text3); font-family: 'Segoe UI', sans-serif; }
+    .input-full { width: 100%; }
+
+    .quick-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 6px; margin-top: 2px;
+    }
+    .quick-btn {
+      padding: 7px 8px;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      color: var(--text2);
+      font-size: 11px; font-weight: 500;
+      cursor: pointer; transition: all 0.15s;
+      text-align: center;
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+    }
+    .quick-btn:hover { background: var(--teal-glow); border-color: var(--teal-dim); color: var(--teal); }
+    .quick-btn:active { transform: scale(0.96); }
+    .quick-btn .qi { font-size: 16px; }
+
+    .task-area {
+      width: 100%;
+      min-height: 72px;
+      resize: vertical;
+    }
+
+    /* preset list */
+    .preset-list { display: flex; flex-direction: column; gap: 4px; }
+    .preset-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 10px;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 11px; color: var(--text2);
+      transition: all 0.15s;
+    }
+    .preset-item:hover { border-color: var(--teal-dim); color: var(--teal); background: var(--teal-glow); }
+    .preset-item .pi { font-size: 13px; }
+
+    /* job queue */
+    .queue-empty {
+      text-align: center;
+      color: var(--text3);
+      font-size: 11px;
+      padding: 16px 0;
+    }
+    .job-item {
+      padding: 8px 10px;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      margin-bottom: 6px;
+      font-size: 11px;
+    }
+    .job-item .job-task { color: var(--text); font-weight: 500; margin-bottom: 3px; }
+    .job-item .job-meta { color: var(--text3); display: flex; justify-content: space-between; }
+    .job-item .job-status { padding: 1px 7px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+    .job-status.pending  { background: rgba(245,158,11,0.15); color: var(--yellow); }
+    .job-status.running  { background: rgba(88,166,255,0.15); color: var(--blue); }
+    .job-status.done     { background: rgba(34,197,94,0.15); color: var(--green); }
+
+    /* ── Center Panel — Live View ────────────────────── */
+    .panel-center {
+      background: var(--bg);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+
+    .view-toolbar {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 16px;
+      display: flex; align-items: center; gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .page-info {
+      flex: 1; overflow: hidden;
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .page-url {
+      font-size: 11px; font-family: monospace;
+      color: var(--blue);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .page-title { font-size: 12px; color: var(--text2); font-weight: 500; }
+
+    .view-controls { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+    .refresh-toggle {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; color: var(--text3); cursor: pointer;
+      user-select: none;
+    }
+    .refresh-toggle input { accent-color: var(--teal); cursor: pointer; }
+    .refresh-toggle:hover { color: var(--text2); }
+
+    .screenshot-container {
+      flex: 1;
+      display: flex; align-items: center; justify-content: center;
+      overflow: auto;
+      padding: 20px;
+      position: relative;
+    }
+
+    .screenshot-placeholder {
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+      color: var(--text3);
+      pointer-events: none;
+    }
+    .screenshot-placeholder .ph-icon {
+      font-size: 56px; opacity: 0.2;
+    }
+    .screenshot-placeholder .ph-text {
+      font-size: 13px; text-align: center; max-width: 220px; line-height: 1.5;
+    }
+
+    #screenshot-img {
+      max-width: 100%; max-height: 100%;
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      box-shadow: 0 4px 32px rgba(0,0,0,0.6);
+      display: none;
+      cursor: zoom-in;
+      transition: transform 0.1s;
+    }
+    #screenshot-img.zoomed {
+      cursor: zoom-out;
+      max-width: none; max-height: none;
+    }
+
+    .view-footer {
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      padding: 6px 16px;
+      display: flex; align-items: center; gap: 16px;
+      font-size: 10px; color: var(--text3);
+      flex-shrink: 0;
+    }
+    .view-footer .vf-item { display: flex; align-items: center; gap: 5px; }
+    .view-footer .vf-label { color: var(--text3); }
+    .view-footer .vf-val { color: var(--text2); font-variant-numeric: tabular-nums; }
+    .view-footer .vf-val.teal { color: var(--teal); }
+
+    /* ── Right Panel — Output Log ────────────────────── */
+    .panel-right {
+      background: var(--bg2);
+      border-left: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+
+    .log-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .log-tab {
+      padding: 9px 14px;
+      font-size: 11px; font-weight: 600;
+      color: var(--text3);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .log-tab:hover { color: var(--text2); }
+    .log-tab.active { color: var(--teal); border-bottom-color: var(--teal); }
+    .log-tab .badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      background: var(--teal); color: #000;
+      border-radius: 10px; font-size: 9px; font-weight: 700;
+      min-width: 16px; height: 16px; padding: 0 4px;
+      margin-left: 5px;
+    }
+
+    .tab-content { display: none; flex: 1; overflow: hidden; flex-direction: column; }
+    .tab-content.active { display: flex; }
+
+    /* command log */
+    .cmd-log {
+      flex: 1; overflow-y: auto;
+      padding: 10px 12px;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+
+    .log-entry {
+      padding: 8px 10px;
+      border-radius: 6px;
+      border-left: 3px solid;
+      font-size: 11px;
+      background: var(--bg3);
+    }
+    .log-entry.success { border-color: var(--teal); }
+    .log-entry.error   { border-color: var(--red); }
+    .log-entry.info    { border-color: var(--blue); }
+    .log-entry.pending { border-color: var(--yellow); }
+
+    .log-entry .le-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 4px;
+    }
+    .log-entry .le-cmd {
+      font-weight: 700; font-family: monospace; font-size: 11px;
+      color: var(--text);
+    }
+    .log-entry .le-time { font-size: 9px; color: var(--text3); font-variant-numeric: tabular-nums; }
+    .log-entry .le-msg { color: var(--text2); line-height: 1.4; }
+    .log-entry .le-msg.err-msg { color: var(--red); }
+    .log-entry .le-duration { font-size: 9px; color: var(--text3); margin-top: 3px; }
+
+    /* steps */
+    .steps-list {
+      flex: 1; overflow-y: auto;
+      padding: 10px 12px;
+    }
+    .step-item {
+      display: flex; align-items: flex-start; gap: 8px;
+      padding: 7px 10px;
+      border-radius: 6px;
+      margin-bottom: 5px;
+      font-size: 11px;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+    }
+    .step-item.ok  .step-icon { color: var(--teal); }
+    .step-item.err .step-icon { color: var(--red); }
+    .step-icon { font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+    .step-body { flex: 1; }
+    .step-action { font-weight: 600; color: var(--text); margin-bottom: 2px; }
+    .step-reason { color: var(--text3); line-height: 1.4; }
+    .step-num { font-size: 10px; color: var(--teal); font-weight: 700; flex-shrink: 0; margin-top: 2px; }
+
+    /* text output */
+    .text-output {
+      flex: 1; overflow-y: auto;
+      padding: 12px;
+    }
+    .text-block {
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      padding: 10px;
+      font-size: 11px; line-height: 1.6;
+      color: var(--text2);
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'Consolas', monospace;
+    }
+    .text-label {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--text3);
+      margin-bottom: 6px; margin-top: 12px;
+    }
+    .text-label:first-child { margin-top: 0; }
+
+    /* analysis */
+    .analysis-block {
+      background: linear-gradient(135deg, rgba(0,217,166,0.05), rgba(88,166,255,0.05));
+      border: 1px solid rgba(0,217,166,0.2);
+      border-radius: 6px;
+      padding: 10px;
+      font-size: 11px; line-height: 1.6;
+      color: var(--text2);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* empty states */
+    .empty-state {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      flex: 1;
+      color: var(--text3); font-size: 12px; text-align: center;
+      padding: 20px;
+      gap: 8px;
+    }
+    .empty-state .es-icon { font-size: 32px; opacity: 0.3; }
+
+    /* Auto-refresh spinner */
+    .spinning { animation: spin 1.5s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* scrollbars */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+    /* fullscreen overlay */
+    .fullscreen-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.92);
+      z-index: 1000;
+      align-items: center; justify-content: center;
+      cursor: zoom-out;
+    }
+    .fullscreen-overlay.active { display: flex; }
+    .fullscreen-overlay img { max-width: 95vw; max-height: 95vh; border-radius: 6px; }
+
+    /* notification toast */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-size: 12px; color: var(--text);
+      z-index: 999;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      opacity: 0; transition: opacity 0.2s;
+      pointer-events: none;
+    }
+    .toast.visible { opacity: 1; }
+    .toast.ok   { border-color: rgba(0,217,166,0.4); }
+    .toast.err  { border-color: rgba(239,68,68,0.4); }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ───────────────────────────────────────── -->
+<header class="header">
+  <div class="header-left">
+    <div class="ned-icon">🌐</div>
+    <div class="header-title">
+      <h1>NED — Browser Tester</h1>
+      <div class="sub">M4 Browser Worker · Playwright + AI Vision</div>
+    </div>
+    <div id="status-pill" class="status-pill stopped">
+      <div class="dot"></div>
+      <span id="status-text">STOPPED</span>
+    </div>
+  </div>
+
+  <div class="header-stats">
+    <div class="stat"><div id="stat-cmds" class="val teal">0</div><div class="lbl">Commands</div></div>
+    <div class="stat"><div id="stat-errs" class="val">0</div><div class="lbl">Errors</div></div>
+    <div class="stat"><div id="stat-gemini" class="val">0</div><div class="lbl">AI Calls</div></div>
+    <div class="stat"><div id="stat-tokens" class="val">0</div><div class="lbl">Tokens</div></div>
+  </div>
+
+  <div class="header-btns">
+    <button class="btn btn-teal" id="btn-start" onclick="startController()">▶ Start Browser</button>
+    <button class="btn btn-red"  id="btn-stop"  onclick="stopController()" disabled>■ Stop</button>
+    <button class="btn btn-ghost btn-sm" onclick="refreshStatus()" title="Refresh status">⟳</button>
+  </div>
+</header>
+
+<!-- ── Main ─────────────────────────────────────────── -->
+<div class="main">
+
+  <!-- Left: Controls -->
+  <aside class="panel-left">
+
+    <!-- URL Navigator -->
+    <div class="panel-section">
+      <div class="section-title">Navigate</div>
+      <div class="url-row">
+        <input id="url-input" type="text" class="input" style="flex:1"
+          placeholder="https://example.com"
+          onkeydown="if(event.key==='Enter')navigateTo()"
+        />
+        <button class="btn btn-teal btn-sm" onclick="navigateTo()">Go</button>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="panel-section">
+      <div class="section-title">Quick Tests</div>
+      <div class="quick-grid">
+        <button class="quick-btn" onclick="quickScreenshot()">
+          <span class="qi">📸</span>Screenshot
+        </button>
+        <button class="quick-btn" onclick="quickExtractText()">
+          <span class="qi">📋</span>Extract Text
+        </button>
+        <button class="quick-btn" onclick="quickCheckPage()">
+          <span class="qi">🔍</span>Check Page
+        </button>
+        <button class="quick-btn" onclick="quickGoBack()">
+          <span class="qi">⬅</span>Go Back
+        </button>
+        <button class="quick-btn" onclick="quickScrollDown()">
+          <span class="qi">⬇</span>Scroll Down
+        </button>
+        <button class="quick-btn" onclick="quickScrollUp()">
+          <span class="qi">⬆</span>Scroll Up
+        </button>
+      </div>
+    </div>
+
+    <!-- Run AI Task -->
+    <div class="panel-section">
+      <div class="section-title">Run AI Task</div>
+      <textarea id="task-input" class="input task-area input-full"
+        placeholder="Describe what to do&#10;e.g. Fill in the login form with user@test.com and click submit"
+      ></textarea>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <input id="task-url" type="text" class="input" style="flex:1;font-size:11px"
+          placeholder="Start URL (optional)"/>
+        <button class="btn btn-blue btn-sm" onclick="runTask()" style="white-space:nowrap">▶ Run</button>
+      </div>
+    </div>
+
+    <!-- Test Presets -->
+    <div class="panel-section">
+      <div class="section-title">Test Presets</div>
+      <div class="preset-list">
+        <div class="preset-item" onclick="runPreset('full_screenshot')">
+          <span class="pi">🖼</span> Full-page visual snapshot
+        </div>
+        <div class="preset-item" onclick="runPreset('check_links')">
+          <span class="pi">🔗</span> Check all links work
+        </div>
+        <div class="preset-item" onclick="runPreset('check_forms')">
+          <span class="pi">📝</span> Identify all forms
+        </div>
+        <div class="preset-item" onclick="runPreset('accessibility')">
+          <span class="pi">♿</span> Accessibility audit
+        </div>
+        <div class="preset-item" onclick="runPreset('page_speed')">
+          <span class="pi">⚡</span> Page load analysis
+        </div>
+        <div class="preset-item" onclick="runPreset('mobile_view')">
+          <span class="pi">📱</span> Check mobile layout
+        </div>
+      </div>
+    </div>
+
+    <!-- Job Queue -->
+    <div class="panel-section" style="flex:1">
+      <div class="section-title" style="justify-content:space-between">
+        <span style="display:flex;align-items:center;gap:6px"><span style="content:'';display:block;width:3px;height:10px;background:var(--teal);border-radius:2px"></span>Job Queue</span>
+        <span id="queue-count" style="font-size:10px;color:var(--text3)">0 pending</span>
+      </div>
+      <div id="job-queue">
+        <div class="queue-empty">No jobs queued<br>Other agents can POST here</div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- Center: Live Screenshot View -->
+  <main class="panel-center">
+
+    <div class="view-toolbar">
+      <div class="page-info">
+        <div id="page-url" class="page-url">—</div>
+        <div id="page-title" class="page-title">No page loaded</div>
+      </div>
+      <div class="view-controls">
+        <label class="refresh-toggle">
+          <input type="checkbox" id="auto-refresh" checked onchange="toggleAutoRefresh()">
+          <span id="refresh-indicator">Auto-refresh</span>
+        </label>
+        <button class="btn btn-ghost btn-sm" onclick="quickScreenshot()" title="Refresh screenshot">
+          <span id="refresh-spin">⟳</span>
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="saveScreenshot()" title="Save screenshot">⬇ Save</button>
+      </div>
+    </div>
+
+    <div class="screenshot-container" id="screenshot-container">
+      <div class="screenshot-placeholder" id="screenshot-placeholder">
+        <div class="ph-icon">🌐</div>
+        <div class="ph-text">Start the browser controller and navigate to a URL to see the live view here</div>
+      </div>
+      <img id="screenshot-img" src="" alt="Browser screenshot" onclick="toggleZoom()" />
+    </div>
+
+    <div class="view-footer">
+      <div class="vf-item">
+        <span class="vf-label">Status:</span>
+        <span id="vf-status" class="vf-val teal">—</span>
+      </div>
+      <div class="vf-item">
+        <span class="vf-label">Last action:</span>
+        <span id="vf-last" class="vf-val">—</span>
+      </div>
+      <div class="vf-item">
+        <span class="vf-label">Uptime:</span>
+        <span id="vf-uptime" class="vf-val">—</span>
+      </div>
+      <div class="vf-item">
+        <span class="vf-label">Browser PID:</span>
+        <span id="vf-pid" class="vf-val">—</span>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Right: Output Log -->
+  <aside class="panel-right">
+
+    <div class="log-tabs">
+      <div class="log-tab active" onclick="switchTab('log')">
+        Log <span id="log-badge" class="badge" style="display:none">0</span>
+      </div>
+      <div class="log-tab" onclick="switchTab('steps')">Steps</div>
+      <div class="log-tab" onclick="switchTab('text')">Text</div>
+      <div class="log-tab" onclick="switchTab('analysis')">AI Analysis</div>
+    </div>
+
+    <!-- Command Log -->
+    <div id="tab-log" class="tab-content active">
+      <div id="cmd-log" class="cmd-log">
+        <div class="empty-state">
+          <div class="es-icon">📋</div>
+          Commands will appear here
+        </div>
+      </div>
+      <div style="padding:8px;border-top:1px solid var(--border);flex-shrink:0">
+        <button class="btn btn-ghost btn-sm" onclick="clearLog()" style="width:100%">Clear Log</button>
+      </div>
+    </div>
+
+    <!-- Steps -->
+    <div id="tab-steps" class="tab-content">
+      <div id="steps-list" class="steps-list">
+        <div class="empty-state">
+          <div class="es-icon">🪜</div>
+          Run a task to see step-by-step actions here
+        </div>
+      </div>
+    </div>
+
+    <!-- Extracted Text -->
+    <div id="tab-text" class="tab-content">
+      <div class="text-output" id="text-output">
+        <div class="empty-state">
+          <div class="es-icon">📋</div>
+          Use "Extract Text" to capture page content
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Analysis -->
+    <div id="tab-analysis" class="tab-content">
+      <div class="text-output" id="analysis-output">
+        <div class="empty-state">
+          <div class="es-icon">🤖</div>
+          AI page analysis appears here after screenshots
+        </div>
+      </div>
+    </div>
+
+  </aside>
+</div>
+
+<!-- Fullscreen overlay -->
+<div class="fullscreen-overlay" id="fullscreen-overlay" onclick="closeFullscreen()">
+  <img id="fullscreen-img" src="" alt="Fullscreen screenshot" />
+</div>
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── State ──────────────────────────────────────────────
+  let controllerStatus = 'stopped';
+  let autoRefreshInterval = null;
+  let logEntries = [];
+  let currentSteps = [];
+  let pollTimer = null;
+  let activeTab = 'log';
+
+  // ── Init ───────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    refreshStatus();
+    startPolling();
+    loadJobQueue();
+  });
+
+  // ── Controller Lifecycle ───────────────────────────────
+  async function startController() {
+    setButtonState(true);
+    addLog('info', 'controller', 'Starting browser controller...');
+    try {
+      const r = await api('POST', '/api/browser/controller/start');
+      addLog('success', 'controller:start', 'Browser controller started');
+      toast('Browser started ✓', 'ok');
+      updateState(r.state);
+    } catch (e) {
+      addLog('error', 'controller:start', e.message);
+      toast('Failed to start: ' + e.message, 'err');
+      setButtonState(false);
+    }
+  }
+
+  async function stopController() {
+    addLog('info', 'controller', 'Stopping browser controller...');
+    try {
+      await api('POST', '/api/browser/controller/stop');
+      addLog('success', 'controller:stop', 'Browser controller stopped');
+      toast('Browser stopped', 'ok');
+      updateState({ status: 'stopped', currentUrl: null, pageTitle: null });
+      clearScreenshot();
+    } catch (e) {
+      addLog('error', 'controller:stop', e.message);
+    }
+  }
+
+  // ── Commands ───────────────────────────────────────────
+  async function navigateTo() {
+    const url = document.getElementById('url-input').value.trim();
+    if (!url) return toast('Enter a URL first', 'err');
+    if (!url.startsWith('http')) {
+      document.getElementById('url-input').value = 'https://' + url;
+    }
+    const finalUrl = document.getElementById('url-input').value.trim();
+    await sendCommand({ type: 'navigate', target: finalUrl }, 'navigate → ' + finalUrl);
+  }
+
+  async function quickScreenshot() {
+    const result = await sendCommand({ type: 'screenshot' }, 'screenshot');
+    if (result?.screenshot) {
+      showScreenshot(result.screenshot);
+    }
+    if (result?.analysis) {
+      appendAnalysis(result.analysis, 'Screenshot Analysis');
+    }
+  }
+
+  async function quickExtractText() {
+    const result = await sendCommand({ type: 'extractText' }, 'extractText');
+    if (result?.text) {
+      showText(result.text, 'Extracted Text');
+      switchTab('text');
+    }
+  }
+
+  async function quickCheckPage() {
+    const result = await sendCommand({
+      type: 'executeTask',
+      taskDescription: 'Check this page: identify the title, main heading, number of links, any forms, and any obvious errors. Return a brief summary.',
+      maxSteps: 5
+    }, 'checkPage');
+    if (result?.steps) showSteps(result.steps);
+    if (result?.analysis) appendAnalysis(result.analysis, 'Page Check');
+    switchTab('steps');
+  }
+
+  async function quickGoBack() {
+    await sendCommand({ type: 'goBack' }, 'goBack');
+    await quickScreenshot();
+  }
+
+  async function quickScrollDown() {
+    await sendCommand({ type: 'scroll', direction: 'down', scrollAmount: 400 }, 'scroll ↓');
+    await quickScreenshot();
+  }
+
+  async function quickScrollUp() {
+    await sendCommand({ type: 'scroll', direction: 'up', scrollAmount: 400 }, 'scroll ↑');
+    await quickScreenshot();
+  }
+
+  async function runTask() {
+    const task = document.getElementById('task-input').value.trim();
+    const url  = document.getElementById('task-url').value.trim();
+    if (!task) return toast('Enter a task description', 'err');
+
+    if (url) {
+      await sendCommand({ type: 'navigate', target: url.startsWith('http') ? url : 'https://' + url }, 'navigate');
+    }
+
+    const result = await sendCommand({
+      type: 'executeTask',
+      taskDescription: task,
+      maxSteps: 25
+    }, 'executeTask');
+
+    if (result?.steps) { showSteps(result.steps); switchTab('steps'); }
+    if (result?.screenshot) showScreenshot(result.screenshot);
+    if (result?.analysis) appendAnalysis(result.analysis, 'Task: ' + task.substring(0, 60));
+  }
+
+  // ── Test Presets ───────────────────────────────────────
+  const PRESETS = {
+    full_screenshot: {
+      label: 'Full-page snapshot',
+      cmd: { type: 'screenshot' }
+    },
+    check_links: {
+      label: 'Check all links',
+      cmd: { type: 'executeTask', taskDescription: 'Find all links on this page. List their text and href. Note any that look broken or go to 404 pages.', maxSteps: 10 }
+    },
+    check_forms: {
+      label: 'Identify forms',
+      cmd: { type: 'executeTask', taskDescription: 'Find all forms on this page. List each form, its fields (name, type, required), and submit button text.', maxSteps: 8 }
+    },
+    accessibility: {
+      label: 'Accessibility audit',
+      cmd: { type: 'executeTask', taskDescription: 'Perform an accessibility check: look for missing alt text on images, form labels, heading structure, colour contrast issues, and keyboard navigation hints.', maxSteps: 10 }
+    },
+    page_speed: {
+      label: 'Page load analysis',
+      cmd: { type: 'executeTask', taskDescription: 'Analyse page load: check for large images, render-blocking scripts, number of elements, and overall page weight indicators. Screenshot the network tab if visible.', maxSteps: 8 }
+    },
+    mobile_view: {
+      label: 'Mobile layout check',
+      cmd: { type: 'executeTask', taskDescription: 'Check if the page is mobile-friendly: look for a responsive meta tag, touch targets, font sizes, and whether the layout fits a 375px wide viewport.', maxSteps: 8 }
+    },
+  };
+
+  async function runPreset(key) {
+    const preset = PRESETS[key];
+    if (!preset) return;
+    const result = await sendCommand(preset.cmd, preset.label);
+    if (result?.screenshot) showScreenshot(result.screenshot);
+    if (result?.steps) { showSteps(result.steps); switchTab('steps'); }
+    if (result?.analysis) appendAnalysis(result.analysis, preset.label);
+    if (result?.text) showText(result.text, preset.label);
+  }
+
+  // ── Core API Helper ────────────────────────────────────
+  async function sendCommand(cmd, label) {
+    if (controllerStatus === 'stopped') {
+      toast('Start the browser controller first', 'err');
+      return null;
+    }
+    const t0 = Date.now();
+    addLog('pending', cmd.type, label || cmd.type);
+
+    try {
+      const result = await api('POST', '/api/browser/controller/command', cmd);
+      const ms = Date.now() - t0;
+
+      if (result.success) {
+        updateLastLog('success', result.message, ms);
+        if (result.screenshot) showScreenshot(result.screenshot);
+        if (result.url) updatePageInfo(result.url, result.title);
+      } else {
+        updateLastLog('error', result.error || result.message, ms);
+      }
+      return result;
+    } catch (e) {
+      updateLastLog('error', e.message, Date.now() - t0);
+      toast('Command failed: ' + e.message, 'err');
+      return null;
+    }
+  }
+
+  async function api(method, path, body) {
+    const opts = { method, headers: { 'Content-Type': 'application/json' } };
+    if (body) opts.body = JSON.stringify(body);
+    const r = await fetch(path, opts);
+    const json = await r.json();
+    if (!r.ok) throw new Error(json.error || json.message || `HTTP ${r.status}`);
+    return json;
+  }
+
+  // ── Status Polling ─────────────────────────────────────
+  function startPolling() {
+    pollTimer = setInterval(refreshStatus, 2000);
+  }
+
+  async function refreshStatus() {
+    try {
+      const state = await api('GET', '/api/browser/controller/status');
+      updateState(state);
+      if (state.screenshotDataUrl) {
+        const b64 = state.screenshotDataUrl.replace('data:image/png;base64,', '');
+        showScreenshot(b64);
+      }
+    } catch (_) {
+      // server may not be running yet
+    }
+  }
+
+  function updateState(state) {
+    if (!state) return;
+    controllerStatus = state.status || 'stopped';
+
+    // Status pill
+    const pill = document.getElementById('status-pill');
+    const txt  = document.getElementById('status-text');
+    pill.className = 'status-pill ' + controllerStatus;
+    txt.textContent = controllerStatus.toUpperCase();
+
+    // Footer status
+    document.getElementById('vf-status').textContent = controllerStatus;
+
+    // Stats
+    if (state.commandsExecuted !== undefined) {
+      document.getElementById('stat-cmds').textContent   = state.commandsExecuted;
+      document.getElementById('stat-errs').textContent   = state.errorsCount || 0;
+      document.getElementById('stat-gemini').textContent = state.geminiCallsCount || 0;
+      document.getElementById('stat-tokens').textContent = fmtNum(state.geminiTokensUsed || 0);
+    }
+
+    // Uptime
+    if (state.startedAt) {
+      const secs = Math.floor((Date.now() - state.startedAt) / 1000);
+      document.getElementById('vf-uptime').textContent = fmtDuration(secs);
+    } else {
+      document.getElementById('vf-uptime').textContent = '—';
+    }
+
+    // PID
+    document.getElementById('vf-pid').textContent = state.browserPid || '—';
+
+    // Page info
+    if (state.currentUrl) updatePageInfo(state.currentUrl, state.pageTitle);
+
+    // Last activity
+    if (state.lastActivity) {
+      const ago = Math.floor((Date.now() - state.lastActivity) / 1000);
+      document.getElementById('vf-last').textContent = ago < 60 ? ago + 's ago' : fmtDuration(Math.floor(ago/60)*60) + ' ago';
+    }
+
+    // Buttons
+    setButtonState(controllerStatus !== 'stopped');
+  }
+
+  function setButtonState(running) {
+    document.getElementById('btn-start').disabled = running;
+    document.getElementById('btn-stop').disabled  = !running;
+  }
+
+  function toggleAutoRefresh() {
+    const on = document.getElementById('auto-refresh').checked;
+    const ind = document.getElementById('refresh-indicator');
+    if (on) {
+      ind.textContent = 'Auto-refresh';
+      if (!pollTimer) pollTimer = setInterval(refreshStatus, 2000);
+    } else {
+      ind.textContent = 'Manual';
+      clearInterval(pollTimer);
+      pollTimer = null;
+    }
+  }
+
+  // ── Screenshot ─────────────────────────────────────────
+  function showScreenshot(b64) {
+    if (!b64) return;
+    const img = document.getElementById('screenshot-img');
+    const ph  = document.getElementById('screenshot-placeholder');
+    img.src = 'data:image/png;base64,' + b64;
+    img.style.display = 'block';
+    ph.style.display  = 'none';
+  }
+
+  function clearScreenshot() {
+    const img = document.getElementById('screenshot-img');
+    const ph  = document.getElementById('screenshot-placeholder');
+    img.style.display = 'none';
+    ph.style.display  = 'flex';
+  }
+
+  function toggleZoom() {
+    const img = document.getElementById('screenshot-img');
+    if (!img.src || img.src === window.location.href) return;
+    // Open fullscreen
+    document.getElementById('fullscreen-img').src = img.src;
+    document.getElementById('fullscreen-overlay').classList.add('active');
+  }
+
+  function closeFullscreen() {
+    document.getElementById('fullscreen-overlay').classList.remove('active');
+  }
+
+  function saveScreenshot() {
+    const img = document.getElementById('screenshot-img');
+    if (!img.src || img.src === window.location.href) return toast('No screenshot to save', 'err');
+    const a = document.createElement('a');
+    a.download = 'ned-screenshot-' + new Date().toISOString().replace(/[:.]/g,'-') + '.png';
+    a.href = img.src;
+    a.click();
+    toast('Screenshot saved ✓', 'ok');
+  }
+
+  function updatePageInfo(url, title) {
+    document.getElementById('page-url').textContent   = url || '—';
+    document.getElementById('page-title').textContent = title || 'Untitled';
+  }
+
+  // ── Log ────────────────────────────────────────────────
+  function addLog(type, cmd, msg) {
+    const el = document.getElementById('cmd-log');
+
+    // Clear empty state
+    if (el.querySelector('.empty-state')) el.innerHTML = '';
+
+    const entry = document.createElement('div');
+    entry.className = 'log-entry ' + type;
+    entry.id = 'log-' + Date.now();
+    entry.innerHTML = `
+      <div class="le-header">
+        <span class="le-cmd">${esc(cmd)}</span>
+        <span class="le-time">${new Date().toLocaleTimeString()}</span>
+      </div>
+      <div class="le-msg ${type === 'error' ? 'err-msg' : ''}">${esc(msg)}</div>
+    `;
+    el.appendChild(entry);
+    el.scrollTop = el.scrollHeight;
+
+    logEntries.push({ id: entry.id, type, cmd, msg });
+
+    // Badge
+    const badge = document.getElementById('log-badge');
+    if (activeTab !== 'log') {
+      const count = parseInt(badge.textContent || '0') + 1;
+      badge.textContent = count;
+      badge.style.display = 'inline-flex';
+    }
+
+    return entry.id;
+  }
+
+  function updateLastLog(type, msg, ms) {
+    const all = document.querySelectorAll('.log-entry');
+    if (!all.length) return;
+    const last = all[all.length - 1];
+    last.className = 'log-entry ' + type;
+    const msgEl = last.querySelector('.le-msg');
+    if (msgEl) { msgEl.textContent = msg; msgEl.className = 'le-msg' + (type === 'error' ? ' err-msg' : ''); }
+    if (ms !== undefined) {
+      let durEl = last.querySelector('.le-duration');
+      if (!durEl) { durEl = document.createElement('div'); durEl.className = 'le-duration'; last.appendChild(durEl); }
+      durEl.textContent = ms + 'ms';
+    }
+  }
+
+  function clearLog() {
+    document.getElementById('cmd-log').innerHTML = '<div class="empty-state"><div class="es-icon">📋</div>Commands will appear here</div>';
+    logEntries = [];
+    const badge = document.getElementById('log-badge');
+    badge.style.display = 'none';
+  }
+
+  // ── Steps ──────────────────────────────────────────────
+  function showSteps(steps) {
+    const el = document.getElementById('steps-list');
+    if (!steps || !steps.length) {
+      el.innerHTML = '<div class="empty-state"><div class="es-icon">🪜</div>No steps recorded</div>';
+      return;
+    }
+    el.innerHTML = '';
+    steps.forEach(s => {
+      const div = document.createElement('div');
+      div.className = 'step-item ' + (s.success ? 'ok' : 'err');
+      div.innerHTML = `
+        <div class="step-num">#${s.stepNumber}</div>
+        <div class="step-icon">${s.success ? '✓' : '✗'}</div>
+        <div class="step-body">
+          <div class="step-action">${esc(s.action)}</div>
+          ${s.reasoning ? `<div class="step-reason">${esc(s.reasoning)}</div>` : ''}
+          ${s.error ? `<div class="step-reason" style="color:var(--red)">${esc(s.error)}</div>` : ''}
+        </div>
+      `;
+      el.appendChild(div);
+    });
+    el.scrollTop = el.scrollHeight;
+  }
+
+  // ── Text ───────────────────────────────────────────────
+  function showText(text, label) {
+    const el = document.getElementById('text-output');
+    const ts = new Date().toLocaleTimeString();
+
+    if (el.querySelector('.empty-state')) el.innerHTML = '';
+
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `
+      <div class="text-label">${esc(label)} · ${ts}</div>
+      <div class="text-block">${esc(text)}</div>
+    `;
+    el.appendChild(wrap);
+    el.scrollTop = el.scrollHeight;
+  }
+
+  // ── Analysis ───────────────────────────────────────────
+  function appendAnalysis(text, label) {
+    const el = document.getElementById('analysis-output');
+    const ts = new Date().toLocaleTimeString();
+
+    if (el.querySelector('.empty-state')) el.innerHTML = '';
+
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `
+      <div class="text-label">${esc(label)} · ${ts}</div>
+      <div class="analysis-block">${esc(text)}</div>
+    `;
+    el.appendChild(wrap);
+    el.scrollTop = el.scrollHeight;
+  }
+
+  // ── Tabs ───────────────────────────────────────────────
+  function switchTab(tab) {
+    activeTab = tab;
+    document.querySelectorAll('.log-tab').forEach((el, i) => {
+      const tabs = ['log', 'steps', 'text', 'analysis'];
+      el.classList.toggle('active', tabs[i] === tab);
+    });
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+
+    if (tab === 'log') {
+      const badge = document.getElementById('log-badge');
+      badge.style.display = 'none';
+    }
+  }
+
+  // ── Job Queue ──────────────────────────────────────────
+  async function loadJobQueue() {
+    try {
+      const r = await api('GET', '/api/browser/sessions');
+      const jobs = r.sessions || [];
+      const el = document.getElementById('job-queue');
+      document.getElementById('queue-count').textContent = jobs.length + ' jobs';
+
+      if (!jobs.length) {
+        el.innerHTML = '<div class="queue-empty">No jobs queued<br>Other agents can POST here</div>';
+        return;
+      }
+
+      el.innerHTML = '';
+      jobs.forEach(j => {
+        const div = document.createElement('div');
+        div.className = 'job-item';
+        div.innerHTML = `
+          <div class="job-task">${esc(j.task)}</div>
+          <div class="job-meta">
+            <span>${new Date(j.createdAt).toLocaleTimeString()}</span>
+            <span class="job-status ${j.status}">${j.status}</span>
+          </div>
+        `;
+        el.appendChild(div);
+      });
+    } catch (_) {}
+    setTimeout(loadJobQueue, 5000);
+  }
+
+  // ── Toast ──────────────────────────────────────────────
+  let toastTimer = null;
+  function toast(msg, type = 'ok') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast visible ' + type;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('visible'), 2500);
+  }
+
+  // ── Utilities ──────────────────────────────────────────
+  function esc(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;');
+  }
+
+  function fmtNum(n) {
+    if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+    if (n >= 1000)    return (n/1000).toFixed(1) + 'K';
+    return String(n);
+  }
+
+  function fmtDuration(secs) {
+    if (secs < 60)   return secs + 's';
+    if (secs < 3600) return Math.floor(secs/60) + 'm ' + (secs%60) + 's';
+    return Math.floor(secs/3600) + 'h ' + Math.floor((secs%3600)/60) + 'm';
+  }
+
+  // keyboard shortcuts
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeFullscreen();
+    if (e.key === 'F5' && !e.ctrlKey) { e.preventDefault(); quickScreenshot(); }
+  });
+</script>
+
+</body>
+</html>

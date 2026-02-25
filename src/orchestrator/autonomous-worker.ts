@@ -362,7 +362,19 @@ export async function runAutonomousTask(task: WorkerTask): Promise<WorkerResult>
     };
   }
 
-  const model = task.model || 'claude-sonnet-4-6';
+  // Resolve model: explicit task > soul preferred_model > default
+  let model = task.model;
+  if (!model && task.soulId) {
+    try {
+      const soul = getSoulEngine().getSoul(task.soulId);
+      const preferred = soul?.config?.preferred_model as string | undefined;
+      if (preferred) {
+        model = preferred;
+        logger.info(`[Task ${task.id}] Using soul preferred_model: ${preferred} (${task.soulId})`);
+      }
+    } catch { /* soul not found — use default */ }
+  }
+  model = model || 'claude-sonnet-4-6';
   const maxTurns = task.maxTurns || 30;
   const maxBudget = task.maxBudgetUsd || 2.00;
   const log: WorkerLogEntry[] = [];

@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIA — Agent Wake-Up Schedule</title>
+<script src="/d3.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0d1117; color: #e6edf3; font-family: "Segoe UI", system-ui, sans-serif; min-height: 100vh; overflow-x: hidden; }
+header { padding: 32px 48px 20px; border-bottom: 1px solid #21262d; display: flex; align-items: baseline; gap: 16px; background: linear-gradient(180deg,rgba(74,158,255,0.05) 0%,transparent 100%); }
+header h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.4px; color: #f0f6fc; }
+.sub { font-size: 13px; color: #7d8590; text-transform: uppercase; letter-spacing: .5px; }
+.legend { display: flex; gap: 24px; padding: 14px 48px; border-bottom: 1px solid #21262d; flex-wrap: wrap; align-items: center; }
+.legend-item { display: flex; align-items: center; gap: 7px; font-size: 12px; color: #8b949e; }
+.legend-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+#vc { padding: 28px 48px 0; }
+#tsv, #psv { width: 100%; overflow: visible; }
+#tip { position: fixed; background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 14px 18px; max-width: 320px; pointer-events: none; z-index: 9999; display: none; box-shadow: 0 12px 40px rgba(0,0,0,.7); }
+.tn { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+.tt { font-size: 10px; text-transform: uppercase; letter-spacing: .7px; margin-bottom: 9px; color: #484f58; }
+.tq { font-size: 12px; color: #79c0ff; font-style: italic; margin-bottom: 9px; line-height: 1.5; padding: 7px 10px; background: rgba(121,192,255,.07); border-left: 2px solid #79c0ff; border-radius: 0 4px 4px 0; }
+.td { font-size: 12px; color: #8b949e; line-height: 1.5; }
+#ps { margin-top: 36px; }
+#ps h2 { font-size: 11px; font-weight: 600; color: #484f58; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; }
+footer { padding: 20px 48px; border-top: 1px solid #21262d; font-size: 11px; color: #484f58; text-align: center; margin-top: 28px; }
+@keyframes pulse-ring { 0%,100%{opacity:.6} 50%{opacity:.12} }
+.pulse-ring { animation: pulse-ring 2.4s ease-in-out infinite; }
+@keyframes dash-flow { to { stroke-dashoffset: -20; } }
+.fa { animation: dash-flow .55s linear infinite; }
+.an { transition: opacity .15s; } .an:hover { opacity: .82; }
+</style>
+</head>
+<body>
+<header>
+  <h1>PIA — Agent Wake-Up Schedule</h1>
+  <span class="sub">24-hour orchestration cycle · intelligence pipeline</span>
+</header>
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#4a9eff"></div>M1 Hub (Izzit7)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#ff8c42"></div>M2 Worker</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#3fb950"></div>M3 Worker</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#bc8cff"></div>Event-triggered</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f0c040"></div>Always-on</div>
+  <div class="legend-item" style="margin-left:auto;gap:6px">
+    <svg width="14" height="14"><circle cx="7" cy="7" r="5" fill="none" stroke="#484f58" stroke-width="1.5" stroke-dasharray="3,2"/></svg>
+    <span>Hover agents for details</span>
+  </div>
+</div>
+<div id="vc">
+  <svg id="tsv"></svg>
+  <div id="ps"><h2>Intelligence Pipeline</h2><svg id="psv"></svg></div>
+</div>
+<div id="tip">
+  <div class="tn" id="tn"></div>
+  <div class="tt" id="tt"></div>
+  <div class="tq" id="tq"></div>
+  <div class="td" id="td"></div>
+</div>
+<footer>PIA System · Multi-machine AI orchestration · M1 Hub (Izzit7) · M2 (soda-monster-hunter) · M3 (soda-yeti)</footer>
+
+<script>
+var MC={M1:"#4a9eff",M2:"#ff8c42",M3:"#3fb950",event:"#bc8cff",always:"#f0c040"};
+var AG=[
+  {id:"ziggi",name:"Ziggi",machine:"M2",type:"cron",hour:2,
+   tl:"Cron · 02:00 nightly",
+   q:"“What completed in the last 24h that needs review?”",
+   does:"Deep quality audit of all specialist output. Devil’s advocate reviewer — rates 1–10, challenges assumptions.",lane:"tl"},
+  {id:"eliyahu",name:"Eliyahu",machine:"M1",type:"cron",hour:6,
+   tl:"Cron · 06:00 daily",
+   q:"“What patterns in Tim Buc’s records matter this morning?”",
+   does:"Morning briefing synthesis. Reads Records DB → distils intelligence → sends brief to Mic + Fisher2050 inbox.",lane:"tl"},
+  {id:"fisher_am",name:"Fisher2050",machine:"M1",type:"cron",hour:9,
+   tl:"Cron · 09:00 standup",
+   q:"“What’s in my inbox from Eliyahu? What’s overdue?”",
+   does:"Standup report: overdue tasks, in-progress agents, upcoming calendar. Routes work to specialist machines.",lane:"tl"},
+  {id:"fisher_pm",name:"Fisher2050",machine:"M1",type:"cron",hour:18,
+   tl:"Cron · 18:00 evening",
+   q:"“What got done today? What’s queued tomorrow?”",
+   does:"Evening summary. Reviews completed tasks, queues tomorrow’s calendar entries, updates Eliyahu’s feed.",lane:"tl"},
+  {id:"monitor",name:"Monitor",machine:"always",type:"always",hour:null,
+   tl:"Continuous · WebSocket",
+   q:"“Is every machine heartbeating? Any agent stalled?”",
+   does:"Fleet health watchdog. Push-based status broadcaster. Alerts on missed heartbeats and stalled agents.",lane:"al"},
+  {id:"owl",name:"Owl",machine:"always",type:"always",hour:null,
+   tl:"Query-triggered · on-demand",
+   q:"“What’s the current task state for this project?”",
+   does:"Persistent memory store. Read on demand by any agent. Maintains task lists, project states, cross-session context.",lane:"al"},
+  {id:"timbuc",name:"Tim Buc",machine:"M1",type:"event",hour:null,
+   tl:"Event · session complete",
+   q:"“What did this agent just do?”",
+   does:"Archivist. Reads SDK logs → extracts actions, decisions, outputs → files structured summary to Records DB.",lane:"ev"},
+  {id:"controller",name:"Controller",machine:"M1",type:"event",hour:null,
+   tl:"On-demand · from Mic",
+   q:"“Where are all projects right now?”",
+   does:"Routes Mic’s requests to the right agent and machine. Voice UI entry point for the whole system.",lane:"ev"},
+  {id:"farcake",name:"Farcake",machine:"M3",type:"calendar",hour:null,
+   tl:"Calendar · Fisher2050",
+   q:"“What am I researching? What sources should I hit?”",
+   does:"Deep research. Context7, influencer mapping, cross-reference. Feeds Andy with a structured research package.",lane:"ev"},
+  {id:"andy",name:"Andy",machine:"M3",type:"calendar",hour:null,
+   tl:"Calendar · post-Farcake",
+   q:"“What voice do I write in? What’s the channel?”",
+   does:"Editorial writing in Mic’s voice. Consumes Farcake research → produces copy for the specified channel.",lane:"ev"},
+  {id:"birdfountain",name:"Bird Fountain",machine:"M2",type:"calendar",hour:null,
+   tl:"Calendar · Fisher2050",
+   q:"“What’s the creative brief? What batch size?”",
+   does:"Visual production run. Generates image and asset batches from creative briefs. Output pipes to Videohoho.",lane:"ev"},
+  {id:"wingspan",name:"Wingspan",machine:"M3",type:"calendar",hour:null,
+   tl:"Calendar · Fisher2050",
+   q:"“Which deck version is canonical? Who’s the audience?”",
+   does:"Deck update and version tracking. Maintains canonical presentation state. Investor and partner-aware.",lane:"ev"},
+  {id:"coder",name:"Coder Machine",machine:"M2",type:"queue",hour:null,
+   tl:"Job queue · Fisher2050",
+   q:"“What’s the spec? What tests are defined?”",
+   does:"Dedicated coding agent. Pulls from Fisher2050 job queue, reads spec, writes code, runs tests, files output.",lane:"ev"}
+];
+var tip=document.getElementById("tip"),
+    tn=document.getElementById("tn"),
+    tt=document.getElementById("tt"),
+    tq=document.getElementById("tq"),
+    td=document.getElementById("td");
+function showT(e,d){
+  tn.textContent=d.name; tn.style.color=MC[d.machine]||"#e6edf3";
+  tt.textContent=d.tl;
+  tq.textContent=d.q; tq.style.borderLeftColor=MC[d.machine]||"#79c0ff";
+  td.textContent=d.does; tip.style.display="block"; moveT(e);
+}
+function moveT(e){
+  var x=e.clientX+18,y=e.clientY-12,tw=tip.offsetWidth,th=tip.offsetHeight;
+  if(x+tw>window.innerWidth) x=e.clientX-tw-18;
+  if(y+th>window.innerHeight) y=e.clientY-th-12;
+  tip.style.left=x+"px"; tip.style.top=y+"px";
+}
+function hideT(){tip.style.display="none";}
+function bind(sel,d){
+  sel.style("cursor","pointer")
+     .on("mouseover",function(e){showT(e,d);})
+     .on("mousemove",moveT)
+     .on("mouseleave",hideT);
+}
+</script>
+
+<script>
+(function(){
+  var vc=document.getElementById("vc");
+  var W=Math.max(vc.offsetWidth||900,900);
+  var mL=86,mR=50,tY=76,nY=185,aY=335,eY=490,H=620;
+  var svg=d3.select("#tsv").attr("width",W).attr("height",H)
+            .attr("viewBox","0 0 "+W+" "+H);
+  var defs=svg.append("defs");
+  var bgG=defs.append("linearGradient").attr("id","bgG")
+    .attr("x1","0%").attr("y1","0%").attr("x2","0%").attr("y2","100%");
+  bgG.append("stop").attr("offset","0%").attr("stop-color","#0d1117");
+  bgG.append("stop").attr("offset","100%").attr("stop-color","#090d12");
+  svg.append("rect").attr("width",W).attr("height",H)
+     .attr("fill","url(#bgG)").attr("rx",12);
+  var xSc=d3.scaleLinear().domain([0,24]).range([mL,W-mR]);
+  [[0,6],[18,24]].forEach(function(n){
+    svg.append("rect")
+       .attr("x",xSc(n[0])).attr("y",tY-14)
+       .attr("width",xSc(n[1])-xSc(n[0])).attr("height",H-tY+14)
+       .attr("fill","rgba(80,90,180,0.045)");
+  });
+  svg.append("text").attr("x",xSc(3)).attr("y",40)
+     .attr("text-anchor","middle").attr("font-size",9)
+     .attr("fill","#2d333b").attr("letter-spacing",2).text("NIGHT");
+  svg.append("text").attr("x",xSc(21)).attr("y",40)
+     .attr("text-anchor","middle").attr("font-size",9)
+     .attr("fill","#2d333b").attr("letter-spacing",2).text("NIGHT");
+  svg.append("line").attr("x1",mL).attr("y1",tY).attr("x2",W-mR).attr("y2",tY)
+     .attr("stroke","#30363d").attr("stroke-width",2);
+  d3.range(0,25,3).forEach(function(h){
+    var x=xSc(h);
+    svg.append("line").attr("x1",x).attr("y1",tY-7).attr("x2",x).attr("y2",tY+7)
+       .attr("stroke","#484f58").attr("stroke-width",1.5);
+    svg.append("text").attr("x",x).attr("y",tY-18).attr("text-anchor","middle")
+       .attr("font-size",11).attr("fill","#484f58")
+       .text((h%24<10?"0":"")+(h%24)+":00");
+  });
+  d3.range(0,25,1).filter(function(h){return h%3!==0;}).forEach(function(h){
+    var x=xSc(h);
+    svg.append("line").attr("x1",x).attr("y1",tY-3).attr("x2",x).attr("y2",tY+3)
+       .attr("stroke","#21262d").attr("stroke-width",1);
+  });
+  var bW=W-mL-mR;
+  [nY+72,aY+58].forEach(function(y){
+    svg.append("line").attr("x1",mL).attr("y1",y).attr("x2",W-mR).attr("y2",y)
+       .attr("stroke","#21262d").attr("stroke-dasharray","5,4").attr("stroke-width",1);
+  });
+  function sL(x,y,t){
+    svg.append("text").attr("x",x).attr("y",y).attr("text-anchor","end")
+       .attr("font-size",9).attr("fill","#484f58").attr("letter-spacing",1.8).text(t);
+  }
+  sL(mL-8,nY+4,"CRON"); sL(mL-8,aY+4,"ALWAYS"); sL(mL-8,eY+4,"EVENT");
+
+  // CRON AGENTS
+  AG.filter(function(a){return a.lane==="tl";}).forEach(function(d){
+    var x=xSc(d.hour),col=MC[d.machine];
+    svg.append("line").attr("x1",x).attr("y1",tY+9).attr("x2",x).attr("y2",nY-26)
+       .attr("stroke",col).attr("stroke-width",1.5)
+       .attr("stroke-dasharray","4,3").attr("opacity",.38);
+    svg.append("circle").attr("cx",x).attr("cy",tY).attr("r",6)
+       .attr("fill",col).attr("stroke","#0d1117").attr("stroke-width",2.5);
+    var g=svg.append("g").attr("class","an")
+             .attr("transform","translate("+x+","+nY+")");
+    bind(g,d);
+    g.append("circle").attr("r",32).attr("fill",col).attr("opacity",.05);
+    g.append("circle").attr("r",23).attr("fill",col).attr("opacity",.09);
+    g.append("circle").attr("r",19).attr("fill","#161b22")
+     .attr("stroke",col).attr("stroke-width",2.5);
+    var sfx=(d.name==="Fisher2050")?(d.hour===9?" 9am":" 6pm"):"";
+    var ini=(d.name==="Fisher2050")?(d.hour===9?"F9":"F6"):
+            d.name.split(" ").map(function(w){return w[0];}).join("").slice(0,2);
+    g.append("text").attr("text-anchor","middle").attr("dy","0.35em")
+     .attr("font-size",12).attr("font-weight","700").attr("fill",col).text(ini);
+    g.append("text").attr("text-anchor","middle").attr("y",33)
+     .attr("font-size",11).attr("fill","#e6edf3").attr("font-weight","600")
+     .text(d.name+sfx);
+    g.append("text").attr("text-anchor","middle").attr("y",46)
+     .attr("font-size",9).attr("fill",col).attr("opacity",.75).text(d.machine);
+  });
+
+  // ALWAYS-ON BAND
+  svg.append("rect").attr("x",mL).attr("y",aY-34).attr("width",bW).attr("height",68)
+     .attr("fill","rgba(240,192,64,0.035)")
+     .attr("stroke","rgba(240,192,64,0.16)").attr("stroke-width",1).attr("rx",8);
+  var hbPts=d3.range(0,bW,3).map(function(x,i){
+    return{x:x+mL,y:aY+Math.sin(i*0.32)*6};
+  });
+  var lFn=d3.line().x(function(p){return p.x;}).y(function(p){return p.y;})
+              .curve(d3.curveCatmullRom);
+  svg.append("path").datum(hbPts).attr("d",lFn)
+     .attr("fill","none").attr("stroke","rgba(240,192,64,0.11)").attr("stroke-width",1.5);
+  var alAg=AG.filter(function(a){return a.lane==="al";});
+  var alSp=bW/(alAg.length+1);
+  alAg.forEach(function(d,i){
+    var x=mL+alSp*(i+1),col=MC[d.machine];
+    var g=svg.append("g").attr("class","an")
+             .attr("transform","translate("+x+","+aY+")");
+    bind(g,d);
+    g.append("circle").attr("class","pulse-ring").attr("r",20)
+     .attr("fill","none").attr("stroke",col).attr("stroke-width",1.5).attr("opacity",.3);
+    g.append("circle").attr("r",24).attr("fill",col).attr("opacity",.06);
+    g.append("circle").attr("r",16).attr("fill","#161b22")
+     .attr("stroke",col).attr("stroke-width",2);
+    var ini=d.name.split(" ").map(function(w){return w[0];}).join("").slice(0,2);
+    g.append("text").attr("text-anchor","middle").attr("dy","0.35em")
+     .attr("font-size",11).attr("font-weight","700").attr("fill",col).text(ini);
+    g.append("text").attr("text-anchor","middle").attr("y",28)
+     .attr("font-size",11).attr("fill","#e6edf3").attr("font-weight","600").text(d.name);
+    g.append("text").attr("text-anchor","middle").attr("y",41)
+     .attr("font-size",9).attr("fill",col).attr("opacity",.75).text("ALWAYS ON");
+  });
+
+  // EVENT LANE
+  svg.append("rect").attr("x",mL).attr("y",eY-44).attr("width",bW).attr("height",120)
+     .attr("fill","rgba(0,0,0,0)").attr("stroke","#21262d")
+     .attr("stroke-width",1).attr("rx",8);
+  svg.append("text").attr("x",mL+10).attr("y",eY-28)
+     .attr("font-size",9).attr("fill","#484f58").attr("letter-spacing",1.2)
+     .text("SESSION COMPLETE  ·  CALENDAR  ·  JOB QUEUE");
+  var BC={event:"#bc8cff",calendar:"#3fb950",queue:"#ff8c42"};
+  var evAg=AG.filter(function(a){return a.lane==="ev";});
+  var evSp=bW/(evAg.length+1);
+  evAg.forEach(function(d,i){
+    var x=mL+evSp*(i+1),col=MC[d.machine],bc=BC[d.type]||"#8b949e";
+    var g=svg.append("g").attr("class","an")
+             .attr("transform","translate("+x+","+eY+")");
+    bind(g,d);
+    g.append("rect").attr("x",-26).attr("y",-50).attr("width",52).attr("height",15)
+     .attr("fill","rgba(0,0,0,0)").attr("stroke",bc)
+     .attr("stroke-width",1).attr("rx",4);
+    g.append("text").attr("text-anchor","middle").attr("y",-38)
+     .attr("font-size",8).attr("fill",bc).attr("letter-spacing",.6)
+     .text(d.type.toUpperCase());
+    g.append("circle").attr("r",19).attr("fill",col).attr("opacity",.07);
+    g.append("circle").attr("r",15).attr("fill","#161b22")
+     .attr("stroke",col).attr("stroke-width",2);
+    var ini=d.name==="Coder Machine"?"CM":d.name==="Bird Fountain"?"BF":
+            d.name.split(" ").map(function(w){return w[0];}).join("").slice(0,2);
+    g.append("text").attr("text-anchor","middle").attr("dy","0.35em")
+     .attr("font-size",10).attr("font-weight","700").attr("fill",col).text(ini);
+    var pts=d.name.split(" ");
+    if(pts.length>1&&d.name.length>9){
+      g.append("text").attr("text-anchor","middle").attr("y",28)
+       .attr("font-size",9).attr("fill","#e6edf3").attr("font-weight","600").text(pts[0]);
+      g.append("text").attr("text-anchor","middle").attr("y",39)
+       .attr("font-size",9).attr("fill","#e6edf3").attr("font-weight","600")
+       .text(pts.slice(1).join(" "));
+      g.append("text").attr("text-anchor","middle").attr("y",51)
+       .attr("font-size",9).attr("fill",col).attr("opacity",.75).text(d.machine);
+    } else {
+      g.append("text").attr("text-anchor","middle").attr("y",28)
+       .attr("font-size",9).attr("fill","#e6edf3").attr("font-weight","600").text(d.name);
+      g.append("text").attr("text-anchor","middle").attr("y",40)
+       .attr("font-size",9).attr("fill",col).attr("opacity",.75).text(d.machine);
+    }
+  });
+})();
+</script>
+
+<script>
+(function(){
+  var vc=document.getElementById("vc");
+  var W=Math.max(vc.offsetWidth||900,900);
+  var H=170;
+  var svg=d3.select("#psv").attr("width",W).attr("height",H)
+            .attr("viewBox","0 0 "+W+" "+H);
+  svg.append("rect").attr("width",W).attr("height",H)
+     .attr("fill","#0d1117").attr("rx",12);
+  var pN=[
+    {lbl:"Any Agent",  sub:"session ends",          col:"#8b949e", icon:"⚙",  isDB:false,isFinal:false},
+    {lbl:"Tim Buc",    sub:"reads SDK logs",         col:"#4a9eff", icon:"TB",      isDB:false,isFinal:false},
+    {lbl:"Records DB", sub:"agent_records table",    col:"#30363d", icon:"DB",      isDB:true, isFinal:false},
+    {lbl:"Eliyahu",    sub:"6am synthesis",          col:"#4a9eff", icon:"EL",      isDB:false,isFinal:false},
+    {lbl:"F2050 Inbox",sub:"briefing filed",         col:"#4a9eff", icon:"F→", isDB:false,isFinal:false},
+    {lbl:"9am Standup",sub:"routes to fleet",        col:"#4a9eff", icon:"F↑", isDB:false,isFinal:false},
+    {lbl:"Mic",        sub:"briefed + actioned",     col:"#f0c040", icon:"M",       isDB:false,isFinal:true}
+  ];
+  var nW=104,nH=52,ml=36,mr=36;
+  var usW=W-ml-mr;
+  var gap=(usW-pN.length*nW)/(pN.length-1);
+  var cy=H/2-14;
+  pN.forEach(function(n,i){n.x=ml+i*(nW+gap);n.y=cy-nH/2;n.cx=n.x+nW/2;n.cy=cy;});
+  // arrows between nodes
+  pN.forEach(function(n,i){
+    if(i===pN.length-1)return;
+    var nx=pN[i+1],x1=n.x+nW,x2=nx.x,fc=i<2?"#bc8cff":"#4a9eff";
+    svg.append("line").attr("x1",x1).attr("y1",cy).attr("x2",x2).attr("y2",cy)
+       .attr("stroke","#21262d").attr("stroke-width",3);
+    svg.append("line").attr("x1",x1).attr("y1",cy).attr("x2",x2).attr("y2",cy)
+       .attr("stroke",fc).attr("stroke-width",2)
+       .attr("stroke-dasharray","6,4").attr("class","fa")
+       .style("animation-delay",(i*0.14)+"s");
+    svg.append("polygon")
+       .attr("points",(x2+1)+","+cy+" "+(x2-7)+","+(cy-4)+" "+(x2-7)+","+(cy+4))
+       .attr("fill",fc).attr("opacity",.8);
+  });
+  // nodes
+  pN.forEach(function(n){
+    var g=svg.append("g").attr("transform","translate("+n.x+","+n.y+")");
+    if(n.isDB){
+      g.append("ellipse").attr("cx",nW/2).attr("cy",9)
+       .attr("rx",nW/2-3).attr("ry",7)
+       .attr("fill","#21262d").attr("stroke",n.col).attr("stroke-width",1.5);
+      g.append("rect").attr("x",3).attr("y",9).attr("width",nW-6).attr("height",nH-18)
+       .attr("fill","#161b22").attr("stroke",n.col).attr("stroke-width",1.5);
+      g.append("ellipse").attr("cx",nW/2).attr("cy",nH-9)
+       .attr("rx",nW/2-3).attr("ry",7)
+       .attr("fill","#161b22").attr("stroke",n.col).attr("stroke-width",1.5);
+    } else {
+      var rx=n.isFinal?26:8;
+      g.append("rect").attr("width",nW).attr("height",nH).attr("rx",rx)
+       .attr("fill","#161b22").attr("stroke",n.col)
+       .attr("stroke-width",n.isFinal?2.5:2);
+      if(n.isFinal)
+        g.append("rect").attr("width",nW).attr("height",nH).attr("rx",rx)
+         .attr("fill",n.col).attr("opacity",.08);
+    }
+    g.append("text").attr("x",nW/2).attr("y",21).attr("text-anchor","middle")
+     .attr("dominant-baseline","middle").attr("font-size",13)
+     .attr("font-weight","700").attr("fill",n.col).text(n.icon);
+    g.append("text").attr("x",nW/2).attr("y",39).attr("text-anchor","middle")
+     .attr("font-size",n.lbl.length>9?9:10).attr("font-weight","600")
+     .attr("fill","#e6edf3").text(n.lbl);
+    svg.append("text").attr("x",n.cx).attr("y",n.y+nH+14).attr("text-anchor","middle")
+     .attr("font-size",9).attr("fill","#484f58").text(n.sub);
+  });
+  svg.append("text").attr("x",ml).attr("y",14).attr("font-size",9)
+     .attr("fill","#484f58").attr("letter-spacing",1)
+     .text("INTELLIGENCE PIPELINE  ·  Tim Buc → Records DB → Eliyahu → Fisher2050 → Mic");
+})();
+</script>
+</body>
+</html>

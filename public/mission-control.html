@@ -536,6 +536,10 @@
       font-weight: 700;
     }
 
+    /* ── Hidden side panels (toggle via header button) ── */
+    #fisherPanel, #calendarPanel, #recordsPanel { display: none; }
+    #fisherPanel.panels-visible, #calendarPanel.panels-visible, #recordsPanel.panels-visible { display: flex; }
+
     /* ── Right Panel: Prompt Queue ── */
     .prompt-panel {
       width: 360px;
@@ -989,6 +993,56 @@
     .terminal-input-bar button:hover { background: #2ea043; }
     .terminal-input-bar button:disabled { background: #333; color: #666; cursor: not-allowed; }
 
+    /* Voice recording mic button */
+    .mic-btn {
+      background: #161625;
+      color: #c9d1d9;
+      border: 1px solid #2a2a3e;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .mic-btn:hover { border-color: #9b4dca; }
+    .mic-btn.recording {
+      background: #2a1014;
+      border-color: #f85149;
+      animation: mic-pulse 1s ease-in-out infinite;
+    }
+    @keyframes mic-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(248, 81, 73, 0.3); }
+      50% { box-shadow: 0 0 0 8px rgba(248, 81, 73, 0); }
+    }
+    .mic-duration {
+      font-size: 11px;
+      color: #f85149;
+      font-variant-numeric: tabular-nums;
+      margin-left: 4px;
+      display: none;
+    }
+    .mic-duration.active { display: inline; }
+    .header-mic-btn {
+      font-size: 12px;
+      padding: 5px 10px;
+      border: 1px solid #2a2a3e;
+      border-radius: 6px;
+      background: transparent;
+      color: #c9d1d9;
+      cursor: pointer;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+      transition: all 0.15s;
+    }
+    .header-mic-btn:hover { border-color: #9b4dca; }
+    .header-mic-btn.recording {
+      background: #2a1014;
+      border-color: #f85149;
+      animation: mic-pulse 1s ease-in-out infinite;
+    }
+
     /* ── Agent Status Banner ── */
     .agent-status-banner {
       display: none;
@@ -1163,11 +1217,14 @@
         <button class="view-toggle-btn" onclick="setView('grid')" id="viewGrid">Grid</button>
       </div>
       <button class="btn purple" onclick="openSpawnModal()">+ Spawn Agent</button>
+      <button class="btn ghost" id="togglePanelsBtn" onclick="toggleSidePanels()" style="font-size:11px;padding:5px 10px;">Show Panels</button>
       <a href="/pia-admin.html" style="color:#58a6ff;font-size:12px;text-decoration:none;padding:5px 12px;border:1px solid #2a2a3e;border-radius:6px;transition:all 0.2s;">PIA Admin</a>
       <div class="ws-status">
         <div class="ws-dot"></div>
         <span>Connected</span>
       </div>
+      <button class="header-mic-btn" id="headerMicBtn" title="Hold to record a quick voice note">🎤 Note</button>
+      <a href="/voice-notes.html" style="color:#58a6ff;font-size:12px;text-decoration:none;padding:5px 8px;" title="Voice Notes page">Voice</a>
       <div class="ws-status" id="waStatus" style="cursor:pointer;" onclick="toggleWhatsApp()" title="Click to connect/disconnect WhatsApp">
         <div class="ws-dot" id="waDot" style="background:#484f58;"></div>
         <span id="waLabel">WhatsApp</span>
@@ -1260,6 +1317,8 @@
 
       <!-- Terminal Input Bar -->
       <div class="terminal-input-bar" id="terminalInputBar" style="display:none;">
+        <button class="mic-btn" id="terminalMicBtn" title="Hold to record voice note">🎤</button>
+        <span class="mic-duration" id="terminalMicDuration">0:00</span>
         <input type="text" id="terminalInput" placeholder="Type a message to the agent..."
                onkeydown="if(event.key==='Enter')sendTerminalInput()">
         <button onclick="sendTerminalInput()" id="terminalSendBtn">Send</button>
@@ -1648,6 +1707,25 @@ let ws = null;
 let wsConnected = false;
 let souls = [];           // from /api/souls (Change 1)
 let currentBranch = 'unknown'; // from .git/HEAD (Change 6)
+
+// ── SIDE PANELS TOGGLE ──
+function toggleSidePanels() {
+  const panels = document.querySelectorAll('#fisherPanel, #calendarPanel, #recordsPanel');
+  const btn = document.getElementById('togglePanelsBtn');
+  const visible = panels[0].classList.contains('panels-visible');
+  panels.forEach(p => p.classList.toggle('panels-visible', !visible));
+  btn.textContent = visible ? 'Show Panels' : 'Hide Panels';
+  localStorage.setItem('pia-show-panels', !visible);
+}
+(function restorePanelPref() {
+  if (localStorage.getItem('pia-show-panels') === 'true') {
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('#fisherPanel, #calendarPanel, #recordsPanel')
+        .forEach(p => p.classList.add('panels-visible'));
+      document.getElementById('togglePanelsBtn').textContent = 'Hide Panels';
+    });
+  }
+})();
 
 // ── API HELPERS ──
 async function api(path, opts = {}) {
@@ -2513,6 +2591,126 @@ async function sendTerminalInput() {
     renderTerminal(selectedAgent);
   }
 }
+
+// ── VOICE RECORDING ──
+(function initVoiceRecording() {
+  let vcMediaRecorder = null;
+  let vcChunks = [];
+  let vcStartTime = null;
+  let vcTimer = null;
+  let vcTarget = null; // 'terminal' or 'header'
+
+  function vcGetMime() {
+    const types = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg'];
+    for (const t of types) { if (MediaRecorder.isTypeSupported(t)) return t; }
+    return 'audio/webm';
+  }
+
+  async function vcStart(target) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+      });
+      vcMediaRecorder = new MediaRecorder(stream, { mimeType: vcGetMime() });
+      vcChunks = [];
+      vcTarget = target;
+      vcMediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) vcChunks.push(e.data); };
+      vcMediaRecorder.start(100);
+      vcStartTime = Date.now();
+
+      const btn = target === 'terminal' ? document.getElementById('terminalMicBtn') : document.getElementById('headerMicBtn');
+      const dur = document.getElementById('terminalMicDuration');
+      if (btn) btn.classList.add('recording');
+      if (target === 'terminal' && dur) dur.classList.add('active');
+
+      vcTimer = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - vcStartTime) / 1000);
+        const m = Math.floor(elapsed / 60);
+        const s = String(elapsed % 60).padStart(2, '0');
+        if (dur) dur.textContent = `${m}:${s}`;
+      }, 100);
+    } catch (err) {
+      console.error('Mic access failed:', err);
+      showToast('Microphone access denied');
+    }
+  }
+
+  async function vcStop() {
+    if (!vcMediaRecorder || vcMediaRecorder.state === 'inactive') return;
+    clearInterval(vcTimer);
+
+    const btn = vcTarget === 'terminal' ? document.getElementById('terminalMicBtn') : document.getElementById('headerMicBtn');
+    const dur = document.getElementById('terminalMicDuration');
+    if (btn) btn.classList.remove('recording');
+    if (dur) { dur.classList.remove('active'); dur.textContent = '0:00'; }
+
+    return new Promise((resolve) => {
+      vcMediaRecorder.onstop = async () => {
+        vcMediaRecorder.stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(vcChunks, { type: vcMediaRecorder.mimeType });
+        const elapsed = (Date.now() - vcStartTime) / 1000;
+        const target = vcTarget;
+
+        if (elapsed < 0.5) { showToast('Too short — hold longer'); resolve(); return; }
+
+        showToast('Transcribing...');
+        try {
+          const arrayBuffer = await blob.arrayBuffer();
+          const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+          const result = await api('/api/voice-notes/transcribe', {
+            method: 'POST',
+            body: { audio: base64, mimeType: blob.type, source: 'dashboard', agentId: selectedAgent || undefined },
+          });
+
+          if (target === 'terminal' && selectedAgent) {
+            // Auto-send to active agent
+            const input = document.getElementById('terminalInput');
+            input.value = result.transcript;
+            if (!outputBuffers[selectedAgent]) outputBuffers[selectedAgent] = [];
+            outputBuffers[selectedAgent].push({ type: 'prompt', text: '> \uD83C\uDFA4 ' + result.transcript });
+            renderTerminal(selectedAgent);
+            input.value = '';
+            await api(`/api/mc/agents/${selectedAgent}/respond`, { method: 'POST', body: { choice: result.transcript } });
+            showToast(`Voice sent (${result.duration.toFixed(1)}s, $${result.cost.toFixed(4)})`);
+          } else {
+            showToast(`Voice note saved (${result.duration.toFixed(1)}s): "${result.transcript.substring(0, 60)}..."`);
+          }
+        } catch (err) {
+          showToast('Transcription failed: ' + err.message);
+        }
+        resolve();
+      };
+      vcMediaRecorder.stop();
+    });
+  }
+
+  let vcRecording = false;
+
+  function bindMic(el, target) {
+    if (!el) return;
+    el.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      if (vcRecording) return;
+      vcRecording = true;
+      vcStart(target);
+    });
+    el.addEventListener('pointerup', async (e) => {
+      e.preventDefault();
+      if (!vcRecording) return;
+      vcRecording = false;
+      await vcStop();
+    });
+    el.addEventListener('pointerleave', async () => {
+      if (!vcRecording) return;
+      vcRecording = false;
+      await vcStop();
+    });
+    el.addEventListener('contextmenu', (e) => e.preventDefault());
+  }
+
+  bindMic(document.getElementById('terminalMicBtn'), 'terminal');
+  bindMic(document.getElementById('headerMicBtn'), 'header');
+})();
 
 // ── TOGGLE MODE (REAL API) ──
 async function toggleMode() {

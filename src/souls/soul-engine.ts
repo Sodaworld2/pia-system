@@ -264,8 +264,19 @@ export class SoulEngine {
   seedSoul(def: SoulDefinition): Soul {
     const existing = this.getSoul(def.id);
     if (existing) {
-      logger.info(`Soul already exists: ${def.name} — skipping seed`);
-      return existing;
+      // Always update from JSON on startup — picks up config changes like preferred_model
+      this.updateSoul(def.id, {
+        name: def.name,
+        role: def.role,
+        personality: def.personality,
+        goals: def.goals,
+        relationships: def.relationships,
+        system_prompt: def.system_prompt,
+        config: def.config,
+        email: def.email,
+      });
+      logger.info(`Soul refreshed: ${def.name}`);
+      return this.getSoul(def.id)!;
     }
     return this.createSoul(def);
   }

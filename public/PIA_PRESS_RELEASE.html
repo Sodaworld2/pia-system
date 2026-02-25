@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Press Release — SodaLabs Launches PIA</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #fefefe;
+    --ink: #111;
+    --ink2: #333;
+    --ink3: #666;
+    --ink4: #999;
+    --red: #c0392b;
+    --border: #ddd;
+    --accent-bg: #f8f8f8;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: #e8e8e8;
+    font-family: 'Inter', Arial, sans-serif;
+    color: var(--ink);
+  }
+
+  /* Print-style wrapper */
+  .pr-page {
+    max-width: 820px; margin: 40px auto;
+    background: var(--paper);
+    box-shadow: 0 4px 40px rgba(0,0,0,0.15);
+  }
+
+  /* Header strip */
+  .pr-header {
+    background: var(--ink); color: #fff;
+    padding: 20px 56px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 4px solid var(--red);
+  }
+  .pr-logo { font-size: 22px; font-weight: 700; letter-spacing: 0.04em; }
+  .pr-logo span { color: var(--red); }
+  .pr-type {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.2em;
+    text-transform: uppercase; color: rgba(255,255,255,0.5);
+  }
+
+  /* Dateline bar */
+  .pr-dateline {
+    background: var(--accent-bg); border-bottom: 1px solid var(--border);
+    padding: 12px 56px;
+    font-size: 12px; color: var(--ink3); letter-spacing: 0.04em;
+  }
+  .pr-dateline strong { color: var(--ink2); }
+
+  /* Body */
+  .pr-body { padding: 48px 56px 64px; }
+
+  /* FOR IMMEDIATE RELEASE */
+  .for-release {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--red); margin-bottom: 28px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .for-release::after { content: ''; flex:1; height: 1px; background: var(--red); opacity: 0.3; }
+
+  /* Headline */
+  .pr-headline {
+    font-size: clamp(22px, 3.5vw, 34px);
+    font-weight: 700; line-height: 1.18;
+    margin-bottom: 12px; color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .pr-subhead {
+    font-size: 16px; color: var(--ink3); line-height: 1.65;
+    font-weight: 400; margin-bottom: 36px;
+    padding-bottom: 28px; border-bottom: 1px solid var(--border);
+  }
+
+  /* Text */
+  .pr-body p {
+    font-size: 15px; line-height: 1.85; color: var(--ink2);
+    margin-bottom: 18px;
+  }
+  .pr-body p.lead {
+    font-size: 17px; font-weight: 500; color: var(--ink); line-height: 1.7;
+  }
+
+  /* Dateline city */
+  .city { font-weight: 700; text-transform: uppercase; color: var(--ink); }
+
+  /* Quote block */
+  .pr-quote {
+    border-left: 3px solid var(--red);
+    margin: 28px 0; padding: 4px 0 4px 24px;
+    font-size: 16px; font-style: italic; line-height: 1.7; color: var(--ink2);
+  }
+  .pr-quote cite {
+    display: block; font-style: normal;
+    font-size: 12px; color: var(--ink4); margin-top: 8px;
+    font-weight: 600; letter-spacing: 0.04em;
+  }
+
+  /* Section break */
+  .pr-section-head {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--ink3); margin: 32px 0 12px;
+  }
+
+  /* Bullet list */
+  .pr-bullets { list-style: none; margin-bottom: 20px; }
+  .pr-bullets li {
+    font-size: 15px; color: var(--ink2); line-height: 1.7;
+    padding: 6px 0 6px 20px; border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .pr-bullets li::before { content: '–'; position: absolute; left: 0; color: var(--red); }
+  .pr-bullets li:last-child { border-bottom: none; }
+  .pr-bullets li strong { color: var(--ink); }
+
+  /* Key stats box */
+  .stats-box {
+    background: var(--accent-bg); border: 1px solid var(--border);
+    padding: 24px 28px; margin: 24px 0;
+  }
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .stat-item { text-align: center; }
+  .stat-num { font-size: 28px; font-weight: 700; color: var(--red); line-height: 1; margin-bottom: 4px; }
+  .stat-lbl { font-size: 11px; color: var(--ink4); line-height: 1.4; }
+
+  /* Triple divider */
+  .triple-rule { text-align: center; color: var(--ink4); letter-spacing: 0.3em; margin: 32px 0; font-size: 18px; }
+
+  /* BOILERPLATE */
+  .pr-boilerplate {
+    border-top: 2px solid var(--ink); padding-top: 24px; margin-top: 40px;
+  }
+  .pr-boilerplate-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--ink3); margin-bottom: 12px;
+  }
+  .pr-boilerplate p { font-size: 13px; color: var(--ink3); line-height: 1.7; }
+
+  /* CONTACT BLOCK */
+  .pr-contact {
+    border-top: 1px solid var(--border); padding-top: 24px; margin-top: 24px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 32px;
+  }
+  .contact-block-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.15em;
+    text-transform: uppercase; color: var(--ink4); margin-bottom: 10px;
+  }
+  .contact-block p { font-size: 13px; color: var(--ink3); line-height: 1.7; }
+  .contact-block a { color: var(--red); text-decoration: none; }
+
+  /* Page end mark */
+  .pr-end { text-align: center; margin-top: 40px; font-size: 20px; color: var(--ink4); letter-spacing: 0.3em; }
+
+  /* Footer */
+  .pr-footer {
+    background: var(--accent-bg); border-top: 1px solid var(--border);
+    padding: 14px 56px; display: flex; justify-content: space-between;
+    font-size: 11px; color: var(--ink4);
+  }
+
+  @media print {
+    body { background: white; }
+    .pr-page { box-shadow: none; margin: 0; }
+  }
+
+  @media (max-width: 700px) {
+    .pr-body { padding: 32px 28px 48px; }
+    .pr-header, .pr-dateline, .pr-footer { padding-left: 28px; padding-right: 28px; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .pr-contact { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="pr-page">
+
+  <!-- HEADER -->
+  <div class="pr-header">
+    <div class="pr-logo">Soda<span>Labs</span></div>
+    <div class="pr-type">Press Release</div>
+  </div>
+
+  <!-- DATELINE BAR -->
+  <div class="pr-dateline">
+    <strong>JOHANNESBURG, South Africa</strong> &nbsp;·&nbsp; 22 February 2026 &nbsp;·&nbsp;
+    For Immediate Release
+  </div>
+
+  <div class="pr-body">
+
+    <!-- FOR IMMEDIATE RELEASE -->
+    <div class="for-release">For Immediate Release</div>
+
+    <!-- HEADLINE -->
+    <h1 class="pr-headline">
+      SodaLabs Launches PIA: The World's First<br>
+      Commercially Deployed AI Workforce Platform<br>
+      with Persistent Agent Identity and Memory
+    </h1>
+    <p class="pr-subhead">
+      Platform gives businesses a team of 12 named AI agents — each with a defined role, persistent memory, and individual email address — running on privately-owned hardware at a fraction of traditional staffing costs. First deployments operational in Johannesburg, South Africa.
+    </p>
+
+    <!-- LEAD PARA -->
+    <p class="lead">
+      <span class="city">Johannesburg, South Africa, 22 February 2026</span> — SodaLabs, a South African technology studio specialising in AI systems architecture, today announced the commercial launch of PIA (Project Intelligence Agent), a multi-machine AI orchestration platform that gives businesses access to a team of twelve specialised AI agents — each with a persistent identity, growing memory, and individual email address — deployed on the client's own hardware and running continuously without human supervision.
+    </p>
+
+    <p>
+      Unlike conventional AI assistant products that begin each session with no memory of prior interactions, PIA agents accumulate institutional knowledge across every session they run. The platform's proprietary Soul System assigns each agent a defined personality, professional role, relationship structure, operational rules, and memory layer that persists indefinitely — enabling agents to function as consistent, evolving team members rather than generic tools that must be re-trained with each use.
+    </p>
+
+    <div class="pr-quote">
+      "The problem with every AI tool on the market today is that it forgets you the moment you close the window. We built PIA to solve that. Every agent on your team knows your business, knows your standards, knows your clients. They get better the longer they work with you — exactly the way a trusted employee does."
+      <cite>— Mic Louw, Founder, SodaLabs</cite>
+    </div>
+
+    <div class="stats-box">
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-num">$0.12</div>
+          <div class="stat-lbl">Average cost of a full competitive research report, down from $50–200 in human time</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">12</div>
+          <div class="stat-lbl">AI agents per deployment, each with distinct identity, role, and persistent memory</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">~$2</div>
+          <div class="stat-lbl">Estimated monthly operating cost for the full 12-agent team (API usage only)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION: HOW IT WORKS -->
+    <div class="pr-section-head">How It Works</div>
+
+    <p>
+      PIA operates across a fleet of three to five computers connected via encrypted mesh networking. The hub machine — designated M1 — runs the platform's orchestration layer, dashboard, and strategic agents including Fisher2050 (Project Manager), Eliyahu (Intelligence Analyst), and Tim Buc (Records Manager). Worker machines run specialist agents on a scheduled or event-triggered basis: Farcake (Research), Andy (Editorial), Ziggi (Quality Review), Wingspan (Presentations), and Bird Fountain (Design Production).
+    </p>
+
+    <p>
+      At the core of the platform is PIA's Intelligence Pipeline — a self-reinforcing improvement loop in which every completed agent session is automatically archived and analysed: the archivist agent (Tim Buc) files all session logs, the analyst agent (Eliyahu) reads the organised records and synthesises patterns, and these patterns are fed back into the project manager's (Fisher2050's) task briefings. The result is a system that improves its understanding of the client's business with each passing week, without any manual intervention.
+    </p>
+
+    <p>
+      All data remains on the client's hardware. PIA does not route client information through third-party cloud servers. This architecture addresses a critical concern for professional services firms, legal practices, and any organisation handling confidential client information.
+    </p>
+
+    <!-- SECTION: MARKET -->
+    <div class="pr-section-head">Market Context</div>
+
+    <p>
+      The commercial launch of PIA comes as independent research confirms a structural transformation in the economics of knowledge work. Anthropic CEO Dario Amodei publicly placed the probability of a one-person company generating over one billion dollars in annual revenue using AI agent fleets in 2026 at seventy to eighty percent. Emergent, an AI-native software platform, reached one hundred million dollars in annual recurring revenue within eight months of launch, with seventy percent of its 150,000 paying customers reporting no prior technical background. Documented solo operators using AI agent swarms have reported six-figure annual revenues with zero human employees.
+    </p>
+
+    <div class="pr-quote">
+      "The unit economics of knowledge work have already collapsed. A competitive research brief that cost $200 in human time now costs twelve cents in compute. The businesses that build this infrastructure first — and accumulate the institutional knowledge in their AI workforce — will have an advantage that compounds in exactly the same way human expertise compounds."
+      <cite>— Mic Louw, Founder, SodaLabs</cite>
+    </div>
+
+    <!-- SECTION: DIFFERENTIATORS -->
+    <div class="pr-section-head">Key Differentiators from Existing AI Platforms</div>
+
+    <ul class="pr-bullets">
+      <li><strong>Persistent Agent Identity:</strong> Proprietary Soul System gives each agent a permanent personality, memory, goals, and relationship structure across all sessions — not achievable on any current commercial platform including OpenAI Assistants, Microsoft Copilot Studio, or CrewAI.</li>
+      <li><strong>Private Hardware Deployment:</strong> The entire platform runs on client-owned hardware. No data leaves the client's network. No monthly per-seat cloud subscription. One deployment, permanently client-owned.</li>
+      <li><strong>Calendar-Triggered Scheduling:</strong> Fisher2050 manages agent deployment through a calendar system — scheduling agent spawns based on project requirements, machine availability, and task dependencies. Eliminates manual agent triggering.</li>
+      <li><strong>Intelligence Loop:</strong> Tim Buc → Records DB → Eliyahu → Fisher2050 creates a self-improving feedback cycle. Agent quality and contextual understanding improve with every session completed, without human configuration.</li>
+      <li><strong>Individual Agent Email Addresses:</strong> Each agent has a real, monitored email address (e.g., fisher2050@sodalabs.ai). Clients can email a task directly to an agent and receive output without opening any dashboard — a first in commercial AI systems.</li>
+      <li><strong>Multi-Machine Fleet Orchestration:</strong> PIA coordinates agents across multiple physical machines connected via WireGuard-encrypted mesh network, enabling parallel execution at scale not achievable on single-machine frameworks.</li>
+    </ul>
+
+    <!-- SECTION: AVAILABILITY -->
+    <div class="pr-section-head">Availability and Engagement Model</div>
+
+    <p>
+      PIA is available as a custom deployment engagement rather than a SaaS subscription. Each deployment is configured specifically for the client's business, with agents trained on the client's voice, standards, and operational context. First commercial deployments are operational in Johannesburg. SodaLabs is accepting engagement inquiries from professional services firms, creative agencies, and technology businesses internationally.
+    </p>
+
+    <p>
+      The company has not disclosed revenue figures for initial commercial deployments. SodaLabs is a privately held studio. No venture capital funding has been announced.
+    </p>
+
+    <div class="triple-rule">— # # # —</div>
+
+    <!-- BOILERPLATE -->
+    <div class="pr-boilerplate">
+      <div class="pr-boilerplate-label">About SodaLabs</div>
+      <p>
+        SodaLabs is a Johannesburg-based technology studio specialising in AI systems architecture and multi-agent orchestration. The company designs, builds, and deploys custom AI workforce systems for businesses in Africa and internationally. SodaLabs' flagship platform, PIA (Project Intelligence Agent), represents the first commercially deployed AI system with persistent agent identity, private hardware orchestration, and an autonomous intelligence improvement loop. SodaLabs is part of the broader SodaWorld ecosystem, which includes GumballCMS, a WhatsApp-first content management platform, and Videohoho, an AI-assisted video production tool.
+      </p>
+    </div>
+
+    <!-- CONTACT -->
+    <div class="pr-contact">
+      <div class="contact-block">
+        <div class="contact-block-label">Media Contact</div>
+        <p>
+          Mic Louw<br>
+          Founder, SodaLabs<br>
+          <a href="mailto:mic@sodalabs.ai">mic@sodalabs.ai</a><br>
+          Johannesburg, South Africa
+        </p>
+      </div>
+      <div class="contact-block">
+        <div class="contact-block-label">Additional Information</div>
+        <p>
+          Technical briefings and product demonstrations available on request for qualifying media, analysts, and investors.<br><br>
+          This press release may be reprinted in full with attribution to SodaLabs.
+        </p>
+      </div>
+    </div>
+
+    <div class="pr-end">– end –</div>
+
+  </div>
+
+  <div class="pr-footer">
+    <span>SodaLabs · Johannesburg, South Africa · mic@sodalabs.ai</span>
+    <span>22 February 2026 · For Immediate Release</span>
+  </div>
+
+</div>
+
+<!-- PIA NAV -->
+<div style="height:52px"></div>
+<nav id="pia-nav" style="position:fixed;bottom:0;left:0;right:0;z-index:9999;background:rgba(6,6,15,0.97);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;height:48px;padding:0 28px;gap:14px;font-family:'Inter',system-ui,Arial,sans-serif;">
+  <a href="pitch.html" style="color:rgba(255,255,255,0.35);text-decoration:none;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;white-space:nowrap;flex-shrink:0;">SodaLabs · PIA</a>
+  <div style="width:1px;height:20px;background:rgba(255,255,255,0.1);flex-shrink:0;"></div>
+  <span style="color:rgba(255,255,255,0.2);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;white-space:nowrap;flex-shrink:0;">View as</span>
+  <div style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;">
+    <a href="PIA_CLIENT_PITCH.html" style="font-size:11px;color:rgba(255,255,255,0.5);text-decoration:none;padding:5px 13px;border-radius:100px;border:1px solid rgba(255,255,255,0.12);white-space:nowrap;">Investor Pitch</a>
+    <a href="PIA_FOR_HUMANS.html" style="font-size:11px;color:rgba(255,255,255,0.5);text-decoration:none;padding:5px 13px;border-radius:100px;border:1px solid rgba(255,255,255,0.12);white-space:nowrap;">For Humans</a>
+    <a href="PIA_MAGAZINE_ARTICLE.html" style="font-size:11px;color:rgba(255,255,255,0.5);text-decoration:none;padding:5px 13px;border-radius:100px;border:1px solid rgba(255,255,255,0.12);white-space:nowrap;">Magazine</a>
+    <a href="PIA_PRESS_RELEASE.html" style="font-size:11px;color:rgba(255,255,255,0.5);text-decoration:none;padding:5px 13px;border-radius:100px;border:1px solid rgba(255,255,255,0.12);white-space:nowrap;">Press Release</a>
+  </div>
+</nav>
+
+</body>
+</html>

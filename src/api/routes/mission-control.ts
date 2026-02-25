@@ -69,7 +69,8 @@ router.post('/agents', async (req: Request, res: Response): Promise<void> => {
     await wireEvents();
     const { machineId = 'local', mode = 'sdk', task, cwd, approvalMode = 'auto', model, maxBudget,
             effort, systemPrompt, maxTurns, disallowedTools, allowedTools, additionalDirectories,
-            networkPolicy, mcpServers, fallbackModel, enableCheckpointing, loadProjectSettings, autoRestart } = req.body;
+            networkPolicy, mcpServers, fallbackModel, enableCheckpointing, loadProjectSettings, autoRestart,
+            soulId } = req.body;
 
     if (!cwd) {
       res.status(400).json({ error: 'cwd is required' });
@@ -119,7 +120,7 @@ router.post('/agents', async (req: Request, res: Response): Promise<void> => {
               data: { mode, task, cwd, approvalMode, model, maxBudget, effort, systemPrompt,
                       maxTurns, disallowedTools, allowedTools, additionalDirectories,
                       enableCheckpointing, loadProjectSettings, autoRestart,
-                      networkPolicy, mcpServers, fallbackModel },
+                      networkPolicy, mcpServers, fallbackModel, soulId },
             },
           });
           if (sent) {
@@ -156,6 +157,7 @@ router.post('/agents', async (req: Request, res: Response): Promise<void> => {
       enableCheckpointing: enableCheckpointing !== false, // default true
       loadProjectSettings: loadProjectSettings !== false, // default true
       autoRestart: autoRestart !== false, // default true
+      soulId,
     });
 
     logger.info(`Agent session spawned via API: ${session.id} (mode: ${mode})`);

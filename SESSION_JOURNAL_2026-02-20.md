@@ -2344,3 +2344,33 @@ No native deps. Tim Buc + email service are pure TypeScript. agent_records table
 1. `SENDGRID_API_KEY` in .env to activate email sending
 2. `EMAIL_MIC` in .env (default: mic@sodalabs.ai)
 3. M2: `git pull && npx pm2 restart pia-hub --update-env`
+
+
+
+---
+
+## Session N+1: pia-wakeup.html — Agent Wake-Up Schedule Visualization
+
+### Changes
+- **New file**: `public/pia-wakeup.html` — D3.js visualization of the PIA 24-hour agent orchestration cycle
+
+### What it shows
+- **Horizontal 24-hour timeline** (00:00 to 23:59) with night shading at 00-06 and 18-24
+- **CRON lane**: Ziggi (02:00), Eliyahu (06:00), Fisher2050 9am standup (09:00), Fisher2050 6pm summary (18:00) — each with drop-lines from the axis
+- **ALWAYS-ON lane**: Monitor and Owl in a pulsing band with animated heartbeat sine wave
+- **EVENT/CALENDAR/QUEUE lane**: Tim Buc, Controller, Farcake, Andy, Bird Fountain, Wingspan, Coder Machine — each with trigger-type badge pill
+- **Intelligence Pipeline** at bottom: animated flow diagram showing Tim Buc -> Records DB -> Eliyahu -> Fisher2050 Inbox -> 9am Standup -> Mic
+- **Hover tooltips** on every agent node: shows trigger label, first question asked, and what they produce
+- **Color coding**: M1 blue (#4a9eff), M2 orange (#ff8c42), M3 green (#3fb950), Event purple (#bc8cff), Always-on yellow (#f0c040)
+- **Animations**: pulse-ring on always-on agents, animated dash-flow on pipeline arrows, heartbeat sine wave
+
+### Files Changed
+| File | Change |
+|---|---|
+| `public/pia-wakeup.html` | **NEW** — D3.js 24-hour agent wake-up schedule visualization |
+
+### Desktop App Impact
+Pure HTML/CSS/JS, no new deps. Served statically from Express. Will need to be ported to React component for Electron app — can reuse the D3 visualization logic directly.
+
+### Access
+Served at `http://localhost:3000/pia-wakeup.html` when PIA server is running.

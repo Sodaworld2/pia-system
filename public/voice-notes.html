@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>PIA Voice Notes</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0a0a14;
+      color: #c9d1d9;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      background: #0d0d18;
+      border-bottom: 1px solid #1e1e30;
+    }
+    .header h1 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #e6edf3;
+    }
+    .header h1 span { color: #9b4dca; }
+    .header a {
+      color: #58a6ff;
+      font-size: 13px;
+      text-decoration: none;
+    }
+
+    /* Status bar */
+    .status-bar {
+      padding: 8px 20px;
+      font-size: 12px;
+      color: #484f58;
+      text-align: center;
+      background: #0d0d18;
+      border-bottom: 1px solid #1a1a2e;
+    }
+    .status-bar .ok { color: #3fb950; }
+    .status-bar .err { color: #f85149; }
+
+    /* Record section */
+    .record-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px 20px;
+      gap: 24px;
+    }
+
+    .record-btn {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      border: 4px solid #2a2a3e;
+      background: #161625;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      cursor: pointer;
+      transition: all 0.2s;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .record-btn:active, .record-btn.recording {
+      border-color: #f85149;
+      background: #2a1014;
+      transform: scale(1.08);
+    }
+    .record-btn.recording {
+      animation: pulse-record 1s ease-in-out infinite;
+    }
+
+    @keyframes pulse-record {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(248, 81, 73, 0.4); }
+      50% { box-shadow: 0 0 0 20px rgba(248, 81, 73, 0); }
+    }
+
+    .record-hint {
+      font-size: 14px;
+      color: #484f58;
+    }
+    .record-duration {
+      font-size: 28px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: #f85149;
+      display: none;
+    }
+    .record-duration.active { display: block; }
+
+    /* Transcribing state */
+    .transcribing-indicator {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      color: #9b4dca;
+    }
+    .transcribing-indicator.active { display: flex; }
+    .transcribing-dots::after {
+      content: '';
+      animation: dots 1.5s steps(4, end) infinite;
+    }
+    @keyframes dots {
+      0% { content: ''; }
+      25% { content: '.'; }
+      50% { content: '..'; }
+      75% { content: '...'; }
+    }
+
+    /* Transcript card */
+    .transcript-card {
+      display: none;
+      background: #161625;
+      border: 1px solid #2a2a3e;
+      border-radius: 12px;
+      padding: 16px;
+      margin: 0 20px 16px;
+      max-width: 500px;
+      width: calc(100% - 40px);
+      align-self: center;
+    }
+    .transcript-card.visible { display: block; }
+    .transcript-card .transcript-text {
+      font-size: 15px;
+      line-height: 1.5;
+      color: #e6edf3;
+      margin-bottom: 12px;
+    }
+    .transcript-card .transcript-meta {
+      font-size: 11px;
+      color: #484f58;
+      margin-bottom: 12px;
+    }
+    .transcript-card .send-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .transcript-card select {
+      flex: 1;
+      background: #0a0a14;
+      color: #c9d1d9;
+      border: 1px solid #2a2a3e;
+      border-radius: 6px;
+      padding: 8px;
+      font-size: 13px;
+    }
+    .transcript-card .btn-send {
+      background: #238636;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .transcript-card .btn-send:hover { background: #2ea043; }
+    .transcript-card .btn-send:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Notes list */
+    .notes-section {
+      padding: 0 20px 20px;
+      max-width: 540px;
+      width: 100%;
+      align-self: center;
+    }
+    .notes-section h3 {
+      font-size: 13px;
+      color: #484f58;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+    .note-item {
+      background: #0d0d18;
+      border: 1px solid #1e1e30;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 8px;
+    }
+    .note-item .note-text {
+      font-size: 14px;
+      line-height: 1.4;
+      color: #c9d1d9;
+      margin-bottom: 6px;
+    }
+    .note-item .note-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #484f58;
+    }
+    .note-item .note-delete {
+      color: #f85149;
+      cursor: pointer;
+      font-size: 11px;
+      background: none;
+      border: none;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: #333;
+      font-size: 14px;
+      padding: 40px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>PIA</span> Voice Notes</h1>
+    <a href="/mission-control.html">Dashboard</a>
+  </div>
+
+  <div class="status-bar" id="statusBar">Checking connection...</div>
+
+  <div class="record-section">
+    <div class="record-duration" id="recordDuration">0:00</div>
+    <div class="record-btn" id="recordBtn">🎤</div>
+    <div class="record-hint" id="recordHint">Hold to record</div>
+    <div class="transcribing-indicator" id="transcribing">
+      <div>Transcribing<span class="transcribing-dots"></span></div>
+    </div>
+  </div>
+
+  <div class="transcript-card" id="transcriptCard">
+    <div class="transcript-text" id="transcriptText"></div>
+    <div class="transcript-meta" id="transcriptMeta"></div>
+    <div class="send-row">
+      <select id="agentSelect"><option value="">Select agent...</option></select>
+      <button class="btn-send" id="sendToAgentBtn" onclick="sendToAgent()" disabled>Send to Agent</button>
+    </div>
+  </div>
+
+  <div class="notes-section">
+    <h3>Recent Notes</h3>
+    <div id="notesList"><div class="empty-state">No voice notes yet</div></div>
+  </div>
+
+<script>
+// ── CONFIG ──
+const API_TOKEN = localStorage.getItem('pia_api_token') || '';
+const headers = { 'Content-Type': 'application/json' };
+if (API_TOKEN) headers['x-api-token'] = API_TOKEN;
+
+async function api(path, opts = {}) {
+  const res = await fetch(path, {
+    headers: { ...headers, ...(opts.headers || {}) },
+    method: opts.method || 'GET',
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  return res.json();
+}
+
+// ── STATE ──
+let mediaRecorder = null;
+let audioChunks = [];
+let recordStartTime = null;
+let durationTimer = null;
+let lastTranscript = null;
+
+// ── ELEMENTS ──
+const recordBtn = document.getElementById('recordBtn');
+const recordHint = document.getElementById('recordHint');
+const recordDuration = document.getElementById('recordDuration');
+const transcribing = document.getElementById('transcribing');
+const transcriptCard = document.getElementById('transcriptCard');
+const transcriptText = document.getElementById('transcriptText');
+const transcriptMeta = document.getElementById('transcriptMeta');
+const agentSelect = document.getElementById('agentSelect');
+const sendToAgentBtn = document.getElementById('sendToAgentBtn');
+const statusBar = document.getElementById('statusBar');
+
+// ── MIME TYPE DETECTION ──
+function getSupportedMimeType() {
+  const types = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg'];
+  for (const t of types) {
+    if (MediaRecorder.isTypeSupported(t)) return t;
+  }
+  return 'audio/webm'; // fallback
+}
+
+// ── RECORDING ──
+async function startRecording() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+    });
+
+    const mimeType = getSupportedMimeType();
+    mediaRecorder = new MediaRecorder(stream, { mimeType });
+    audioChunks = [];
+
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) audioChunks.push(e.data);
+    };
+
+    mediaRecorder.start(100); // 100ms chunks
+    recordStartTime = Date.now();
+
+    recordBtn.classList.add('recording');
+    recordHint.textContent = 'Release to stop';
+    recordDuration.classList.add('active');
+    transcriptCard.classList.remove('visible');
+
+    durationTimer = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - recordStartTime) / 1000);
+      const m = Math.floor(elapsed / 60);
+      const s = String(elapsed % 60).padStart(2, '0');
+      recordDuration.textContent = `${m}:${s}`;
+    }, 100);
+
+  } catch (err) {
+    console.error('getUserMedia failed:', err);
+    recordHint.textContent = 'Microphone access denied';
+    setTimeout(() => { recordHint.textContent = 'Hold to record'; }, 3000);
+  }
+}
+
+async function stopRecording() {
+  if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
+
+  clearInterval(durationTimer);
+  recordBtn.classList.remove('recording');
+  recordDuration.classList.remove('active');
+  recordHint.textContent = 'Hold to record';
+
+  return new Promise((resolve) => {
+    mediaRecorder.onstop = async () => {
+      // Stop all tracks
+      mediaRecorder.stream.getTracks().forEach(t => t.stop());
+
+      const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
+      const elapsed = (Date.now() - recordStartTime) / 1000;
+
+      // Skip very short recordings (< 0.5s — probably accidental tap)
+      if (elapsed < 0.5) {
+        recordHint.textContent = 'Too short — hold longer';
+        setTimeout(() => { recordHint.textContent = 'Hold to record'; }, 2000);
+        resolve();
+        return;
+      }
+
+      await transcribeAudio(blob);
+      resolve();
+    };
+    mediaRecorder.stop();
+  });
+}
+
+async function transcribeAudio(blob) {
+  transcribing.classList.add('active');
+  recordHint.textContent = '';
+
+  try {
+    // Convert blob to base64
+    const arrayBuffer = await blob.arrayBuffer();
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+
+    const result = await api('/api/voice-notes/transcribe', {
+      method: 'POST',
+      body: { audio: base64, mimeType: blob.type, source: 'mobile' },
+    });
+
+    lastTranscript = result;
+
+    // Show transcript card
+    transcriptText.textContent = result.transcript;
+    transcriptMeta.textContent = `${result.duration.toFixed(1)}s | ${result.language} | $${result.cost.toFixed(4)}`;
+    transcriptCard.classList.add('visible');
+
+    // Refresh notes list
+    loadNotes();
+
+  } catch (err) {
+    console.error('Transcription failed:', err);
+    recordHint.textContent = 'Transcription failed: ' + err.message;
+    setTimeout(() => { recordHint.textContent = 'Hold to record'; }, 4000);
+  } finally {
+    transcribing.classList.remove('active');
+  }
+}
+
+// ── SEND TO AGENT ──
+async function sendToAgent() {
+  const agentId = agentSelect.value;
+  if (!agentId || !lastTranscript) return;
+
+  sendToAgentBtn.disabled = true;
+  sendToAgentBtn.textContent = 'Sending...';
+
+  try {
+    await api(`/api/mc/agents/${agentId}/respond`, {
+      method: 'POST',
+      body: { choice: lastTranscript.transcript },
+    });
+    sendToAgentBtn.textContent = 'Sent!';
+    setTimeout(() => {
+      sendToAgentBtn.textContent = 'Send to Agent';
+      sendToAgentBtn.disabled = false;
+    }, 2000);
+  } catch (err) {
+    sendToAgentBtn.textContent = 'Failed';
+    setTimeout(() => {
+      sendToAgentBtn.textContent = 'Send to Agent';
+      sendToAgentBtn.disabled = false;
+    }, 2000);
+  }
+}
+
+agentSelect.addEventListener('change', () => {
+  sendToAgentBtn.disabled = !agentSelect.value;
+});
+
+// ── LOAD AGENTS ──
+async function loadAgents() {
+  try {
+    const data = await api('/api/mc/agents');
+    const agents = data.agents || [];
+    agentSelect.innerHTML = '<option value="">Select agent...</option>';
+    agents.filter(a => a.status !== 'completed' && a.status !== 'error').forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a.id;
+      opt.textContent = `${a.soul || a.mode} — ${a.task.substring(0, 40)}`;
+      agentSelect.appendChild(opt);
+    });
+  } catch (err) {
+    console.warn('Could not load agents:', err);
+  }
+}
+
+// ── LOAD NOTES ──
+async function loadNotes() {
+  try {
+    const data = await api('/api/voice-notes?limit=20');
+    const notes = data.notes || [];
+    const container = document.getElementById('notesList');
+
+    if (notes.length === 0) {
+      container.innerHTML = '<div class="empty-state">No voice notes yet</div>';
+      return;
+    }
+
+    container.innerHTML = notes.map(n => `
+      <div class="note-item" id="note-${n.id}">
+        <div class="note-text">${escapeHtml(n.transcript)}</div>
+        <div class="note-meta">
+          <span>${formatTime(n.created_at)} | ${n.duration_seconds.toFixed(1)}s | ${n.source}</span>
+          <button class="note-delete" onclick="deleteNote('${n.id}')">Delete</button>
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    console.warn('Could not load notes:', err);
+  }
+}
+
+async function deleteNote(id) {
+  try {
+    await api(`/api/voice-notes/${id}`, { method: 'DELETE' });
+    const el = document.getElementById('note-' + id);
+    if (el) el.remove();
+  } catch (err) {
+    console.error('Delete failed:', err);
+  }
+}
+
+// ── HELPERS ──
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function formatTime(unixSeconds) {
+  const d = new Date(unixSeconds * 1000);
+  const now = new Date();
+  if (d.toDateString() === now.toDateString()) {
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+  return d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' +
+         d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+// ── INIT ──
+async function init() {
+  // Check API connectivity
+  try {
+    const health = await api('/api/health');
+    statusBar.innerHTML = `<span class="ok">Connected</span> — PIA ${health.version || ''} (${health.mode || ''})`;
+  } catch (err) {
+    statusBar.innerHTML = `<span class="err">Not connected</span> — check API token`;
+  }
+
+  loadAgents();
+  loadNotes();
+
+  // Refresh agents every 30s
+  setInterval(loadAgents, 30000);
+}
+
+// ── POINTER EVENTS (works on both touch and mouse) ──
+let isRecording = false;
+
+recordBtn.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  if (isRecording) return;
+  isRecording = true;
+  startRecording();
+});
+
+recordBtn.addEventListener('pointerup', async (e) => {
+  e.preventDefault();
+  if (!isRecording) return;
+  isRecording = false;
+  await stopRecording();
+});
+
+recordBtn.addEventListener('pointerleave', async (e) => {
+  if (!isRecording) return;
+  isRecording = false;
+  await stopRecording();
+});
+
+// Prevent context menu on long press (mobile)
+recordBtn.addEventListener('contextmenu', (e) => e.preventDefault());
+
+init();
+</script>
+</body>
+</html>

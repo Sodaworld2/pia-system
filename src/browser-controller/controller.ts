@@ -58,10 +58,6 @@ export class BrowserController {
       throw new Error('Browser controller already running');
     }
 
-    if (!isVisionReady()) {
-      throw new Error('GEMINI_API_KEY not configured — set it in .env');
-    }
-
     this.setStatus('starting');
     logger.info('Starting browser controller...');
 
@@ -213,13 +209,23 @@ export class BrowserController {
 
   private async cmdExtractText(cmd: BrowserCommand): Promise<BrowserCommandResult> {
     const screenshot = await this.takeScreenshot();
-    const vision = await extractPageText(screenshot, cmd.value);
-    this.state.geminiCallsCount++;
-    this.state.geminiTokensUsed += vision.tokensUsed;
+    if (isVisionReady()) {
+      const vision = await extractPageText(screenshot, cmd.value);
+      this.state.geminiCallsCount++;
+      this.state.geminiTokensUsed += vision.tokensUsed;
+      return {
+        success: true,
+        message: 'Text extracted via Gemini vision',
+        text: vision.text,
+        screenshot,
+      };
+    }
+    // Fallback: native Playwright text extraction (no Gemini needed)
+    const text = await this.page!.evaluate(() => document.body.innerText);
     return {
       success: true,
-      message: 'Text extracted via Gemini vision',
-      text: vision.text,
+      message: 'Text extracted (native — add GEMINI_API_KEY for AI-powered extraction)',
+      text,
       screenshot,
     };
   }
@@ -262,6 +268,9 @@ export class BrowserController {
   private async cmdExecuteTask(cmd: BrowserCommand): Promise<BrowserCommandResult> {
     if (!cmd.taskDescription) {
       return { success: false, message: 'executeTask requires taskDescription' };
+    }
+    if (!isVisionReady()) {
+      return { success: false, message: 'AI tasks require GEMINI_API_KEY in .env — add it and restart PIA' };
     }
 
     const maxSteps = Math.min(cmd.maxSteps || MAX_TASK_STEPS, MAX_TASK_STEPS);

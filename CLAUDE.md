@@ -92,7 +92,7 @@ GET  /api/browser/sessions
 
 ## Session Journaling
 
-**Every agent session MUST update `SESSION_JOURNAL_2026-02-16.md` (or current date) before finishing.**
+**Every agent session MUST update the current date's session journal (e.g. `SESSION_JOURNAL_2026-02-22.md`) before finishing.**
 
 A desktop app (Electron) is being built from this codebase. Other agents are building features in parallel. To keep everything in sync, journal these changes:
 
@@ -143,13 +143,14 @@ The Express server, API routes, and WebSocket events are the **contract** betwee
 
 ## Knowledge Base & File Index Maintenance
 
-**Three files form the project's living documentation. Keep them updated.**
+**Four files form the project's living documentation. Keep them updated.**
 
 | File | What It Is | When to Update |
 |------|-----------|----------------|
 | `FILE_INDEX.md` | Index of every `.md` and `.html` file | When you CREATE or DELETE any `.md` or `.html` file |
 | `PIA_KNOWLEDGE_BASE.md` | Master knowledge base (terminology, ideas, spec, capabilities, to-do) | When you add new features, make architectural decisions, or change capabilities |
 | `public/pia-book.html` | Visual HTML version of the knowledge base (served at `/pia-book.html`) | When significant changes are made to the knowledge base |
+| `public/docs.html` | Live markdown docs viewer (served at `/docs.html`) — pinned sidebar groups | When you create a new KEY `.md` file that agents need to find quickly |
 
 ### How to Update FILE_INDEX.md
 
@@ -159,6 +160,31 @@ When you create a new `.md` or `.html` file:
 3. Include: file path, one-line purpose
 
 When you delete a file, remove its entry.
+
+### How to Update docs.html Pinned Groups
+
+`public/docs.html` has a `PINNED_GROUPS` array at the top of its `<script>` block (~line 348). The `research/` folder and session journals are loaded **dynamically** — you never need to touch those. Only update `PINNED_GROUPS` when creating a file that is important enough that agents should find it at a glance.
+
+**Add to `⭐ Key Docs` group when:**
+- Creating a new spec, definition, or decision document that drives current build work (e.g. `V1_DEFINITION.md`, a new `research/BIG_SPEC.md`)
+- Creating a new research file that is directly referenced in the current sprint
+
+**Add to `🏗 Architecture` group when:**
+- Creating a new architecture document, audit, or site map
+
+**Add to `🤖 Agent Docs` group when:**
+- Creating a new per-agent spec or workflow document
+
+**Never add to PINNED_GROUPS:**
+- Session journals (`SESSION_JOURNAL_*.md`) — already dynamic
+- Research files in `research/` — already dynamically loaded in the `📁 research/` group
+- Temporary or one-off files
+
+**How to add an entry** — open `public/docs.html` and find the matching group in `PINNED_GROUPS`, then add:
+```js
+{ label: 'Human-readable name', path: 'relative/path/from/project-root.md', tags: ['new'] },
+```
+Remove the `tags: ['new']` after the next session.
 
 ### How to Update PIA_KNOWLEDGE_BASE.md
 

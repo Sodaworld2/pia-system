@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIA — Fleet Architecture & Multi-Project Setup</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 11pt; line-height: 1.65; color: #1a1a1a; background: #fff;
+    max-width: 210mm; margin: 0 auto; padding: 20mm;
+  }
+  @media print {
+    body { padding: 12mm; font-size: 10pt; }
+    .no-print { display: none; }
+    .page-break { page-break-before: always; }
+    h2 { page-break-after: avoid; }
+    .machine-box { page-break-inside: avoid; }
+  }
+  .print-btn {
+    position: fixed; top: 20px; right: 20px;
+    background: #1a1a1a; color: white; border: none;
+    padding: 10px 20px; font-size: 11pt; cursor: pointer; font-family: inherit;
+  }
+  .print-btn:hover { background: #333; }
+  .cover { text-align: center; padding: 26px 0 36px; border-bottom: 3px solid #1a1a1a; margin-bottom: 36px; }
+  .cover h1 { font-size: 24pt; letter-spacing: 5px; text-transform: uppercase; margin-bottom: 6px; }
+  .cover .subtitle { font-size: 12pt; font-style: italic; color: #555; margin-bottom: 10px; }
+  .cover .meta { font-size: 9pt; color: #888; font-family: 'Courier New', monospace; }
+  h2 { font-size: 14pt; text-transform: uppercase; letter-spacing: 3px; border-bottom: 2px solid #1a1a1a; padding-bottom: 6px; margin: 36px 0 18px; }
+  h3 { font-size: 12pt; margin: 20px 0 8px; font-style: italic; }
+  p { margin-bottom: 10px; }
+  ul, ol { padding-left: 20px; margin-bottom: 10px; }
+  li { margin-bottom: 4px; }
+
+  /* ====== FLEET DIAGRAM ====== */
+  .fleet-diagram {
+    border: 2px solid #1a1a1a;
+    padding: 24px 20px;
+    margin: 20px 0;
+    background: #fafafa;
+  }
+  .fleet-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 16px;
+  }
+  .fleet-row:last-child { margin-bottom: 0; }
+  .machine-box {
+    border: 2px solid #1a1a1a;
+    background: white;
+    flex: 1;
+    min-width: 0;
+  }
+  .machine-box.hub {
+    border-color: #0055cc;
+    flex: 1.4;
+  }
+  .machine-box.quality { border-color: #8B0000; }
+  .machine-box.content { border-color: #2ea043; }
+  .machine-box.build { border-color: #f59e0b; }
+  .machine-box.new {
+    border-style: dashed;
+    border-color: #888;
+    background: #f5f5f5;
+  }
+  .machine-header {
+    padding: 7px 10px;
+    font-size: 9pt;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    letter-spacing: 1px;
+  }
+  .hub .machine-header { background: #0055cc; color: white; }
+  .quality .machine-header { background: #8B0000; color: white; }
+  .content .machine-header { background: #2ea043; color: white; }
+  .build .machine-header { background: #f59e0b; color: #1a1a1a; }
+  .new .machine-header { background: #ddd; color: #555; }
+  .machine-name { font-size: 8pt; font-weight: normal; opacity: 0.85; margin-top: 1px; }
+  .machine-body { padding: 8px 10px; }
+  .agent-chip {
+    display: inline-block;
+    font-size: 8pt;
+    padding: 2px 7px;
+    margin: 2px 2px 2px 0;
+    border: 1px solid #1a1a1a;
+    font-family: 'Courier New', monospace;
+    background: white;
+  }
+  .agent-chip.cron { border-color: #0055cc; color: #0055cc; }
+  .agent-chip.ephemeral { border-color: #2ea043; color: #2ea043; }
+  .agent-chip.always { border-color: #f59e0b; color: #b45309; }
+  .agent-chip.infra { border-style: dashed; color: #666; }
+  .machine-spec { font-size: 8pt; color: #666; margin-top: 6px; font-style: italic; font-family: 'Courier New', monospace; }
+
+  /* Arrow between machines */
+  .fleet-arrows {
+    text-align: center;
+    font-size: 11pt;
+    color: #888;
+    margin: 4px 0;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 4px;
+  }
+
+  /* Flow connectors */
+  .connector-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin: 4px 0;
+  }
+  .connector { flex: 1; text-align: center; font-size: 16pt; color: #bbb; }
+  .connector.active { color: #0055cc; }
+
+  /* Legend */
+  .legend {
+    display: flex; gap: 16px; flex-wrap: wrap;
+    margin: 12px 0; font-size: 9pt;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-chip {
+    display: inline-block; width: 60px; height: 14px;
+    border: 1px solid; font-size: 7pt; text-align: center;
+    line-height: 14px; font-family: 'Courier New', monospace;
+  }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 10pt; }
+  th { background: #1a1a1a; color: white; text-align: left; padding: 6px 10px; font-size: 9pt; text-transform: uppercase; letter-spacing: 1px; font-weight: normal; }
+  td { padding: 6px 10px; border-bottom: 1px solid #e0e0e0; vertical-align: top; }
+  tr:nth-child(even) td { background: #fafafa; }
+
+  .callout { border-left: 4px solid #1a1a1a; padding: 10px 14px; margin: 14px 0; background: #f8f8f8; }
+  .callout.blue { border-left-color: #0055cc; background: #f0f6ff; }
+  .callout.green { border-left-color: #2ea043; background: #f0fff4; }
+  .callout strong { display: block; margin-bottom: 3px; font-size: 9pt; text-transform: uppercase; letter-spacing: 1px; }
+  .mono { font-family: 'Courier New', monospace; font-size: 9pt; background: #f0f0f0; padding: 1px 4px; }
+
+  /* Project-to-machine assignment table */
+  .assign-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0;
+    border: 1px solid #ddd;
+    margin: 16px 0;
+    font-size: 9pt;
+  }
+  .assign-cell {
+    padding: 7px 8px;
+    border-right: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+    text-align: center;
+  }
+  .assign-cell.header { background: #1a1a1a; color: white; font-weight: bold; text-transform: uppercase; font-size: 8pt; }
+  .assign-cell.machine-col { background: #f8f8f8; font-weight: bold; text-align: left; }
+  .assign-cell.tick { color: #2ea043; font-size: 12pt; }
+  .assign-cell.partial { color: #f59e0b; font-size: 10pt; }
+  .assign-cell.cross { color: #bbb; }
+
+  /* Knowledge enrichment blocks */
+  .enrich-block {
+    border: 1px solid #ddd;
+    margin-bottom: 14px;
+  }
+  .enrich-header {
+    background: #1a1a1a; color: white;
+    padding: 6px 12px;
+    display: flex; justify-content: space-between;
+    font-size: 10pt;
+  }
+  .enrich-name { font-weight: bold; }
+  .enrich-type { font-size: 8pt; opacity: 0.8; font-style: italic; margin-top: 2px; }
+  .enrich-body { padding: 10px 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 9.5pt; }
+  .enrich-col-label { font-size: 8pt; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-bottom: 5px; }
+  .enrich-item { padding: 3px 0; border-bottom: 1px dashed #eee; }
+  .enrich-item:last-child { border-bottom: none; }
+  .limit-bar {
+    height: 6px; background: #eee; margin: 8px 0 4px;
+    position: relative;
+  }
+  .limit-fill { height: 100%; background: #2ea043; }
+  .limit-fill.warn { background: #f59e0b; }
+  .limit-fill.danger { background: #c00; }
+
+  .toc { background: #f8f8f8; border: 1px solid #ddd; padding: 16px 20px; margin-bottom: 36px; }
+  .toc h3 { font-size: 9pt; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; color: #555; }
+  .toc ol { padding-left: 18px; }
+  .toc li { padding: 2px 0; font-size: 10pt; }
+</style>
+</head>
+<body>
+
+<button class="print-btn no-print" onclick="window.print()">⎙ Print / Save PDF</button>
+
+<div class="cover">
+  <h1>PIA Fleet Architecture</h1>
+  <div class="subtitle">Multi-project setup, machine roles, agent knowledge enrichment</div>
+  <div class="meta">SODALABS · JOHANNESBURG · FEBRUARY 2026</div>
+</div>
+
+<div class="toc">
+  <h3>Contents</h3>
+  <ol>
+    <li>The Question: What Do We Need for 6 Concurrent Projects?</li>
+    <li>Current Fleet vs Recommended Fleet — Visual Diagram</li>
+    <li>Machine Role Assignments</li>
+    <li>Which Projects Go on Which Machine</li>
+    <li>How to Set Up Each Worker Machine</li>
+    <li>Agent Knowledge Enrichment — What to Inject Per Agent</li>
+    <li>Knowledge Limits & Recommendations</li>
+  </ol>
+</div>
+
+
+<!-- SECTION 1 -->
+<h2>1. The Question: 6 Concurrent Projects</h2>
+
+<p>Running 6 simultaneous projects means multiple agents firing at the same time on different tasks. The bottleneck question is: <strong>how many execution slots do we have, and which machines hold them?</strong></p>
+
+<p>Each project typically needs some combination of: research (Farcake), writing (Andy), design (Bird Fountain), presentations (Wingspan), code (Coder Machine), and quality review (Ziggi). These are the <em>workers</em>. The <em>orchestrators</em> (Fisher2050, Eliyahu, Tim Buc) run on M1 and never block project execution.</p>
+
+<div class="callout blue">
+  <strong>The Core Bottleneck</strong>
+  M3 (soda-yeti) runs Farcake, Andy, and Wingspan — but can only run ONE agent at a time. For 6 projects all needing content work, M3 is the queue. Add a second M3-equivalent machine and double content throughput. Add a third and handle 6 projects simultaneously.
+</div>
+
+<table>
+  <thead><tr><th>Agent Type</th><th>Where It Runs</th><th>Max Concurrent (Current 3 Machines)</th><th>Max Concurrent (Recommended 5 Machines)</th></tr></thead>
+  <tbody>
+    <tr><td>Research (Farcake)</td><td>M3</td><td>1 at a time</td><td>2 at a time (M3 + M4)</td></tr>
+    <tr><td>Writing (Andy)</td><td>M3</td><td>1 at a time</td><td>2 at a time (M3 + M4)</td></tr>
+    <tr><td>Design (Bird Fountain)</td><td>M2</td><td>1 at a time</td><td>1 (add M5 for overflow)</td></tr>
+    <tr><td>Presentations (Wingspan)</td><td>M3</td><td>1 at a time</td><td>2 at a time (M3 + M4)</td></tr>
+    <tr><td>Code (Coder Machine)</td><td>Dedicated</td><td>0 (no dedicated hardware)</td><td>1 dedicated machine</td></tr>
+    <tr><td>Quality Review (Ziggi)</td><td>M2</td><td>1 at a time (fast, ephemeral)</td><td>1 (fast enough for 6 projects)</td></tr>
+  </tbody>
+</table>
+
+
+<!-- SECTION 2 — DIAGRAM -->
+<div class="page-break"></div>
+<h2>2. Fleet Diagrams</h2>
+
+<h3>A. Current Fleet (3 Machines) — What We Have Now</h3>
+
+<div class="fleet-diagram">
+
+  <!-- Row 1: M1 Hub -->
+  <div class="fleet-row">
+    <div class="machine-box hub" style="flex: 1;">
+      <div class="machine-header">
+        M1 — HUB / BRAIN
+        <div class="machine-name">IZZIT7 · 100.73.133.3 · Always on</div>
+      </div>
+      <div class="machine-body">
+        <span class="agent-chip cron">Fisher2050</span>
+        <span class="agent-chip cron">Eliyahu</span>
+        <span class="agent-chip cron">Itai</span>
+        <span class="agent-chip ephemeral">Tim Buc</span>
+        <span class="agent-chip infra">Owl</span>
+        <span class="agent-chip infra">Monitor</span>
+        <span class="agent-chip infra">Controller</span>
+        <div class="machine-spec">Orchestration only. Never runs execution agents. SQLite DB lives here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Arrows down -->
+  <div class="fleet-arrows">↓ dispatches via WebSocket ↓</div>
+
+  <!-- Row 2: M2 + M3 -->
+  <div class="fleet-row">
+    <div class="machine-box quality">
+      <div class="machine-header">
+        M2 — QUALITY + DESIGN
+        <div class="machine-name">SODA-MONSTER-HUNTER · 100.127.165.12</div>
+      </div>
+      <div class="machine-body">
+        <span class="agent-chip always">Bird Fountain</span>
+        <span class="agent-chip ephemeral">Ziggi</span>
+        <div class="machine-spec">Bird Fountain is resident. Ziggi reviews output from ALL machines.</div>
+        <div class="machine-spec" style="color: #8B0000;">⚠ Ziggi is the bottleneck for 6 concurrent reviews.</div>
+      </div>
+    </div>
+    <div class="machine-box content">
+      <div class="machine-header">
+        M3 — CONTENT PIPELINE
+        <div class="machine-name">SODA-YETI · 100.102.217.69</div>
+      </div>
+      <div class="machine-body">
+        <span class="agent-chip ephemeral">Farcake</span>
+        <span class="agent-chip ephemeral">Andy</span>
+        <span class="agent-chip ephemeral">Wingspan</span>
+        <div class="machine-spec">Sequential only — one agent at a time. Farcake → Andy → Wingspan.</div>
+        <div class="machine-spec" style="color: #c00;">⚠ Max 1 content project at a time. Major bottleneck for 6 projects.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Arrows back up -->
+  <div class="fleet-arrows">↑ reports results + archives to Tim Buc ↑</div>
+
+  <!-- Legend -->
+  <div class="legend" style="margin-top: 12px;">
+    <div class="legend-item"><span class="legend-chip" style="border-color: #0055cc; color: #0055cc;">cron</span> Scheduled (cron job)</div>
+    <div class="legend-item"><span class="legend-chip" style="border-color: #2ea043; color: #2ea043;">ephemeral</span> Spawns and terminates</div>
+    <div class="legend-item"><span class="legend-chip" style="border-color: #f59e0b; color: #b45309;">always on</span> Resident agent</div>
+    <div class="legend-item"><span class="legend-chip" style="border-style: dashed; color: #666;">infra</span> Infrastructure (no spawn)</div>
+  </div>
+</div>
+
+
+<h3>B. Recommended Fleet (5 Machines) — For 6 Concurrent Projects</h3>
+
+<div class="fleet-diagram">
+
+  <!-- M1 Hub -->
+  <div class="fleet-row">
+    <div class="machine-box hub" style="flex: 1;">
+      <div class="machine-header">
+        M1 — HUB / BRAIN (UNCHANGED)
+        <div class="machine-name">IZZIT7 · Always on · Same setup as current</div>
+      </div>
+      <div class="machine-body">
+        <span class="agent-chip cron">Fisher2050</span>
+        <span class="agent-chip cron">Eliyahu</span>
+        <span class="agent-chip cron">Itai</span>
+        <span class="agent-chip ephemeral">Tim Buc</span>
+        <span class="agent-chip infra">Owl</span>
+        <span class="agent-chip infra">Monitor</span>
+        <span class="agent-chip infra">Controller</span>
+        <div class="machine-spec">No change. M1 orchestrates everything. Never runs execution agents.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="fleet-arrows">↓ dispatches to all workers simultaneously ↓</div>
+
+  <!-- Row 2: M2 + M5 (build) -->
+  <div class="fleet-row">
+    <div class="machine-box quality">
+      <div class="machine-header">
+        M2 — QUALITY + DESIGN (UNCHANGED)
+        <div class="machine-name">SODA-MONSTER-HUNTER · 100.127.165.12</div>
+      </div>
+      <div class="machine-body">
+        <span class="agent-chip always">Bird Fountain</span>
+        <span class="agent-chip ephemeral">Ziggi</span>
+        <div class="machine-spec">Handles design + quality review for ALL 6 projects. Ziggi is fast enough (ephemeral, minutes per review).</div>
+      </div>
+    </div>
+    <div class="machine-box build">
+      <div class="machine-header">
+        M5 — DEDICATED BUILD (NEW)
+        <div class="machine-name">New machine · Specs: mid-range workstation</div>
+      </div>
+      <div class="machine-body">
+        <span class="agent-chip always">Coder Machine</span>
+        <div class="machine-spec">Always on. Polls Fisher2050's coding job queue 24/7. One machine = unlimited coding throughput (sequential jobs, very fast).</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 3: M3 + M4 content -->
+  <div class="fleet-row">
+    <div class="machine-box content">
+      <div class="machine-header">
+        M3 — CONTENT PIPELINE A (UNCHANGED)
+        <div class="machine-name">SODA-YETI · 100.102.217.69 · Projects 1–3</div>
+      </div>
+      <div class="machine-body">
+        <span class="agent-chip ephemeral">Farcake</span>
+        <span class="agent-chip ephemeral">Andy</span>
+        <span class="agent-chip ephemeral">Wingspan</span>
+        <div class="machine-spec">Content pipeline for projects 1, 2, 3. Sequential within machine; parallel across M3+M4.</div>
+      </div>
+    </div>
+    <div class="machine-box new">
+      <div class="machine-header" style="background: #888; color: white;">
+        M4 — CONTENT PIPELINE B (NEW)
+        <div class="machine-name">New machine · Same spec as M3 · Projects 4–6</div>
+      </div>
+      <div class="machine-body">
+        <span class="agent-chip ephemeral">Farcake</span>
+        <span class="agent-chip ephemeral">Andy</span>
+        <span class="agent-chip ephemeral">Wingspan</span>
+        <div class="machine-spec">Exact clone of M3. Fisher2050 assigns projects 4, 5, 6 here. Doubles content throughput.</div>
+        <div class="machine-spec" style="color: #555; margin-top: 4px;">Setup: git clone + npm install + PM2 + SSH key. 20 minutes.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="fleet-arrows">↑ all results archive to Tim Buc on M1 ↑</div>
+
+  <!-- Legend -->
+  <div class="legend" style="margin-top: 12px;">
+    <div class="legend-item">■ Solid border = existing machine</div>
+    <div class="legend-item">⬜ Dashed border = new machine to add</div>
+  </div>
+</div>
+
+
+<!-- SECTION 3 -->
+<h2>3. Machine Role Assignments</h2>
+
+<table>
+  <thead><tr><th>Machine</th><th>Role</th><th>Runs These Agents</th><th>Never Runs</th><th>Min Spec</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>M1</strong><br>Hub / Brain</td>
+      <td>Orchestration only</td>
+      <td>Fisher2050, Eliyahu, Tim Buc, Owl, Monitor, Controller, Itai</td>
+      <td>No execution agents — never Farcake, Andy, Bird Fountain, Ziggi, Wingspan, Coder Machine</td>
+      <td>Any PC, always on</td>
+    </tr>
+    <tr>
+      <td><strong>M2</strong><br>Quality + Design</td>
+      <td>Quality gate + design production for all projects</td>
+      <td>Bird Fountain (resident), Ziggi (ephemeral reviews)</td>
+      <td>No M1 orchestration services. No content pipeline agents.</td>
+      <td>Mid-range workstation, GPU helpful for design</td>
+    </tr>
+    <tr>
+      <td><strong>M3 / M4</strong><br>Content Pipeline</td>
+      <td>Content production (research → writing → decks)</td>
+      <td>Farcake, Andy, Wingspan (all ephemeral, sequential)</td>
+      <td>No Fisher, no Tim Buc, no Ziggi</td>
+      <td>Any modern PC. M3 + M4 identical setup.</td>
+    </tr>
+    <tr>
+      <td><strong>M5</strong><br>Build Machine</td>
+      <td>Code execution only</td>
+      <td>Coder Machine (always on, job queue consumer)</td>
+      <td>Nothing else. Dedicated.</td>
+      <td>Developer workstation. SSD. Node 22 LTS.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout green">
+  <strong>The Rule: M1 Never Does Execution Work</strong>
+  M1 is the brain. If M1 starts running content agents or build jobs, it slows down scheduling, archiving, and briefings. The hub must stay clear. All execution goes to workers.
+</div>
+
+
+<!-- SECTION 4 -->
+<h2>4. Which Projects Go on Which Machine</h2>
+
+<p>Fisher2050 decides this automatically based on Monitor's machine availability feed. But here is the pattern:</p>
+
+<div class="assign-grid">
+  <div class="assign-cell header">Project Need</div>
+  <div class="assign-cell header">M2</div>
+  <div class="assign-cell header">M3</div>
+  <div class="assign-cell header">M4</div>
+  <div class="assign-cell header">M5</div>
+
+  <div class="assign-cell machine-col">Research (Farcake)</div>
+  <div class="assign-cell cross">—</div>
+  <div class="assign-cell tick">✓</div>
+  <div class="assign-cell tick">✓</div>
+  <div class="assign-cell cross">—</div>
+
+  <div class="assign-cell machine-col">Writing (Andy)</div>
+  <div class="assign-cell cross">—</div>
+  <div class="assign-cell tick">✓</div>
+  <div class="assign-cell tick">✓</div>
+  <div class="assign-cell cross">—</div>
+
+  <div class="assign-cell machine-col">Design (Bird Fountain)</div>
+  <div class="assign-cell tick">✓</div>
+  <div class="assign-cell cross">—</div>
+  <div class="assign-cell cross">—</div>
+  <div class="assign-cell cross">—</div>
+
+  <div class="assign-cell machine-col">Presentations (Wingspan)</div>
+  <div class="assign-cell cross">—</div>
+  <div class="assign-cell tick">✓</div>
+  <div class="assign-cell tick">✓</div>
+  <div class="assign-cell cross">—</div>
+
+  <div class="assign-cell machine-col">Quality Review (Ziggi)</div>
+  <div class="assign-cell tick">✓</div>
+  <div class="assign-cell cross">—</div>
+  <div class="assign-cell cross">—</div>
+  <div class="assign-cell cross">—</div>
+
+  <div class="assign-cell machine-col">Code (Coder Machine)</div>
+  <div class="assign-cell cross">—</div>
+  <div class="assign-cell cross">—</div>
+  <div class="assign-cell cross">—</div>
+  <div class="assign-cell tick">✓</div>
+</div>
+
+<p><strong>Fisher2050's scheduling logic:</strong> When a project needs content work (research/writing), Fisher assigns it to M3 if M3 is free, or M4 if M3 is occupied. Ziggi reviews for all machines — it's ephemeral and fast (~5 minutes per review). Design and code each have dedicated machines and don't compete with content.</p>
+
+
+<!-- SECTION 5 -->
+<h2>5. How to Set Up Each Worker Machine (20-Minute Checklist)</h2>
+
+<p>M3 is already set up. M4 and M5 follow identical steps. Once SSH key is deployed to M1, the rest can be done remotely.</p>
+
+<table>
+  <thead><tr><th>#</th><th>Step</th><th>Command / Action</th><th>Time</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Install Tailscale</td><td>Download from tailscale.com, sign in with same account</td><td>5 min</td></tr>
+    <tr><td>2</td><td>Install Node 22 LTS</td><td><span class="mono">winget install OpenJS.NodeJS.LTS</span> or from nodejs.org</td><td>3 min</td></tr>
+    <tr><td>3</td><td>Install PM2</td><td><span class="mono">npm install -g pm2</span></td><td>1 min</td></tr>
+    <tr><td>4</td><td>Enable SSH</td><td>PowerShell (admin): <span class="mono">Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0 && Start-Service sshd && Set-Service sshd -StartupType Automatic</span></td><td>2 min</td></tr>
+    <tr><td>5</td><td>Add M1 SSH key</td><td>Paste M1's public key into <span class="mono">C:\Users\&lt;user&gt;\.ssh\authorized_keys</span> (see ops/PLAYBOOK.md for exact key)</td><td>1 min</td></tr>
+    <tr><td>6</td><td>Clone PIA</td><td><span class="mono">git clone https://github.com/Sodaworld2/pia-system.git C:\Users\&lt;user&gt;\Documents\GitHub\pia-system</span></td><td>2 min</td></tr>
+    <tr><td>7</td><td>Install deps</td><td><span class="mono">cd C:\...\pia-system && npm install</span></td><td>2 min</td></tr>
+    <tr><td>8</td><td>Create .env</td><td>Copy .env from M1 (change nothing — hostname auto-detection sets worker mode)</td><td>1 min</td></tr>
+    <tr><td>9</td><td>Start PM2</td><td><span class="mono">pm2 start ecosystem.config.cjs --update-env && pm2 save && pm2 startup</span></td><td>1 min</td></tr>
+    <tr><td>10</td><td>Verify</td><td>Dashboard on M1: new machine appears in fleet panel with green dot</td><td>30 sec</td></tr>
+  </tbody>
+</table>
+
+<p>After step 5 (SSH key), M1 can do steps 6–10 remotely without touching the new machine. See <span class="mono">ops/PLAYBOOK.md</span> for exact SSH commands.</p>
+
+
+<!-- SECTION 6 -->
+<div class="page-break"></div>
+<h2>6. Agent Knowledge Enrichment</h2>
+
+<p>Each soul currently has personality + instructions. <em>Knowledge enrichment</em> is adding domain-specific information, methodologies, and context that makes the agent more effective at its specific job. This goes into the soul's <span class="mono">system_prompt</span> or injected as a <span class="mono">soul_memory</span> at spawn time.</p>
+
+<div class="callout">
+  <strong>Two Types of Knowledge</strong>
+  <strong>Static knowledge</strong> — goes in the soul file (personality/system_prompt). Stable facts about the agent's domain. Doesn't change often.<br><br>
+  <strong>Dynamic knowledge</strong> — injected as soul_memories at spawn time. Current project state, recent decisions, what worked last time. Updated per session by Tim Buc.
+</div>
+
+<!-- Fisher2050 enrichment -->
+<div class="enrich-block">
+  <div class="enrich-header">
+    <div><div class="enrich-name">Fisher2050</div><div class="enrich-type">Project Manager</div></div>
+    <div style="font-size: 9pt; opacity: 0.8;">Priority: HIGH — this agent drives everything downstream</div>
+  </div>
+  <div class="enrich-body">
+    <div>
+      <div class="enrich-col-label">Static Knowledge to Add (soul file)</div>
+      <div class="enrich-item">SodaLabs project list with current status and priority</div>
+      <div class="enrich-item">Mic's working hours and availability patterns</div>
+      <div class="enrich-item">Machine capacity table (what each machine can handle)</div>
+      <div class="enrich-item">OKR framework — how to break goals into quarterly + weekly tasks</div>
+      <div class="enrich-item">Critical path method — how to identify the blocking task in a sequence</div>
+      <div class="enrich-item">Agent capability descriptions — what each agent produces and how long it takes</div>
+    </div>
+    <div>
+      <div class="enrich-col-label">Dynamic Memories (injected per session)</div>
+      <div class="enrich-item">Current sprint tasks and their status</div>
+      <div class="enrich-item">Which agents are currently running + where</div>
+      <div class="enrich-item">Last Ziggi quality scores by agent (to decide re-do vs ship)</div>
+      <div class="enrich-item">Any blockers from last 24 hours</div>
+      <div class="enrich-item">Upcoming deadlines this week</div>
+    </div>
+  </div>
+</div>
+
+<!-- Eliyahu enrichment -->
+<div class="enrich-block">
+  <div class="enrich-header">
+    <div><div class="enrich-name">Eliyahu</div><div class="enrich-type">Knowledge Analyst</div></div>
+    <div style="font-size: 9pt; opacity: 0.8;">Priority: HIGH — quality of briefings depends on depth of knowledge</div>
+  </div>
+  <div class="enrich-body">
+    <div>
+      <div class="enrich-col-label">Static Knowledge to Add</div>
+      <div class="enrich-item">Goldratt's Theory of Constraints (TOC) — finding the bottleneck</div>
+      <div class="enrich-item">SodaLabs strategic goals for 2026 (what matters to Mic)</div>
+      <div class="enrich-item">Known patterns to watch for (e.g. M3 bottleneck, Ziggi re-do rate)</div>
+      <div class="enrich-item">Mic's key relationships and context (who Robbie, CVVC, Brenton are)</div>
+      <div class="enrich-item">The SodaLabs business model and revenue streams</div>
+    </div>
+    <div>
+      <div class="enrich-col-label">Dynamic Memories</div>
+      <div class="enrich-item">Running quality trend per agent (is Ziggi score improving?)</div>
+      <div class="enrich-item">Last 7 days: decisions made, decisions pending</div>
+      <div class="enrich-item">Current API spend trend (feeds from Itai)</div>
+      <div class="enrich-item">Any projects that went off-track recently and why</div>
+    </div>
+  </div>
+</div>
+
+<!-- Andy enrichment -->
+<div class="enrich-block">
+  <div class="enrich-header">
+    <div><div class="enrich-name">Andy</div><div class="enrich-type">Editorial Engine</div></div>
+    <div style="font-size: 9pt; opacity: 0.8;">Priority: CRITICAL — without voice samples, Andy writes generic AI content</div>
+  </div>
+  <div class="enrich-body">
+    <div>
+      <div class="enrich-col-label">Static Knowledge to Add</div>
+      <div class="enrich-item"><strong>Mic's voice samples</strong> — 3–5 pieces of writing Mic is proud of (articles, posts, scripts). These are mandatory before Andy can write in Mic's voice.</div>
+      <div class="enrich-item">SodaLabs brand voice guide — tone, vocabulary, what to avoid</div>
+      <div class="enrich-item">Channel formatting norms for each platform (LinkedIn, WhatsApp, newsletter, long-form)</div>
+      <div class="enrich-item">The 3 observable terms that define Mic's voice (to be derived from voice samples)</div>
+    </div>
+    <div>
+      <div class="enrich-col-label">Dynamic Memories</div>
+      <div class="enrich-item">Which Andy drafts Ziggi scored above 8 (what worked)</div>
+      <div class="enrich-item">Which drafts were revised and why</div>
+      <div class="enrich-item">Content calendar context — what was published recently, what's planned</div>
+    </div>
+  </div>
+</div>
+
+<!-- Farcake enrichment -->
+<div class="enrich-block">
+  <div class="enrich-header">
+    <div><div class="enrich-name">Farcake</div><div class="enrich-type">Research Engine</div></div>
+    <div style="font-size: 9pt; opacity: 0.8;">Priority: HIGH — research depth determines everything downstream</div>
+  </div>
+  <div class="enrich-body">
+    <div>
+      <div class="enrich-col-label">Static Knowledge to Add</div>
+      <div class="enrich-item">SodaLabs topic domains: African creative economy, phygital, music tech, culture-tech, Ubuntu philosophy</div>
+      <div class="enrich-item">Credibility scoring rubric for sources (academic vs media vs social)</div>
+      <div class="enrich-item">Research methodology: primary vs secondary sources, cross-referencing techniques</div>
+      <div class="enrich-item">Mic's known influencers and thinkers to reference (Robbie Brozin, Rory Sutherland, Nir Eyal, Yuk Hui)</div>
+    </div>
+    <div>
+      <div class="enrich-col-label">Dynamic Memories</div>
+      <div class="enrich-item">Previously researched topics (to avoid duplication)</div>
+      <div class="enrich-item">Sources that scored high credibility in past reports</div>
+      <div class="enrich-item">Gaps from previous research that were flagged by Andy or Ziggi</div>
+    </div>
+  </div>
+</div>
+
+<!-- Ziggi enrichment -->
+<div class="enrich-block">
+  <div class="enrich-header">
+    <div><div class="enrich-name">Ziggi</div><div class="enrich-type">Quality Architect</div></div>
+    <div style="font-size: 9pt; opacity: 0.8;">Priority: HIGH — Ziggi's rubric determines what ships</div>
+  </div>
+  <div class="enrich-body">
+    <div>
+      <div class="enrich-col-label">Static Knowledge to Add</div>
+      <div class="enrich-item">Code quality rubric: SOLID, DRY, OWASP top 10, TypeScript safety rules</div>
+      <div class="enrich-item">Content quality rubric: Mic's voice consistency, factual accuracy, engagement structure</div>
+      <div class="enrich-item">Design quality rubric: brand compliance, resolution standards, accessibility</div>
+      <div class="enrich-item">Research quality rubric: source credibility, verification depth, gap honesty</div>
+      <div class="enrich-item">PIA codebase patterns to flag as technical debt</div>
+    </div>
+    <div>
+      <div class="enrich-col-label">Dynamic Memories</div>
+      <div class="enrich-item">Average quality score by agent (trend tracking)</div>
+      <div class="enrich-item">Most common failure patterns per agent</div>
+      <div class="enrich-item">Technical debt backlog items (accumulated across reviews)</div>
+    </div>
+  </div>
+</div>
+
+<!-- Bird Fountain enrichment -->
+<div class="enrich-block">
+  <div class="enrich-header">
+    <div><div class="enrich-name">Bird Fountain</div><div class="enrich-type">Visual Production</div></div>
+    <div style="font-size: 9pt; opacity: 0.8;">Priority: MEDIUM — needs brand assets to be effective</div>
+  </div>
+  <div class="enrich-body">
+    <div>
+      <div class="enrich-col-label">Static Knowledge to Add</div>
+      <div class="enrich-item">SodaLabs brand guidelines: logo usage, colour palette (hex codes), typography stack</div>
+      <div class="enrich-item">Platform size specifications: Instagram, LinkedIn, WhatsApp, newsletter headers</div>
+      <div class="enrich-item">SodaWorld visual style reference: examples of on-brand work</div>
+      <div class="enrich-item">File format requirements per delivery destination (GumballCMS, Videohoho)</div>
+    </div>
+    <div>
+      <div class="enrich-col-label">Dynamic Memories</div>
+      <div class="enrich-item">Active brand campaigns and their style references</div>
+      <div class="enrich-item">Assets produced per project (to avoid duplicates)</div>
+      <div class="enrich-item">Which assets Ziggi flagged as off-brand (learning)</div>
+    </div>
+  </div>
+</div>
+
+<!-- Tim Buc enrichment -->
+<div class="enrich-block">
+  <div class="enrich-header">
+    <div><div class="enrich-name">Tim Buc</div><div class="enrich-type">Archivist</div></div>
+    <div style="font-size: 9pt; opacity: 0.8;">Priority: LOW — soul is already precise; filing taxonomy is the main enrichment</div>
+  </div>
+  <div class="enrich-body">
+    <div>
+      <div class="enrich-col-label">Static Knowledge to Add</div>
+      <div class="enrich-item">Complete project name taxonomy (so tags are consistent): list of all SodaLabs project names exactly as they should appear in records</div>
+      <div class="enrich-item">Agent name canonical forms (no variants — always "Fisher2050" not "Fisher" not "fisher2050")</div>
+      <div class="enrich-item">Cost thresholds: when to escalate a session cost to Eliyahu immediately vs include in batch</div>
+    </div>
+    <div>
+      <div class="enrich-col-label">Dynamic Memories</div>
+      <div class="enrich-item">Not needed — Tim Buc is a filer, not a reasoner. Static knowledge is sufficient.</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- SECTION 7 -->
+<h2>7. Knowledge Limits & Recommendations</h2>
+
+<h3>How Much Can You Add to a Soul?</h3>
+
+<p>The soul is injected as the system prompt. It competes with the task input and conversation history for Claude's context window. Here are the practical limits:</p>
+
+<table>
+  <thead><tr><th>What You're Adding</th><th>Recommended Size</th><th>Absolute Limit</th><th>Risk if Exceeded</th></tr></thead>
+  <tbody>
+    <tr><td>Personality + quirks</td><td>800–1200 chars</td><td>2000 chars</td><td>Becomes noise — agent ignores or contradicts</td></tr>
+    <tr><td>System prompt (operational steps)</td><td>800–1500 chars</td><td>2000 chars</td><td>Steps get skipped — agent prioritises early instructions</td></tr>
+    <tr><td>Static knowledge (domain context)</td><td>500–800 chars</td><td>1500 chars</td><td>Eats into task budget — less room for actual work</td></tr>
+    <tr><td>Dynamic memories (injected at spawn)</td><td>Up to 20 items, ~50 chars each</td><td>30 items</td><td>Context overload — Tim Buc/Monitor flags it</td></tr>
+    <tr><td>Total soul (all fields combined)</td><td>3000–5000 chars</td><td>8000 chars</td><td>Agent context budget too small for actual task work</td></tr>
+  </tbody>
+</table>
+
+<h3>Recommendation</h3>
+
+<p><strong>Do not try to put everything in the soul at once.</strong> The soul defines <em>who</em> the agent is and <em>how</em> they work. Domain knowledge goes in soul_memories (dynamic, per-session injection) or in a context file passed with each task. This way:</p>
+
+<ul>
+  <li>The soul stays tight and consistent (identity + process)</li>
+  <li>Knowledge is fresh and project-specific (injected per spawn)</li>
+  <li>Tim Buc keeps the memory system populated from session learnings</li>
+  <li>Eliyahu enriches memories over time as patterns emerge</li>
+</ul>
+
+<div class="callout blue">
+  <strong>The Single Highest-Value Enrichment Action Right Now</strong>
+  Provide Andy with 3–5 writing samples in Mic's voice. These become Andy's calibration data. Without them, Andy writes in generic AI voice — with them, it writes in Mic's voice. This is the enrichment that most directly affects output quality. Everything else can wait.
+</div>
+
+<div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 9pt; color: #888; text-align: center;">
+  PIA Fleet Architecture &nbsp;·&nbsp; SodaLabs &nbsp;·&nbsp; Johannesburg &nbsp;·&nbsp; February 2026<br>
+  View online: <span class="mono">localhost:3000/pia-fleet.html</span>
+</div>
+
+</body>
+</html>

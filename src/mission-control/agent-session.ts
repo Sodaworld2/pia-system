@@ -24,6 +24,7 @@ import { getPromptManager } from './prompt-manager.js';
 import { ptyManager, PTYWrapper } from '../tunnel/pty-wrapper.js';
 import { runAutonomousTask, cancelTask, WorkerResult } from '../orchestrator/autonomous-worker.js';
 import { getNodeSpawnEnv } from '../electron-paths.js';
+import { getSoulEngine } from '../souls/soul-engine.js';
 import { query } from '@anthropic-ai/claude-agent-sdk';
 import type { Query, SDKMessage, SDKAssistantMessage, SDKResultMessage,
   SDKSystemMessage, SDKToolProgressMessage, SDKToolUseSummaryMessage,
@@ -141,6 +142,7 @@ export interface AgentSessionConfig {
   loadProjectSettings?: boolean;
   autoRestart?: boolean;
   maxRestarts?: number;
+  soulId?: string;               // If set, soul system prompt is injected at spawn
 }
 
 export type AgentStatus = 'starting' | 'working' | 'waiting_for_input' | 'idle' | 'done' | 'error';
@@ -409,8 +411,14 @@ export class AgentSessionManager extends EventEmitter {
       const cleanEnv = { ...process.env, ...getNodeSpawnEnv() };
       delete cleanEnv.CLAUDECODE;
       delete cleanEnv.CLAUDE_CODE_SESSION;
-      // Keep ANTHROPIC_API_KEY — worker machines may only have API key auth (no OAuth).
-      // The subprocess needs this to authenticate with the Anthropic API.
+      // Auth strategy: Prefer OAuth over API key.
+      // The Claude CLI reads OAuth tokens from ~/.claude.json automatically.
+      // If ANTHROPIC_API_KEY is set in the env AND has no credits, the CLI will
+      // use it (ignoring OAuth) and fail with "credit balance too low".
+      // Fix: remove the API key so the CLI falls back to OAuth from config file.
+      // If no OAuth is configured, the CLI will still find the API key in .env
+      // via its own config loading — but env var won't override OAuth.
+      delete cleanEnv.ANTHROPIC_API_KEY;
       delete cleanEnv.CLAUDE_CODE_OAUTH_TOKEN;
       delete cleanEnv.CLAUDE_CODE_SESSION_ACCESS_TOKEN;
       // DO NOT delete CLAUDE_CODE_ENTRYPOINT — the SDK sets it to "sdk-ts" in config.env,
@@ -434,8 +442,9 @@ export class AgentSessionManager extends EventEmitter {
           const spawnEnv = { ...process.env, ...(config.env || {}), ...getNodeSpawnEnv() };
           delete spawnEnv.CLAUDECODE;
           delete spawnEnv.CLAUDE_CODE_SESSION;
-          // Keep ANTHROPIC_API_KEY — worker machines may only have API key auth (no OAuth)
-          // delete spawnEnv.ANTHROPIC_API_KEY;
+          // Remove API key — let CLI fall back to OAuth from ~/.claude.json.
+          // Prevents "credit balance too low" when API key has no credits but OAuth works.
+          delete spawnEnv.ANTHROPIC_API_KEY;
           delete spawnEnv.CLAUDE_CODE_OAUTH_TOKEN;
           delete spawnEnv.CLAUDE_CODE_SESSION_ACCESS_TOKEN;
           // DO NOT delete CLAUDE_CODE_ENTRYPOINT — the SDK sets it to "sdk-ts" via config.env,
@@ -488,8 +497,8 @@ export class AgentSessionManager extends EventEmitter {
         // Stability: Auto-fallback to cheaper model on errors/rate limits
         fallbackModel: (() => {
           const main = session.config.model || 'claude-opus-4-6';
-          const fb = session.config.fallbackModel || 'claude-sonnet-4-6';
-          return fb !== main ? fb : (main === 'claude-sonnet-4-6' ? 'claude-haiku-4-5-20251001' : 'claude-sonnet-4-6');
+          const fb = session.config.fallbackModel || 'claude-haiku-4-5-20251001';
+          return fb !== main ? fb : (main === 'claude-opus-4-6' ? 'claude-haiku-4-5-20251001' : 'claude-opus-4-6');
         })(),
         // Safety: prevent runaway loops — agents never timeout on their own
         maxTurns: session.config.maxTurns || 100,
@@ -506,12 +515,32 @@ export class AgentSessionManager extends EventEmitter {
         queryOptions.effort = session.config.effort;
       }
 
-      // System prompt — always use claude_code preset, append user's custom prompt if any
+      // System prompt — always use claude_code preset, append soul + user's custom prompt
+      // B10: If a soulId is set, generate the full soul system prompt and inject it
+      let soulSystemPrompt: string | undefined;
+      if (session.config.soulId) {
+        try {
+          soulSystemPrompt = getSoulEngine().generateSystemPrompt(session.config.soulId);
+          logger.info(`Soul injected: ${session.config.soulId} → ${soulSystemPrompt.length} chars`);
+          // B11: Apply soul's preferred_model if no explicit model was requested
+          if (!session.config.model) {
+            const soul = getSoulEngine().getSoul(session.config.soulId);
+            const preferredModel = soul?.config?.preferred_model as string | undefined;
+            if (preferredModel) {
+              queryOptions.model = preferredModel;
+              logger.info(`Soul model applied: ${session.config.soulId} → ${preferredModel}`);
+            }
+          }
+        } catch (soulErr) {
+          logger.warn(`Soul not found for id "${session.config.soulId}", spawning without soul: ${soulErr}`);
+        }
+      }
+      const appendParts = [soulSystemPrompt, session.config.systemPrompt].filter(Boolean);
       queryOptions.systemPrompt = {
         type: 'preset',
         preset: 'claude_code',
         // Use undefined (not '') when no custom prompt — empty string may be rejected by cli.js
-        append: session.config.systemPrompt || undefined,
+        append: appendParts.length > 0 ? appendParts.join('\n\n---\n\n') : undefined,
       };
 
       // Disallowed tools

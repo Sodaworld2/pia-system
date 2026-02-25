@@ -71,6 +71,7 @@ Plain-English definitions of every PIA-specific term.
 | **Queue System** | Fisher2050 produces jobs into a queue; M3 specialist agents consume them one at a time (M3 can only run one agent at a time). Fisher manages machine capacity, books time slots, handles overruns, re-schedules if a machine goes offline. |
 | **Producer-Consumer Pattern** | The architectural pattern underlying the Queue System. Fisher2050 is the producer (creates jobs). Farcake, Andy, Wingspan are consumers (pick up and execute jobs). Decouples scheduling from execution. |
 | **Coder Machine** | A planned specialist agent on M3. Receives a spec, implements it in an isolated git worktree, submits a PR. Pure execution — no management, no decisions beyond the code. |
+| **Itai** | Finance intelligence agent. Tracks API costs, billing, revenue, and financial forecasting for the SodaLabs ecosystem. Named 2026-02-22. Planned for M1, scheduled daily + on spend threshold. Email: itai@sodalabs.ai. Soul not yet written. |
 | **Dark Factory** | Level 5 in the "Five Levels of Vibe Coding" framework. Spec in → working software out. No human writes or reviews code. StrongDM operates at this level with 3 engineers. PIA is the infrastructure for reaching this level. |
 
 ### New Terms (Added Feb 2026 — Sessions 6–16)
@@ -89,6 +90,24 @@ Plain-English definitions of every PIA-specific term.
 | **Thin Soul** | A soul with `personality` defined but missing `system_prompt` — the agent has character but no operational instructions. Will behave inconsistently. Fix: write the step-by-step instructions for the role. |
 | **Soul Version Snapshot** | Planned: auto-save a JSON snapshot of a soul before every edit so changes can be rolled back if enrichment degrades quality. Part of the Agent Enrichment System plan. |
 | **Cross-Machine Soul Sync** | Planned: when a soul is updated on M1, broadcast a `soul:updated` WebSocket event to M2/M3 so workers get the new soul definition without a restart. Souls live in M1's SQLite as the single source of truth. |
+
+### Autonomous Business Swarms (Added Feb 2026)
+
+| Term | What It Means |
+|------|---------------|
+| **Autonomous Business Swarm** | A configuration where one human provides strategic direction and capital, and a fleet of AI agents handles all execution: research, content, coding, customer service, bookkeeping, fulfillment. The human is the founder. The agents are the company. Documented in `research/AUTONOMOUS_BUSINESS_SWARMS.md`. |
+| **One-Person Unicorn** | A business with one human employee (or zero) generating billion-dollar revenue using AI agent swarms. Dario Amodei (Anthropic CEO) put 70–80% odds on this happening in 2026. Business types: proprietary trading, developer tools, automated customer service. |
+| **Vibe Coding Platform** | A service (e.g. Emergent, $100M ARR in 8 months) where non-technical users describe an app in plain English and autonomous agents build it — full-stack, production-ready, deployable. 70% of Emergent's 150,000 paying customers had NO prior coding experience. |
+| **Swarm Operator** | A person who builds and manages a fleet of AI agents as a business operation. The solo practitioner running an autonomous business. Examples: Rahhaat Uppaal (6-figure agency, 0 employees), Emergent's 6M users. |
+| **Unit Economics Collapse** | The phenomenon where AI agents reduce the cost of a task to near-zero, destroying the price floor for that category. Example: VRSEN SEO reports went from hours + hundreds of dollars → minutes + $0.12. Whoever holds the swarm infrastructure wins when this happens. |
+| **Dark Factory (Business)** | Extension of the Dark Factory (Level 5 software) concept: spec a business in → agents research, build, market, sell, fulfill, iterate → revenue out. No human executes. StrongDM is Level 5 for code. The autonomous business swarm is Level 5 for commerce. |
+| **Ghost CEO** | Rahhaat Uppaal's term for a management swarm that handles executive-level drafting, decision support, and communication on the operator's behalf. In PIA terms: Fisher2050 + Eliyahu combined — one schedules and orchestrates, the other synthesises intelligence and briefs. |
+| **AI Staff** | Treating a fleet of agents as a workforce, not tools. Each agent has a role, a name, accountability, and a persistent record. Rahhaat Uppaal's framing: "my AI staff." PIA formalises this further with souls, emails, and machine assignments per agent. |
+| **Handoff Protocol** | The explicit runtime spec of what an agent receives, what it produces, and who it passes output to. Ratliff's HurumoAI failed because there was no handoff protocol — agents hallucinated progress with no structured flow. PIA's Agent Automation Profile IS this spec, but it is currently conceptual only; it needs to be enforced at spawn time. |
+| **Agentic Commerce** | Agents that can transact — pay for APIs, submit to platforms, push to storefronts, handle Stripe/payouts — not just produce content. The missing layer between "agent produces work" and "business makes money." PIA currently stops at content production; agentic commerce is the next frontier. |
+| **Micro-App** | A small, monetizable standalone app built by Coder Machine in a single session and deployed immediately. Revenue model: many micro-apps in parallel rather than one large product. Rahhaat Uppaal built a $70/day micro-app in a weekend using vibe coding. The pattern: spec → Coder Machine builds → Fisher2050 deploys → monitor revenue. |
+| **Swarm Self-Improvement Loop** | The feedback cycle that turns a pipeline into a learning system: agent outputs → Tim Buc files to Records DB → Eliyahu analyses patterns → Fisher2050 adjusts future task specs. PIA has all three agents but the routing between them (Tim Buc output → Eliyahu read → Fisher2050 update) is not yet wired. When closed, the system improves automatically with each cycle. |
+| **Critic Agent** | Industry-standard term for what Ziggi is — a dedicated agent whose sole job is reviewing outputs and rating them (1–10, architecture smell, devil's advocate). Most public swarm frameworks (CrewAI, Agency Swarm) skip this entirely. Having Ziggi is an architectural differentiator. |
 
 ### DAO Terms (Separate Project)
 
@@ -135,6 +154,25 @@ Marc Nuri is a senior open-source developer who went from 10–15 → **25+ GitH
 | **Burnout risk** — async productivity means you're tempted to never stop | Worth noting in PIA docs |
 
 His dashboard (shown in YouTube demo) also displays: project name, initial prompt, git branch, machine name, session duration, model used, **context % used**, current status (waiting/working/needs permission).
+
+### External Research — Autonomous Business Swarms (Feb 2026)
+
+Source: `research/AUTONOMOUS_BUSINESS_SWARMS.md` (full 10-section document)
+
+The concept: AI agents as entrepreneurs (not assistants). The full stack (code, bookkeeping, customer service, fulfillment) run by agents. Human provides direction and capital. This is Level 5 (Dark Factory) applied not just to software but to entire businesses.
+
+| Insight | Relevance to PIA |
+|---------|-----------------|
+| **Emergent: $100M ARR in 8 months** — vibe coding platform, non-technical users building full apps | PIA is the MANAGEMENT LAYER above what Emergent does. Emergent is Farcake. PIA is Fisher2050. |
+| **Autonomous systems fail without a manager agent** — Ratliff's HurumoAI descended into chaos in 3 months | PIA has Fisher2050 (orchestrator), Ziggi (quality gate), Tim Buc (archivist) — solving the exact failures |
+| **Unit economics collapse is real** — VRSEN SEO reports: hours → minutes, hundreds of dollars → $0.12 | First pipeline to close in PIA creates this same advantage |
+| **6-figure swarm agency, 0 employees** — Rahhaat Uppaal's documented case | This is what PIA enables for Mic + SodaLabs |
+| **PIA is architecturally ahead of every public framework** — souls + memory + Ziggi + Fisher2050 are unique | ✅ B10 done 2026-02-22 — souls now fire at spawn. Intelligence loop wired. Inbound email routes to Fisher2050. |
+| **The bottleneck shifts to spec quality** — confirmed by StrongDM + METR study + Ratliff failure | Mic writing good agent automation profiles IS the leverage point |
+
+**The key framing:** PIA is not a competitor to CrewAI or Agency Swarm. PIA is the management intelligence ABOVE them. The stack: `Mic → Fisher2050 (PIA) → Farcake/Andy/Wingspan/Coder (specialist agents) → GumballCMS/Videohoho (delivery) → Tim Buc (archive) → Eliyahu (synthesise) → Fisher2050 (improve)`.
+
+**The moment one full pipeline closes autonomously → PIA IS an autonomous business swarm.**
 
 ### Ideas Explored (Future)
 
@@ -389,7 +427,11 @@ What PIA can actually do right now.
 | Architecture diagram (`/pia-diagram.html`) | Now vs After comparison, full data flow, comparison table, to-do list, Five Levels framework, full ecosystem section (three-tier hierarchy, all agents, architectural patterns) |
 | Mind map (`/pia-mindmap.html`) | Interactive D3.js mind map of the full PIA × SodaLabs architecture. Zoom/pan, click nodes for detail. |
 | Storyboard (`/pia-storyboard.html`) | Visual storyboard / planning board for PIA features and sessions. |
-| Soul Engine (`src/souls/soul-engine.ts`) | Fully functional — loads souls from DB, generates system prompts, saves memories. Soul schema: id, name, role, personality, goals, relationships, system_prompt, config, email, status. **⚠️ WIRING GAP: `generateSystemPrompt()` works but is NEVER called at spawn time. `agent-session.ts` has zero soul references. Fix: ~10 lines (B10 in to-do).** |
+| **Soul injection at agent spawn (B10)** — DONE 2026-02-22 | Pass `soulId` in `POST /api/mc/agents`. `generateSystemPrompt()` called before SDK query. All 12 souls fire correctly. |
+| **Eliyahu → Fisher2050 intelligence loop** — DONE 2026-02-22 | After 6am briefing: Eliyahu writes pattern analysis to Fisher2050's `agent_messages` inbox + saves soul memory. Fisher2050 standup/summary reads unread inbox and marks read. Eliyahu prompt includes 7-day Ziggi quality trends. |
+| **Inbound email → Fisher2050 task** — DONE 2026-02-22 | `POST /api/email/inbound` parses Mailgun/Cloudflare email → creates `calendar_events` entry for Fisher2050 scheduled 1 min ahead. |
+| **Tim Buc quality scoring** — improved 2026-02-22 | Score now uses 5 signals: produced files (+15), tool_calls ≥ 3 (+10), cost > 0 (+10), summary present (+5), base 60. Replaces 80/70 dummy heuristic. |
+| Soul Engine (`src/souls/soul-engine.ts`) | Fully functional — loads souls from DB, generates system prompts, saves memories. Pass `soulId` in POST /api/mc/agents to inject. |
 | Task Queue (`src/orchestrator/task-queue.ts`) | Fully functional — priority queue, pending→in_progress→completed/failed, blocked_by, blocks, output fields. Full REST API at `/api/tasks`. |
 | Autonomous Worker (`src/orchestrator/autonomous-worker.ts`) | Fully functional — complete Claude API tool loop with soul injection. Not yet triggered cross-machine. |
 | AgentBus (`src/comms/agent-bus.ts`) | In-memory pub/sub between agents. Fully functional for real-time events. Messages lost on restart — by design. |
@@ -403,9 +445,8 @@ What PIA can actually do right now.
 | MQTT broker | Code exists, not wired to Cortex telemetry yet |
 | Autonomous Worker | Code exists (`src/orchestrator/autonomous-worker.ts`), not triggered cross-machine |
 | Fleet Dashboard mockup | HTML exists (`FLEET_DASHBOARD_MOCKUP.html`), not wired to real data |
-| DAO admin dashboard | Plan exists, implementation not started |
-| Fisher2050 | Exists as a standalone app (port 3002, `fisher2050/` directory) with its own disconnected SQLite DB. Soul JSON complete. Cron scheduler built. Needs merging into PIA main process as `FisherService` before any dependent features can be built. |
-| GumballCMS | Full codebase exists at `sodalabs/GumballCMS/`. Integration into PIA agent pipeline (as WhatsApp bridge and output delivery layer) is pending — not connected to Fisher2050's inbox or any agent output flow. |
+| GumballCMS | Full codebase exists at `sodalabs/GumballCMS/`. Integration pending — v2.0 item. |
+| Fisher2050 port 3002 sidecar | `fisher2050/` folder still exists but is dead code. `FisherService` in main process is the live version. Decommission when convenient — low priority. |
 
 ---
 
@@ -419,12 +460,12 @@ These 6 items were identified as risk-reduction actions by the Devil's Advocate 
 
 | # | Fix | Effort | Why |
 |---|-----|--------|-----|
-| DA1 | **Write `V1_DEFINITION.md`** — define exactly which N items must work for v1.0 | 1 hour | Without a finish line, scope creep is guaranteed. Every build decision should be evaluated against v1.0. |
-| DA2 | **Merge Fisher2050 into PIA main process** (`FisherService` inside `startHub()`) | 2-3 days | Currently a disconnected sidecar with its own DB. Every feature that assumes Fisher2050 is part of PIA is building on a false assumption. Single biggest architectural risk. |
-| DA3 | **Add TTL + inbox size limit to `agent_messages`** before deploying | 1 hour | Without expiry, stale messages accumulate forever and inflate every agent's context on startup indefinitely. Add `expires_at` column (default 7 days) + SoulEngine hard limit of 10 unread messages per spawn. |
-| DA4 | **Write one integration test for the core loop** | 1 day | Fisher2050 receives task → creates calendar entry → PIA spawns agent → Tim Buc fires → record exists in Records DB. No need for real API calls — use mocks. Without this, there is no definition of "working" and regressions are invisible. |
-| DA5 | **Build local calendar fallback before touching Google OAuth** | 1 day | A simple `calendar_events` SQLite table Fisher2050 writes to and PIA's scheduler reads from. Makes calendar-triggered spawn work without any external dependency. Google Calendar becomes an enhancement, not a requirement. |
-| DA6 | **Wire methodology frameworks into agent system prompts** | 2-3 hours | Taoism, Rory Sutherland, Ubuntu, Nir Eyal, etc. live in `research/USER_WORKING_STYLE.md` but are not connected to any agent's actual soul. Until wired in, all the philosophy work produces documents agents do not read. |
+| DA1 | ✅ **`V1_DEFINITION.md` written** — 12 acceptance criteria, 17 build items, 5-week target | DONE | |
+| DA2 | ✅ **Fisher2050 merged into PIA main process** — `src/services/fisher-service.ts`, wired in `src/index.ts` | DONE | Port 3002 sidecar folder still exists but unused |
+| DA3 | ✅ **TTL + inbox size limit on `agent_messages`** — `expires_at` column + weekly Sunday cleanup cron in FisherService | DONE | |
+| DA4 | 🔧 **Integration test scaffolding** — vitest configured, `tests/integration/core-loop.test.ts` stubs written 2026-02-22 | IN PROGRESS | Full soak test needs API key |
+| DA5 | ✅ **Local calendar_events table** — migration 045, CalendarSpawnService wired, Fisher2050 writes + PIA reads | DONE | |
+| DA6 | ✅ **Methodology frameworks in soul prompts** — Taoism, Sutherland, Ubuntu, Nir Eyal baked into 12 soul personality files | DONE | |
 
 ### High Priority — New Architecture (From MASTER_VISION.md Build Order, Feb 2026)
 
@@ -441,7 +482,7 @@ These items are the build order extracted from the full PIA × SodaLabs architec
 | B7 | **Monitor Agent** (continuous push-based watchdog) | 1 day | Always-running agent on M1. Detects failures, stalls, context overload, machine offline. Pushes to Controller immediately — never waits to be polled. Observer pattern. |
 | B8 | **Context % Bar on Agent Cards** | 2 hours | SDK already exposes `ModelUsage.contextWindow` via `onMessage` callback. Show `inputTokens / contextWindow * 100` as a bar on each agent card. Yellow at 70%, red at 90%. |
 | B9 | **Activity Feed** (AI-narrated briefing screen) | 2-3 days | Non-technical screen showing what the AI workforce did today, explained in plain English. Eliyahu produces the text; the feed renders it. For stakeholders who do not understand the technology. |
-| B10 | **Soul Spawn Wiring** (fix the soul gap) | 30 min | `agent-session.ts` — accept optional `soulId` in spawn payload, call `getSoulEngine().generateSystemPrompt(soulId, taskContext)`, prepend to systemPrompt before `query()`. ~10 lines. Currently ALL 12 souls are seeded but NEVER injected at spawn. This single fix makes every agent actually behave as their soul defines. **Do this before building the enrichment UI.** |
+| B10 | ✅ **Soul Spawn Wiring** — DONE 2026-02-22 | DONE | `agent-session.ts` now calls `getSoulEngine().generateSystemPrompt(soulId)` and injects result as `append` in SDK systemPrompt. `soulId` flows through mission-control route, remote spawn payload, and runSdkMode(). |
 | B11 | **Agent Enrichment System** (Souls tab in dashboard) | 2-3 days | New "Souls" tab in `mission-control.html`. Soul Roster Grid (12 cards with health score), Soul Editor (6-section form: identity/character/mission/goals/relationships/config), Memory Panel (add/view/search memories per agent), System Prompt Preview (live render of assembled prompt). All backed by existing `/api/souls/*` REST API. B10 must be done first. |
 | B12 | **Soul Health Analysis** (Eliyahu audit) | 1 day | Add soul health score calculation (0–100% completeness). Eliyahu periodic audit: report thin/conflicting/stale souls, flag to Fisher2050 for enrichment scheduling. Soul health trend over time. |
 | B13 | **Soul Export/Import + Version Snapshots** | 1 day | Export any soul as standalone JSON. Import/paste JSON to create or overwrite a soul. Auto-snapshot before every edit (roll back if enrichment degrades quality). Cross-machine sync: broadcast `soul:updated` WebSocket event to workers on save. |

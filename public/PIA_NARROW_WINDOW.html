@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Narrow Window — SodaLabs Intelligence Brief</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #07080e;
+    --surface: #0d0f18;
+    --surface2: #141622;
+    --border: rgba(255,210,80,0.1);
+    --border2: rgba(255,255,255,0.07);
+    --gold: #f2c440;
+    --gold2: #e8a820;
+    --rust: #d9541c;
+    --red: #c03535;
+    --green: #3aaa6e;
+    --ink: #f0ece3;
+    --ink2: rgba(240,236,227,0.65);
+    --ink3: rgba(240,236,227,0.38);
+    --ink4: rgba(240,236,227,0.2);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    font-family: 'Inter', system-ui, Arial, sans-serif;
+    color: var(--ink);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* Background texture */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 0%, rgba(242,196,64,0.04) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 50% at 80% 100%, rgba(217,84,28,0.03) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 32px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── MASTHEAD ── */
+  .masthead {
+    border-bottom: 1px solid var(--border2);
+    padding: 20px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .masthead-logo {
+    font-size: 13px; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--ink3);
+  }
+  .masthead-logo span { color: var(--gold); }
+  .masthead-meta {
+    font-size: 11px; color: var(--ink3); letter-spacing: 0.06em;
+    text-align: right;
+  }
+  .masthead-meta strong { color: var(--ink2); }
+
+  /* ── COVER ── */
+  .cover {
+    padding: 80px 0 64px;
+    border-bottom: 1px solid var(--border2);
+  }
+  .cover-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.25em;
+    text-transform: uppercase; color: var(--gold);
+    margin-bottom: 28px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .cover-label::after {
+    content: ''; flex: 1; height: 1px;
+    background: linear-gradient(90deg, rgba(242,196,64,0.3), transparent);
+  }
+  .cover-headline {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(36px, 6vw, 64px);
+    font-weight: 700; line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin-bottom: 32px;
+  }
+  .cover-headline em {
+    font-style: italic;
+    color: var(--gold);
+  }
+  .cover-deck {
+    font-size: 17px; line-height: 1.8; color: var(--ink2);
+    max-width: 640px; margin-bottom: 40px;
+    border-left: 2px solid var(--gold);
+    padding-left: 20px;
+  }
+  .cover-byline {
+    display: flex; gap: 32px; flex-wrap: wrap;
+    font-size: 11px; color: var(--ink3); letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .cover-byline strong { color: var(--ink2); display: block; font-size: 13px; text-transform: none; letter-spacing: 0; }
+
+  /* ── SECTION STRUCTURE ── */
+  section { padding: 72px 0; border-bottom: 1px solid var(--border2); }
+  section:last-of-type { border-bottom: none; }
+
+  .section-label {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.3em;
+    text-transform: uppercase; color: var(--ink3);
+    margin-bottom: 32px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .section-label .n {
+    color: var(--gold); font-size: 11px;
+  }
+  .section-label::after {
+    content: ''; flex: 1; height: 1px;
+    background: var(--border2);
+  }
+
+  .section-headline {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(26px, 4vw, 40px);
+    font-weight: 700; line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin-bottom: 20px;
+  }
+  .section-sub {
+    font-size: 16px; line-height: 1.8; color: var(--ink2);
+    margin-bottom: 40px; max-width: 660px;
+  }
+
+  /* ── DATA WALL ── */
+  .data-wall {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border2);
+    border: 1px solid var(--border2);
+    margin: 40px 0;
+  }
+  .data-cell {
+    background: var(--surface);
+    padding: 28px 24px;
+  }
+  .data-num {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 42px; font-weight: 700; line-height: 1;
+    color: var(--gold);
+    margin-bottom: 10px;
+  }
+  .data-num.red { color: var(--red); }
+  .data-num.rust { color: var(--rust); }
+  .data-label {
+    font-size: 12px; color: var(--ink2); line-height: 1.5;
+  }
+  .data-source {
+    font-size: 10px; color: var(--ink3); margin-top: 8px;
+    letter-spacing: 0.04em; text-transform: uppercase;
+  }
+
+  /* ── PULL QUOTE ── */
+  .pull-quote {
+    border-left: 3px solid var(--gold);
+    padding: 8px 0 8px 24px;
+    margin: 40px 0;
+  }
+  .pull-quote q {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 20px; font-style: italic;
+    line-height: 1.6; color: var(--ink);
+    display: block; margin-bottom: 12px;
+  }
+  .pull-quote cite {
+    font-size: 11px; color: var(--ink3); font-style: normal;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+
+  /* ── AFRICA BOX ── */
+  .africa-box {
+    background: linear-gradient(135deg, rgba(217,84,28,0.08), rgba(217,84,28,0.03));
+    border: 1px solid rgba(217,84,28,0.2);
+    padding: 32px 28px;
+    margin: 40px 0;
+  }
+  .africa-box-label {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.25em;
+    text-transform: uppercase; color: var(--rust);
+    margin-bottom: 16px;
+  }
+  .africa-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+  }
+  .africa-stat {}
+  .africa-num {
+    font-size: 36px; font-weight: 700;
+    color: var(--rust); line-height: 1;
+    font-family: 'Playfair Display', serif;
+    margin-bottom: 6px;
+  }
+  .africa-desc { font-size: 13px; color: var(--ink2); line-height: 1.5; }
+  .africa-note { font-size: 10px; color: var(--ink3); margin-top: 4px; }
+
+  /* ── STORY BOX ── */
+  .story-box {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    padding: 36px 32px;
+    margin: 40px 0;
+  }
+  .story-name {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.15em;
+    text-transform: uppercase; color: var(--gold);
+    margin-bottom: 16px;
+  }
+  .story-text {
+    font-size: 16px; line-height: 1.85; color: var(--ink2);
+  }
+  .story-text strong { color: var(--ink); }
+  .time-split {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+    margin-top: 24px;
+  }
+  .time-col {}
+  .time-col-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.15em;
+    text-transform: uppercase; margin-bottom: 12px;
+  }
+  .time-col.before .time-col-label { color: var(--red); }
+  .time-col.after .time-col-label { color: var(--green); }
+  .time-item {
+    font-size: 13px; color: var(--ink2); line-height: 1.6;
+    padding: 8px 0; border-bottom: 1px solid var(--border2);
+    display: flex; gap: 8px; align-items: flex-start;
+  }
+  .time-item:last-child { border-bottom: none; }
+  .time-dot {
+    width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; margin-top: 6px;
+  }
+  .before .time-dot { background: var(--red); }
+  .after .time-dot { background: var(--green); }
+
+  /* ── AGENT GRID ── */
+  .agent-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin: 40px 0;
+  }
+  .agent-card {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    padding: 20px 18px;
+  }
+  .agent-tag {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--ink3);
+    margin-bottom: 10px;
+  }
+  .agent-name {
+    font-size: 16px; font-weight: 700; color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .agent-role {
+    font-size: 11px; color: var(--gold); letter-spacing: 0.04em;
+    margin-bottom: 12px;
+  }
+  .agent-desc {
+    font-size: 12px; color: var(--ink2); line-height: 1.6;
+  }
+  .agent-email {
+    font-size: 10px; color: var(--ink3); margin-top: 10px;
+    letter-spacing: 0.03em;
+  }
+
+  /* ── ECONOMICS TABLE ── */
+  .econ-compare {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+    margin: 40px 0;
+  }
+  .econ-col {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    padding: 28px 24px;
+  }
+  .econ-col.theirs { border-color: rgba(192,53,53,0.2); }
+  .econ-col.ours { border-color: rgba(58,170,110,0.2); }
+  .econ-col-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.2em;
+    text-transform: uppercase; margin-bottom: 20px;
+  }
+  .econ-col.theirs .econ-col-label { color: var(--red); }
+  .econ-col.ours .econ-col-label { color: var(--green); }
+  .econ-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 8px 0; border-bottom: 1px solid var(--border2);
+    gap: 12px;
+  }
+  .econ-row:last-child { border-bottom: none; }
+  .econ-role { font-size: 13px; color: var(--ink2); }
+  .econ-cost { font-size: 14px; font-weight: 700; color: var(--ink); white-space: nowrap; }
+  .econ-total {
+    border-top: 2px solid var(--border2); margin-top: 8px;
+    padding-top: 12px; display: flex; justify-content: space-between;
+  }
+  .econ-total-label { font-size: 13px; font-weight: 700; color: var(--ink); }
+  .econ-total-num { font-size: 22px; font-weight: 700; }
+  .econ-col.theirs .econ-total-num { color: var(--red); }
+  .econ-col.ours .econ-total-num { color: var(--green); }
+  .econ-note { font-size: 11px; color: var(--ink3); margin-top: 12px; line-height: 1.5; }
+
+  /* ── LOOP DIAGRAM ── */
+  .loop {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    padding: 36px;
+    margin: 40px 0;
+    font-family: 'Inter', monospace;
+  }
+  .loop-title {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--gold);
+    margin-bottom: 28px;
+  }
+  .loop-flow {
+    display: flex; flex-direction: column; gap: 0;
+  }
+  .loop-step {
+    display: flex; gap: 20px; align-items: flex-start;
+  }
+  .loop-step-col {
+    display: flex; flex-direction: column; align-items: center;
+    width: 32px; flex-shrink: 0;
+  }
+  .loop-dot {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--surface);
+    border: 2px solid var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: var(--gold);
+    flex-shrink: 0;
+  }
+  .loop-line {
+    width: 2px; flex: 1; min-height: 20px;
+    background: linear-gradient(to bottom, rgba(242,196,64,0.3), rgba(242,196,64,0.05));
+    margin: 4px 0;
+  }
+  .loop-content {
+    padding: 3px 0 24px;
+  }
+  .loop-agent { font-size: 13px; font-weight: 700; color: var(--gold); margin-bottom: 4px; }
+  .loop-desc { font-size: 12px; color: var(--ink2); line-height: 1.6; }
+
+  /* ── DIFFERENTIATORS ── */
+  .diff-list {
+    list-style: none;
+    margin: 40px 0;
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .diff-item {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    padding: 18px 20px 18px 64px;
+    position: relative;
+    display: flex; flex-direction: column;
+  }
+  .diff-num {
+    position: absolute; left: 20px; top: 50%; transform: translateY(-50%);
+    font-family: 'Playfair Display', serif;
+    font-size: 24px; font-weight: 700; color: var(--gold);
+    opacity: 0.4; line-height: 1;
+  }
+  .diff-title { font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 4px; }
+  .diff-desc { font-size: 12px; color: var(--ink2); line-height: 1.6; }
+
+  /* ── WINDOW BOX ── */
+  .window-box {
+    background: linear-gradient(135deg, rgba(242,196,64,0.06), rgba(242,196,64,0.02));
+    border: 1px solid rgba(242,196,64,0.2);
+    padding: 48px 40px;
+    text-align: center;
+    margin: 40px 0;
+  }
+  .window-quote {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(20px, 3vw, 30px);
+    font-style: italic; line-height: 1.4;
+    color: var(--ink); margin-bottom: 16px;
+  }
+  .window-attr {
+    font-size: 11px; color: var(--ink3); letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  /* ── TIMELINE ── */
+  .timeline-row {
+    display: flex; align-items: flex-start; gap: 20px;
+    padding: 20px 0; border-bottom: 1px solid var(--border2);
+  }
+  .timeline-row:last-child { border-bottom: none; }
+  .timeline-week {
+    font-size: 11px; font-weight: 700; color: var(--gold);
+    letter-spacing: 0.08em; width: 80px; flex-shrink: 0; padding-top: 2px;
+  }
+  .timeline-content { flex: 1; }
+  .timeline-action { font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 4px; }
+  .timeline-detail { font-size: 12px; color: var(--ink2); line-height: 1.6; }
+
+  /* ── CTA ── */
+  .cta-section {
+    padding: 80px 0;
+  }
+  .cta-inner {
+    border: 1px solid rgba(242,196,64,0.2);
+    padding: 52px 48px;
+    text-align: center;
+    background: var(--surface);
+  }
+  .cta-label {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.3em;
+    text-transform: uppercase; color: var(--gold); margin-bottom: 24px;
+  }
+  .cta-headline {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(24px, 4vw, 40px); font-weight: 700;
+    line-height: 1.15; color: var(--ink);
+    margin-bottom: 20px;
+  }
+  .cta-sub {
+    font-size: 15px; color: var(--ink2); line-height: 1.7;
+    max-width: 520px; margin: 0 auto 36px;
+  }
+  .cta-spots {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: rgba(242,196,64,0.08);
+    border: 1px solid rgba(242,196,64,0.2);
+    padding: 10px 20px; margin-bottom: 36px;
+    font-size: 13px; color: var(--gold); font-weight: 600;
+  }
+  .cta-spots .dot { width: 8px; height: 8px; background: var(--gold); border-radius: 50%; }
+  .cta-email {
+    display: block;
+    font-size: 20px; font-weight: 700; color: var(--gold);
+    text-decoration: none; letter-spacing: 0.02em;
+    margin-bottom: 12px;
+  }
+  .cta-email:hover { text-decoration: underline; }
+  .cta-tagline { font-size: 12px; color: var(--ink3); }
+
+  /* ── FOOTER ── */
+  .footer {
+    border-top: 1px solid var(--border2);
+    padding: 20px 0;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 11px; color: var(--ink3);
+  }
+  .footer a { color: var(--gold); text-decoration: none; }
+
+  /* ── BODY TEXT ── */
+  .body-text {
+    font-size: 15px; line-height: 1.9; color: var(--ink2);
+    margin-bottom: 20px;
+  }
+  .body-text + .body-text { }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 640px) {
+    .wrap { padding: 0 20px; }
+    .data-wall { grid-template-columns: 1fr 1fr; }
+    .data-wall .data-cell:nth-child(5),
+    .data-wall .data-cell:nth-child(6) { }
+    .agent-grid { grid-template-columns: 1fr; }
+    .econ-compare { grid-template-columns: 1fr; }
+    .africa-grid { grid-template-columns: 1fr; }
+    .time-split { grid-template-columns: 1fr; }
+    .masthead { flex-direction: column; gap: 8px; text-align: center; }
+    .masthead-meta { text-align: center; }
+    .cta-inner { padding: 32px 24px; }
+    .loop { padding: 24px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- MASTHEAD -->
+  <div class="masthead">
+    <div class="masthead-logo">Soda<span>Labs</span> · PIA Intelligence Brief</div>
+    <div class="masthead-meta">
+      <strong>For Organisation Leaders</strong><br>
+      February 2026 · Confidential
+    </div>
+  </div>
+
+  <!-- COVER -->
+  <div class="cover">
+    <div class="cover-label">Strategic Brief</div>
+    <h1 class="cover-headline">
+      The Narrow<br>
+      <em>Window</em>
+    </h1>
+    <p class="cover-deck">
+      How the first wave of organisations building AI workforces is already pulling ahead —
+      and why every week of inaction compounds the gap.
+    </p>
+    <div class="cover-byline">
+      <div>
+        <strong>SodaLabs</strong>
+        Johannesburg, South Africa
+      </div>
+      <div>
+        <strong>PIA Platform</strong>
+        Project Intelligence Agent
+      </div>
+      <div>
+        <strong>Contact</strong>
+        mic@sodalabs.ai
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 1: THE NUMBERS -->
+  <section>
+    <div class="section-label"><span class="n">01</span> The Numbers</div>
+    <h2 class="section-headline">This is not theoretical.<br>The shift has already happened.</h2>
+    <p class="section-sub">
+      The following statistics are sourced from verified transaction data, corporate disclosures, and peer-reviewed research. They represent real business decisions already made — not projections.
+    </p>
+
+    <div class="data-wall">
+      <div class="data-cell">
+        <div class="data-num">$0.03</div>
+        <div class="data-label">Cost of AI labor per $1 of equivalent human labor</div>
+        <div class="data-source">Ramp 2025 — real transaction data across thousands of companies</div>
+      </div>
+      <div class="data-cell">
+        <div class="data-num red">40%</div>
+        <div class="data-label">Klarna workforce reduction after deploying 700 AI agents. 5,500 → 3,400 employees.</div>
+        <div class="data-source">Klarna, 2025 annual report</div>
+      </div>
+      <div class="data-cell">
+        <div class="data-num rust">300M</div>
+        <div class="data-label">Jobs exposed to automation globally, across all sectors</div>
+        <div class="data-source">Goldman Sachs Research, 2024</div>
+      </div>
+      <div class="data-cell">
+        <div class="data-num red">66%</div>
+        <div class="data-label">"3× productivity = same as a 66% headcount reduction." 1,100 people affected in my board meetings this week.</div>
+        <div class="data-source">Ben Horowitz (a16z), Moonshots Podcast, Feb 2026</div>
+      </div>
+      <div class="data-cell">
+        <div class="data-num">40%</div>
+        <div class="data-label">Of global employers plan to reduce headcount due to AI in 2025–2026</div>
+        <div class="data-source">World Economic Forum, 2025 Future of Jobs Report</div>
+      </div>
+      <div class="data-cell">
+        <div class="data-num rust">70–80%</div>
+        <div class="data-label">Probability a 1-person company generates over $1B in annual revenue using AI agent fleets in 2026</div>
+        <div class="data-source">Dario Amodei, Anthropic CEO, public statement 2025</div>
+      </div>
+    </div>
+
+    <div class="pull-quote">
+      <q>"Half of entry-level white-collar jobs will be gone in one to five years. We need to stop sugar-coating it."</q>
+      <cite>Dario Amodei, CEO Anthropic — creator of Claude, the AI powering PIA</cite>
+    </div>
+  </section>
+
+  <!-- SECTION 2: AFRICA + CREATIVE SECTOR -->
+  <section>
+    <div class="section-label"><span class="n">02</span> Closer to Home</div>
+    <h2 class="section-headline">Africa's creative sector<br>is already in the data.</h2>
+    <p class="section-sub">
+      The disruption is not coming to Africa. It is here. The following figures are specific to the African creative and knowledge economy — the workers and organisations most directly affected by what AI does first.
+    </p>
+
+    <div class="africa-box">
+      <div class="africa-box-label">Africa &amp; Creative Sector — Verified Data</div>
+      <div class="africa-grid">
+        <div class="africa-stat">
+          <div class="africa-num">−21%</div>
+          <div class="africa-desc">African freelance jobs on Upwork since 2022. The micro-tasks that sustained African digital workers are the tasks being automated first.</div>
+          <div class="africa-note">Source: Jobtech Alliance, Africa Digital Economy Report 2025</div>
+        </div>
+        <div class="africa-stat">
+          <div class="africa-num">40%+</div>
+          <div class="africa-desc">Of tasks assigned to African remote workers are micro-tasks — the category with the highest AI substitution rate globally.</div>
+          <div class="africa-note">Source: Jobtech Alliance 2025</div>
+        </div>
+        <div class="africa-stat">
+          <div class="africa-num">−28%</div>
+          <div class="africa-desc">Decline in writing and editorial freelance work in 2025 alone. Not a projection — a measured year-on-year collapse.</div>
+          <div class="africa-note">Source: Upwork earnings reports, 2025</div>
+        </div>
+        <div class="africa-stat">
+          <div class="africa-num">−33%</div>
+          <div class="africa-desc">Decline in graphic design and visual art freelance commissions in 2025. Image generation at $0.02 per image has changed the market permanently.</div>
+          <div class="africa-note">Source: Upwork sector data, 2025</div>
+        </div>
+      </div>
+    </div>
+
+    <p class="body-text">
+      The question for organisations operating in the creative economy is not whether this disruption will affect them. It already has. The question is whether they respond as institutions that are being disrupted, or as institutions that are doing the disrupting — building the infrastructure that captures value rather than watching it leave.
+    </p>
+
+    <div class="pull-quote">
+      <q>"There is a narrow window to mobilise finance and technology for exponential sector growth. We cannot be caught flat-footed."</q>
+      <cite>Beth Arendse, CEO — Business and Arts South Africa, February 2026</cite>
+    </div>
+  </section>
+
+  <!-- SECTION 3: THE HUMAN STORY -->
+  <section>
+    <div class="section-label"><span class="n">03</span> The Human Reality</div>
+    <h2 class="section-headline">Every team has a Zanele.</h2>
+    <p class="section-sub">
+      Your best people are not underperforming. They are being buried. The operational overhead of running a modern organisation — coordination, reporting, admin, follow-up, research, quality tracking — consumes the majority of the working day for exactly the people whose judgment and creativity you hired them for.
+    </p>
+
+    <div class="story-box">
+      <div class="story-name">The Zanele Pattern — a composite from SodaLabs client engagements</div>
+      <p class="story-text">
+        She is <strong>creatively brilliant</strong>. She has the ideas, the relationships, the voice. She was hired because of what she creates. She costs the organisation R40,000 a month and is worth every cent — in theory.
+      </p>
+      <p class="story-text" style="margin-top: 14px;">
+        In practice: she spends <strong>60–70% of her working week</strong> on operational tasks. Scheduling. Status updates. Compiling reports. Coordinating approvals. Tracking down content from suppliers. Re-explaining context to collaborators who missed the last meeting.
+      </p>
+      <p class="story-text" style="margin-top: 14px;">
+        None of this is her fault. None of it is her job. <strong>All of it can be done by an AI agent.</strong>
+      </p>
+
+      <div class="time-split">
+        <div class="time-col before">
+          <div class="time-col-label">Before AI Workforce</div>
+          <div class="time-item"><div class="time-dot"></div><span>Zanele compiles weekly reports (4hrs)</span></div>
+          <div class="time-item"><div class="time-dot"></div><span>Zanele chases stakeholder approvals (3hrs)</span></div>
+          <div class="time-item"><div class="time-dot"></div><span>Zanele researches campaign benchmarks (2hrs)</span></div>
+          <div class="time-item"><div class="time-dot"></div><span>Zanele attends coordination calls (5hrs)</span></div>
+          <div class="time-item"><div class="time-dot"></div><span>Actual creative work: 6hrs / week</span></div>
+        </div>
+        <div class="time-col after">
+          <div class="time-col-label">With AI Workforce</div>
+          <div class="time-item"><div class="time-dot"></div><span>Eliyahu compiles and analyses reports. Automatic.</span></div>
+          <div class="time-item"><div class="time-dot"></div><span>Fisher2050 tracks and follows up on approvals. Automatic.</span></div>
+          <div class="time-item"><div class="time-dot"></div><span>Farcake researches and produces briefings. 12 cents per report.</span></div>
+          <div class="time-item"><div class="time-dot"></div><span>Tim Buc files every meeting, every decision. Nothing lost.</span></div>
+          <div class="time-item"><div class="time-dot"></div><span>Zanele's creative work: 30+ hrs / week.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <p class="body-text">
+      This is not about replacing Zanele. It is about returning her to the work that only she can do. The AI agents do not replace the humans. They remove the operational overhead that has always been the wrong use of human intelligence.
+    </p>
+  </section>
+
+  <!-- SECTION 4: THE TEAM -->
+  <section>
+    <div class="section-label"><span class="n">04</span> The AI Workforce</div>
+    <h2 class="section-headline">Not a tool. A team.</h2>
+    <p class="section-sub">
+      PIA deploys twelve named AI agents across your organisation's operations. Each has a defined role, a persistent identity, individual email addresses, and memory that grows with every session. The management layer — Eliyahu, Fisher2050, and Ziggi — sits above the specialist workers and coordinates the entire operation autonomously.
+    </p>
+
+    <div style="margin-bottom: 20px;">
+      <div class="data-cell" style="background: rgba(242,196,64,0.04); border: 1px solid rgba(242,196,64,0.15); padding: 14px 18px; margin-bottom: 2px;">
+        <div style="font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 2px;">The Management Layer — This is what nobody else has</div>
+      </div>
+    </div>
+    <div class="agent-grid">
+      <div class="agent-card" style="border-color: rgba(242,196,64,0.2);">
+        <div class="agent-tag">Knowledge Manager</div>
+        <div class="agent-name">Eliyahu</div>
+        <div class="agent-role">Intelligence &amp; Patterns</div>
+        <div class="agent-desc">Reads every session log, every report, every completed task across your operation. Every morning, delivers a two-minute briefing — not a data dump, the three things that actually matter today. Spots patterns your team would never see.</div>
+        <div class="agent-email">eliyahu@sodalabs.ai</div>
+      </div>
+      <div class="agent-card" style="border-color: rgba(242,196,64,0.2);">
+        <div class="agent-tag">Project Manager</div>
+        <div class="agent-name">Fisher2050</div>
+        <div class="agent-role">Operations &amp; Scheduling</div>
+        <div class="agent-desc">Tracks every task, every deadline, every person responsible. Follows up automatically when tasks slip. Morning standup. Evening summary. Coordinates between all other agents. "Project health: 82%." Never sleeps, never drops a ball.</div>
+        <div class="agent-email">fisher2050@sodalabs.ai</div>
+      </div>
+      <div class="agent-card" style="border-color: rgba(242,196,64,0.2);">
+        <div class="agent-tag">Quality Architect</div>
+        <div class="agent-name">Ziggi</div>
+        <div class="agent-role">Review &amp; Standards</div>
+        <div class="agent-desc">Reviews every piece of output before it leaves the organisation. Rates quality 1–10. Explains the issue and shows the better approach. Deep audit every night at 2am. "Ziggi's Verdict: 8/10. Ship it." Teaches your team better practice every day.</div>
+        <div class="agent-email">ziggi@sodalabs.ai</div>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 20px; margin-top: 16px;">
+      <div class="data-cell" style="background: var(--surface); border: 1px solid var(--border2); padding: 14px 18px; margin-bottom: 2px;">
+        <div style="font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink3); margin-bottom: 2px;">The Specialist Workers</div>
+      </div>
+    </div>
+    <div class="agent-grid">
+      <div class="agent-card">
+        <div class="agent-tag">Research Engine</div>
+        <div class="agent-name">Farcake</div>
+        <div class="agent-role">Investigates — does not merely search</div>
+        <div class="agent-desc">Pulls from multiple sources, cross-references claims, validates evidence, and delivers structured findings ready to act on. A full competitive research report: $0.12.</div>
+      </div>
+      <div class="agent-card">
+        <div class="agent-tag">Editorial Engine</div>
+        <div class="agent-name">Andy</div>
+        <div class="agent-role">Writes in your voice, not AI voice</div>
+        <div class="agent-desc">Takes research from Farcake and turns it into content that sounds like you stayed up until 3am writing it yourself. Learns your voice over time. Publishes direct to your platform.</div>
+      </div>
+      <div class="agent-card">
+        <div class="agent-tag">Design Department</div>
+        <div class="agent-name">Bird Fountain</div>
+        <div class="agent-role">Visual production at scale</div>
+        <div class="agent-desc">Campaign assets, social creative, design variations — production runs, not single images. The output of a 4-person design team, from one agent that never asks for a brief twice.</div>
+      </div>
+      <div class="agent-card">
+        <div class="agent-tag">Archivist</div>
+        <div class="agent-name">Tim Buc</div>
+        <div class="agent-role">Institutional memory</div>
+        <div class="agent-desc">Files every completed session to the Records database — indexed by project, agent, date, cost. Nothing is ever lost. Eliyahu reads Tim Buc's records every morning to build the intelligence layer.</div>
+      </div>
+      <div class="agent-card">
+        <div class="agent-tag">Presentations</div>
+        <div class="agent-name">Wingspan</div>
+        <div class="agent-role">Version control for your decks</div>
+        <div class="agent-desc">Ends the "FINAL_v3_REAL.pptx" problem. Tracks which version went to which audience, what changed, what landed. Produces updated decks without being told what was in the previous version.</div>
+      </div>
+      <div class="agent-card">
+        <div class="agent-tag">Build Agent</div>
+        <div class="agent-name">Coder Machine</div>
+        <div class="agent-role">Always-on software execution</div>
+        <div class="agent-desc">A dedicated compute node for software tasks. Writes, tests, debugs, commits. Never idles — polls Fisher2050's queue and picks up the next build job automatically.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 5: THE ECONOMICS -->
+  <section>
+    <div class="section-label"><span class="n">05</span> The Economics</div>
+    <h2 class="section-headline">The math is not subtle.</h2>
+    <p class="section-sub">
+      A comparable human team for the roles PIA covers would cost R116,000–R160,000 per month in South Africa. The operating cost of the 12-agent PIA team — API usage only — is approximately R36 per month. The comparison below uses conservative market rates for South African knowledge workers.
+    </p>
+
+    <div class="econ-compare">
+      <div class="econ-col theirs">
+        <div class="econ-col-label">Human Team</div>
+        <div class="econ-row"><span class="econ-role">Project Manager</span><span class="econ-cost">R 22,000</span></div>
+        <div class="econ-row"><span class="econ-role">Content Strategist</span><span class="econ-cost">R 18,000</span></div>
+        <div class="econ-row"><span class="econ-role">Research Analyst</span><span class="econ-cost">R 16,000</span></div>
+        <div class="econ-row"><span class="econ-role">Designer (×2)</span><span class="econ-cost">R 28,000</span></div>
+        <div class="econ-row"><span class="econ-role">QA / Editorial</span><span class="econ-cost">R 15,000</span></div>
+        <div class="econ-row"><span class="econ-role">Data Analyst</span><span class="econ-cost">R 17,000</span></div>
+        <div class="econ-total">
+          <span class="econ-total-label">Monthly Total</span>
+          <span class="econ-total-num">R 116,000</span>
+        </div>
+        <div class="econ-note">+ Benefits. + Office. + Training. + Turnover. + Sick days. + Timezone. Hours: 8am–6pm, Mon–Fri only.</div>
+      </div>
+      <div class="econ-col ours">
+        <div class="econ-col-label">PIA AI Workforce</div>
+        <div class="econ-row"><span class="econ-role">Fisher2050 (PM)</span><span class="econ-cost">Always on</span></div>
+        <div class="econ-row"><span class="econ-role">Andy (Editorial)</span><span class="econ-cost">Always on</span></div>
+        <div class="econ-row"><span class="econ-role">Farcake (Research)</span><span class="econ-cost">Always on</span></div>
+        <div class="econ-row"><span class="econ-role">Bird Fountain ×2 (Design)</span><span class="econ-cost">Always on</span></div>
+        <div class="econ-row"><span class="econ-role">Ziggi (QA)</span><span class="econ-cost">Always on</span></div>
+        <div class="econ-row"><span class="econ-role">Eliyahu (Intelligence)</span><span class="econ-cost">Always on</span></div>
+        <div class="econ-total">
+          <span class="econ-total-label">Monthly Total</span>
+          <span class="econ-total-num">R 36</span>
+        </div>
+        <div class="econ-note">Zero benefits. Zero office. Zero turnover. Zero sick days. Zero timezone. Hours: 24/7, 365 days/year. Data stays on your hardware.</div>
+      </div>
+    </div>
+
+    <p class="body-text">
+      The comparison above is not an argument to eliminate your team. It is an argument to stop using your team as though they were AI. Every hour a human being spends on work that an AI agent can do for R0.03 on the rand is an hour stolen from the judgment, creativity, and strategy that only humans can provide.
+    </p>
+  </section>
+
+  <!-- SECTION 6: THE INTELLIGENCE LOOP -->
+  <section>
+    <div class="section-label"><span class="n">06</span> The Compound Advantage</div>
+    <h2 class="section-headline">It gets better every week.<br>Without you doing anything.</h2>
+    <p class="section-sub">
+      Every other AI tool on the market resets when you close the window. Every conversation starts from zero. PIA's intelligence loop does the opposite: it continuously improves its understanding of your organisation without any manual configuration, re-training, or instruction.
+    </p>
+
+    <div class="loop">
+      <div class="loop-title">The PIA Intelligence Loop — Running Continuously</div>
+      <div class="loop-flow">
+        <div class="loop-step">
+          <div class="loop-step-col">
+            <div class="loop-dot">1</div>
+            <div class="loop-line"></div>
+          </div>
+          <div class="loop-content">
+            <div class="loop-agent">Agent Session Completes</div>
+            <div class="loop-desc">Farcake finishes a research brief. Andy publishes a piece. Ziggi completes an audit. Any session, any agent.</div>
+          </div>
+        </div>
+        <div class="loop-step">
+          <div class="loop-step-col">
+            <div class="loop-dot">2</div>
+            <div class="loop-line"></div>
+          </div>
+          <div class="loop-content">
+            <div class="loop-agent">Tim Buc Files Everything</div>
+            <div class="loop-desc">Immediately on session end, Tim Buc reads the raw logs, extracts cost, tools used, files produced, quality signals, and archives everything to the Records database — tagged, indexed, searchable.</div>
+          </div>
+        </div>
+        <div class="loop-step">
+          <div class="loop-step-col">
+            <div class="loop-dot">3</div>
+            <div class="loop-line"></div>
+          </div>
+          <div class="loop-content">
+            <div class="loop-agent">Eliyahu Reads and Synthesises — 6am Daily</div>
+            <div class="loop-desc">Every morning, Eliyahu reads Tim Buc's filed records from the past 24 hours. Connects patterns across projects. Identifies which task types fail review, which decisions are causing downstream problems, what costs are trending. Sends a 2-minute briefing to the organisation.</div>
+          </div>
+        </div>
+        <div class="loop-step">
+          <div class="loop-step-col">
+            <div class="loop-dot">4</div>
+            <div class="loop-line"></div>
+          </div>
+          <div class="loop-content">
+            <div class="loop-agent">Fisher2050 Adjusts the Schedule</div>
+            <div class="loop-desc">Eliyahu's pattern analysis feeds directly into Fisher2050's task briefings. If Farcake's research output scores below 8/10 three times in a row, Fisher2050 adjusts the approach. The system corrects itself.</div>
+          </div>
+        </div>
+        <div class="loop-step">
+          <div class="loop-step-col">
+            <div class="loop-dot">5</div>
+          </div>
+          <div class="loop-content">
+            <div class="loop-agent">The Loop Repeats — Indefinitely</div>
+            <div class="loop-desc">Each week, the agents understand your organisation better than the week before. Your institutional knowledge grows. Not in a folder nobody reads — in the living memory of the agents doing the work.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pull-quote">
+      <q>"The problem with every AI tool on the market today is that it forgets you the moment you close the window. We built PIA to solve that. Every agent on your team knows your business, knows your standards, knows your clients. They get better the longer they work with you — exactly the way a trusted employee does."</q>
+      <cite>Mic Louw, Founder — SodaLabs</cite>
+    </div>
+  </section>
+
+  <!-- SECTION 7: WHAT MAKES IT DIFFERENT -->
+  <section>
+    <div class="section-label"><span class="n">07</span> The Differentiators</div>
+    <h2 class="section-headline">What you cannot get<br>anywhere else.</h2>
+    <p class="section-sub">
+      The following capabilities do not exist on any current commercial AI platform — not OpenAI Assistants, not Microsoft Copilot Studio, not CrewAI, not any SaaS AI product available today.
+    </p>
+
+    <ul class="diff-list">
+      <li class="diff-item">
+        <div class="diff-num">1</div>
+        <div class="diff-title">Persistent Agent Identity — The Soul System</div>
+        <div class="diff-desc">Every agent has a seven-layer "soul": Identity, Personality, Goals, Relationships, Rules, Memory, Schedule. These persist indefinitely across all sessions. Fisher2050 today knows everything Fisher2050 knew last month. No other platform offers this.</div>
+      </li>
+      <li class="diff-item">
+        <div class="diff-num">2</div>
+        <div class="diff-title">Your Data Stays On Your Hardware</div>
+        <div class="diff-desc">PIA runs on a fleet of three to five computers that you own. Your clients' information, your internal strategy, your operational data — none of it routes through third-party cloud servers. This is not a feature. For organisations handling confidential or legally sensitive information, it is a requirement.</div>
+      </li>
+      <li class="diff-item">
+        <div class="diff-num">3</div>
+        <div class="diff-title">Calendar-Triggered Autonomous Scheduling</div>
+        <div class="diff-desc">Fisher2050 manages agent deployment through a real calendar system — scheduling spawns based on project requirements, machine availability, and task dependencies. Agents work on schedule without you triggering them manually. The operation runs while you sleep.</div>
+      </li>
+      <li class="diff-item">
+        <div class="diff-num">4</div>
+        <div class="diff-title">Individual Email Addresses for Every Agent</div>
+        <div class="diff-desc">Fisher2050 has a real, monitored inbox. You can email a task directly to fisher2050@sodalabs.ai and receive completed output without opening any dashboard. No other commercial AI system offers this level of seamless human-agent communication.</div>
+      </li>
+      <li class="diff-item">
+        <div class="diff-num">5</div>
+        <div class="diff-title">Self-Improving Intelligence Loop</div>
+        <div class="diff-desc">Tim Buc → Records Database → Eliyahu → Fisher2050 creates a closed feedback loop that improves agent output quality automatically over time. No manual re-training. No configuration changes. The system learns your organisation's patterns and adapts.</div>
+      </li>
+      <li class="diff-item">
+        <div class="diff-num">6</div>
+        <div class="diff-title">Multi-Machine Fleet Orchestration</div>
+        <div class="diff-desc">PIA coordinates agents across multiple physical machines connected via encrypted mesh networking. Parallel execution at a scale that no single-machine framework can achieve. The infrastructure grows with your operation.</div>
+      </li>
+    </ul>
+  </section>
+
+  <!-- SECTION 8: THE WINDOW -->
+  <section>
+    <div class="section-label"><span class="n">08</span> The Urgency</div>
+    <h2 class="section-headline">The advantage<br>compounds every week.</h2>
+    <p class="section-sub">
+      The intelligence loop means that organisations that deploy PIA this month will have one month of institutional knowledge by next month. Organisations that wait six months will have nothing. The gap between early adopters and late adopters is not linear — it compounds.
+    </p>
+
+    <div class="window-box">
+      <p class="window-quote">"There is a narrow window to mobilise finance and technology for exponential sector growth. The organisations that build this infrastructure first — and accumulate the institutional knowledge in their AI workforce — will have an advantage that compounds in exactly the same way human expertise compounds."</p>
+      <div class="window-attr">SodaLabs — Intelligence Brief, February 2026</div>
+    </div>
+
+    <p class="body-text">
+      In February 2026, Emergent — an AI-native software platform — reached $100 million in annual recurring revenue within eight months of launch. Seventy percent of its 150,000 paying customers reported no prior technical background. Documented solo operators using AI agent swarms have reported six-figure annual revenues with zero human employees. The unit economics that previously required a 50-person organisation can now be achieved by a 5-person team with an AI workforce.
+    </p>
+
+    <p class="body-text">
+      The organisations that understand this are not waiting for a better time. There is no better time. The window Dario Amodei described — 70–80% probability of a one-person billion-dollar company in 2026 — is not a distant horizon. It is the operating environment you are already in.
+    </p>
+
+    <div style="margin-top: 40px;">
+      <div class="section-label"><span class="n" style="color: var(--ink3);">Deployment Timeline</span></div>
+      <div class="timeline-row">
+        <div class="timeline-week">Week 1–2</div>
+        <div class="timeline-content">
+          <div class="timeline-action">Custom deployment configuration</div>
+          <div class="timeline-detail">SodaLabs configures each agent's soul for your organisation's specific context, voice, standards, and workflows. Fleet hardware identified.</div>
+        </div>
+      </div>
+      <div class="timeline-row">
+        <div class="timeline-week">Week 2–3</div>
+        <div class="timeline-content">
+          <div class="timeline-action">Soul enrichment + first live sessions</div>
+          <div class="timeline-detail">Agents receive their institutional context. Fisher2050's first standup. Eliyahu's first briefing. First Farcake research run. You see the system working on real work.</div>
+        </div>
+      </div>
+      <div class="timeline-row">
+        <div class="timeline-week">Week 4</div>
+        <div class="timeline-content">
+          <div class="timeline-action">Intelligence loop closes</div>
+          <div class="timeline-detail">Enough sessions filed for Eliyahu to begin surfacing patterns. Fisher2050 begins adjusting scheduling based on quality data. The system begins improving itself.</div>
+        </div>
+      </div>
+      <div class="timeline-row">
+        <div class="timeline-week">Month 2+</div>
+        <div class="timeline-content">
+          <div class="timeline-action">Compound advantage begins</div>
+          <div class="timeline-detail">Every week, the agents know your organisation better. Every project the team runs faster. Every insight Eliyahu surfaces is more specific to your context. The institutional memory compounds indefinitely.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <div class="cta-section">
+    <div class="cta-inner">
+      <div class="cta-label">Custom Deployment — Limited Availability</div>
+      <h2 class="cta-headline">4 deployment engagements<br>available in Q1 2026.</h2>
+      <p class="cta-sub">
+        PIA is not a SaaS subscription. Every deployment is configured specifically for your organisation — agents trained on your voice, your standards, and your operational context. First commercial deployments are live in Johannesburg.
+      </p>
+      <div class="cta-spots">
+        <div class="dot"></div>
+        Currently accepting inquiries from professional services, creative agencies, and cultural institutions
+      </div>
+      <a class="cta-email" href="mailto:mic@sodalabs.ai">mic@sodalabs.ai</a>
+      <div class="cta-tagline">Technical briefings and live demonstrations available on request for qualifying organisations.</div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <span>SodaLabs · Johannesburg, South Africa</span>
+    <span>February 2026 · <a href="pitch.html">All Formats</a></span>
+  </div>
+
+</div>
+
+<!-- PIA NAV -->
+<div style="height:52px"></div>
+<nav id="pia-nav" style="position:fixed;bottom:0;left:0;right:0;z-index:9999;background:rgba(6,6,15,0.97);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;height:48px;padding:0 28px;gap:14px;font-family:'Inter',system-ui,Arial,sans-serif;">
+  <a href="pitch.html" style="color:rgba(255,255,255,0.35);text-decoration:none;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;white-space:nowrap;flex-shrink:0;">SodaLabs · PIA</a>
+  <div style="width:1px;height:20px;background:rgba(255,255,255,0.1);flex-shrink:0;"></div>
+  <span style="color:rgba(255,255,255,0.2);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;white-space:nowrap;flex-shrink:0;">View as</span>
+  <div style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;">
+    <a href="PIA_NARROW_WINDOW.html" style="font-size:11px;color:rgba(255,255,255,0.5);text-decoration:none;padding:5px 13px;border-radius:100px;border:1px solid rgba(255,255,255,0.12);white-space:nowrap;">Narrow Window</a>
+    <a href="PIA_CLIENT_PITCH.html" style="font-size:11px;color:rgba(255,255,255,0.5);text-decoration:none;padding:5px 13px;border-radius:100px;border:1px solid rgba(255,255,255,0.12);white-space:nowrap;">Investor Pitch</a>
+    <a href="PIA_FOR_HUMANS.html" style="font-size:11px;color:rgba(255,255,255,0.5);text-decoration:none;padding:5px 13px;border-radius:100px;border:1px solid rgba(255,255,255,0.12);white-space:nowrap;">For Humans</a>
+    <a href="PIA_MAGAZINE_ARTICLE.html" style="font-size:11px;color:rgba(255,255,255,0.5);text-decoration:none;padding:5px 13px;border-radius:100px;border:1px solid rgba(255,255,255,0.12);white-space:nowrap;">Magazine</a>
+    <a href="PIA_PRESS_RELEASE.html" style="font-size:11px;color:rgba(255,255,255,0.5);text-decoration:none;padding:5px 13px;border-radius:100px;border:1px solid rgba(255,255,255,0.12);white-space:nowrap;">Press Release</a>
+  </div>
+</nav>
+
+</body>
+</html>

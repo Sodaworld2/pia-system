@@ -133,14 +133,27 @@ class TimBucService {
         || session.config.task?.substring(0, 50)
         || session.id;
 
-      // Quality score: simple heuristic
+      // Quality score: pre-Ziggi heuristic based on session signals
+      // Ziggi is the authoritative reviewer — this is Tim Buc's preliminary filing score only
       let qualityScore: number | null = null;
       let qualityVerdict: string | null = null;
       if (result.success) {
-        qualityScore = produced.length > 0 ? 80 : 70;
-        qualityVerdict = 'PASS';
+        // Score components (each adds to base 60):
+        //   +15 if produced files (agent actually made something)
+        //   +10 if tool_calls >= 3 (agent did real work, not just text)
+        //   +10 if cost_usd > 0 (tokens were consumed — real session)
+        //   +5  if session has a summary (agent reported back)
+        let score = 60;
+        if (produced.length > 0) score += 15;
+        if ((result.toolCalls ?? 0) >= 3) score += 10;
+        if ((result.costUsd ?? 0) > 0) score += 10;
+        if (result.summary && result.summary.length > 50) score += 5;
+        qualityScore = Math.min(score, 100);
+        qualityVerdict = qualityScore >= 75 ? 'PASS' : 'PASS_LOW';
       } else {
-        qualityScore = 20;
+        // Failed sessions: differentiate between crash (0) and partial work
+        const partialWork = produced.length > 0 || (result.toolCalls ?? 0) > 0;
+        qualityScore = partialWork ? 35 : 15;
         qualityVerdict = 'FAIL';
       }
 
@@ -177,7 +190,7 @@ class TimBucService {
       `).run(record);
 
       this.sessionCount++;
-      logger.info(`Tim Buc filed: ${evt.sessionId} [${project}/${record.agent}] cost=$${evt.result.costUsd?.toFixed(4)} verdict=${qualityVerdict}`);
+      logger.info(`Tim Buc filed: ${evt.sessionId} [${project}/${record.agent}] cost=$${(result.costUsd ?? 0).toFixed(4)} verdict=${qualityVerdict}`);
 
       // Ping Eliyahu if 3+ sessions filed this run
       if (this.sessionCount % 3 === 0) {

@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIA — The Complete Manual</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --teal: #00bcd4;
+    --green: #3fb950;
+    --orange: #f79000;
+    --red: #f85149;
+    --purple: #d2a8ff;
+    --yellow: #e3b341;
+    --blue: #58a6ff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', -apple-system, sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 32px 80px;
+  }
+  /* Cover */
+  .cover {
+    text-align: center;
+    padding: 80px 40px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 60px;
+  }
+  .cover .logo { font-size: 14px; color: var(--teal); letter-spacing: 4px; text-transform: uppercase; margin-bottom: 24px; }
+  .cover h1 { font-size: 52px; font-weight: 700; color: var(--teal); line-height: 1.1; margin-bottom: 16px; }
+  .cover .subtitle { font-size: 20px; color: var(--muted); margin-bottom: 40px; }
+  .cover .meta { font-size: 13px; color: var(--muted); }
+  /* Print button */
+  .print-btn {
+    position: fixed; top: 20px; right: 20px;
+    background: var(--teal); color: #000;
+    border: none; padding: 10px 20px; border-radius: 6px;
+    cursor: pointer; font-size: 13px; font-weight: 600;
+    z-index: 100;
+  }
+  /* TOC */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 36px 40px;
+    margin-bottom: 60px;
+  }
+  .toc h2 { font-size: 20px; color: var(--teal); margin-bottom: 24px; }
+  .toc-part { margin-top: 20px; }
+  .toc-part-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
+  .toc a { color: var(--text); text-decoration: none; display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .toc a:hover { color: var(--teal); }
+  .toc a .ch-num { color: var(--teal); font-weight: 600; min-width: 40px; }
+  /* Part header */
+  .part-header {
+    margin: 80px 0 40px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--border);
+  }
+  .part-label { font-size: 11px; color: var(--teal); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 8px; }
+  .part-title { font-size: 32px; font-weight: 700; color: var(--text); }
+  /* Chapter */
+  .chapter {
+    margin-bottom: 80px;
+    scroll-margin-top: 20px;
+  }
+  .chapter-num { font-size: 11px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; }
+  .chapter h2 { font-size: 28px; font-weight: 700; color: var(--teal); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+  .chapter h3 { font-size: 17px; font-weight: 600; color: var(--text); margin: 28px 0 10px; }
+  .chapter p { margin-bottom: 14px; color: #c9d1d9; }
+  .chapter ul, .chapter ol { padding-left: 24px; margin-bottom: 14px; color: #c9d1d9; }
+  .chapter li { margin-bottom: 6px; }
+  /* Callout box */
+  .callout {
+    background: rgba(0,188,212,0.07);
+    border-left: 3px solid var(--teal);
+    border-radius: 0 8px 8px 0;
+    padding: 16px 20px;
+    margin: 20px 0;
+  }
+  .callout.green { background: rgba(63,185,80,0.07); border-left-color: var(--green); }
+  .callout.orange { background: rgba(247,144,0,0.07); border-left-color: var(--orange); }
+  .callout.red { background: rgba(248,81,73,0.07); border-left-color: var(--red); }
+  .callout strong { color: var(--text); }
+  /* Table */
+  table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px; }
+  th { background: var(--surface); color: var(--teal); text-align: left; padding: 10px 14px; border-bottom: 2px solid var(--border); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: #c9d1d9; vertical-align: top; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  /* Glossary */
+  .glossary-term {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    padding: 14px 0;
+    align-items: start;
+  }
+  .term-name { color: var(--teal); font-weight: 700; font-size: 14px; padding-right: 20px; padding-top: 2px; }
+  .term-def { color: #c9d1d9; font-size: 14px; }
+  .term-analogy { color: var(--muted); font-size: 13px; font-style: italic; margin-top: 4px; }
+  /* Diagram */
+  .diagram {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 28px;
+    margin: 24px 0;
+    overflow: hidden;
+  }
+  .diagram-title { font-size: 12px; color: var(--teal); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 24px; font-weight: 600; }
+  .flow-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+  }
+  .flow-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    min-width: 160px;
+    text-align: center;
+  }
+  .flow-box.m1 { border-color: var(--blue); color: var(--blue); }
+  .flow-box.m2 { border-color: var(--orange); color: var(--orange); }
+  .flow-box.m3 { border-color: var(--green); color: var(--green); }
+  .flow-box.db { border-color: var(--purple); color: var(--purple); }
+  .flow-box.email { border-color: var(--yellow); color: var(--yellow); }
+  .flow-box.human { border-color: var(--teal); color: var(--teal); }
+  .flow-box .sub { font-size: 11px; font-weight: 400; color: var(--muted); margin-top: 3px; }
+  .flow-arrow {
+    color: var(--muted);
+    font-size: 20px;
+    padding: 0 10px;
+    line-height: 1;
+  }
+  .flow-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .flow-down {
+    color: var(--muted);
+    font-size: 20px;
+    line-height: 1;
+    text-align: center;
+  }
+  .flow-grid {
+    display: grid;
+    grid-template-columns: 1fr 40px 1fr;
+    gap: 8px;
+    align-items: center;
+  }
+  .flow-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    margin-top: 2px;
+  }
+  /* Vertical flow */
+  .vflow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+  .vflow-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  /* Two columns */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 20px 0;
+  }
+  .col-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+  }
+  .col-card h4 { font-size: 14px; color: var(--teal); margin-bottom: 12px; }
+  .col-card ul { padding-left: 16px; }
+  .col-card li { font-size: 14px; color: #c9d1d9; margin-bottom: 6px; }
+  /* Agent card row */
+  .agent-row {
+    display: grid;
+    grid-template-columns: 140px 1fr 80px;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+  .agent-name-cell { font-weight: 700; color: var(--text); font-size: 14px; }
+  .agent-role-cell { font-size: 14px; color: #c9d1d9; }
+  .agent-when { font-size: 12px; color: var(--muted); }
+  .badge {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .badge-m1 { background: rgba(88,166,255,0.15); color: var(--blue); }
+  .badge-m2 { background: rgba(247,144,0,0.15); color: var(--orange); }
+  .badge-m3 { background: rgba(63,185,80,0.15); color: var(--green); }
+  /* Status list */
+  .status-list { list-style: none; padding: 0; margin: 0; }
+  .status-list li { padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 14px; color: #c9d1d9; display: flex; align-items: center; gap: 10px; }
+  .status-list .icon-done { color: var(--green); font-size: 16px; }
+  .status-list .icon-pending { color: var(--orange); font-size: 16px; }
+  .status-list .icon-todo { color: var(--red); font-size: 16px; }
+  /* Quote */
+  blockquote {
+    border-left: 3px solid var(--teal);
+    padding: 12px 20px;
+    margin: 20px 0;
+    color: var(--muted);
+    font-style: italic;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+  blockquote strong { color: var(--text); font-style: normal; }
+  /* Big stat */
+  .stat-row { display: flex; gap: 20px; margin: 20px 0; flex-wrap: wrap; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; flex: 1; min-width: 160px; text-align: center; }
+  .stat-num { font-size: 32px; font-weight: 700; color: var(--teal); }
+  .stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  /* Build item */
+  .build-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .build-item h4 { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .build-item .meta { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+  .build-item p { font-size: 14px; color: #c9d1d9; margin: 0; }
+  /* Horizontal rule */
+  hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+  /* Print */
+  @media print {
+    body { background: #fff; color: #111; max-width: 100%; padding: 20px; font-size: 13px; }
+    .print-btn { display: none; }
+    .cover { padding: 40px 20px; }
+    .cover h1 { color: #003; font-size: 36px; }
+    .cover .logo, .cover .subtitle { color: #555; }
+    .toc { background: #f9f9f9; border: 1px solid #ddd; }
+    .toc a { color: #111; }
+    .toc a .ch-num { color: #006; }
+    .part-label { color: #006; }
+    .chapter h2 { color: #003; }
+    th { background: #f0f0f0; color: #003; }
+    td { color: #222; }
+    .callout { background: #f0faff; border-left-color: #006; }
+    .callout.green { background: #f0fff0; border-left-color: #060; }
+    .callout.orange { background: #fffaf0; border-left-color: #f70; }
+    .flow-box { background: #f5f5f5; color: #003; border-color: #999; }
+    .flow-box.m1 { border-color: #005; color: #005; background: #eef; }
+    .flow-box.m2 { border-color: #860; color: #860; background: #fef5e7; }
+    .flow-box.m3 { border-color: #060; color: #060; background: #f0fff0; }
+    .flow-box.db { border-color: #606; color: #606; background: #faf0ff; }
+    .flow-box.email { border-color: #880; color: #880; background: #fffff0; }
+    .flow-box.human { border-color: #006; color: #006; background: #f0f8ff; }
+    .diagram { background: #fafafa; border-color: #ddd; }
+    .flow-arrow, .flow-down { color: #555; }
+    .col-card { background: #f9f9f9; border-color: #ddd; }
+    blockquote { color: #444; border-color: #006; }
+    .stat { background: #f9f9f9; border-color: #ddd; }
+    .stat-num { color: #003; }
+    .build-item { background: #f9f9f9; border-color: #ddd; }
+    .term-name { color: #003; }
+    .badge-m1 { background: #eef; color: #005; }
+    .badge-m2 { background: #fef5e7; color: #860; }
+    .badge-m3 { background: #f0fff0; color: #060; }
+    .chapter { page-break-inside: avoid; }
+    .part-header { page-break-before: always; }
+  }
+</style>
+</head>
+<body>
+
+<button class="print-btn" onclick="window.print()">Print / Save PDF</button>
+
+<!-- COVER -->
+<div class="cover">
+  <div class="logo">SodaLabs · Internal Document</div>
+  <h1>PIA</h1>
+  <div class="subtitle">Personal Intelligence Agent<br>The Complete Manual</div>
+  <div class="meta">Version 1.0 · February 2026 · Confidential</div>
+</div>
+
+<!-- TABLE OF CONTENTS -->
+<div class="toc">
+  <h2>Table of Contents</h2>
+  <div class="toc-part">
+    <div class="toc-part-label">Part I — The Vision</div>
+    <a href="#ch1"><span class="ch-num">01</span><span>Why We Built PIA — The Autonomous Business Swarm</span></a>
+    <a href="#ch2"><span class="ch-num">02</span><span>What PIA Is — Plain English Overview</span></a>
+  </div>
+  <div class="toc-part">
+    <div class="toc-part-label">Part II — The Concepts</div>
+    <a href="#ch3"><span class="ch-num">03</span><span>Glossary — Terms Every Owner Should Know</span></a>
+    <a href="#ch4"><span class="ch-num">04</span><span>Memory, Context, and Why Agents Forget</span></a>
+  </div>
+  <div class="toc-part">
+    <div class="toc-part-label">Part III — The System</div>
+    <a href="#ch5"><span class="ch-num">05</span><span>The Agent Roster — All 13 Agents</span></a>
+    <a href="#ch6"><span class="ch-num">06</span><span>The Soul System — How Agents Are Programmed</span></a>
+    <a href="#ch7"><span class="ch-num">07</span><span>The Intelligence Loop — How PIA Learns Over Time</span></a>
+    <a href="#ch8"><span class="ch-num">08</span><span>The Creative Pipeline — From Brief to Published</span></a>
+  </div>
+  <div class="toc-part">
+    <div class="toc-part-label">Part IV — The Infrastructure</div>
+    <a href="#ch9"><span class="ch-num">09</span><span>The Fleet — Machines, Network, and Setup</span></a>
+    <a href="#ch10"><span class="ch-num">10</span><span>Working With PIA — The Human Side</span></a>
+  </div>
+  <div class="toc-part">
+    <div class="toc-part-label">Part V — The Roadmap</div>
+    <a href="#ch11"><span class="ch-num">11</span><span>Current Status — What's Done, What's Pending</span></a>
+    <a href="#ch12"><span class="ch-num">12</span><span>The Four Things Still To Build — Version 1.0 Finish Line</span></a>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- PART I: THE VISION -->
+<!-- ═══════════════════════════════════════════ -->
+
+<div class="part-header">
+  <div class="part-label">Part I</div>
+  <div class="part-title">The Vision</div>
+</div>
+
+<section class="chapter" id="ch1">
+  <div class="chapter-num">Chapter 01</div>
+  <h2>Why We Built PIA — The Autonomous Business Swarm</h2>
+
+  <blockquote>
+    <strong>"AI agents didn't need to assist entrepreneurs. They could BE entrepreneurs."</strong><br>
+    The full stack: code, bookkeeping, customer service, fulfillment — all stitched into a single autonomous operator running a small business end-to-end. One human provides strategic direction and capital. The agents do everything else.
+  </blockquote>
+
+  <p>This is not a future prediction. This is 2026.</p>
+
+  <div class="stat-row">
+    <div class="stat">
+      <div class="stat-num">$100M</div>
+      <div class="stat-label">ARR in 8 months<br>(Emergent, Feb 2026)</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">$7.8B</div>
+      <div class="stat-label">Agentic AI market<br>today</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">70–80%</div>
+      <div class="stat-label">Dario Amodei's confidence that a 1-person billion-dollar company appears in 2026</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">$3.5M</div>
+      <div class="stat-label">Revenue per employee<br>at AI-native startups</div>
+    </div>
+  </div>
+
+  <h3>The Landscape in 2026</h3>
+  <p>Three types of players are emerging in this space:</p>
+  <table>
+    <tr><th>Type</th><th>Example</th><th>What They Do</th><th>What's Missing</th></tr>
+    <tr><td>Vibe-Coding Platforms</td><td>Emergent, Lovable, Bolt</td><td>Non-coders describe apps → agents build them</td><td>No orchestration, no memory, no personality</td></tr>
+    <tr><td>Agent Frameworks</td><td>Agency Swarm, CrewAI, LangGraph</td><td>Developers wire agents together</td><td>No management intelligence. No Ziggi. No Fisher2050.</td></tr>
+    <tr><td>Swarm Operators</td><td>Rahhaat Uppaal, Elladin</td><td>One person running a company via AI agents</td><td>Manual setup every time, no persistent identity</td></tr>
+  </table>
+
+  <div class="callout">
+    <strong>PIA's position:</strong> PIA is not a framework and not a platform. PIA is the <strong>management intelligence layer</strong> that sits above all of them. Agency Swarm builds the worker agents. PIA decides when they run, audits their output, remembers what they've done, and reports back to you by 6am every morning.
+  </div>
+
+  <h3>Why Other Swarms Fail (And Why PIA Is Different)</h3>
+  <p>HurumoAI deployed 20 AI employees and descended into chaos. The Ratliff cohort's swarms stalled without structured orchestration. The pattern is consistent: <strong>tools without management intelligence fail at scale.</strong></p>
+
+  <p>The five things that separate PIA from everything else:</p>
+  <ol>
+    <li><strong>Souls with memory</strong> — persistent agent identity across sessions. Fisher2050 remembers your projects. Eliyahu remembers your priorities.</li>
+    <li><strong>Tim Buc (institutional memory)</strong> — every session archived and indexed. PIA never loses what it learned.</li>
+    <li><strong>Ziggi (quality gate)</strong> — nothing ships without a 1-10 review. The reason other swarms produce junk is there was no Ziggi.</li>
+    <li><strong>Fisher2050 as calendar-aware orchestrator</strong> — not just a task queue. Understands time, priority, and context.</li>
+    <li><strong>Methodology frameworks in soul prompts</strong> — Ubuntu, Taoism, Sutherland, Nir Eyal are literally written into agent personalities. The agents think the way SodaLabs thinks.</li>
+  </ol>
+
+  <h3>The SodaLabs Context</h3>
+  <p>PIA was built for the African creative economy. The Ubuntu philosophy — "I am because we are" — is not just a tag line. It's written into the soul of every agent. The goal is not extraction. The goal is amplification: giving one person (or one small team) the output of a company, channelled through the cultural and creative lens of SodaLabs.</p>
+
+  <p>The agents understand phygital (physical + digital), the PIE model, the Tao of Soda. They're not generic AI assistants. They are SodaLabs team members with persistent identities, specific roles, and relationships with each other.</p>
+</section>
+
+<section class="chapter" id="ch2">
+  <div class="chapter-num">Chapter 02</div>
+  <h2>What PIA Is — Plain English Overview</h2>
+
+  <p>PIA is a multi-machine system that runs AI agents on your behalf — automatically, on a schedule, without you needing to be at the keyboard.</p>
+
+  <p>Think of it as a company that runs in the background. The agents are your staff. Fisher2050 is your project manager. Eliyahu writes your morning briefing. Farcake does your research. Andy writes your content. Ziggi checks everything before it ships. Tim Buc files everything so nothing is ever lost.</p>
+
+  <h3>What Makes It Different From Chatting With AI</h3>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h4>Regular AI (ChatGPT, Claude)</h4>
+      <ul>
+        <li>You ask, it answers. That's it.</li>
+        <li>Forgets everything when you close the tab</li>
+        <li>No scheduling, no autonomy</li>
+        <li>You do all the prompting</li>
+        <li>One session at a time</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h4>PIA</h4>
+      <ul>
+        <li>Agents run on a schedule — you don't ask</li>
+        <li>Every session is archived by Tim Buc</li>
+        <li>Fisher2050 schedules work 7 days a week</li>
+        <li>Agents prompt each other (Farcake → Andy → Ziggi)</li>
+        <li>Multiple agents run simultaneously on 3 machines</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>The Three-Machine Setup</h3>
+  <table>
+    <tr><th>Machine</th><th>Name</th><th>Role</th><th>What Runs On It</th></tr>
+    <tr>
+      <td><span class="badge badge-m1">M1</span></td>
+      <td>Izzit7</td>
+      <td>Hub — the brain</td>
+      <td>Fisher2050, Eliyahu, Tim Buc, Owl, Monitor, Controller. All the cron jobs. The database. The dashboard.</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-m2">M2</span></td>
+      <td>soda-monster-hunter</td>
+      <td>Quality &amp; Design</td>
+      <td>Ziggi (quality audits), Bird Fountain (images). Gets work from M1, sends results back.</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-m3">M3</span></td>
+      <td>soda-yeti</td>
+      <td>Execution — the production line</td>
+      <td>Farcake (research), Andy (writing), Wingspan (presentations). The highest-volume execution machine.</td>
+    </tr>
+  </table>
+
+  <p>All three machines are connected via Tailscale, a private encrypted network. They talk to each other automatically. M1 is always in charge. M2 and M3 receive work from M1 and report back when done.</p>
+
+  <div class="callout">
+    <strong>The dashboard</strong> is at <code>localhost:3000/mission-control.html</code> on M1. From there you can see every agent running across all three machines, send them new tasks, and see their output in real time.
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- PART II: THE CONCEPTS -->
+<!-- ═══════════════════════════════════════════ -->
+
+<div class="part-header">
+  <div class="part-label">Part II</div>
+  <div class="part-title">The Concepts</div>
+</div>
+
+<section class="chapter" id="ch3">
+  <div class="chapter-num">Chapter 03</div>
+  <h2>Glossary — Terms Every Owner Should Know</h2>
+
+  <p>No technical background needed. These are the 20 concepts that come up every day when working with PIA.</p>
+
+  <div class="glossary-term">
+    <div class="term-name">AI Agent</div>
+    <div>
+      <div class="term-def">An AI that doesn't just answer questions — it takes actions. It can read files, run code, browse the web, send emails, and call other agents. It decides what to do next based on its goal, not just what you last said.</div>
+      <div class="term-analogy">Analogy: a contractor who you give a project brief to and they go and get it done. A chatbot is a dictionary. An agent is an employee.</div>
+    </div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="term-name">Context Window</div>
+    <div>
+      <div class="term-def">An agent's working memory — how much it can "hold in its head" at once during one session. Claude currently handles about 200,000 tokens (roughly 150,000 words — 1.5 average novels).</div>
+      <div class="term-analogy">Analogy: a whiteboard. You can write a lot on it. But once it's full, you have to erase something old to write something new. When the context window fills, the oldest things disappear.</div>
+    </div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="term-name">Token</div>
+    <div>
+      <div class="term-def">The unit of text that AI models process and charge for. Roughly 750 words = 1,000 tokens. Every character you send and every character the agent produces costs tokens.</div>
+      <div class="term-analogy">Analogy: words on a meter. Like a taxi — the clock runs on words, not kilometres.</div>
+    </div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="term-name">System Prompt</div>
+    <div>
+      <div class="term-def">The "programming" of an agent — the invisible instructions given to it before any conversation starts. It defines personality, role, goals, values, and process. In PIA, system prompts are generated from Soul files.</div>
+      <div class="term-analogy">Analogy: an employee's job description, values charter, and manager's briefing, all rolled into one document that the agent reads before every session.</div>
+    </div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="term-name">Soul</div>
+    <div>
+      <div class="term-def">PIA's term for an agent's persistent identity. A Soul file contains the agent's name, role, personality, goals, relationships with other agents, and configuration. Souls survive restarts and new sessions — Fisher2050 is always Fisher2050.</div>
+      <div class="term-analogy">Analogy: a character sheet. Like a D&D character card that describes who the character is, what they care about, and how they relate to other characters in the party.</div>
+    </div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="term-name">Spawn</div>
+    <div>
+      <div class="term-def">Starting an agent session. When Fisher2050 "spawns" Farcake, it means: create a new session, load Farcake's soul, inject the task context, and let Farcake run. Spawning is automatic — you don't need to do it manually.</div>
+      <div class="term-analogy">Analogy: sending an employee a brief and telling them to start on it. The brief arrives, they open their laptop, they begin.</div>
+    </div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="term-name">Ephemeral Agent</div>
+    <div>
+      <div class="term-def">An agent that starts, does its job, and stops. Most PIA agents are ephemeral — Farcake researches one brief then terminates; Tim Buc files one session then terminates; Ziggi reviews one output then terminates.</div>
+      <div class="term-analogy">Analogy: a freelancer hired per project. They come in, deliver, leave.</div>
+    </div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="term-name">Resident Agent</div>
+    <div>
+      <div class="term-def">An agent that runs continuously, always available. Owl (task memory), Monitor (fleet watchdog), and Coder Machine (build queue) are resident agents. They don't terminate between tasks.</div>
+      <div class="term-analogy">Analogy: a full-time employee who is always at their desk.</div>
+    </div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="term-name">Hub / Worker</div>
+    <div>
+      <div class="term-def">M1 (Izzit7) is the Hub — the brain, the scheduler, the database. M2 and M3 are Workers — they execute tasks assigned by the hub and report back. The hub knows about all workers. Workers only know about the hub.</div>
+      <div class="term-analogy">Analogy: a head office (hub) and branch offices (workers). The head office plans and coordinates. Branches execute and report.</div>
+    </div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="term-name">API Key</div>
+    <div>
+      <div class="term-def">The "fuel" that powers all AI agent activity. PIA uses Anthropic's API (ANTHROPIC_API_KEY). Every tool call, every word an agent produces, every session — charged to this key. Without it, no agents run autonomously.</div>
+      <div class="term-analogy">Analogy: the petrol card. The car (PIA system) is built. The key just needs to be in the ignition.</div>
+    </div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="term-name">Tool (in AI context)</div>
+    <div>
+      <div class="term-def">An action an agent can take beyond just thinking and talking. PIA agents have tools: read file, write file, run bash command, browse web, call another API, send message. Tools are what make agents useful instead of just chatty.</div>
+      <div class="term-analogy">Analogy: hands. Without tools, the agent can think but not do. Tools give it hands.</div>
+    </div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="term-name">Cron / Scheduled Job</div>
+    <div>
+      <div class="term-def">A task that runs automatically at a specific time, every day (or week, or hour). "9am cron" means: every day at 9am, without anyone pressing a button, this thing happens. Fisher2050's standup is a cron. Eliyahu's 6am briefing is a cron.</div>
+      <div class="term-analogy">Analogy: an alarm clock that instead of waking you, wakes the agent.</div>
+    </div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="term-name">Session</div>
+    <div>
+      <div class="term-def">One agent run, from spawn to completion. Each session has a start time, end time, agent name, task, all tool calls made, all output produced, and a cost in API tokens. Tim Buc archives every session.</div>
+      <div class="term-analogy">Analogy: a single shift. The employee clocked in, did the work, clocked out. The timesheet (Tim Buc's record) logs everything.</div>
+    </div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="term-name">Records DB</div>
+    <div>
+      <div class="term-def">The archive of all filed sessions. Tim Buc files each session to the Records DB. Eliyahu reads from it every morning to write the briefing. It's the system's institutional memory — what got done, what cost how much, what was produced.</div>
+      <div class="term-analogy">Analogy: the filing cabinet. Every completed piece of work gets a folder. Eliyahu knows where every folder is and reads them every morning.</div>
+    </div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="term-name">Soul Memory</div>
+    <div>
+      <div class="term-def">Specific facts injected into an agent's context at the start of every session. "Fisher2050 knows: Client X is high priority. Deadline is March 15. Mic prefers briefs under 2 pages." These memories survive across sessions because they're stored in the database.</div>
+      <div class="term-analogy">Analogy: sticky notes on a desk. Every time Fisher2050 sits down, his specific notes are already on the desk — they weren't erased between sessions.</div>
+    </div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="term-name">Hallucination</div>
+    <div>
+      <div class="term-def">When an AI states something confidently that is completely wrong — inventing facts, dates, people, or research. This is the biggest risk with AI content production. PIA's defense is Ziggi (quality reviewer) and Tim Buc (source archiving).</div>
+      <div class="term-analogy">Analogy: a brilliant employee who sometimes makes up references. You wouldn't let them publish without a fact-checker. Ziggi is the fact-checker.</div>
+    </div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="term-name">Webhook</div>
+    <div>
+      <div class="term-def">When an external service automatically notifies PIA of an event. WhatsApp sends a webhook when a message arrives. Stripe sends a webhook when payment is made. PIA can listen to webhooks and trigger agents in response.</div>
+      <div class="term-analogy">Analogy: a doorbell. The external service presses the bell; PIA answers the door and decides what to do.</div>
+    </div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="term-name">WebSocket</div>
+    <div>
+      <div class="term-def">The live connection between the PIA server and the dashboard. When an agent is writing output, it appears on your screen in real time — character by character — because of WebSocket. Without it, you'd have to refresh to see updates.</div>
+      <div class="term-analogy">Analogy: a live phone call vs a letter. WebSocket is the call — you hear it as it happens.</div>
+    </div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="term-name">SDK Mode</div>
+    <div>
+      <div class="term-def">The way PIA runs its agents — using Anthropic's official Claude Agent SDK. In SDK mode, the agent can use tools autonomously, loop until the task is done, and stream output back. This is the most capable way to run Claude.</div>
+      <div class="term-analogy">Analogy: the difference between asking someone to read a report to you, vs handing them the report and a pen and saying "fix whatever needs fixing."</div>
+    </div>
+  </div>
+
+  <div class="glossary-term">
+    <div class="term-name">PM2</div>
+    <div>
+      <div class="term-def">The process manager that keeps PIA running. If the server crashes, PM2 restarts it within 30 seconds. When M1 reboots, PM2 starts PIA automatically. It also provides logs and monitoring without needing to be logged in.</div>
+      <div class="term-analogy">Analogy: the building manager. If the lights go out, the building manager turns them back on — you don't need to be there.</div>
+    </div>
+  </div>
+</section>
+
+<section class="chapter" id="ch4">
+  <div class="chapter-num">Chapter 04</div>
+  <h2>Memory, Context, and Why Agents Forget</h2>
+
+  <p>This is one of the most misunderstood things about AI. People expect agents to remember everything like a human colleague. The reality is different — and PIA is specifically designed to work around these limits.</p>
+
+  <h3>The Whiteboard Problem</h3>
+
+  <p>Every agent session starts with a blank whiteboard. The agent can write a lot on it — research notes, tool results, partial outputs, conversation history. But the whiteboard is finite. Once it's full, the oldest writing gets erased to make room for new writing.</p>
+
+  <p>This is called the <strong>context window limit</strong>. Claude currently handles approximately 200,000 tokens per session — about 150,000 words. For most tasks, this is enormous. For a month-long research project that spans dozens of sessions, it's not enough.</p>
+
+  <div class="callout">
+    <strong>The practical limit:</strong> A single agent session can handle roughly: a 500-page book, OR a month of email threads, OR 20 hours of transcribed conversation. Larger tasks need to be broken into multiple sessions.
+  </div>
+
+  <h3>Why Agents Don't Remember Yesterday</h3>
+
+  <p>When Farcake finishes a research session and Tim Buc terminates, that whiteboard is erased. The next time Farcake is spawned, it starts fresh — it doesn't automatically know what it researched last Tuesday.</p>
+
+  <p>This is not a bug. It is the fundamental design of how language models work. The solution is not to make the context window bigger (though it's getting bigger every year). The solution is to <strong>write important things down before the session ends</strong> — which is exactly what Tim Buc does.</p>
+
+  <h3>How PIA Solves This — Four Layers of Memory</h3>
+
+  <table>
+    <tr><th>Layer</th><th>Who Manages It</th><th>What It Stores</th><th>How Long It Lasts</th></tr>
+    <tr>
+      <td><strong>1. Working Memory</strong></td>
+      <td>The agent itself</td>
+      <td>Everything in the current session — tool results, partial outputs, reasoning steps</td>
+      <td>Duration of that session only. Gone when session ends.</td>
+    </tr>
+    <tr>
+      <td><strong>2. Session Archive</strong></td>
+      <td>Tim Buc</td>
+      <td>Structured summary of every session — agent, cost, produced files, quality score</td>
+      <td>Forever. Filed to Records DB.</td>
+    </tr>
+    <tr>
+      <td><strong>3. Soul Memories</strong></td>
+      <td>Soul Engine (injected at spawn)</td>
+      <td>Specific facts about projects, preferences, relationships, decisions</td>
+      <td>Until deleted. Injected into every new session.</td>
+    </tr>
+    <tr>
+      <td><strong>4. Task Queue</strong></td>
+      <td>Owl</td>
+      <td>What is queued, in progress, done, and blocked across all sessions</td>
+      <td>Persistent. Owl maintains this across restarts.</td>
+    </tr>
+  </table>
+
+  <h3>The Memory Pipeline in Practice</h3>
+
+  <p>Here's what happens when Farcake completes a research session:</p>
+  <ol>
+    <li>Farcake's whiteboard is full of research. Session ends.</li>
+    <li>Tim Buc wakes up. Reads the raw session log. Files a structured summary to the Records DB.</li>
+    <li>Any key facts (project decisions, deadlines, client preferences) can be added as Soul Memories for relevant agents.</li>
+    <li>Tomorrow morning, Eliyahu reads the Records DB (including today's Farcake filing). Morning briefing includes: "Farcake completed X research, key finding was Y."</li>
+    <li>Fisher2050 reads the briefing. Knows what happened yesterday. Schedules follow-up tasks accordingly.</li>
+  </ol>
+
+  <div class="callout green">
+    <strong>The result:</strong> No individual agent remembers everything. But the system as a whole never forgets anything. PIA's institutional memory grows with every session.
+  </div>
+
+  <h3>What's Still a Limitation (Honest)</h3>
+
+  <p>In version 1.0, there are still real limits:</p>
+  <ul>
+    <li><strong>Soul Memories must be added manually</strong> — Tim Buc files sessions, but a human (or Fisher2050) still needs to decide which facts become persistent Soul Memories. Full automated memory extraction is a v2.0 feature.</li>
+    <li><strong>RAG (long-term knowledge search) is v2.0</strong> — In v1.0, agents can't search through 6 months of archived records in real time. Eliyahu reads the last 24 hours, not all history.</li>
+    <li><strong>Cross-agent memory is limited</strong> — Farcake's memories don't automatically transfer to Andy. They have to be explicitly written into Andy's Soul Memories or included in the task context.</li>
+  </ul>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- PART III: THE SYSTEM -->
+<!-- ═══════════════════════════════════════════ -->
+
+<div class="part-header">
+  <div class="part-label">Part III</div>
+  <div class="part-title">The System</div>
+</div>
+
+<section class="chapter" id="ch5">
+  <div class="chapter-num">Chapter 05</div>
+  <h2>The Agent Roster — All 13 Agents</h2>
+
+  <p>PIA currently has 13 named agents. Each has a soul file, a role, a machine, and a trigger. Here's the full roster.</p>
+
+  <h3>Strategic Layer (M1)</h3>
+
+  <div class="agent-row">
+    <div class="agent-name-cell">Fisher2050 <span class="badge badge-m1">M1</span></div>
+    <div class="agent-role-cell"><strong>Project Manager & Orchestrator.</strong> The central brain of PIA's work. Every morning at 9am, Fisher2050 reviews the task queue, sends a standup email, and schedules the day. Every evening at 6pm, he sends a summary of what was completed and what the API costs were. He receives goals via email and translates them into specific tasks for specialist agents.</div>
+    <div class="agent-when">9am · 6pm · demand</div>
+  </div>
+
+  <div class="agent-row">
+    <div class="agent-name-cell">Eliyahu <span class="badge badge-m1">M1</span></div>
+    <div class="agent-role-cell"><strong>Knowledge Analyst & Intelligence Briefer.</strong> Every morning at 6am (before Fisher2050's standup), Eliyahu reads everything Tim Buc filed in the last 24 hours, synthesises the 3 most important things, and sends a morning briefing email. Eliyahu is PIA's intelligence function — connecting dots across sessions and projects.</div>
+    <div class="agent-when">6am daily</div>
+  </div>
+
+  <div class="agent-row">
+    <div class="agent-name-cell">Controller <span class="badge badge-m1">M1</span></div>
+    <div class="agent-role-cell"><strong>Strategic Gateway & Voice Interface.</strong> The front door of PIA. Receives voice or text commands, routes them to the right agent, and ensures tasks are framed correctly before Fisher2050 sees them. Reads Owl's task list on startup to maintain context.</div>
+    <div class="agent-when">Always on</div>
+  </div>
+
+  <div class="agent-row">
+    <div class="agent-name-cell">Owl <span class="badge badge-m1">M1</span></div>
+    <div class="agent-role-cell"><strong>Persistent Memory & Task List.</strong> Owl holds the master task queue across all sessions and restarts. Unlike a database table, Owl is an agent — it understands task relationships, dependencies, and priorities. Owl is what makes Fisher2050 coherent across multiple days.</div>
+    <div class="agent-when">Always on</div>
+  </div>
+
+  <div class="agent-row">
+    <div class="agent-name-cell">Tim Buc <span class="badge badge-m1">M1</span></div>
+    <div class="agent-role-cell"><strong>Archivist & Institutional Memory.</strong> Wakes on every session completion. Reads the raw SDK log, files a structured summary (agent, date, cost, produced files, quality heuristic) to the Records DB, and terminates. Tim Buc is why PIA never loses anything. Named after the concept of meticulous record-keeping.</div>
+    <div class="agent-when">Every session end</div>
+  </div>
+
+  <div class="agent-row">
+    <div class="agent-name-cell">Monitor <span class="badge badge-m1">M1</span></div>
+    <div class="agent-role-cell"><strong>Fleet Watchdog.</strong> Watches all three machines. If any agent stalls for more than 5 minutes without producing output, Monitor alerts Controller and Fisher2050. Tracks health, load, and connectivity across the fleet.</div>
+    <div class="agent-when">Continuous</div>
+  </div>
+
+  <div class="agent-row">
+    <div class="agent-name-cell">Itai <span class="badge badge-m1">M1</span></div>
+    <div class="agent-role-cell"><strong>Finance Intelligence.</strong> Tracks API costs, billing, revenue streams, and financial forecasting for the SodaLabs ecosystem. Wakes daily and on spend thresholds. Reports to Fisher2050 and Eliyahu. Soul not yet written — planned addition for v1.1.</div>
+    <div class="agent-when">Daily + threshold</div>
+  </div>
+
+  <h3>Quality Gate (M2)</h3>
+
+  <div class="agent-row">
+    <div class="agent-name-cell">Ziggi <span class="badge badge-m2">M2</span></div>
+    <div class="agent-role-cell"><strong>Quality Architect & Devil's Advocate.</strong> Reviews every output before it ships. Scores 1–10. Asks the questions nobody wants to ask: "Is this actually good? Is this research valid? Does this writing sound like Mic or generic AI?" If score is below 7, Ziggi returns a specific fix and Fisher2050 reschedules the task. Named for rigour.</div>
+    <div class="agent-when">Post every task</div>
+  </div>
+
+  <div class="agent-row">
+    <div class="agent-name-cell">Bird Fountain <span class="badge badge-m2">M2</span></div>
+    <div class="agent-role-cell"><strong>Visual Production.</strong> Generates images, graphics, and visual assets. Pipes output to Videohoho (video editor) and GumballCMS (distribution). Can run as resident or ephemeral. M2 is the right machine for design work — quality + visual production.</div>
+    <div class="agent-when">Calendar entry</div>
+  </div>
+
+  <h3>Execution Pipeline (M3)</h3>
+
+  <div class="agent-row">
+    <div class="agent-name-cell">Farcake <span class="badge badge-m3">M3</span></div>
+    <div class="agent-role-cell"><strong>Research Engine.</strong> Deep search, cross-reference, Context7 (live documentation), influencer mapping, competitive analysis. Given a brief by Fisher2050, Farcake produces a comprehensive research package that Andy then writes from. Quality threshold: 8/10 minimum before output is passed to Andy.</div>
+    <div class="agent-when">Calendar entry</div>
+  </div>
+
+  <div class="agent-row">
+    <div class="agent-name-cell">Andy <span class="badge badge-m3">M3</span></div>
+    <div class="agent-role-cell"><strong>Editorial Engine.</strong> Writes in Mic's voice. Takes Farcake's research and produces articles, newsletters, briefs, scripts — output calibrated to SodaLabs' tone (Ubuntu philosophy, Sutherland reframing, Nir Eyal hooks). Requires Ziggi review before output is published.</div>
+    <div class="agent-when">Post-Farcake</div>
+  </div>
+
+  <div class="agent-row">
+    <div class="agent-name-cell">Wingspan <span class="badge badge-m3">M3</span></div>
+    <div class="agent-role-cell"><strong>Presentation Management.</strong> Builds decks, tracks versions, formats investor presentations and client proposals. Version tracking built in. Works from Andy's content or direct briefs from Fisher2050.</div>
+    <div class="agent-when">Calendar entry</div>
+  </div>
+
+  <div class="agent-row">
+    <div class="agent-name-cell">Coder Machine <span class="badge badge-m3">M3</span></div>
+    <div class="agent-role-cell"><strong>Dedicated Build Agent.</strong> Always on. Processes a job queue of coding tasks — generates code, runs tests (test suite required before any output is accepted), creates git worktrees, submits PRs. This is how new software features get built autonomously. Tests required: zero untested code ships.</div>
+    <div class="agent-when">Job queue</div>
+  </div>
+</section>
+
+<section class="chapter" id="ch6">
+  <div class="chapter-num">Chapter 06</div>
+  <h2>The Soul System — How Agents Are Programmed</h2>
+
+  <p>Every PIA agent has a Soul — a JSON file stored in <code>src/souls/personalities/</code>. The Soul is the agent's permanent identity. It doesn't change between sessions. It is compiled into a System Prompt at the start of every spawn.</p>
+
+  <h3>The Seven Fields of a Soul</h3>
+
+  <table>
+    <tr><th>Field</th><th>What It Contains</th><th>Example</th></tr>
+    <tr><td><strong>id</strong></td><td>Unique identifier, used internally</td><td><code>fisher2050</code></td></tr>
+    <tr><td><strong>name</strong></td><td>Display name</td><td><code>Fisher2050</code></td></tr>
+    <tr><td><strong>role</strong></td><td>One-line role description</td><td><code>Project Manager and Orchestrator</code></td></tr>
+    <tr><td><strong>email</strong></td><td>Agent's digital identity — receives &amp; sends email</td><td><code>fisher2050@sodalabs.ai</code></td></tr>
+    <tr><td><strong>personality</strong></td><td>Character description (200–400 chars). Defines tone, style, values, how it handles conflict</td><td>Proactive, structured, deadline-aware. Bias to action. Asks clarifying questions…</td></tr>
+    <tr><td><strong>goals</strong></td><td>Ordered list of what this agent optimises for. Shapes every decision.</td><td>1. Ensure all SodaLabs projects advance daily. 2. Never let a task sit unassigned…</td></tr>
+    <tr><td><strong>relationships</strong></td><td>How this agent relates to other agents — who it reports to, who it commands, who it collaborates with</td><td>reports_to: Mic, manages: [Farcake, Andy, Ziggi…], trusts: Eliyahu</td></tr>
+    <tr><td><strong>config</strong></td><td>Technical settings: which machine, ephemeral or resident, quality threshold, special flags</td><td>machine: M1, ephemeral: false, quality_threshold: 0</td></tr>
+  </table>
+
+  <h3>How the System Prompt Is Built</h3>
+
+  <p>When PIA spawns an agent, the Soul Engine runs and builds the system prompt in this order:</p>
+  <ol>
+    <li><strong>Preamble</strong> — Mic's global instructions (communication rules, anti-sycophancy, lead with answer)</li>
+    <li><strong>Identity block</strong> — "You are Fisher2050. Your role is: Project Manager…"</li>
+    <li><strong>Personality</strong> — the character description from the soul file</li>
+    <li><strong>Goals</strong> — the ordered list of what to optimise for</li>
+    <li><strong>Relationships</strong> — who this agent works with and how</li>
+    <li><strong>Soul Memories</strong> — specific facts injected from the database (e.g. "Current priority project: Videohoho Phase 2")</li>
+    <li><strong>Task context</strong> — what this specific session needs to accomplish</li>
+  </ol>
+
+  <div class="callout" style="border-left-color: var(--green);">
+    <strong>✅ B10 done (2026-02-22):</strong> Soul injection is live. When a spawn request includes <code>soulId</code>, the Soul Engine generates the full system prompt and injects it. Fisher2050 knows it is Fisher2050. The <code>soulId</code> field is now a first-class parameter in <code>POST /api/mc/agents</code> and the mission-control dashboard spawn form.
+  </div>
+
+  <h3>Soul Health Score</h3>
+
+  <p>Each soul has a health score (0–100%) calculated from how complete its fields are:</p>
+  <table>
+    <tr><th>Field Complete</th><th>Points</th></tr>
+    <tr><td>personality ≥ 200 characters</td><td>+20</td></tr>
+    <tr><td>system_prompt ≥ 300 characters</td><td>+20</td></tr>
+    <tr><td>goals ≥ 3 items</td><td>+20</td></tr>
+    <tr><td>relationships ≥ 3 entries</td><td>+20</td></tr>
+    <tr><td>config.machine specified</td><td>+10</td></tr>
+    <tr><td>soul_memories ≥ 5 entries</td><td>+10</td></tr>
+  </table>
+  <p>All 12 current souls score approximately 90% — the missing 10% is soul memories (0 currently, needs to be seeded).</p>
+
+  <h3>How to Enrich a Soul</h3>
+
+  <p>Go to <code>localhost:3000/soul-enrichment.html</code>. Select an agent. You can:</p>
+  <ul>
+    <li>Edit any of the 6 editable soul fields (Identity, Character, Mission, Goals, Relationships)</li>
+    <li>Add memories with category (project/preference/relationship/decision) and importance (1–10)</li>
+    <li>Preview the generated system prompt before saving</li>
+  </ul>
+</section>
+
+<section class="chapter" id="ch7">
+  <div class="chapter-num">Chapter 07</div>
+  <h2>The Intelligence Loop — How PIA Learns Over Time</h2>
+
+  <p>The most important architectural feature of PIA is not any single agent. It's the loop that connects all of them — the cycle that transforms individual session output into ongoing institutional intelligence.</p>
+
+  <h3>The Loop (Visual)</h3>
+
+  <div class="diagram">
+    <div class="diagram-title">The Intelligence Loop — Full Cycle</div>
+
+    <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+      <div class="flow-box human" style="width:280px;">
+        Human / Fisher2050<div class="sub">Goal arrives via email or dashboard</div>
+      </div>
+      <div class="flow-down">↓</div>
+      <div class="flow-box m1" style="width:280px;">
+        Mission Control<div class="sub">POST /api/mc/agents → spawn with soul + context</div>
+      </div>
+      <div class="flow-down">↓</div>
+      <div class="flow-box m3" style="width:280px;">
+        Specialist Agent<div class="sub">Farcake / Andy / Ziggi / Coder Machine</div>
+      </div>
+      <div class="flow-down">↓ session ends</div>
+      <div class="flow-box m1" style="width:280px;">
+        Tim Buc (Archivist)<div class="sub">Reads raw log · Files to Records DB · Terminates</div>
+      </div>
+      <div class="flow-down">↓</div>
+      <div class="flow-box db" style="width:280px;">
+        Records DB (agent_records)<div class="sub">agent · date · cost · produced files · quality</div>
+      </div>
+      <div class="flow-down">↓ at 6am</div>
+      <div class="flow-box m1" style="width:280px;">
+        Eliyahu (Knowledge Analyst)<div class="sub">Reads last 24h records · Synthesises 3 key insights</div>
+      </div>
+      <div class="flow-down">↓</div>
+      <div class="flow-box email" style="width:280px;">
+        Morning Briefing Email<div class="sub">To Mic's inbox · Under 2 min to read</div>
+      </div>
+      <div class="flow-down">↓</div>
+      <div class="flow-box m1" style="width:280px;">
+        Fisher2050 (9am standup)<div class="sub">Reads briefing · Schedules day · Creates new tasks</div>
+      </div>
+      <div class="flow-down">↓ and the cycle repeats</div>
+    </div>
+  </div>
+
+  <h3>Why This Loop Matters</h3>
+
+  <p>Most AI systems have no loop. You get output, and that's it. The next session starts from zero. PIA's intelligence loop means that every completed session <em>feeds the next one</em>. Each cycle, Eliyahu has more records to synthesise. Fisher2050 has better context for scheduling. The system gets smarter with use, not dumber.</p>
+
+  <div class="callout green">
+    <strong>The compounding effect:</strong> After 30 days, Eliyahu has read 30 morning's worth of records. Fisher2050's scheduling is 30 days smarter. The intelligence of the system grows proportionally to how much work it does.
+  </div>
+
+  <h3>What's Currently Wired vs What's Pending</h3>
+  <table>
+    <tr><th>Loop Component</th><th>Status</th></tr>
+    <tr><td>Tim Buc fires on session end</td><td>✅ Built and running</td></tr>
+    <tr><td>Tim Buc writes to agent_records DB</td><td>✅ Built and running</td></tr>
+    <tr><td>Eliyahu sends 6am email</td><td>✅ Built (needs SendGrid key)</td></tr>
+    <tr><td>Fisher2050 reads records before scheduling</td><td>⚠️ Partially wired — needs agent_messages table connection</td></tr>
+    <tr><td>Souls inject Tim Buc records at spawn</td><td>🔴 Not yet — v1.0 item</td></tr>
+  </table>
+</section>
+
+<section class="chapter" id="ch8">
+  <div class="chapter-num">Chapter 08</div>
+  <h2>The Creative Pipeline — From Brief to Published</h2>
+
+  <p>The Creative Pipeline is how a research brief becomes published content. It runs four agents in sequence, with Ziggi as the quality gate that prevents anything below standard from shipping.</p>
+
+  <h3>The Pipeline (Visual)</h3>
+
+  <div class="diagram">
+    <div class="diagram-title">Creative Pipeline — Research to Distribution</div>
+
+    <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+      <div class="flow-box human" style="width:300px;">
+        Fisher2050<div class="sub">Creates calendar entry with brief + deadline</div>
+      </div>
+      <div class="flow-down">↓ at scheduled time</div>
+      <div class="flow-box m3" style="width:300px;">
+        Farcake — Research Engine (M3)<div class="sub">Deep search · Context7 · Influencers · References · Sources</div>
+      </div>
+      <div class="flow-down">↓ research complete</div>
+      <div class="flow-box m1" style="width:300px;">
+        Tim Buc archives Farcake session
+      </div>
+      <div class="flow-down">↓</div>
+      <div class="flow-box m3" style="width:300px;">
+        Andy — Editorial Engine (M3)<div class="sub">Writes in Mic's voice · Uses Farcake's research</div>
+      </div>
+      <div class="flow-down">↓ draft complete</div>
+      <div class="flow-box m2" style="width:300px;">
+        Ziggi — Quality Architect (M2)<div class="sub">Devil's advocate · Scores 1–10 · Specific issues</div>
+      </div>
+
+      <div style="display:flex; gap:40px; margin-top:8px; align-items:flex-start;">
+        <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+          <div style="color:var(--green); font-weight:700; font-size:13px;">Score ≥ 8</div>
+          <div class="flow-down" style="color:var(--green);">↓</div>
+          <div class="flow-box" style="border-color:var(--green); color:var(--green); width:160px;">
+            GumballCMS<div class="sub">WhatsApp · Email · Social</div>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+          <div style="color:var(--red); font-weight:700; font-size:13px;">Score &lt; 7</div>
+          <div class="flow-down" style="color:var(--red);">↓</div>
+          <div class="flow-box" style="border-color:var(--red); color:var(--red); width:160px;">
+            Reschedule<div class="sub">Fisher2050 books new slot</div>
+          </div>
+          <div class="flow-down" style="color:var(--red);">↓</div>
+          <div style="font-size:12px; color:var(--muted);">Back to Farcake</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Why the Quality Gate Is Non-Negotiable</h3>
+
+  <p>The most common failure mode of automated content pipelines is <em>quantity over quality</em>. Systems that publish automatically without a gate produce large volumes of mediocre or hallucinated content that damages brand reputation.</p>
+
+  <p>Ziggi exists to prevent this. The 1–10 score isn't arbitrary — it comes from Ziggi's soul, which includes the question: <em>"Would Mic be embarrassed if this shipped?"</em> A 7 is good but requires a specific fix. An 8 ships. A 9 or 10 is flagged as a best-practice example for future reference.</p>
+
+  <h3>GumballCMS — The Distribution Layer</h3>
+
+  <p>GumballCMS is SodaLabs' WhatsApp-first content management system. It sits at the end of the Creative Pipeline. Once Ziggi approves content (score ≥ 8), it goes to GumballCMS for distribution across WhatsApp, email newsletters, and social channels. GumballCMS is also an inbound channel — a WhatsApp message to GumballCMS can trigger Fisher2050 to create a new research brief.</p>
+
+  <div class="callout">
+    <strong>Pipeline status:</strong> Fisher2050, Farcake, Andy, Ziggi, and Tim Buc are all built. Soul injection (B10) is done — souls fire at spawn. The Eliyahu → Fisher2050 intelligence loop is wired. Inbound email creates Fisher2050 tasks. GumballCMS integration is a v2.0 item.
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- PART IV: THE INFRASTRUCTURE -->
+<!-- ═══════════════════════════════════════════ -->
+
+<div class="part-header">
+  <div class="part-label">Part IV</div>
+  <div class="part-title">The Infrastructure</div>
+</div>
+
+<section class="chapter" id="ch9">
+  <div class="chapter-num">Chapter 09</div>
+  <h2>The Fleet — Machines, Network, and Setup</h2>
+
+  <h3>Current Fleet (3 Machines)</h3>
+
+  <table>
+    <tr><th>Machine</th><th>Hostname</th><th>Tailscale IP</th><th>OS User</th><th>Role</th></tr>
+    <tr>
+      <td><span class="badge badge-m1">M1 Hub</span></td>
+      <td>IZZIT7</td>
+      <td>localhost</td>
+      <td>mic</td>
+      <td>Hub. Runs everything: Fisher2050, Eliyahu, Tim Buc, Owl, all crons, dashboard, database.</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-m2">M2 Worker</span></td>
+      <td>SODA-MONSTER-HUNTER</td>
+      <td>100.127.165.12</td>
+      <td>user</td>
+      <td>Quality &amp; Design. Runs Ziggi and Bird Fountain. Receives tasks from M1 via WebSocket.</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-m3">M3 Worker</span></td>
+      <td>SODA-YETI</td>
+      <td>100.102.217.69</td>
+      <td>mic</td>
+      <td>Execution pipeline. Runs Farcake, Andy, Wingspan. Highest-volume machine.</td>
+    </tr>
+  </table>
+
+  <h3>How Machines Connect</h3>
+
+  <p>All three machines run Tailscale — a private encrypted overlay network. No port forwarding required. No firewall exceptions. Each machine gets a permanent Tailscale IP that works from anywhere in the world, even if the physical location changes.</p>
+
+  <p>M2 and M3 run the PIA server in worker mode. On startup, they connect to M1 via WebSocket and register themselves: "I am soda-monster-hunter, I'm online, here are my capabilities." From that point, M1 can assign tasks to them and they report results back.</p>
+
+  <h3>How M1 Knows Which Machine Is Which</h3>
+
+  <p>PIA uses automatic fleet detection. On startup, the PIA server calls <code>os.hostname()</code> and looks itself up in the Fleet Table. If the hostname is IZZIT7, it runs in Hub mode. If it's SODA-MONSTER-HUNTER or SODA-YETI, it runs in Worker mode. No manual configuration needed.</p>
+
+  <h3>Recommended Fleet for 6 Concurrent Projects</h3>
+
+  <p>Running 6 active projects simultaneously requires more capacity than 3 machines provide. The recommended 5-machine setup:</p>
+
+  <table>
+    <tr><th>Machine</th><th>Role</th><th>Agents</th></tr>
+    <tr><td>M1 — Hub</td><td>Orchestration only. No heavy workload.</td><td>Fisher2050, Eliyahu, Tim Buc, Owl, Monitor, Controller</td></tr>
+    <tr><td>M2 — Quality Gate</td><td>All quality reviews across all projects</td><td>Ziggi (runs 6x per project cycle), Bird Fountain</td></tr>
+    <tr><td>M3 — Content Pipeline A</td><td>Projects 1-3 content execution</td><td>Farcake, Andy, Wingspan</td></tr>
+    <tr><td>M4 — Content Pipeline B</td><td>Projects 4-6 content execution</td><td>Farcake, Andy, Wingspan (same agents, new machine)</td></tr>
+    <tr><td>M5 — Dedicated Build</td><td>All coding tasks for all projects</td><td>Coder Machine (always on, job queue)</td></tr>
+  </table>
+
+  <h3>Activating a New Machine (10 Steps, ~20 Minutes)</h3>
+
+  <ol>
+    <li>Install Tailscale and join the SodaLabs network</li>
+    <li>Install Node.js v22 LTS</li>
+    <li>Clone the repo: <code>git clone &lt;repo-url&gt;</code></li>
+    <li>Run <code>npm install</code></li>
+    <li>Copy <code>.env</code> from M1 (contains the ANTHROPIC_API_KEY)</li>
+    <li>Add the M1 SSH public key to <code>~/.ssh/authorized_keys</code> (see <code>ops/PLAYBOOK.md</code> for the exact key)</li>
+    <li>Test SSH from M1: <code>ssh user@&lt;tailscale-ip&gt; "hostname && echo OK"</code></li>
+    <li>Run <code>npm run dev</code> — the machine will auto-detect its role from hostname</li>
+    <li>Check M1's dashboard — new machine should appear in the fleet list within 30 seconds</li>
+    <li>Set up PM2 for auto-restart on reboot</li>
+  </ol>
+</section>
+
+<section class="chapter" id="ch10">
+  <div class="chapter-num">Chapter 10</div>
+  <h2>Working With PIA — The Human Side</h2>
+
+  <p>PIA runs autonomously. But it's not autonomous <em>from</em> you — it's autonomous <em>on your behalf</em>. Understanding what you delegate and what you keep is what makes the system effective.</p>
+
+  <h3>What You Delegate to PIA</h3>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h4>✅ Delegate to PIA</h4>
+      <ul>
+        <li>Research on any topic</li>
+        <li>Scheduling and task management</li>
+        <li>First-draft content writing</li>
+        <li>Quality review of all outputs</li>
+        <li>Daily briefing synthesis</li>
+        <li>Session archiving</li>
+        <li>API cost tracking (Itai)</li>
+        <li>Code builds and PRs</li>
+        <li>Presentation formatting</li>
+        <li>Image generation</li>
+        <li>Competitive intelligence</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h4>🤝 You Keep (and PIA supports)</h4>
+      <ul>
+        <li>Creative direction and vision</li>
+        <li>Relationship management</li>
+        <li>Client conversations and sales</li>
+        <li>Strategic decisions</li>
+        <li>Final approval on published content</li>
+        <li>Budget and financial decisions</li>
+        <li>Ethical judgement calls</li>
+        <li>Cultural context (Andy gets close, but you approve)</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>The Daily Rhythm</h3>
+
+  <table>
+    <tr><th>Time</th><th>Who</th><th>What</th><th>Your Action</th></tr>
+    <tr>
+      <td>6:00am</td>
+      <td>Eliyahu</td>
+      <td>Sends morning briefing: 3 key things from yesterday. What got done, what to watch, what's next.</td>
+      <td>Read. Takes 2 minutes. Star or reply if something needs immediate attention.</td>
+    </tr>
+    <tr>
+      <td>9:00am</td>
+      <td>Fisher2050</td>
+      <td>Sends daily standup: what's running today, what's in the queue, any blockers or decisions needed.</td>
+      <td>Read. Reply with any priority changes or new goals.</td>
+    </tr>
+    <tr>
+      <td>During day</td>
+      <td>Farcake / Andy / Ziggi</td>
+      <td>Executing scheduled tasks. Tim Buc filing each session as it completes.</td>
+      <td>Nothing needed. Dashboard shows live status. Agent chips appear when running.</td>
+    </tr>
+    <tr>
+      <td>6:00pm</td>
+      <td>Fisher2050</td>
+      <td>Sends daily summary: what completed today, Ziggi scores, API cost, what's queued for tomorrow.</td>
+      <td>Read. Review any Ziggi rejections — decide whether to reschedule or drop.</td>
+    </tr>
+  </table>
+
+  <h3>How to Give PIA a New Project</h3>
+
+  <ol>
+    <li><strong>Email fisher2050@sodalabs.ai</strong> with the project brief. Plain English. No special format needed.</li>
+    <li>Fisher2050 reads the email, creates a Farcake research task, a follow-up Andy task, and a Ziggi review task.</li>
+    <li>Each task gets a time slot based on current queue load and machine availability.</li>
+    <li>At the scheduled times, agents spawn automatically and execute.</li>
+    <li>You get a summary from Fisher2050 that evening and Eliyahu's synthesis the next morning.</li>
+  </ol>
+
+  <div class="callout green">
+    <strong>Steps 1 and 2 work today.</strong> Steps 3–5 are the v1.0 finish line — calendar-triggered spawn + the closed loop test running for 5 consecutive days.
+  </div>
+
+  <h3>How to Review Eliyahu's Morning Briefing</h3>
+
+  <p>Eliyahu is trained to be concise. The briefing format is always:</p>
+  <ol>
+    <li><strong>What happened</strong> — top 1-3 completed items from yesterday, with Ziggi scores</li>
+    <li><strong>What to watch</strong> — anything that needs your decision or flagged as risk</li>
+    <li><strong>What's next</strong> — top 1-2 things running or queued today</li>
+  </ol>
+
+  <p>If a Ziggi score is below 7, Eliyahu will say so and include Ziggi's specific feedback. You don't need to log into the dashboard to understand what's happening. The email is designed to be read in 2 minutes over coffee.</p>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- PART V: THE ROADMAP -->
+<!-- ═══════════════════════════════════════════ -->
+
+<div class="part-header">
+  <div class="part-label">Part V</div>
+  <div class="part-title">The Roadmap</div>
+</div>
+
+<section class="chapter" id="ch11">
+  <div class="chapter-num">Chapter 11</div>
+  <h2>Current Status — What's Done, What's Pending</h2>
+
+  <h3>Infrastructure (Fully Working)</h3>
+  <ul class="status-list">
+    <li><span class="icon-done">●</span>Express API server running on port 3000 (M1)</li>
+    <li><span class="icon-done">●</span>SQLite database with 47+ migrations applied</li>
+    <li><span class="icon-done">●</span>WebSocket — live agent output streaming to dashboard</li>
+    <li><span class="icon-done">●</span>Mission Control dashboard (spawn, kill, monitor agents)</li>
+    <li><span class="icon-done">●</span>PM2 auto-restart — PIA survives crashes and reboots</li>
+    <li><span class="icon-done">●</span>Fleet auto-detection — hostname determines hub vs worker automatically</li>
+    <li><span class="icon-done">●</span>M2 synced and connected — soda-monster-hunter online</li>
+    <li><span class="icon-done">●</span>SSH from M1 to M2 working (passwordless key auth)</li>
+  </ul>
+
+  <h3>Intelligence Pipeline (Built, Partially Wired)</h3>
+  <ul class="status-list">
+    <li><span class="icon-done">●</span>Tim Buc service — fires on session end, files to agent_records</li>
+    <li><span class="icon-done">●</span>Records DB table (agent_records) — migration applied</li>
+    <li><span class="icon-done">●</span>Eliyahu 6am cron — reads records, sends briefing email</li>
+    <li><span class="icon-pending">●</span>Eliyahu email delivery — needs SendGrid API key in .env</li>
+    <li><span class="icon-done">●</span>Fisher2050 reads agent_messages — wired 2026-02-22</li>
+    <li><span class="icon-done">●</span>Soul injection at spawn (B10) — done 2026-02-22</li>
+  </ul>
+
+  <h3>Scheduling &amp; Triggers</h3>
+  <ul class="status-list">
+    <li><span class="icon-done">●</span>Fisher2050 cron jobs — 9am standup, 6pm summary, 2am Ziggi, 6am Eliyahu</li>
+    <li><span class="icon-done">●</span>CalendarSpawnService — watches calendar_events table, spawns at scheduled time</li>
+    <li><span class="icon-done">●</span>TaskQueue + ExecutionEngine (auto-start true)</li>
+    <li><span class="icon-pending">●</span>Email inbound (fisher2050@sodalabs.ai) — SendGrid inbound + routing needed</li>
+  </ul>
+
+  <h3>Soul System</h3>
+  <ul class="status-list">
+    <li><span class="icon-done">●</span>12 soul files written (Fisher2050, Eliyahu, Ziggi, Tim Buc, Farcake, Andy, Bird Fountain, Wingspan, Owl, Coder Machine, Controller, Monitor)</li>
+    <li><span class="icon-done">●</span>Soul Engine (generateSystemPrompt()) — fully working</li>
+    <li><span class="icon-done">●</span>Soul seeding on startup — all 12 souls in DB on first boot</li>
+    <li><span class="icon-done">●</span>Soul Enrichment UI at /soul-enrichment.html</li>
+    <li><span class="icon-done">●</span>Soul injection at spawn — done 2026-02-22</li>
+    <li><span class="icon-todo">●</span>Itai soul file — not yet written (v2.0 agent, deferred)</li>
+  </ul>
+
+  <h3>Communications</h3>
+  <ul class="status-list">
+    <li><span class="icon-done">●</span>Email service (SendGrid) — code fully built</li>
+    <li><span class="icon-pending">●</span>SENDGRID_API_KEY — needs to be added to .env</li>
+    <li><span class="icon-done">●</span>Discord bot — fully built, needs DISCORD_BOT_TOKEN</li>
+    <li><span class="icon-done">●</span>WhatsApp routes — built, needs QR scan to activate</li>
+  </ul>
+</section>
+
+<section class="chapter" id="ch12">
+  <div class="chapter-num">Chapter 12</div>
+  <h2>What's Left To Build — Version 1.0 Finish Line</h2>
+
+  <p>Version 1.0 progress as of Feb 22, 2026. Items completed are marked ✅.</p>
+
+  <div class="build-item" style="border-left-color: var(--green);">
+    <h4>✅ B10 — The Spawn Wire <span style="color:var(--green);font-size:13px;font-weight:400;">DONE — 2026-02-22</span></h4>
+    <div class="meta">Completed · <code>agent-session.ts</code> + <code>mission-control.ts</code></div>
+    <p>Soul injection is live. When a spawn request includes <code>soulId</code>, <code>generateSystemPrompt()</code> is called and the full soul personality, goals, memories and relationships are injected as the system prompt. Fisher2050 now knows it is Fisher2050. Same for all 12 souls.</p>
+    <p style="margin-top:8px; color: var(--green);">To test when API key arrives: <code>POST /api/mc/agents { "soulId": "fisher2050", "task": "Who are you?" }</code></p>
+  </div>
+
+  <div class="build-item" style="border-left-color: var(--green);">
+    <h4>✅ Intelligence Loop Closure <span style="color:var(--green);font-size:13px;font-weight:400;">DONE — 2026-02-22</span></h4>
+    <div class="meta">Completed · <code>fisher-service.ts</code></div>
+    <p>The full Eliyahu → Fisher2050 feedback loop is now wired:</p>
+    <ul style="margin-top:8px; padding-left:20px; font-size:14px; color:#c9d1d9;">
+      <li>Eliyahu runs at 6am → writes pattern analysis to Fisher2050's <code>agent_messages</code> inbox</li>
+      <li>Eliyahu's briefing saves to its own soul memory (longitudinal continuity — Eliyahu remembers yesterday)</li>
+      <li>Fisher2050 standup/summary reads unread inbox before building prompt, marks read after</li>
+      <li>Eliyahu prompt now includes 7-day Ziggi quality trends, not just last 24h records</li>
+    </ul>
+  </div>
+
+  <div class="build-item" style="border-left-color: var(--green);">
+    <h4>✅ Inbound Email Handler <span style="color:var(--green);font-size:13px;font-weight:400;">DONE — 2026-02-22</span></h4>
+    <div class="meta">Completed · <code>POST /api/email/inbound</code></div>
+    <p>Mailgun and Cloudflare Email Workers can now POST to <code>/api/email/inbound</code>. PIA parses the email and creates a <code>calendar_events</code> entry for Fisher2050 — scheduled 1 minute from receipt. This is v1.0 item #12: goal submission by email.</p>
+  </div>
+
+  <div class="build-item">
+    <h4>The 5-Day Integration Test</h4>
+    <div class="meta">1–2 days of observation · v1.0 exit gate · Needs API key</div>
+    <p>Once the API key is in place, run the system for 5 consecutive business days with no manual intervention. The acceptance test:</p>
+    <ul style="margin-top:8px; padding-left:20px; font-size:14px; color:#c9d1d9;">
+      <li>Goal submitted by email → Fisher2050 schedules → Farcake executes → Tim Buc archives → Ziggi reviews → Eliyahu reports</li>
+      <li>Five consecutive days. No crash. No stall. No manual restart.</li>
+      <li>At least 10 sessions in the Records DB by end of test.</li>
+    </ul>
+  </div>
+
+  <div class="build-item">
+    <h4>The First Closed Pipeline</h4>
+    <div class="meta">~1 week of real use · Proves the system at real scale · Needs API key</div>
+    <p>One use case, fully autonomous, documented. Recommendation: weekly content brief. Every Monday, email Fisher2050 a topic. Farcake researches it Tuesday. Andy writes it Wednesday. Ziggi reviews Thursday. Output ready by Friday. Repeat for 4 consecutive weeks.</p>
+  </div>
+
+  <div class="callout orange">
+    <strong>The one remaining blocker:</strong> <code>ANTHROPIC_API_KEY</code> in M1's <code>.env</code>. All agent code is written, the loop is wired, souls inject correctly. Adding the key is a 2-minute task. Console: <code>console.anthropic.com/settings/billing</code>
+  </div>
+
+  <hr>
+
+  <h3>After Version 1.0 — What's Next</h3>
+
+  <p>Version 2.0 (after the 5-day test passes):</p>
+  <ul>
+    <li>Electron desktop app with React UI — replacing the browser dashboard</li>
+    <li>WhatsApp bridge — inbound goals via WhatsApp, not just email</li>
+    <li>Google Calendar integration — real calendar sync, not just local table</li>
+    <li>GumballCMS integration — Andy's output goes directly to distribution</li>
+    <li>M2 and M3 agent activation — Ziggi and Farcake running on dedicated machines</li>
+    <li>RAG — Eliyahu searches 6 months of archives, not just 24 hours</li>
+    <li>Agentic commerce — Stripe integration, Itai spending authority</li>
+    <li>Videohoho Phase 2 — Bird Fountain → Videohoho automated video pipeline</li>
+  </ul>
+</section>
+
+<hr>
+
+<div style="text-align:center; padding: 60px 20px; color: var(--muted); font-size: 13px;">
+  <div style="font-size:28px; color:var(--teal); font-weight:700; margin-bottom:8px;">PIA</div>
+  Personal Intelligence Agent · SodaLabs<br>
+  Version 1.0 Document · February 2026<br><br>
+  <em>"I am because we are."</em> — Ubuntu
+</div>
+
+<script>
+  // Smooth scroll for TOC links
+  document.querySelectorAll('.toc a').forEach(a => {
+    a.addEventListener('click', e => {
+      const id = a.getAttribute('href');
+      const el = document.querySelector(id);
+      if (el) { e.preventDefault(); el.scrollIntoView({behavior:'smooth', block:'start'}); }
+    });
+  });
+</script>
+</body>
+</html>

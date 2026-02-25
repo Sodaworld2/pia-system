@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Company With No Employees | Business Quarterly</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #fdfcf9;
+    --paper2: #f5f3ee;
+    --ink: #141210;
+    --ink2: #3a3630;
+    --ink3: #7a7060;
+    --ink4: #b5aa95;
+    --red: #c0392b;
+    --gold: #b8860b;
+    --border: rgba(0,0,0,0.1);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--paper2);
+    color: var(--ink);
+    font-family: 'Source Serif 4', Georgia, serif;
+  }
+
+  /* ── MASTHEAD ── */
+  .masthead {
+    background: var(--ink);
+    color: #fff;
+    text-align: center;
+    padding: 20px 48px;
+    border-bottom: 4px solid var(--red);
+  }
+  .masthead-pub {
+    font-family: 'Playfair Display', serif;
+    font-size: 36px; font-weight: 900;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .masthead-issue {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: rgba(255,255,255,0.45);
+  }
+
+  /* ── SECTION BANNER ── */
+  .section-banner {
+    background: var(--red); color: #fff;
+    text-align: center; padding: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase;
+  }
+
+  /* ── ARTICLE WRAPPER ── */
+  .article {
+    max-width: 900px; margin: 0 auto;
+    background: var(--paper);
+    box-shadow: 0 0 80px rgba(0,0,0,0.12);
+  }
+
+  /* ── HERO IMAGE AREA ── */
+  .hero-img {
+    background: var(--ink);
+    height: 380px;
+    display: flex; flex-direction: column;
+    justify-content: flex-end;
+    padding: 36px 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-img-bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 70% 30%, rgba(192,57,43,0.15), transparent 60%),
+      linear-gradient(135deg, #0a0905 0%, #1a1410 50%, #0d0a06 100%);
+  }
+  .hero-img-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  /* Abstract "office at night" SVG elements */
+  .hero-dots {
+    position: absolute; top: 40px; right: 60px;
+    display: flex; flex-wrap: wrap; gap: 8px; width: 200px;
+  }
+  .hero-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+  }
+  .hero-dot.on { background: rgba(192,57,43,0.7); box-shadow: 0 0 8px rgba(192,57,43,0.5); }
+  .hero-dot.dim { background: rgba(255,200,100,0.3); }
+  .hero-tag {
+    position: relative; z-index: 2;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--red); margin-bottom: 14px;
+  }
+  .hero-headline {
+    position: relative; z-index: 2;
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(30px, 5vw, 52px); font-weight: 900;
+    line-height: 1.05; color: #fff; margin-bottom: 16px;
+  }
+  .hero-deck {
+    position: relative; z-index: 2;
+    font-size: 16px; color: rgba(255,255,255,0.6); line-height: 1.5; max-width: 580px;
+    font-style: italic;
+  }
+
+  /* ── BYLINE BAR ── */
+  .byline-bar {
+    border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    padding: 14px 48px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: 'Inter', sans-serif;
+  }
+  .byline-author { font-size: 12px; color: var(--ink3); }
+  .byline-author strong { color: var(--ink2); }
+  .byline-date { font-size: 12px; color: var(--ink4); }
+
+  /* ── BODY LAYOUT ── */
+  .body-wrap { padding: 48px 48px 80px; }
+
+  /* 3-column drop-cap opener */
+  .opener {
+    columns: 2; column-gap: 40px; margin-bottom: 40px;
+    border-bottom: 1px solid var(--border); padding-bottom: 40px;
+  }
+  .opener p { font-size: 16px; line-height: 1.85; color: var(--ink2); margin-bottom: 14px; break-inside: avoid; }
+  .opener p:first-child::first-letter {
+    font-family: 'Playfair Display', serif;
+    font-size: 72px; font-weight: 900; line-height: 0.75;
+    float: left; margin: 8px 12px 0 0; color: var(--red);
+  }
+
+  /* ── MAIN LAYOUT: text + sidebar ── */
+  .main-layout { display: grid; grid-template-columns: 1fr 240px; gap: 48px; }
+  .main-text p { font-size: 16px; line-height: 1.85; color: var(--ink2); margin-bottom: 20px; }
+  .main-text h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px; font-weight: 700; margin: 36px 0 14px; color: var(--ink);
+    border-top: 2px solid var(--ink); padding-top: 14px;
+  }
+  .main-text blockquote {
+    border-left: 3px solid var(--red); margin: 28px 0;
+    padding: 4px 0 4px 24px;
+    font-style: italic; font-size: 17px; color: var(--ink2); line-height: 1.7;
+  }
+  .main-text blockquote cite { display: block; font-size: 12px; font-style: normal; color: var(--ink4); margin-top: 8px; font-family: 'Inter', sans-serif; }
+
+  /* Pull quote — full width */
+  .pull-quote {
+    border-top: 3px solid var(--ink); border-bottom: 1px solid var(--border);
+    padding: 28px 0 24px; margin: 36px 0;
+    text-align: center;
+  }
+  .pull-quote p {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(20px, 3vw, 28px); font-style: italic;
+    line-height: 1.4; color: var(--ink); margin-bottom: 0 !important;
+  }
+  .pull-quote cite { display: block; font-family: 'Inter', sans-serif; font-size: 11px; color: var(--ink4); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 12px; }
+
+  /* ── SIDEBAR ── */
+  .sidebar { border-left: 1px solid var(--border); padding-left: 32px; }
+  .sidebar-module { margin-bottom: 36px; }
+  .sidebar-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--red); margin-bottom: 12px;
+    padding-bottom: 8px; border-bottom: 1px solid var(--border);
+  }
+  .sidebar-module p { font-size: 13px; line-height: 1.75; color: var(--ink3); }
+  .sidebar-module p strong { color: var(--ink2); }
+  .sidebar-stat { margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+  .sidebar-stat:last-child { border-bottom: none; margin-bottom: 0; }
+  .sidebar-stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 36px; font-weight: 700; color: var(--red); line-height: 1;
+  }
+  .sidebar-stat-desc { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink3); line-height: 1.5; margin-top: 4px; }
+  .sidebar-team { display: flex; flex-direction: column; gap: 10px; }
+  .sidebar-person { display: flex; gap: 10px; align-items: flex-start; }
+  .sp-avatar {
+    width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+    background: var(--paper2); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', serif; font-size: 11px; font-weight: 700; color: var(--ink3);
+  }
+  .sp-info { font-family: 'Inter', sans-serif; }
+  .sp-name { font-size: 12px; font-weight: 600; color: var(--ink2); }
+  .sp-role { font-size: 11px; color: var(--ink4); }
+  .sidebar-callout {
+    background: var(--ink); color: #fff; padding: 20px;
+    border-radius: 2px; font-size: 14px; line-height: 1.65; font-style: italic;
+  }
+  .sidebar-callout strong { color: rgba(255,220,150,0.9); font-style: normal; }
+
+  /* ── FULL-WIDTH FEATURE BOX ── */
+  .feature-box {
+    background: var(--paper2); border: 1px solid var(--border);
+    padding: 36px 40px; margin: 36px 0;
+    border-left: 4px solid var(--red);
+  }
+  .feature-box h4 {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px; font-weight: 700; margin-bottom: 12px;
+  }
+  .feature-box p { font-size: 14px; line-height: 1.8; color: var(--ink3); margin-bottom: 12px; }
+  .feature-box p:last-child { margin-bottom: 0; }
+
+  /* ── DATA TABLE ── */
+  .data-table { width: 100%; border-collapse: collapse; font-family: 'Inter', sans-serif; font-size: 13px; margin: 24px 0; }
+  .data-table th { background: var(--ink); color: #fff; padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; }
+  .data-table td { padding: 10px 16px; border-bottom: 1px solid var(--border); color: var(--ink2); }
+  .data-table tr:nth-child(even) td { background: var(--paper2); }
+  .data-table .num { font-weight: 700; color: var(--red); }
+
+  /* ── FOOTER ── */
+  .article-footer {
+    border-top: 2px solid var(--ink); padding: 28px 48px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink4);
+  }
+  .article-footer a { color: var(--red); text-decoration: none; }
+
+  @media (max-width: 800px) {
+    .main-layout { grid-template-columns: 1fr; }
+    .sidebar { border-left: none; border-top: 1px solid var(--border); padding-left: 0; padding-top: 32px; }
+    .opener { columns: 1; }
+    .body-wrap, .byline-bar { padding-left: 24px; padding-right: 24px; }
+    .hero-img { padding: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- MASTHEAD -->
+<div class="masthead">
+  <div class="masthead-pub">Business Quarterly</div>
+  <div class="masthead-issue">Africa Edition &nbsp;·&nbsp; February 2026 &nbsp;·&nbsp; Technology &amp; Innovation</div>
+</div>
+<div class="section-banner">Technology &nbsp;/&nbsp; Future of Work &nbsp;/&nbsp; Artificial Intelligence</div>
+
+<div class="article">
+
+  <!-- HERO -->
+  <div class="hero-img">
+    <div class="hero-img-bg"></div>
+    <div class="hero-img-grid"></div>
+    <div class="hero-dots">
+      <div class="hero-dot on"></div><div class="hero-dot"></div><div class="hero-dot on"></div><div class="hero-dot"></div><div class="hero-dot dim"></div>
+      <div class="hero-dot"></div><div class="hero-dot on"></div><div class="hero-dot"></div><div class="hero-dot on"></div><div class="hero-dot"></div>
+      <div class="hero-dot dim"></div><div class="hero-dot"></div><div class="hero-dot"></div><div class="hero-dot on"></div><div class="hero-dot"></div>
+      <div class="hero-dot on"></div><div class="hero-dot"></div><div class="hero-dot dim"></div><div class="hero-dot on"></div><div class="hero-dot"></div>
+    </div>
+    <div class="hero-tag">Cover Story</div>
+    <h1 class="hero-headline">The Company<br>With No Employees</h1>
+    <p class="hero-deck">A Johannesburg technology studio is quietly building something the world hasn't seen: businesses staffed entirely by AI. Not chatbots — a workforce. With names, memories, and job titles.</p>
+  </div>
+
+  <!-- BYLINE -->
+  <div class="byline-bar">
+    <div class="byline-author">By <strong>Staff Writer, Business Quarterly</strong> &nbsp;·&nbsp; Johannesburg</div>
+    <div class="byline-date">February 22, 2026 &nbsp;·&nbsp; 8 min read</div>
+  </div>
+
+  <div class="body-wrap">
+
+    <!-- OPENING (2-col) -->
+    <div class="opener">
+      <p>It is 2:04 in the morning in a quiet office park in Johannesburg. No lights are on. No one is at their desk. And yet, somewhere inside three humming computers, something is working — reading, writing, reviewing, filing. By the time the building's owner wakes up at seven and reaches for his phone, there will be a three-point briefing waiting in his inbox, a completed research brief, and a reviewed draft of a client proposal, all produced while the city slept.</p>
+      <p>The person who sent the briefing is named Eliyahu. He is not a freelancer in another time zone, not a junior analyst pulling an all-nighter, and not, in any conventional sense, a person at all. Eliyahu is an AI agent — one of twelve — built and deployed by SodaLabs, a technology studio whose stated ambition is to give every business owner the equivalent of a full-time, highly competent team, at a cost that makes traditional staffing economics look almost comically inefficient.</p>
+      <p>The briefing Eliyahu sends each morning takes him forty-seven seconds to produce. It costs approximately three rand to run. The equivalent human work — reading everything produced in the previous twenty-four hours, identifying the three most decision-relevant points, and composing a concise summary — would take a skilled analyst the better part of two hours.</p>
+      <p>This is not a technology demonstration. It is live, operational, and running on commercial projects for real clients. And it may represent the most significant shift in how African businesses compete in the global knowledge economy that this decade will produce.</p>
+    </div>
+
+    <!-- MAIN + SIDEBAR -->
+    <div class="main-layout">
+      <div class="main-text">
+
+        <h3>The Problem With Every AI Tool You've Already Tried</h3>
+        <p>To understand what SodaLabs is doing, it helps to understand what it is not. Every AI assistant currently on the market — ChatGPT, Claude, Gemini, Microsoft Copilot — shares a fundamental architectural limitation: they are stateless. Ask them something today, and tomorrow they will have no memory of it. They do not know your business. They do not know your standards. They do not know what you decided last Thursday or why. You must re-explain yourself every single time, turning every session into a training exercise for a colleague who perpetually has amnesia.</p>
+
+        <p>The tools are individually impressive. The workflow they produce is exhausting. And for most businesses, the result is that AI remains something they use occasionally for specific tasks rather than something that fundamentally changes how their operation runs.</p>
+
+        <blockquote>
+          "Every AI tool you've ever used started from zero. It didn't know your name. It didn't know what you worked on last week. You spent half your time explaining context that a good employee would already know."
+          <cite>— Mic Louw, Founder, SodaLabs</cite>
+        </blockquote>
+
+        <p>SodaLabs' answer to this problem is what the company calls the Soul System — a technical architecture that gives each AI agent a persistent identity. Each agent has a name, a defined role, a communication style, a set of goals, a relationship map (who they work with and how), and — critically — a growing memory that accumulates across every session they run. Fisher2050, the project management agent, remembers that you prefer short briefings. He remembers that Client X is sensitive about deadlines. He remembers the format you approved for research briefs in November. He gets better at working with you in the same way a trusted colleague gets better at working with you over time.</p>
+
+        <div class="pull-quote">
+          <p>"Nobody has packaged this with <em>identity first</em>. That is the gap being filled — and it changes everything about how humans relate to the system."</p>
+          <cite>AI Systems Researcher, quoted on condition of anonymity</cite>
+        </div>
+
+        <h3>Meet the Team</h3>
+        <p>What distinguishes the SodaLabs approach from conventional AI automation is its insistence on treating agents as workforce rather than software. The twelve agents currently deployed each have a clearly defined job title, a personality that makes them recognisable, and a communication style that reflects their role. Fisher2050 is the project manager — organised, proactive, uses confidence percentages, never lets anything fall through the gaps. Eliyahu is the intelligence analyst — curious, pattern-focused, produces his daily briefing with the precision of someone who has been studying your business for months. Ziggi is the quality reviewer — meticulous, rates every output from one to ten, and will not sign off on work that does not meet the standard.</p>
+
+        <p>The workflow they enable is striking in its simplicity from the human side. The business owner emails Fisher2050 with a goal — "I need a competitive analysis on the South African fintech sector by Friday." Fisher, knowing the business's research standards and having access to the team's full history, schedules Farcake (the research agent) for a three-hour session that afternoon, queues Andy (the writing agent) for Thursday morning when the research will be ready, and books Ziggi to review the final draft Thursday evening. By Friday morning, the owner has a completed, reviewed, publication-ready document — without having opened a dashboard, configured a workflow, or written a single prompt.</p>
+
+        <div class="feature-box">
+          <h4>How a Typical Project Flows</h4>
+          <p><strong>Monday, 9am:</strong> Business owner emails Fisher2050: "Need an Afrotech brief by Friday." Fisher checks team availability, schedules the project across three agents.</p>
+          <p><strong>Tuesday, 2pm:</strong> Farcake runs a three-hour research session. Investigates eight sources. Cross-references. Validates. Produces structured findings. Terminates. Cost: R9.</p>
+          <p><strong>Thursday, 8am:</strong> Andy reads Farcake's research. Writes the brief in the client's established voice. Sends to Ziggi for review. Cost: R5.</p>
+          <p><strong>Thursday, 2am:</strong> Ziggi reviews. Rates 8/10. Flags one weak section. Suggests a rewrite. Files her verdict. Cost: R2.</p>
+          <p><strong>Friday, 6am:</strong> Eliyahu's briefing includes: "Afrotech brief ready. Ziggi approved at 8/10 with one suggested amendment. Brief is in your drafts folder."</p>
+          <p><strong>Total cost of the entire project: approximately R16.</strong> Equivalent human time: 12–15 hours.</p>
+        </div>
+
+        <h3>The Economics That Should Alarm Every Traditional Agency</h3>
+        <p>The cost comparison that SodaLabs presents to prospective clients is not a subtle one. A skilled research manager in Johannesburg commands a salary of R25,000 per month. A senior writer, R22,000. A project manager, R15,000. A quality reviewer engaged on a freelance basis, R18,000. A data analyst, R14,000. The total for a competent five-person knowledge team — before accounting for leave, sick days, UIF contributions, recruitment costs, and the inevitable human error — exceeds R100,000 per month.</p>
+
+        <p>The equivalent AI team, running on the business's own hardware, costs in the range of R26 to R40 per month in operational expenses, depending on the volume of work. The hardware investment is a one-time cost. There are no monthly per-seat fees, no cloud subscriptions, and no data leaving the building.</p>
+
+        <table class="data-table">
+          <thead>
+            <tr><th>Task</th><th>Human (hours)</th><th>Human (cost)</th><th>AI Agent (time)</th><th>AI Cost</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Competitive research brief</td><td>4 hrs</td><td>R320</td><td>3 hrs (overnight)</td><td class="num">R9</td></tr>
+            <tr><td>First draft, 2,000 words</td><td>3 hrs</td><td>R240</td><td>45 min</td><td class="num">R5</td></tr>
+            <tr><td>Quality review + notes</td><td>2 hrs</td><td>R200</td><td>25 min (2am)</td><td class="num">R2</td></tr>
+            <tr><td>Daily project management</td><td>1 hr</td><td>R100</td><td>Continuous</td><td class="num">R2.50</td></tr>
+            <tr><td>Archive + file session</td><td>30 min</td><td>R50</td><td>5 min (automated)</td><td class="num">R0.90</td></tr>
+            <tr><td><strong>Monthly total (8 projects)</strong></td><td></td><td><strong>R7,200</strong></td><td></td><td class="num"><strong>R26</strong></td></tr>
+          </tbody>
+        </table>
+
+        <h3>The Intelligence Loop — What Makes It Learn</h3>
+        <p>The most technically sophisticated element of the SodaLabs system is what the company calls the Intelligence Pipeline — a self-reinforcing loop that causes the system to improve automatically over time, without any intervention from the business owner.</p>
+
+        <p>After every agent session ends, an agent named Tim Buc wakes up. Tim Buc's sole function is archival: he reads the raw session logs, sorts everything by project, agent, type, and date, and files it to a central records database. He then adds relevant memories to the working agent's soul — so that the next time Farcake runs a research session, he arrives with a memory of what worked last time, what standards were approved, and what the client's preferences are.</p>
+
+        <p>Eliyahu then reads Tim Buc's organised records and synthesises patterns across projects: which types of tasks consistently score highest with Ziggi, which clients require what approaches, which decisions made three weeks ago are producing consequences now. These patterns feed into Fisher2050's scheduling and task briefing — so the project manager is continuously incorporating institutional knowledge into how he structures future work.</p>
+
+        <blockquote>
+          "Most AI systems have zero memory beyond the current session. Some have retrieval. Very few have an actual intelligence layer that reads past sessions and builds understanding over time. This pipeline is the difference between an AI that forgets everything and an AI that gets smarter about your business every day."
+          <cite>— SodaLabs internal documentation</cite>
+        </blockquote>
+
+        <h3>The Question Nobody Is Asking</h3>
+        <p>The standard conversation about AI in business tends to focus on whether AI will replace jobs. It is a legitimate and important conversation. But it may be the wrong frame for understanding what systems like PIA actually represent.</p>
+
+        <p>The more significant shift is not replacement — it is leverage. A single business owner with access to a twelve-person AI workforce is not replacing twelve people. They are giving themselves capabilities that, until recently, required twelve people to produce. The competitive implication is not that companies will have fewer employees. It is that companies with AI workforces will be able to produce at a scale and speed that makes traditional staffing economics increasingly uncompetitive in knowledge-work categories.</p>
+
+        <p>Anthropic CEO Dario Amodei placed the odds of a one-person company generating billion-dollar revenue using AI agent fleets in 2026 at seventy to eighty percent. Rahhaat Uppaal, a swarm operator documented in the AI business community, runs a six-figure consulting agency with zero employees. Emergent, an AI-native software platform, reached one hundred million dollars in annual recurring revenue in eight months.</p>
+
+        <p>SodaLabs' bet is that the businesses which build this infrastructure now — who establish their AI workforce, train the agents on their voice and standards, and accumulate institutional knowledge in the system — will have a structural advantage that compounds over time in the same way that a well-trained, experienced human team compounds over time. The team that knows your business is more valuable than the team that does not, regardless of whether the team members are human or AI.</p>
+
+        <p>At 2:04 in the morning in Johannesburg, Ziggi is reading a client proposal. She has rated it 7.5 out of 10. She has identified two paragraphs that could be stronger and has written her suggested revisions. By morning, the business owner will read her notes, approve the changes, and send the proposal — better than it would have been, delivered faster than it could have been, at a cost that no traditional competitor can match.</p>
+
+        <p>The lights are still off. The work is still happening.</p>
+
+      </div>
+
+      <!-- SIDEBAR -->
+      <div class="sidebar">
+
+        <div class="sidebar-module">
+          <div class="sidebar-label">By the Numbers</div>
+          <div class="sidebar-stat">
+            <div class="sidebar-stat-num">R0.12</div>
+            <div class="sidebar-stat-desc">Cost of a full competitive research report. Was R300–800 in human time.</div>
+          </div>
+          <div class="sidebar-stat">
+            <div class="sidebar-stat-num">12</div>
+            <div class="sidebar-stat-desc">AI agents, each with a persistent identity, memory, and defined role.</div>
+          </div>
+          <div class="sidebar-stat">
+            <div class="sidebar-stat-num">24/7</div>
+            <div class="sidebar-stat-desc">Operational hours. Ziggi reviews at 2am. Eliyahu briefs at 6am. Fisher manages from 9am.</div>
+          </div>
+          <div class="sidebar-stat">
+            <div class="sidebar-stat-num">R26</div>
+            <div class="sidebar-stat-desc">Approximate monthly operating cost for the full 12-person AI team. No subscriptions.</div>
+          </div>
+        </div>
+
+        <div class="sidebar-module">
+          <div class="sidebar-label">The Team</div>
+          <div class="sidebar-team">
+            <div class="sidebar-person"><div class="sp-avatar">F</div><div class="sp-info"><div class="sp-name">Fisher2050</div><div class="sp-role">Project Manager</div></div></div>
+            <div class="sidebar-person"><div class="sp-avatar">E</div><div class="sp-info"><div class="sp-name">Eliyahu</div><div class="sp-role">Intelligence Analyst</div></div></div>
+            <div class="sidebar-person"><div class="sp-avatar">Z</div><div class="sp-info"><div class="sp-name">Ziggi</div><div class="sp-role">Quality Reviewer</div></div></div>
+            <div class="sidebar-person"><div class="sp-avatar">Fc</div><div class="sp-info"><div class="sp-name">Farcake</div><div class="sp-role">Lead Researcher</div></div></div>
+            <div class="sidebar-person"><div class="sp-avatar">An</div><div class="sp-info"><div class="sp-name">Andy</div><div class="sp-role">Senior Writer</div></div></div>
+            <div class="sidebar-person"><div class="sp-avatar">T</div><div class="sp-info"><div class="sp-name">Tim Buc</div><div class="sp-role">Records Manager</div></div></div>
+            <div class="sidebar-person"><div class="sp-avatar">+6</div><div class="sp-info"><div class="sp-name">Six more agents</div><div class="sp-role">Controller, Monitor, Owl, Coder, Bird Fountain, Wingspan</div></div></div>
+          </div>
+        </div>
+
+        <div class="sidebar-module">
+          <div class="sidebar-label">The Competitive Context</div>
+          <div class="sidebar-callout">
+            Global AI agent platforms — CrewAI, AutoGen, Microsoft Copilot, OpenAI Assistants — share a common limitation: <strong>none of them run on your hardware, and none of them have a persistent identity system.</strong> Your data stays on their servers. Your agents start from zero every session.
+          </div>
+        </div>
+
+        <div class="sidebar-module">
+          <div class="sidebar-label">Contact</div>
+          <p style="font-family:'Inter',sans-serif; font-size:13px; color:var(--ink3); line-height:1.7;">SodaLabs, Johannesburg<br><a href="mailto:mic@sodalabs.ai" style="color:var(--red);">mic@sodalabs.ai</a></p>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <span>© 2026 Business Quarterly. All rights reserved.</span>
+    <span><a href="mailto:mic@sodalabs.ai">mic@sodalabs.ai</a> · SodaLabs, Johannesburg</span>
+  </div>
+
+</div>
+
+<!-- PIA NAV -->
+<div style="height:52px"></div>
+<nav id="pia-nav" style="position:fixed;bottom:0;left:0;right:0;z-index:9999;background:rgba(6,6,15,0.97);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;height:48px;padding:0 28px;gap:14px;font-family:'Inter',system-ui,Arial,sans-serif;">
+  <a href="pitch.html" style="color:rgba(255,255,255,0.35);text-decoration:none;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;white-space:nowrap;flex-shrink:0;">SodaLabs · PIA</a>
+  <div style="width:1px;height:20px;background:rgba(255,255,255,0.1);flex-shrink:0;"></div>
+  <span style="color:rgba(255,255,255,0.2);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;white-space:nowrap;flex-shrink:0;">View as</span>
+  <div style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;">
+    <a href="PIA_CLIENT_PITCH.html" style="font-size:11px;color:rgba(255,255,255,0.5);text-decoration:none;padding:5px 13px;border-radius:100px;border:1px solid rgba(255,255,255,0.12);white-space:nowrap;">Investor Pitch</a>
+    <a href="PIA_FOR_HUMANS.html" style="font-size:11px;color:rgba(255,255,255,0.5);text-decoration:none;padding:5px 13px;border-radius:100px;border:1px solid rgba(255,255,255,0.12);white-space:nowrap;">For Humans</a>
+    <a href="PIA_MAGAZINE_ARTICLE.html" style="font-size:11px;color:rgba(255,255,255,0.5);text-decoration:none;padding:5px 13px;border-radius:100px;border:1px solid rgba(255,255,255,0.12);white-space:nowrap;">Magazine</a>
+    <a href="PIA_PRESS_RELEASE.html" style="font-size:11px;color:rgba(255,255,255,0.5);text-decoration:none;padding:5px 13px;border-radius:100px;border:1px solid rgba(255,255,255,0.12);white-space:nowrap;">Press Release</a>
+  </div>
+</nav>
+
+</body>
+</html>

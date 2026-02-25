@@ -56,6 +56,9 @@ import settingsRouter from './routes/settings.js';
 import cortexRouter from './routes/cortex.js';
 import systemRouter from './routes/system.js';
 import fisherRouter from './routes/fisher.js';
+import emailInboundRouter from './routes/email-inbound.js';
+import calendarRouter from './routes/calendar.js';
+import voiceNotesRouter from './routes/voice-notes.js';
 import { getNetworkSentinel } from '../security/network-sentinel.js';
 
 const logger = createLogger('API');
@@ -224,6 +227,9 @@ export function createServer(): Express {
   app.use('/api/cortex', cortexRouter);
   app.use('/api/system', systemRouter);
   app.use('/api/fisher', fisherRouter);
+  app.use('/api/email', emailInboundRouter);
+  app.use('/api/calendar', calendarRouter);
+  app.use('/api/voice-notes', voiceNotesRouter);
 
   // Health check
   app.get('/api/health', (_req: Request, res: Response) => {

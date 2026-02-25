@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>What if you had a team that never slept? | SodaLabs</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #faf8f3;
+    --cream2: #f3f0e8;
+    --ink: #1a1a14;
+    --ink2: #3d3d30;
+    --ink3: #7a7a60;
+    --ink4: #b5b59a;
+    --gold: #c8933a;
+    --gold-light: #fdf3e3;
+    --gold-border: #e8d5b0;
+    --green: #2d6a4f;
+    --green-light: #e8f5ef;
+    --red: #b5341e;
+    --red-light: #fdf0ee;
+    --blue: #2563a8;
+    --blue-light: #eff5ff;
+    --border: rgba(0,0,0,0.08);
+    --shadow: 0 4px 24px rgba(0,0,0,0.07);
+    --shadow-lg: 0 12px 48px rgba(0,0,0,0.12);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--cream);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+    line-height: 1.6;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(250,248,243,0.92);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 48px; height: 56px;
+  }
+  .nav-logo { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: var(--ink); }
+  .nav-logo span { color: var(--gold); }
+  .nav-links { display: flex; gap: 28px; }
+  .nav-links a { color: var(--ink3); text-decoration: none; font-size: 13px; font-weight: 500; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--ink); }
+
+  /* ── HERO — newspaper style ── */
+  .hero {
+    padding: 120px 48px 80px;
+    max-width: 1100px; margin: 0 auto;
+    display: grid; grid-template-columns: 1fr 380px; gap: 64px; align-items: start;
+  }
+  .hero-kicker {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--gold); margin-bottom: 20px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .hero-kicker::after { content: ''; flex: 1; height: 1px; background: var(--gold-border); }
+  .hero-headline {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(40px, 5vw, 64px);
+    font-weight: 900; line-height: 1.08;
+    letter-spacing: -0.01em; margin-bottom: 28px;
+  }
+  .hero-headline em { font-style: italic; color: var(--gold); }
+  .hero-body { font-size: 18px; color: var(--ink2); line-height: 1.75; margin-bottom: 36px; }
+  .hero-cta {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: var(--ink); color: var(--cream);
+    padding: 14px 32px; border-radius: 4px;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+    transition: background 0.2s;
+  }
+  .hero-cta:hover { background: var(--gold); }
+
+  /* Hero sidebar */
+  .hero-aside {
+    background: var(--ink); color: var(--cream);
+    border-radius: 8px; padding: 36px 32px;
+    position: sticky; top: 80px;
+  }
+  .aside-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.15em;
+    text-transform: uppercase; color: var(--gold); margin-bottom: 20px;
+  }
+  .aside-story {
+    font-size: 14px; line-height: 1.8; color: rgba(250,248,243,0.75);
+    font-style: italic; margin-bottom: 24px;
+    border-left: 2px solid var(--gold); padding-left: 16px;
+  }
+  .aside-story strong { color: var(--cream); font-style: normal; }
+  .aside-divider { height: 1px; background: rgba(255,255,255,0.1); margin: 20px 0; }
+  .aside-stat { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; }
+  .aside-stat-val { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; color: var(--gold); }
+  .aside-stat-lbl { font-size: 12px; color: rgba(250,248,243,0.5); text-align: right; max-width: 160px; line-height: 1.4; }
+
+  /* ── SECTION WRAPPER ── */
+  .section { padding: 80px 48px; max-width: 1100px; margin: 0 auto; }
+  .section-rule { border: none; border-top: 2px solid var(--ink); margin: 0 48px; }
+  .section-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--gold); margin-bottom: 12px;
+  }
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(28px, 4vw, 46px); font-weight: 700;
+    line-height: 1.12; margin-bottom: 16px; letter-spacing: -0.01em;
+  }
+  .section-body {
+    font-size: 17px; color: var(--ink2); line-height: 1.75;
+    max-width: 640px; margin-bottom: 56px;
+  }
+
+  /* ── STORY PANELS ── */
+  .story-split { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; background: var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 16px; }
+  .story-panel { background: var(--cream); padding: 40px; }
+  .story-panel.dark { background: var(--ink); color: var(--cream); }
+  .story-panel-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  .story-panel .story-panel-label { color: var(--red); }
+  .story-panel.dark .story-panel-label { color: var(--gold); }
+  .story-text { font-size: 15px; line-height: 1.85; color: var(--ink2); }
+  .story-panel.dark .story-text { color: rgba(250,248,243,0.75); }
+  .story-text strong { color: var(--ink); }
+  .story-panel.dark .story-text strong { color: var(--cream); }
+  .story-time { font-size: 32px; font-family: 'Playfair Display', serif; font-weight: 700; color: var(--gold); margin-bottom: 8px; }
+
+  /* ── MEET THE TEAM ── */
+  .team-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .staff-card {
+    background: #fff; border: 1px solid var(--border);
+    border-radius: 8px; padding: 28px 24px;
+    transition: all 0.25s; position: relative; overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .staff-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: var(--gold);
+  }
+  .staff-card.green::before { background: var(--green); }
+  .staff-card.blue::before  { background: var(--blue); }
+  .staff-card.red::before   { background: var(--red); }
+  .staff-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+  .staff-avatar {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: var(--gold-light); border: 2px solid var(--gold-border);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700;
+    color: var(--gold); margin-bottom: 16px;
+  }
+  .staff-card.green .staff-avatar { background: var(--green-light); border-color: #a7d4bf; color: var(--green); }
+  .staff-card.blue .staff-avatar  { background: var(--blue-light);  border-color: #bed4ef; color: var(--blue); }
+  .staff-card.red .staff-avatar   { background: var(--red-light);   border-color: #f0c0b6; color: var(--red); }
+  .staff-name { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
+  .staff-title {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--gold); margin-bottom: 14px;
+  }
+  .staff-card.green .staff-title { color: var(--green); }
+  .staff-card.blue .staff-title  { color: var(--blue); }
+  .staff-card.red .staff-title   { color: var(--red); }
+  .staff-desc { font-size: 13px; color: var(--ink3); line-height: 1.75; margin-bottom: 16px; }
+  .staff-quote {
+    font-size: 13px; font-style: italic; color: var(--ink2);
+    border-left: 2px solid var(--gold-border); padding-left: 12px; line-height: 1.6;
+  }
+  .staff-card.green .staff-quote { border-left-color: #a7d4bf; }
+  .staff-card.blue .staff-quote  { border-left-color: #bed4ef; }
+  .staff-tag { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 8px; border-radius: 3px; margin-top: 12px; background: var(--gold-light); color: var(--gold); }
+  .staff-card.green .staff-tag { background: var(--green-light); color: var(--green); }
+  .staff-card.blue .staff-tag  { background: var(--blue-light);  color: var(--blue); }
+
+  /* ── MORNING BRIEFING ── */
+  .phone-mockup {
+    max-width: 360px; margin: 0 auto;
+    background: var(--ink); border-radius: 40px; padding: 24px;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.25); position: relative;
+  }
+  .phone-notch {
+    width: 120px; height: 28px; background: var(--ink);
+    border-radius: 0 0 20px 20px; margin: 0 auto 16px;
+    border: 2px solid rgba(255,255,255,0.06);
+  }
+  .phone-screen { background: #fff; border-radius: 24px; overflow: hidden; }
+  .phone-statusbar { background: #f9f9f9; padding: 10px 16px; display: flex; justify-content: space-between; border-bottom: 1px solid #eee; }
+  .phone-statusbar span { font-size: 11px; font-weight: 600; color: var(--ink3); }
+  .email-header { padding: 16px 20px 12px; border-bottom: 1px solid #eee; }
+  .email-from { font-size: 12px; color: var(--ink3); margin-bottom: 4px; }
+  .email-from strong { color: var(--ink); }
+  .email-subject { font-size: 15px; font-weight: 700; color: var(--ink); }
+  .email-time { font-size: 11px; color: var(--ink4); }
+  .email-body { padding: 16px 20px 24px; }
+  .email-greeting { font-size: 14px; color: var(--ink); margin-bottom: 12px; }
+  .email-item { display: flex; gap: 10px; margin-bottom: 12px; align-items: flex-start; }
+  .email-num {
+    width: 20px; height: 20px; background: var(--gold); color: #fff;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; flex-shrink: 0; margin-top: 1px;
+  }
+  .email-text { font-size: 13px; color: var(--ink2); line-height: 1.6; }
+  .email-text strong { color: var(--ink); }
+  .email-sig { font-size: 12px; color: var(--ink4); margin-top: 16px; padding-top: 12px; border-top: 1px solid #eee; }
+  .phone-caption { text-align: center; margin-top: 24px; font-size: 13px; color: var(--ink3); font-style: italic; }
+
+  /* ── COST COMPARISON ── */
+  .payslip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .payslip {
+    border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .payslip-header { padding: 20px 28px; background: var(--cream2); border-bottom: 1px solid var(--border); }
+  .payslip-company { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink3); margin-bottom: 4px; }
+  .payslip-title { font-size: 18px; font-weight: 700; }
+  .payslip-period { font-size: 12px; color: var(--ink3); margin-top: 2px; }
+  .payslip-body { background: #fff; padding: 0; }
+  .payslip-line { display: flex; justify-content: space-between; padding: 12px 28px; border-bottom: 1px solid #f5f5f0; }
+  .payslip-line:last-of-type { border-bottom: none; }
+  .payslip-item { font-size: 14px; color: var(--ink2); }
+  .payslip-amount { font-size: 14px; font-weight: 600; color: var(--ink); }
+  .payslip-amount.red { color: var(--red); }
+  .payslip-amount.green { color: var(--green); }
+  .payslip-footer { padding: 16px 28px; background: var(--ink); display: flex; justify-content: space-between; align-items: center; }
+  .payslip-footer .label { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(250,248,243,0.5); }
+  .payslip-footer .total { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; color: var(--cream); }
+  .payslip.pia .payslip-footer { background: var(--green); }
+  .payslip.pia .payslip-footer .total { color: #fff; }
+  .payslip-note { margin-top: 12px; font-size: 13px; color: var(--ink3); text-align: center; }
+
+  /* ── MEMORY SECTION ── */
+  .memory-split { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; }
+  .memory-conversation { display: flex; flex-direction: column; gap: 12px; }
+  .bubble { max-width: 85%; padding: 14px 18px; border-radius: 16px; font-size: 14px; line-height: 1.65; }
+  .bubble.you { background: var(--ink); color: var(--cream); align-self: flex-end; border-radius: 16px 16px 4px 16px; }
+  .bubble.agent { background: #fff; color: var(--ink); border: 1px solid var(--border); align-self: flex-start; border-radius: 16px 16px 16px 4px; box-shadow: var(--shadow); }
+  .bubble-name { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; color: var(--gold); }
+  .bubble-time { font-size: 11px; color: var(--ink4); margin-top: 4px; text-align: right; }
+  .memory-fact-list { display: flex; flex-direction: column; gap: 12px; }
+  .memory-fact {
+    background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px;
+    display: flex; gap: 16px; align-items: flex-start; box-shadow: var(--shadow);
+  }
+  .memory-icon { font-size: 20px; flex-shrink: 0; }
+  .memory-fact-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .memory-fact-body { font-size: 13px; color: var(--ink3); line-height: 1.6; }
+
+  /* ── PRIVACY SECTION ── */
+  .privacy-visual { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 24px; margin-bottom: 40px; }
+  .privacy-box {
+    background: #fff; border: 1px solid var(--border);
+    border-radius: 8px; padding: 28px; box-shadow: var(--shadow);
+    text-align: center;
+  }
+  .privacy-box.theirs { background: var(--red-light); border-color: #f0c0b6; }
+  .privacy-box.yours { background: var(--green-light); border-color: #a7d4bf; }
+  .privacy-icon { font-size: 36px; margin-bottom: 12px; }
+  .privacy-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+  .privacy-box.theirs .privacy-label { color: var(--red); }
+  .privacy-box.yours .privacy-label  { color: var(--green); }
+  .privacy-title { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+  .privacy-desc { font-size: 13px; color: var(--ink3); line-height: 1.6; }
+  .privacy-arrow { font-size: 28px; color: var(--ink4); text-align: center; }
+  .privacy-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .privacy-card { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 24px; box-shadow: var(--shadow); }
+  .privacy-card-icon { font-size: 24px; margin-bottom: 12px; }
+  .privacy-card-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+  .privacy-card-body { font-size: 13px; color: var(--ink3); line-height: 1.65; }
+
+  /* ── STEPS ── */
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; position: relative; }
+  .steps::before {
+    content: ''; position: absolute; top: 28px; left: calc(16.6% + 28px); right: calc(16.6% + 28px);
+    height: 2px; background: var(--gold-border); z-index: 0;
+  }
+  .step { text-align: center; padding: 0 24px; position: relative; z-index: 1; }
+  .step-num {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--gold); color: #fff;
+    font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 20px; box-shadow: 0 4px 16px rgba(200,147,58,0.3);
+  }
+  .step-title { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+  .step-body { font-size: 14px; color: var(--ink3); line-height: 1.65; }
+
+  /* ── PULL QUOTE ── */
+  .pullquote {
+    background: var(--ink); color: var(--cream);
+    padding: 56px 64px; text-align: center; margin: 0;
+  }
+  .pullquote-text {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(22px, 3.5vw, 38px); font-weight: 400;
+    line-height: 1.45; font-style: italic; margin-bottom: 24px;
+    max-width: 800px; margin-left: auto; margin-right: auto;
+  }
+  .pullquote-text em { color: var(--gold); font-style: normal; }
+  .pullquote-attr { font-size: 13px; color: rgba(250,248,243,0.4); }
+
+  /* ── CTA ── */
+  .cta-section {
+    background: var(--gold-light); border-top: 2px solid var(--gold-border);
+    padding: 100px 48px; text-align: center;
+  }
+  .cta-label { font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); margin-bottom: 16px; }
+  .cta-title { font-family: 'Playfair Display', serif; font-size: clamp(32px, 5vw, 54px); font-weight: 700; margin-bottom: 20px; line-height: 1.1; }
+  .cta-body { font-size: 17px; color: var(--ink2); max-width: 520px; margin: 0 auto 40px; line-height: 1.75; }
+  .cta-btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: var(--ink); color: var(--cream);
+    padding: 18px 48px; border-radius: 4px;
+    font-size: 16px; font-weight: 600; text-decoration: none;
+    transition: background 0.2s;
+  }
+  .cta-btn:hover { background: var(--gold); }
+  .cta-note { margin-top: 20px; font-size: 13px; color: var(--ink3); }
+
+  /* ── CALENDAR VISUAL ── */
+  .calendar-wrap { background: #fff; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; box-shadow: var(--shadow); }
+  .calendar-header { background: var(--ink); color: var(--cream); padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
+  .calendar-month { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; }
+  .calendar-nav { font-size: 12px; color: rgba(250,248,243,0.5); }
+  .calendar-days-header { display: grid; grid-template-columns: repeat(7, 1fr); background: var(--cream2); }
+  .cal-day-head { padding: 10px; text-align: center; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink3); }
+  .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--border); }
+  .cal-cell { background: #fff; padding: 12px 10px; min-height: 80px; }
+  .cal-cell.empty { background: var(--cream2); }
+  .cal-num { font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--ink3); }
+  .cal-cell.today .cal-num { background: var(--gold); color: #fff; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; }
+  .cal-event { font-size: 10px; padding: 2px 6px; border-radius: 3px; margin-bottom: 3px; line-height: 1.4; }
+  .cal-event.fisher { background: rgba(200,147,58,0.12); color: #8a5a0a; }
+  .cal-event.ziggi  { background: rgba(37,99,168,0.1);   color: var(--blue); }
+  .cal-event.eliyahu{ background: rgba(45,106,79,0.1);   color: var(--green); }
+  .cal-event.farcake{ background: rgba(181,52,30,0.08);  color: var(--red); }
+  .cal-event.andy   { background: rgba(37,99,168,0.08);  color: var(--blue); }
+
+  /* ── BEFORE/AFTER WEEKS ── */
+  .week-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .week-card { background: #fff; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; box-shadow: var(--shadow); }
+  .week-header { padding: 16px 24px; border-bottom: 1px solid var(--border); }
+  .week-header .wh-label { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 4px; }
+  .week-card:first-child .wh-label { color: var(--red); }
+  .week-card:last-child  .wh-label { color: var(--green); }
+  .week-header .wh-title { font-size: 18px; font-weight: 700; }
+  .week-day { padding: 14px 24px; border-bottom: 1px solid #f5f5f0; display: flex; gap: 16px; align-items: flex-start; }
+  .week-day:last-child { border-bottom: none; }
+  .wd-label { font-size: 11px; font-weight: 700; color: var(--ink3); min-width: 70px; padding-top: 1px; }
+  .wd-tasks { flex: 1; }
+  .wd-task { font-size: 13px; color: var(--ink2); line-height: 1.6; padding: 2px 0; display: flex; align-items: flex-start; gap: 8px; }
+  .wd-task::before { content: '—'; color: var(--ink4); flex-shrink: 0; }
+  .wd-task.done { color: var(--green); }
+  .wd-task.done::before { content: '✓'; color: var(--green); }
+  .wd-task.auto { color: var(--gold); }
+  .wd-task.auto::before { content: '★'; color: var(--gold); font-size: 10px; }
+
+  /* ── FADE IN ── */
+  .fade { opacity: 0; transform: translateY(20px); transition: all 0.6s cubic-bezier(0.16,1,0.3,1); }
+  .fade.in { opacity: 1; transform: translateY(0); }
+
+  /* ── BACK TO TOP ── */
+  #btt {
+    position: fixed; bottom: 28px; right: 28px; z-index: 200;
+    width: 40px; height: 40px; border-radius: 8px;
+    background: var(--ink); color: var(--cream); cursor: pointer; font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: all 0.3s; text-decoration: none;
+    box-shadow: var(--shadow);
+  }
+  #btt.show { opacity: 1; }
+  #btt:hover { background: var(--gold); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 960px) {
+    .hero { grid-template-columns: 1fr; }
+    .hero-aside { position: static; }
+    .team-grid { grid-template-columns: repeat(2, 1fr); }
+    .payslip-grid, .week-compare, .memory-split, .privacy-visual { grid-template-columns: 1fr; }
+    .privacy-arrow { display: none; }
+    .steps { grid-template-columns: 1fr; }
+    .steps::before { display: none; }
+    nav { padding: 0 20px; }
+    .section { padding: 60px 24px; }
+    .hero { padding: 100px 24px 60px; }
+    .nav-links { display: none; }
+    .pullquote { padding: 48px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Soda<span>Labs</span></div>
+  <div class="nav-links">
+    <a href="#problem">The Problem</a>
+    <a href="#team">Meet the Team</a>
+    <a href="#morning">A Morning</a>
+    <a href="#cost">The Cost</a>
+    <a href="#memory">Why It Stays</a>
+    <a href="#start">Get Started</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero" id="top">
+  <div class="hero-left">
+    <div class="hero-kicker">SodaLabs · February 2026</div>
+    <h1 class="hero-headline">
+      What if you had a team<br>that never <em>slept?</em>
+    </h1>
+    <p class="hero-body">
+      Imagine hiring 12 dedicated professionals — a project manager, a researcher, a writer, a quality reviewer, an analyst — who show up every single day, remember everything you've ever told them, and cost less than your monthly Uber bill.
+    </p>
+    <p class="hero-body">
+      That team exists. We build it for you.
+    </p>
+    <a href="#team" class="hero-cta">Meet the team →</a>
+  </div>
+
+  <div class="hero-aside">
+    <div class="aside-label">While you read this...</div>
+    <div class="aside-story">
+      It's <strong>2:00 AM.</strong> Your quality reviewer just finished reading everything your team produced today. She rated each piece 1–10 and filed her notes. You'll see them in the morning. She doesn't need to sleep.
+    </div>
+    <div class="aside-divider"></div>
+    <div class="aside-stat">
+      <div class="aside-stat-val">$0.12</div>
+      <div class="aside-stat-lbl">Cost of a full research report that used to take 4 hours</div>
+    </div>
+    <div class="aside-stat">
+      <div class="aside-stat-val">6am</div>
+      <div class="aside-stat-lbl">Your briefing lands. 3 bullets. Nothing you don't need.</div>
+    </div>
+    <div class="aside-stat">
+      <div class="aside-stat-val">24/7</div>
+      <div class="aside-stat-lbl">Your team works. Whether you're in the office or not.</div>
+    </div>
+  </div>
+</div>
+
+<hr class="section-rule">
+
+<!-- PROBLEM -->
+<div class="section fade" id="problem">
+  <div class="section-label">The Problem</div>
+  <h2 class="section-title">You're doing five jobs.<br>You should be doing one.</h2>
+  <p class="section-body">It's not that you're not working hard enough. It's that you're working on the wrong things.</p>
+
+  <div class="week-compare fade">
+    <div class="week-card">
+      <div class="week-header">
+        <div class="wh-label">Your week right now</div>
+        <div class="wh-title">You, doing everything</div>
+      </div>
+      <div class="week-day">
+        <div class="wd-label">Monday</div>
+        <div class="wd-tasks">
+          <div class="wd-task">Write up last week's research notes (2hrs)</div>
+          <div class="wd-task">Email three clients with updates</div>
+          <div class="wd-task">Review proposal draft yourself — catch 4 errors</div>
+        </div>
+      </div>
+      <div class="week-day">
+        <div class="wd-label">Tuesday</div>
+        <div class="wd-tasks">
+          <div class="wd-task">Start research brief — interrupted twice</div>
+          <div class="wd-task">Reschedule what didn't get done Monday</div>
+          <div class="wd-task">Answer the same question three different clients asked</div>
+        </div>
+      </div>
+      <div class="week-day">
+        <div class="wd-label">Wednesday</div>
+        <div class="wd-tasks">
+          <div class="wd-task">Realise research still isn't done</div>
+          <div class="wd-task">Write a first draft — it's fine but not your best</div>
+          <div class="wd-task">Miss a deadline. Apologise.</div>
+        </div>
+      </div>
+      <div class="week-day">
+        <div class="wd-label">Thursday</div>
+        <div class="wd-tasks">
+          <div class="wd-task">Dig through last month's notes looking for something</div>
+          <div class="wd-task">Realise you forgot to follow up on three things</div>
+          <div class="wd-task">Stay late to catch up</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="week-card">
+      <div class="week-header">
+        <div class="wh-label">Your week with a team</div>
+        <div class="wh-title">You, doing your actual job</div>
+      </div>
+      <div class="week-day">
+        <div class="wd-label">Monday</div>
+        <div class="wd-tasks">
+          <div class="wd-task auto">Research brief done — ran overnight</div>
+          <div class="wd-task auto">Client updates drafted and ready for your approval</div>
+          <div class="wd-task auto">Proposal reviewed, 4 issues flagged + suggestions</div>
+        </div>
+      </div>
+      <div class="week-day">
+        <div class="wd-label">Tuesday</div>
+        <div class="wd-tasks">
+          <div class="wd-task done">You reviewed and approved the draft (15 min)</div>
+          <div class="wd-task auto">New research task scheduled automatically</div>
+          <div class="wd-task done">Spent morning on a new client pitch — your real value</div>
+        </div>
+      </div>
+      <div class="week-day">
+        <div class="wd-label">Wednesday</div>
+        <div class="wd-tasks">
+          <div class="wd-task auto">Second draft ready — rewritten in your voice</div>
+          <div class="wd-task auto">Deadline flagged 3 days ago — already on track</div>
+          <div class="wd-task done">You reviewed, approved, sent.</div>
+        </div>
+      </div>
+      <div class="week-day">
+        <div class="wd-label">Thursday</div>
+        <div class="wd-tasks">
+          <div class="wd-task auto">Everything filed and searchable — found in 10 seconds</div>
+          <div class="wd-task auto">3 follow-ups sent automatically — nothing slipped</div>
+          <div class="wd-task done">Left on time. Nothing outstanding.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p style="text-align:center; font-size:13px; color:var(--ink4); margin-top:12px;">
+    ★ = handled by your team automatically &nbsp;|&nbsp; ✓ = what you actually did
+  </p>
+</div>
+
+<!-- PULLQUOTE -->
+<div class="pullquote">
+  <p class="pullquote-text">
+    "You don't manage this team with spreadsheets.<br>You <em>direct</em> them — like a CEO."
+  </p>
+  <p class="pullquote-attr">The shift from doing work to directing work is where the leverage lives.</p>
+</div>
+
+<!-- MEET THE TEAM -->
+<div class="section fade" id="team">
+  <div class="section-label">Your AI Workforce</div>
+  <h2 class="section-title">Meet your team.</h2>
+  <p class="section-body">Every person below has a name, a specific job, and a memory. They've worked with you before. They know your standards. They don't need a Monday morning briefing on what's happening — they already know.</p>
+
+  <div class="team-grid">
+
+    <div class="staff-card fade">
+      <div class="staff-avatar">F</div>
+      <div class="staff-name">Fisher2050</div>
+      <div class="staff-title">Project Manager</div>
+      <div class="staff-desc">Runs your 9am standup every morning. Checks what's overdue, what's blocked, what's scheduled. Sends you a clean report. Follows up on things that didn't get done — without you having to ask.</div>
+      <div class="staff-quote">"Project health: 82%. Two items need your decision today."</div>
+      <div class="staff-tag">Always On · M1</div>
+    </div>
+
+    <div class="staff-card green fade">
+      <div class="staff-avatar">E</div>
+      <div class="staff-name">Eliyahu</div>
+      <div class="staff-title">Intelligence Analyst</div>
+      <div class="staff-desc">Every morning at 6am, you get an email from Eliyahu. Three things that matter today. What patterns he noticed across your work this week. What decisions need your attention. Two minutes, nothing more.</div>
+      <div class="staff-quote">"I noticed the last three research briefs all flagged the same competitor. Thought you should know."</div>
+      <div class="staff-tag">6am Daily · M1</div>
+    </div>
+
+    <div class="staff-card blue fade">
+      <div class="staff-avatar">Z</div>
+      <div class="staff-name">Ziggi</div>
+      <div class="staff-title">Quality Reviewer</div>
+      <div class="staff-desc">Nothing goes out the door without Ziggi reading it first. She rates every piece of work from 1 to 10 and explains what could be better. She runs at 2am — her verdict is waiting when you wake up.</div>
+      <div class="staff-quote">"8 out of 10. One section needs a stronger opening. Here's how I'd rewrite it."</div>
+      <div class="staff-tag">2am Nightly · M1</div>
+    </div>
+
+    <div class="staff-card red fade">
+      <div class="staff-avatar">Fc</div>
+      <div class="staff-name">Farcake</div>
+      <div class="staff-title">Lead Researcher</div>
+      <div class="staff-desc">Give Farcake a topic and he'll come back with 8 sources, cross-checked and verified, formatted the way you like. He doesn't just search — he investigates. He knows your research standards inside out.</div>
+      <div class="staff-quote">"Found a gap none of the other reports mentioned. Including it in the findings."</div>
+      <div class="staff-tag">Scheduled · M3</div>
+    </div>
+
+    <div class="staff-card fade">
+      <div class="staff-avatar">An</div>
+      <div class="staff-name">Andy</div>
+      <div class="staff-title">Senior Writer</div>
+      <div class="staff-desc">Andy takes Farcake's research and turns it into writing. Not generic AI writing — your writing. Your voice, your style, your tone. After one briefing, clients have asked if you wrote it yourself.</div>
+      <div class="staff-quote">"Used your opening structure from the January brief. Felt right for this audience."</div>
+      <div class="staff-tag">After Farcake · M3</div>
+    </div>
+
+    <div class="staff-card green fade">
+      <div class="staff-avatar">T</div>
+      <div class="staff-name">Tim Buc</div>
+      <div class="staff-title">Records Manager</div>
+      <div class="staff-desc">Every meeting, every document, every draft, every decision — Tim Buc files it. Organised. Searchable. Tagged. When you need something from three months ago, it takes 10 seconds, not three hours of digging.</div>
+      <div class="staff-quote">"Filed. Session archived under Project Afrotech, Research Phase, Q1 2026."</div>
+      <div class="staff-tag">Event-Triggered · M1</div>
+    </div>
+
+    <div class="staff-card blue fade">
+      <div class="staff-avatar">W</div>
+      <div class="staff-name">Wingspan</div>
+      <div class="staff-title">Presentations</div>
+      <div class="staff-desc">Wingspan tracks every version of every presentation and deck. She knows which version went to which client, what feedback came back, and what the current approved version is. No more "which file is the latest?"</div>
+      <div class="staff-quote">"Version 4.2 — updated with Q4 figures. Previous version sent to Investor X on Feb 14."</div>
+      <div class="staff-tag">On-Demand · M3</div>
+    </div>
+
+    <div class="staff-card red fade">
+      <div class="staff-avatar">Bf</div>
+      <div class="staff-name">Bird Fountain</div>
+      <div class="staff-title">Design Production</div>
+      <div class="staff-desc">Campaign assets, social content, creative variations — Bird Fountain runs production batches. She knows your brand system and doesn't need a new brief every time. Tell her the campaign, she knows the rest.</div>
+      <div class="staff-quote">"12 variations. Formatted for Instagram, LinkedIn, and WhatsApp. Ready to review."</div>
+      <div class="staff-tag">Scheduled · M2</div>
+    </div>
+
+    <div class="staff-card fade">
+      <div class="staff-avatar">CM</div>
+      <div class="staff-name">Coder Machine</div>
+      <div class="staff-title">Software Developer</div>
+      <div class="staff-desc">Write down what you need. Coder Machine reads the spec, builds it, tests it, and submits it for review. No jargon. No management. Just: tell it what the software should do — it handles the rest.</div>
+      <div class="staff-quote">"Built, tested, and ready for review. 0 errors. PR submitted."</div>
+      <div class="staff-tag">On Spec · M3</div>
+    </div>
+
+  </div>
+</div>
+
+<hr class="section-rule">
+
+<!-- MORNING BRIEFING -->
+<div class="section fade" id="morning">
+  <div class="section-label">6:02am on a Tuesday</div>
+  <h2 class="section-title">This lands in your inbox<br>before your first coffee.</h2>
+  <p class="section-body">Eliyahu reads everything that happened yesterday and writes you a briefing. Not a wall of text. Not a report you have to decode. Three things. Two minutes.</p>
+
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start;">
+    <div>
+      <div class="phone-mockup fade">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="phone-statusbar">
+            <span>6:02 AM</span>
+            <span>📶 ✉️</span>
+          </div>
+          <div class="email-header">
+            <div class="email-from"><strong>Eliyahu</strong> · eliyahu@sodalabs.ai</div>
+            <div class="email-subject">Morning Brief — Tuesday 25 Feb</div>
+            <div class="email-time">6:02 AM</div>
+          </div>
+          <div class="email-body">
+            <div class="email-greeting">Good morning, Mic.</div>
+            <div class="email-item">
+              <div class="email-num">1</div>
+              <div class="email-text"><strong>Afrotech research is done.</strong> Farcake finished at 11pm. Andy started drafting at midnight. First draft ready for your review by 9am.</div>
+            </div>
+            <div class="email-item">
+              <div class="email-num">2</div>
+              <div class="email-text"><strong>Ziggi flagged one issue</strong> in yesterday's deck — slide 7 uses outdated figures. She's already suggested a correction. Takes 2 minutes to fix.</div>
+            </div>
+            <div class="email-item">
+              <div class="email-num">3</div>
+              <div class="email-text"><strong>Client X deadline is Friday.</strong> Fisher2050 has scheduled the final review for Thursday morning. You're on track — no action needed today.</div>
+            </div>
+            <div class="email-sig">— Eliyahu · Your intelligence briefing · 47 seconds to read</div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-caption">This is not a dashboard you open. It comes to you.</div>
+    </div>
+
+    <div style="padding-top: 20px;">
+      <div class="memory-fact-list fade">
+        <div class="memory-fact">
+          <div class="memory-icon">🌙</div>
+          <div>
+            <div class="memory-fact-title">What happened while you slept</div>
+            <div class="memory-fact-body">Farcake ran a 2-hour research session. Andy wrote a first draft. Ziggi reviewed yesterday's outputs. Tim Buc filed everything. Fisher2050 scheduled today's work. All before your alarm went off.</div>
+          </div>
+        </div>
+        <div class="memory-fact">
+          <div class="memory-icon">☕</div>
+          <div>
+            <div class="memory-fact-title">What you do with it</div>
+            <div class="memory-fact-body">Read Eliyahu's three points. Open Andy's draft. Approve or redirect in 15 minutes. Your morning is about decisions, not catching up.</div>
+          </div>
+        </div>
+        <div class="memory-fact">
+          <div class="memory-icon">📅</div>
+          <div>
+            <div class="memory-fact-title">No dashboard required</div>
+            <div class="memory-fact-body">You never have to open a control panel or check a system. Everything comes to you — briefing in your email, updates in WhatsApp, alerts only when something actually needs you.</div>
+          </div>
+        </div>
+        <div class="memory-fact">
+          <div class="memory-icon">💬</div>
+          <div>
+            <div class="memory-fact-title">Need something? Just ask.</div>
+            <div class="memory-fact-body">Email Fisher2050 with a goal: "I need a competitive brief on South African fintech by Friday." He'll schedule Farcake, Andy, and Ziggi's review — and update you when it's done.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PULLQUOTE -->
+<div class="pullquote">
+  <p class="pullquote-text">
+    "The research took four hours and cost<br>hundreds of dollars. Now it costs <em>twelve cents.</em><br>The work is the same. The math is not."
+  </p>
+  <p class="pullquote-attr">Documented case study — AI-powered research agency, 2025</p>
+</div>
+
+<!-- COST -->
+<div class="section fade" id="cost">
+  <div class="section-label">The Numbers</div>
+  <h2 class="section-title">What would this team<br>cost you to hire?</h2>
+  <p class="section-body">This is not a comparison between software packages. This is a comparison between hiring people and not having to.</p>
+
+  <div class="payslip-grid fade">
+    <div class="payslip">
+      <div class="payslip-header">
+        <div class="payslip-company">Traditional Staffing</div>
+        <div class="payslip-title">Monthly Payroll</div>
+        <div class="payslip-period">To do what this team does</div>
+      </div>
+      <div class="payslip-body">
+        <div class="payslip-line"><span class="payslip-item">Research Manager (full-time)</span><span class="payslip-amount red">R25,000</span></div>
+        <div class="payslip-line"><span class="payslip-item">Senior Writer (full-time)</span><span class="payslip-amount red">R22,000</span></div>
+        <div class="payslip-line"><span class="payslip-item">Project Manager (part-time)</span><span class="payslip-amount red">R15,000</span></div>
+        <div class="payslip-line"><span class="payslip-item">Quality Reviewer (freelance)</span><span class="payslip-amount red">R18,000</span></div>
+        <div class="payslip-line"><span class="payslip-item">Data Analyst (part-time)</span><span class="payslip-amount red">R14,000</span></div>
+        <div class="payslip-line"><span class="payslip-item">Records + Admin</span><span class="payslip-amount red">R10,000</span></div>
+        <div class="payslip-line"><span class="payslip-item">+ Leave, UIF, sick days, mistakes</span><span class="payslip-amount red">R12,000</span></div>
+      </div>
+      <div class="payslip-footer">
+        <span class="label">Per Month</span>
+        <span class="total">R116,000</span>
+      </div>
+    </div>
+
+    <div class="payslip pia">
+      <div class="payslip-header">
+        <div class="payslip-company">Your AI Team</div>
+        <div class="payslip-title">Monthly Operating Cost</div>
+        <div class="payslip-period">All 12 team members, every day</div>
+      </div>
+      <div class="payslip-body">
+        <div class="payslip-line"><span class="payslip-item">Fisher2050 — daily standups + scheduling</span><span class="payslip-amount green">~R2.50</span></div>
+        <div class="payslip-line"><span class="payslip-item">Eliyahu — morning briefings</span><span class="payslip-amount green">~R3.50</span></div>
+        <div class="payslip-line"><span class="payslip-item">Ziggi — nightly quality reviews</span><span class="payslip-amount green">~R2.30</span></div>
+        <div class="payslip-line"><span class="payslip-item">Farcake — research sessions (8 briefs)</span><span class="payslip-amount green">~R9.00</span></div>
+        <div class="payslip-line"><span class="payslip-item">Andy — written drafts (8 projects)</span><span class="payslip-amount green">~R5.20</span></div>
+        <div class="payslip-line"><span class="payslip-item">Tim Buc — archiving every session</span><span class="payslip-amount green">~R0.90</span></div>
+        <div class="payslip-line"><span class="payslip-item">All others combined</span><span class="payslip-amount green">~R2.60</span></div>
+      </div>
+      <div class="payslip-footer">
+        <span class="label">Per Month</span>
+        <span class="total" style="color:#fff;">~R26</span>
+      </div>
+    </div>
+  </div>
+
+  <p class="payslip-note fade">R26 vs R116,000. Not 10% cheaper. Not twice as cheap. <strong>Four thousand times cheaper.</strong><br>And this team never calls in sick, never takes leave, and never asks for a raise.</p>
+</div>
+
+<hr class="section-rule">
+
+<!-- MEMORY — why it stays -->
+<div class="section fade" id="memory">
+  <div class="section-label">The Part Most People Miss</div>
+  <h2 class="section-title">They remember<br>everything.</h2>
+  <p class="section-body">Every AI tool you've used before started from scratch every time you opened it. It didn't know your name. It didn't know what you worked on last week. You had to re-explain everything, every single session. Your AI team is different.</p>
+
+  <div class="memory-split fade">
+    <div>
+      <div style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink3); margin-bottom:16px;">A conversation with Fisher2050</div>
+      <div class="memory-conversation">
+        <div class="bubble you">Fisher — I need the Afrotech brief by Friday.</div>
+
+        <div class="bubble agent">
+          <div class="bubble-name">Fisher2050</div>
+          Got it. I remember you had a similar brief in November — Farcake used the KPMG Africa report as a primary source and you liked the format. Should I have him start with that approach?
+          <div class="bubble-time">Tuesday 9:04 AM</div>
+        </div>
+
+        <div class="bubble you">Yes, same format. But this time focus on fintech specifically.</div>
+
+        <div class="bubble agent">
+          <div class="bubble-name">Fisher2050</div>
+          Noted. Farcake is free from 2pm today — I've blocked 3 hours for the research. Andy is scheduled for Thursday morning once the research is filed. Ziggi will review Thursday evening. You'll have the final draft Friday morning.
+          <div class="bubble-time">Tuesday 9:04 AM</div>
+        </div>
+
+        <div class="bubble you">Perfect. What else is on for today?</div>
+
+        <div class="bubble agent">
+          <div class="bubble-name">Fisher2050</div>
+          Three things need you: Client X wants a revised timeline (Ziggi flagged it yesterday), the Q1 deck needs one slide updated, and Eliyahu found a pattern in last week's work worth 5 minutes of your attention. Nothing urgent — I've drafted responses to X and the deck fix. Want me to send?
+          <div class="bubble-time">Tuesday 9:05 AM</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink3); margin-bottom:16px;">Why this works differently</div>
+      <div class="memory-fact-list">
+        <div class="memory-fact">
+          <div class="memory-icon">🧠</div>
+          <div>
+            <div class="memory-fact-title">They build up knowledge about you</div>
+            <div class="memory-fact-body">Over weeks and months, each team member accumulates memories about your preferences, your standards, your clients, and what you've approved before. The longer they work with you, the better they get.</div>
+          </div>
+        </div>
+        <div class="memory-fact">
+          <div class="memory-icon">👤</div>
+          <div>
+            <div class="memory-fact-title">Each person has a character</div>
+            <div class="memory-fact-body">Fisher is organised and direct. Eliyahu is curious and pattern-focused. Ziggi is precise and won't let things slide. Andy matches your voice. They're not interchangeable — each one has a personality you'll come to recognise.</div>
+          </div>
+        </div>
+        <div class="memory-fact">
+          <div class="memory-icon">📧</div>
+          <div>
+            <div class="memory-fact-title">They have real email addresses</div>
+            <div class="memory-fact-body">Fisher2050 has fisher2050@sodalabs.ai. You can literally email him a task and he'll handle it. No app to open. No dashboard to check. Just send an email — the way you'd contact any colleague.</div>
+          </div>
+        </div>
+        <div class="memory-fact">
+          <div class="memory-icon">🔄</div>
+          <div>
+            <div class="memory-fact-title">The team talks to each other</div>
+            <div class="memory-fact-body">Fisher tells Farcake what to research. Farcake's output goes straight to Andy. Andy's draft goes to Ziggi for review. Tim Buc files the whole conversation. You don't manage the handoffs — they do.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- YOUR PRIVATE OFFICE -->
+<div class="section fade" id="private">
+  <div class="section-label">Your Private Office</div>
+  <h2 class="section-title">They work on your computers.<br>Your data never leaves.</h2>
+  <p class="section-body">Most AI tools are rented from someone else's cloud. Your conversations and documents sit on their servers. With PIA, your team works from your own machines — in your building, on your network.</p>
+
+  <div class="privacy-visual fade">
+    <div class="privacy-box theirs">
+      <div class="privacy-icon">☁️</div>
+      <div class="privacy-label">Everyone else's approach</div>
+      <div class="privacy-title">Cloud-hosted AI</div>
+      <div class="privacy-desc">Your data, your clients' information, your strategies — all on a server you don't own, in a country you don't control. You pay monthly. They see everything.</div>
+    </div>
+    <div class="privacy-arrow">vs</div>
+    <div class="privacy-box yours">
+      <div class="privacy-icon">🏢</div>
+      <div class="privacy-label">PIA's approach</div>
+      <div class="privacy-title">Your hardware, your network</div>
+      <div class="privacy-desc">Three machines in your office. Your team. Your data stays where you put it. No monthly cloud subscriptions. One build — and it's yours permanently.</div>
+    </div>
+  </div>
+
+  <div class="privacy-cards fade">
+    <div class="privacy-card">
+      <div class="privacy-card-icon">🔒</div>
+      <div class="privacy-card-title">Client confidentiality</div>
+      <div class="privacy-card-body">Your clients' information never leaves your network. You can take on sensitive briefs knowing nothing is being stored on external servers.</div>
+    </div>
+    <div class="privacy-card">
+      <div class="privacy-card-icon">💳</div>
+      <div class="privacy-card-title">No monthly fees per person</div>
+      <div class="privacy-card-body">Most AI tools charge per seat, per month. PIA is a one-time build. Once deployed, the team is yours. No per-agent subscription, ever.</div>
+    </div>
+    <div class="privacy-card">
+      <div class="privacy-card-icon">⚡</div>
+      <div class="privacy-card-title">Always available</div>
+      <div class="privacy-card-body">Your team works from machines that are on 24/7 in your office. No cloud outages. No regional restrictions. No waiting for a server to spin up.</div>
+    </div>
+  </div>
+</div>
+
+<hr class="section-rule">
+
+<!-- GETTING STARTED -->
+<div class="section fade" id="start">
+  <div class="section-label">Getting Started</div>
+  <h2 class="section-title">Three steps.<br>Then your team is hired.</h2>
+  <p class="section-body">There's no subscription form, no onboarding wizard, no figuring it out yourself. We do the deployment. You just tell us about your business.</p>
+
+  <div class="steps fade">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-title">We talk</div>
+      <div class="step-body">One conversation. You tell us what your business does, who your clients are, what work you repeat every week. We learn your voice, your standards, your way of working.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-title">We build your team</div>
+      <div class="step-body">We configure each team member for your specific business. Fisher knows your projects. Andy knows your writing style. Farcake knows your research standards. Ziggi knows what you won't accept.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-title">They show up</div>
+      <div class="step-body">From day one, your team runs. First morning briefing at 6am. First standup at 9am. First research session scheduled. You're the director now — not the worker.</div>
+    </div>
+  </div>
+</div>
+
+<!-- CTA -->
+<div class="cta-section fade" id="contact">
+  <div class="cta-label">SodaLabs · Johannesburg</div>
+  <h2 class="cta-title">Ready to hire your team?</h2>
+  <p class="cta-body">One conversation. We'll tell you exactly what this looks like for your specific business — no jargon, no sales pitch, just a straight conversation about what you're trying to get done.</p>
+  <a href="mailto:mic@sodalabs.ai" class="cta-btn">Start the conversation →</a>
+  <p class="cta-note">mic@sodalabs.ai &nbsp;·&nbsp; This is not a SaaS subscription. One build, yours forever.</p>
+</div>
+
+<a href="#top" id="btt">↑</a>
+
+<script>
+  // Fade in on scroll
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('in');
+        // Stagger direct children if they are staff-card or similar
+        const cards = e.target.querySelectorAll('.staff-card, .memory-fact, .week-day');
+        cards.forEach((c, i) => {
+          c.style.transitionDelay = (i * 0.08) + 's';
+          c.style.opacity = '0';
+          c.style.transform = 'translateY(16px)';
+          c.style.transition = 'all 0.5s cubic-bezier(0.16,1,0.3,1)';
+          setTimeout(() => {
+            c.style.opacity = '1';
+            c.style.transform = 'translateY(0)';
+          }, i * 80 + 100);
+        });
+        obs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
+
+  document.querySelectorAll('.fade').forEach(el => obs.observe(el));
+
+  // Back to top
+  const btt = document.getElementById('btt');
+  window.addEventListener('scroll', () => btt.classList.toggle('show', scrollY > 500));
+</script>
+
+<!-- PIA NAV -->
+<div style="height:52px"></div>
+<nav id="pia-nav" style="position:fixed;bottom:0;left:0;right:0;z-index:9999;background:rgba(6,6,15,0.97);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;height:48px;padding:0 28px;gap:14px;font-family:'Inter',system-ui,Arial,sans-serif;">
+  <a href="pitch.html" style="color:rgba(255,255,255,0.35);text-decoration:none;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;white-space:nowrap;flex-shrink:0;">SodaLabs · PIA</a>
+  <div style="width:1px;height:20px;background:rgba(255,255,255,0.1);flex-shrink:0;"></div>
+  <span style="color:rgba(255,255,255,0.2);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;white-space:nowrap;flex-shrink:0;">View as</span>
+  <div style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;">
+    <a href="PIA_CLIENT_PITCH.html" style="font-size:11px;color:rgba(255,255,255,0.5);text-decoration:none;padding:5px 13px;border-radius:100px;border:1px solid rgba(255,255,255,0.12);white-space:nowrap;">Investor Pitch</a>
+    <a href="PIA_FOR_HUMANS.html" style="font-size:11px;color:rgba(255,255,255,0.5);text-decoration:none;padding:5px 13px;border-radius:100px;border:1px solid rgba(255,255,255,0.12);white-space:nowrap;">For Humans</a>
+    <a href="PIA_MAGAZINE_ARTICLE.html" style="font-size:11px;color:rgba(255,255,255,0.5);text-decoration:none;padding:5px 13px;border-radius:100px;border:1px solid rgba(255,255,255,0.12);white-space:nowrap;">Magazine</a>
+    <a href="PIA_PRESS_RELEASE.html" style="font-size:11px;color:rgba(255,255,255,0.5);text-decoration:none;padding:5px 13px;border-radius:100px;border:1px solid rgba(255,255,255,0.12);white-space:nowrap;">Press Release</a>
+  </div>
+</nav>
+
+</body>
+</html>

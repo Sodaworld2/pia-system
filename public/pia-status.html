@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PIA Status — What We've Built</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0a14;
+      color: #e2e8f0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      padding: 32px 24px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .page-header h1 {
+      font-size: 32px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #58a6ff, #bc8cff, #ff7b72);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+
+    .page-header p {
+      color: #8b949e;
+      font-size: 15px;
+    }
+
+    /* Phase banner */
+    .phase-strip {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 48px;
+      flex-wrap: wrap;
+    }
+
+    .phase-pill {
+      padding: 8px 20px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid;
+    }
+
+    .phase-pill.done { background: #0d2818; border-color: #3fb950; color: #3fb950; }
+    .phase-pill.active { background: #1a1a2e; border-color: #58a6ff; color: #58a6ff; }
+    .phase-pill.next { background: #1a1215; border-color: #6e3a3a; color: #f87171; }
+
+    /* Section titles */
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #8b949e;
+      margin-bottom: 16px;
+      padding-left: 4px;
+    }
+
+    /* The single blocker */
+    .blocker-banner {
+      background: linear-gradient(135deg, #1a0a00, #1a1000);
+      border: 1px solid #f59e0b;
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 48px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .blocker-icon { font-size: 28px; }
+    .blocker-text h3 { color: #f59e0b; font-size: 15px; margin-bottom: 4px; }
+    .blocker-text p { color: #b45309; font-size: 13px; }
+    .blocker-text a { color: #fbbf24; }
+
+    /* Machines */
+    .machines-row {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 48px;
+      flex-wrap: wrap;
+    }
+
+    .machine-card {
+      flex: 1;
+      min-width: 200px;
+      background: #0d1117;
+      border: 1px solid #21262d;
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .machine-card.online { border-color: #3fb950; }
+    .machine-card.pending { border-color: #f59e0b; }
+    .machine-card.offline { border-color: #6e3a3a; }
+
+    .machine-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .machine-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .dot-online { background: #3fb950; box-shadow: 0 0 8px #3fb950; }
+    .dot-pending { background: #f59e0b; }
+    .dot-offline { background: #6e3a3a; }
+
+    .machine-name { font-size: 14px; font-weight: 700; }
+    .machine-hostname { font-size: 11px; color: #8b949e; }
+    .machine-status { font-size: 11px; color: #8b949e; margin-bottom: 8px; }
+
+    .machine-tag {
+      display: inline-block;
+      background: #1c2128;
+      border: 1px solid #30363d;
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 10px;
+      color: #8b949e;
+      margin: 2px 2px 2px 0;
+    }
+
+    /* Agents grid */
+    .agents-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+      margin-bottom: 48px;
+    }
+
+    .agent-card {
+      background: #0d1117;
+      border: 1px solid #21262d;
+      border-radius: 12px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .agent-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+    }
+
+    .agent-card.strategic::before { background: linear-gradient(90deg, #bc8cff, #58a6ff); }
+    .agent-card.creative::before { background: linear-gradient(90deg, #ff7b72, #f59e0b); }
+    .agent-card.infra::before { background: linear-gradient(90deg, #3fb950, #58a6ff); }
+
+    .agent-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .agent-name { font-size: 16px; font-weight: 700; }
+    .agent-role { font-size: 11px; color: #8b949e; margin-bottom: 12px; }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .badge-ready { background: #0d2818; color: #3fb950; border: 1px solid #2ea04326; }
+    .badge-partial { background: #1a1a00; color: #f59e0b; border: 1px solid #f59e0b26; }
+    .badge-wired { background: #0d1a2e; color: #58a6ff; border: 1px solid #58a6ff26; }
+    .badge-pending { background: #1a1215; color: #f87171; border: 1px solid #f8717126; }
+
+    .agent-machine {
+      font-size: 11px;
+      color: #6e7681;
+      margin-bottom: 12px;
+    }
+
+    .done-list, .todo-list {
+      list-style: none;
+      font-size: 12px;
+      line-height: 1.8;
+    }
+
+    .done-list li::before { content: '✓ '; color: #3fb950; }
+    .todo-list li::before { content: '○ '; color: #f59e0b; }
+    .todo-list li { color: #8b949e; }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #21262d;
+      margin: 10px 0;
+    }
+
+    /* Services section */
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px;
+      margin-bottom: 48px;
+    }
+
+    .service-card {
+      background: #0d1117;
+      border: 1px solid #21262d;
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .service-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .service-name { font-size: 13px; font-weight: 700; }
+    .service-desc { font-size: 11px; color: #8b949e; line-height: 1.6; }
+
+    /* Phase roadmap */
+    .roadmap {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin-bottom: 48px;
+    }
+
+    .phase-item {
+      display: flex;
+      gap: 20px;
+      padding: 20px 0;
+      border-bottom: 1px solid #21262d;
+    }
+
+    .phase-item:last-child { border-bottom: none; }
+
+    .phase-num {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .phase-num.done { background: #0d2818; color: #3fb950; border: 2px solid #3fb950; }
+    .phase-num.active { background: #0d1a2e; color: #58a6ff; border: 2px solid #58a6ff; }
+    .phase-num.future { background: #1c2128; color: #6e7681; border: 2px solid #30363d; }
+
+    .phase-content h3 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .phase-content p { font-size: 12px; color: #8b949e; line-height: 1.6; }
+    .phase-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .phase-label.done { color: #3fb950; }
+    .phase-label.active { color: #58a6ff; }
+    .phase-label.future { color: #6e7681; }
+
+    /* Cost model */
+    .cost-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 48px;
+    }
+
+    .cost-card {
+      background: #0d1117;
+      border: 1px solid #21262d;
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .cost-tier { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+    .cost-tier.free { color: #3fb950; }
+    .cost-tier.cheap { color: #58a6ff; }
+    .cost-tier.medium { color: #f59e0b; }
+    .cost-tier.expensive { color: #f87171; }
+
+    .cost-model { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .cost-desc { font-size: 11px; color: #8b949e; }
+
+    .footer {
+      text-align: center;
+      padding-top: 32px;
+      border-top: 1px solid #21262d;
+      color: #6e7681;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>PIA System — State of Play</h1>
+    <p>What's built, what's working, what's next · Feb 22, 2026</p>
+  </div>
+
+  <!-- Phase strip -->
+  <div class="phase-strip">
+    <div class="phase-pill done">✓ Infrastructure Built</div>
+    <div class="phase-pill done">✓ Bugs Fixed (11)</div>
+    <div class="phase-pill active">→ API Credits Needed</div>
+    <div class="phase-pill active">→ M2 Bring-Up</div>
+    <div class="phase-pill next">Multi-Machine Live</div>
+    <div class="phase-pill next">Multi-Project Running</div>
+  </div>
+
+  <!-- Blocker -->
+  <div class="blocker-banner">
+    <div class="blocker-icon">⚡</div>
+    <div class="blocker-text">
+      <h3>Single blocker: Anthropic API credits</h3>
+      <p>Everything is wired and ready. The moment credits land, Fisher fires at 9am, agents spawn, Tim Buc archives. Add at <a href="https://console.anthropic.com/settings/billing" target="_blank">console.anthropic.com/settings/billing</a></p>
+    </div>
+  </div>
+
+  <!-- Machines -->
+  <div class="section-title">The Fleet</div>
+  <div class="machines-row">
+
+    <div class="machine-card online">
+      <div class="machine-header">
+        <div class="machine-dot dot-online"></div>
+        <div>
+          <div class="machine-name">M1 — Izzit7</div>
+          <div class="machine-hostname">localhost:3000</div>
+        </div>
+      </div>
+      <div class="machine-status">✓ Running · Hub + Controller</div>
+      <div>
+        <span class="machine-tag">Fisher2050</span>
+        <span class="machine-tag">Tim Buc</span>
+        <span class="machine-tag">Eliyahu</span>
+        <span class="machine-tag">Doctor</span>
+        <span class="machine-tag">Cortex</span>
+        <span class="machine-tag">Calendar</span>
+        <span class="machine-tag">Dashboard</span>
+      </div>
+    </div>
+
+    <div class="machine-card pending">
+      <div class="machine-header">
+        <div class="machine-dot dot-pending"></div>
+        <div>
+          <div class="machine-name">M2 — soda-monster-hunter</div>
+          <div class="machine-hostname">100.127.165.12:3000</div>
+        </div>
+      </div>
+      <div class="machine-status">⏳ Registered · Needs git pull + restart</div>
+      <div>
+        <span class="machine-tag">Bird Fountain</span>
+        <span class="machine-tag">Execution worker</span>
+        <span class="machine-tag">Project Boss</span>
+      </div>
+    </div>
+
+    <div class="machine-card offline">
+      <div class="machine-header">
+        <div class="machine-dot dot-offline"></div>
+        <div>
+          <div class="machine-name">M3 — soda-yeti</div>
+          <div class="machine-hostname">Not started yet</div>
+        </div>
+      </div>
+      <div class="machine-status">○ Offline · Not yet activated</div>
+      <div>
+        <span class="machine-tag">Farcake</span>
+        <span class="machine-tag">Andy</span>
+        <span class="machine-tag">Wingspan</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Agents -->
+  <div class="section-title">The Souls — 12 Agents</div>
+  <div class="agents-grid">
+
+    <!-- Fisher2050 -->
+    <div class="agent-card strategic">
+      <div class="agent-header">
+        <div>
+          <div class="agent-name">Fisher2050</div>
+          <div class="agent-role">Project Manager · Machine Scheduler</div>
+        </div>
+        <span class="status-badge badge-ready">✓ Ready</span>
+      </div>
+      <div class="agent-machine">Runs on M1 · Triggers: 9am, 6pm, 2am, 6am + on-demand</div>
+      <ul class="done-list">
+        <li>Soul file written + seeded in DB</li>
+        <li>5 cron jobs scheduled and running</li>
+        <li>Calendar event creator wired</li>
+        <li>AgentBus subscription active</li>
+        <li>Manual trigger via dashboard</li>
+      </ul>
+      <hr class="divider">
+      <ul class="todo-list">
+        <li>Needs API credits to actually run</li>
+        <li>First real standup (when credits land)</li>
+      </ul>
+    </div>
+
+    <!-- Tim Buc -->
+    <div class="agent-card infra">
+      <div class="agent-header">
+        <div>
+          <div class="agent-name">Tim Buc</div>
+          <div class="agent-role">Archivist · Session Records Librarian</div>
+        </div>
+        <span class="status-badge badge-ready">✓ Ready</span>
+      </div>
+      <div class="agent-machine">Runs on M1 · Triggers: every session completion</div>
+      <ul class="done-list">
+        <li>Wired to AgentSessionManager events</li>
+        <li>Archives every session to agent_records table</li>
+        <li>Handles both SDK and API mode sessions</li>
+        <li>Tracks cost, tokens, files produced/consumed</li>
+        <li>Records visible in dashboard panel</li>
+      </ul>
+      <hr class="divider">
+      <ul class="todo-list">
+        <li>DAOV1 mentor_chats.db import (future)</li>
+      </ul>
+    </div>
+
+    <!-- Eliyahu -->
+    <div class="agent-card strategic">
+      <div class="agent-header">
+        <div>
+          <div class="agent-name">Eliyahu</div>
+          <div class="agent-role">Knowledge Manager · Intelligence Synthesizer</div>
+        </div>
+        <span class="status-badge badge-partial">⏳ Partial</span>
+      </div>
+      <div class="agent-machine">Runs on M1 · Triggers: 6am daily</div>
+      <ul class="done-list">
+        <li>Soul file written + seeded</li>
+        <li>Cron scheduled (6am)</li>
+        <li>Email service wired (dev mode)</li>
+      </ul>
+      <hr class="divider">
+      <ul class="todo-list">
+        <li>Needs API credits to run</li>
+        <li>Needs SENDGRID_API_KEY for email delivery</li>
+        <li>Morning briefing email not yet tested end-to-end</li>
+      </ul>
+    </div>
+
+    <!-- Ziggi -->
+    <div class="agent-card strategic">
+      <div class="agent-header">
+        <div>
+          <div class="agent-name">Ziggi</div>
+          <div class="agent-role">Quality Architect · Devil's Advocate Reviewer</div>
+        </div>
+        <span class="status-badge badge-partial">⏳ Partial</span>
+      </div>
+      <div class="agent-machine">Runs on M2 · Triggers: 2am, after every build</div>
+      <ul class="done-list">
+        <li>Soul file written + seeded</li>
+        <li>Cron scheduled (2am)</li>
+        <li>1-10 review framework defined</li>
+      </ul>
+      <hr class="divider">
+      <ul class="todo-list">
+        <li>M2 needs to be brought online</li>
+        <li>No actual review loop tested yet</li>
+        <li>Farcake → Andy → Ziggi pipeline not run</li>
+      </ul>
+    </div>
+
+    <!-- Doctor -->
+    <div class="agent-card infra">
+      <div class="agent-header">
+        <div>
+          <div class="agent-name">Doctor</div>
+          <div class="agent-role">Auto-Healer · Fleet Health Monitor</div>
+        </div>
+        <span class="status-badge badge-ready">✓ Running</span>
+      </div>
+      <div class="agent-machine">Runs on M1 · Every 60 seconds</div>
+      <ul class="done-list">
+        <li>Checks all agents for stuck/error state</li>
+        <li>Auto-restarts stuck agents</li>
+        <li>Alert deduplication (no spam)</li>
+        <li>Machine offline detection</li>
+        <li>Action log in dashboard</li>
+      </ul>
+      <hr class="divider">
+      <ul class="todo-list">
+        <li>Works fully — no outstanding items</li>
+      </ul>
+    </div>
+
+    <!-- Farcake -->
+    <div class="agent-card creative">
+      <div class="agent-header">
+        <div>
+          <div class="agent-name">Farcake</div>
+          <div class="agent-role">Research Engine · Investigation Specialist</div>
+        </div>
+        <span class="status-badge badge-wired">◉ Wired</span>
+      </div>
+      <div class="agent-machine">Runs on M3 · Triggered by Fisher via calendar</div>
+      <ul class="done-list">
+        <li>Soul file written + seeded</li>
+        <li>Calendar spawn system ready</li>
+        <li>Can be scheduled from dashboard</li>
+      </ul>
+      <hr class="divider">
+      <ul class="todo-list">
+        <li>M3 not yet activated</li>
+        <li>Context7 + web research tools not yet configured</li>
+        <li>First real research task not run</li>
+      </ul>
+    </div>
+
+    <!-- Andy -->
+    <div class="agent-card creative">
+      <div class="agent-header">
+        <div>
+          <div class="agent-name">Andy</div>
+          <div class="agent-role">Editorial Engine · Writes in Mic's Voice</div>
+        </div>
+        <span class="status-badge badge-wired">◉ Wired</span>
+      </div>
+      <div class="agent-machine">Runs on M3 · Triggered after Farcake completes</div>
+      <ul class="done-list">
+        <li>Soul file written + seeded</li>
+        <li>GumballCMS pipeline defined</li>
+        <li>Videohoho output path defined</li>
+      </ul>
+      <hr class="divider">
+      <ul class="todo-list">
+        <li>M3 not yet activated</li>
+        <li>Mic's voice samples not yet fed in</li>
+        <li>GumballCMS integration not built</li>
+      </ul>
+    </div>
+
+    <!-- Bird Fountain -->
+    <div class="agent-card creative">
+      <div class="agent-header">
+        <div>
+          <div class="agent-name">Bird Fountain</div>
+          <div class="agent-role">Visual Production · Design Department</div>
+        </div>
+        <span class="status-badge badge-wired">◉ Wired</span>
+      </div>
+      <div class="agent-machine">Runs on M2 · Triggered by Fisher via calendar</div>
+      <ul class="done-list">
+        <li>Soul file written + seeded</li>
+        <li>Machine assignment defined (M2)</li>
+      </ul>
+      <hr class="divider">
+      <ul class="todo-list">
+        <li>M2 needs bring-up</li>
+        <li>Image generation tools not yet connected</li>
+        <li>Videohoho pipe not yet built</li>
+      </ul>
+    </div>
+
+    <!-- Wingspan -->
+    <div class="agent-card creative">
+      <div class="agent-header">
+        <div>
+          <div class="agent-name">Wingspan</div>
+          <div class="agent-role">Presentation Manager · Deck Specialist</div>
+        </div>
+        <span class="status-badge badge-wired">◉ Wired</span>
+      </div>
+      <div class="agent-machine">Runs on M3 · Calendar triggered</div>
+      <ul class="done-list">
+        <li>Soul file written + seeded</li>
+      </ul>
+      <hr class="divider">
+      <ul class="todo-list">
+        <li>M3 not activated</li>
+        <li>Presentation tool integrations not built</li>
+      </ul>
+    </div>
+
+    <!-- Coder Machine -->
+    <div class="agent-card infra">
+      <div class="agent-header">
+        <div>
+          <div class="agent-name">Coder Machine</div>
+          <div class="agent-role">Dedicated Build Agent · Always On</div>
+        </div>
+        <span class="status-badge badge-wired">◉ Wired</span>
+      </div>
+      <div class="agent-machine">Dedicated machine · Job queue consumer</div>
+      <ul class="done-list">
+        <li>Soul file written + seeded</li>
+        <li>Job queue system built (tasks table)</li>
+        <li>ExecutionEngine auto-starts</li>
+      </ul>
+      <hr class="divider">
+      <ul class="todo-list">
+        <li>Dedicated hardware not yet assigned</li>
+        <li>Continuous job loop not tested</li>
+      </ul>
+    </div>
+
+    <!-- Owl -->
+    <div class="agent-card infra">
+      <div class="agent-header">
+        <div>
+          <div class="agent-name">Owl</div>
+          <div class="agent-role">Persistent Memory · Session Continuity</div>
+        </div>
+        <span class="status-badge badge-wired">◉ Wired</span>
+      </div>
+      <div class="agent-machine">M1 DB · Session start + end</div>
+      <ul class="done-list">
+        <li>Soul file written + seeded</li>
+        <li>Memory tables in DB (soul_memories)</li>
+        <li>MemoryManager built</li>
+      </ul>
+      <hr class="divider">
+      <ul class="todo-list">
+        <li>Cross-session task list not yet active</li>
+        <li>Memory injection into spawns not tested</li>
+      </ul>
+    </div>
+
+    <!-- Controller -->
+    <div class="agent-card strategic">
+      <div class="agent-header">
+        <div>
+          <div class="agent-name">Controller</div>
+          <div class="agent-role">Strategic Gateway · Voice Interface</div>
+        </div>
+        <span class="status-badge badge-pending">○ Planned</span>
+      </div>
+      <div class="agent-machine">M1 · On-demand, voice triggered</div>
+      <ul class="done-list">
+        <li>Soul file written + seeded</li>
+        <li>Routing framework defined</li>
+      </ul>
+      <hr class="divider">
+      <ul class="todo-list">
+        <li>Voice interface not built</li>
+        <li>Routing logic not implemented</li>
+        <li>Low priority until core loop proven</li>
+      </ul>
+    </div>
+
+    <!-- Itai -->
+    <div class="agent-card strategic">
+      <div class="agent-header">
+        <div>
+          <div class="agent-name">Itai</div>
+          <div class="agent-role">Finance Intelligence · Cost & Revenue Tracking</div>
+        </div>
+        <span class="status-badge badge-pending">○ Planned</span>
+      </div>
+      <div class="agent-machine">M1 · Scheduled + on-demand</div>
+      <ul class="done-list">
+        <li>Concept noted 2026-02-22</li>
+      </ul>
+      <hr class="divider">
+      <ul class="todo-list">
+        <li>Soul file not yet written</li>
+        <li>Define scope: API costs, billing, revenue, forecasting</li>
+        <li>Trigger: scheduled daily + on spend threshold</li>
+        <li>Outputs: cost reports, budget alerts, spend summaries</li>
+        <li>Email: itai@sodalabs.ai (to be set up)</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- Infrastructure services -->
+  <div class="section-title">Infrastructure Services Running 24/7</div>
+  <div class="services-grid">
+    <div class="service-card">
+      <div class="service-header">
+        <div class="service-name">Express API</div>
+        <span class="status-badge badge-ready" style="font-size:10px;">✓ Running</span>
+      </div>
+      <div class="service-desc">50+ API routes, auth middleware, rate limiting. Port 3000.</div>
+    </div>
+    <div class="service-card">
+      <div class="service-header">
+        <div class="service-name">WebSocket Server</div>
+        <span class="status-badge badge-ready" style="font-size:10px;">✓ Running</span>
+      </div>
+      <div class="service-desc">Real-time updates to dashboard. Port 3001. Auth + heartbeat.</div>
+    </div>
+    <div class="service-card">
+      <div class="service-header">
+        <div class="service-name">AgentSessionManager</div>
+        <span class="status-badge badge-ready" style="font-size:10px;">✓ Running</span>
+      </div>
+      <div class="service-desc">Spawns SDK + PTY + API agent sessions. Streams output live.</div>
+    </div>
+    <div class="service-card">
+      <div class="service-header">
+        <div class="service-name">SQLite Database</div>
+        <span class="status-badge badge-ready" style="font-size:10px;">✓ Running</span>
+      </div>
+      <div class="service-desc">47 migrations. Machines, agents, sessions, records, calendar, souls, memories.</div>
+    </div>
+    <div class="service-card">
+      <div class="service-header">
+        <div class="service-name">Cortex Intelligence</div>
+        <span class="status-badge badge-ready" style="font-size:10px;">✓ Running</span>
+      </div>
+      <div class="service-desc">Fleet analysis every 2 minutes. Surfaces warnings + insights automatically.</div>
+    </div>
+    <div class="service-card">
+      <div class="service-header">
+        <div class="service-name">Calendar Spawn</div>
+        <span class="status-badge badge-ready" style="font-size:10px;">✓ Running</span>
+      </div>
+      <div class="service-desc">Polls every minute for due events. Fires agents at scheduled time.</div>
+    </div>
+    <div class="service-card">
+      <div class="service-header">
+        <div class="service-name">AgentBus / Relay</div>
+        <span class="status-badge badge-ready" style="font-size:10px;">✓ Running</span>
+      </div>
+      <div class="service-desc">Agents broadcast to each other. Cross-machine message relay.</div>
+    </div>
+    <div class="service-card">
+      <div class="service-header">
+        <div class="service-name">Soul Engine</div>
+        <span class="status-badge badge-ready" style="font-size:10px;">✓ Running</span>
+      </div>
+      <div class="service-desc">12 souls loaded. Personality injection into every agent spawn.</div>
+    </div>
+    <div class="service-card">
+      <div class="service-header">
+        <div class="service-name">Heartbeat Monitor</div>
+        <span class="status-badge badge-ready" style="font-size:10px;">✓ Running</span>
+      </div>
+      <div class="service-desc">M1 pings all machines every 30s. Detects offline machines.</div>
+    </div>
+  </div>
+
+  <!-- Roadmap -->
+  <div class="section-title">The Roadmap — Phase by Phase</div>
+  <div class="roadmap">
+
+    <div class="phase-item">
+      <div class="phase-num done">1</div>
+      <div class="phase-content">
+        <div class="phase-label done">✓ Complete</div>
+        <h3>Infrastructure + Bug Fixes</h3>
+        <p>Express API, WebSocket, SQLite, AgentSessionManager, Soul Engine, all cron jobs, Tim Buc, CalendarSpawn, Doctor. 11 silent bugs fixed — auth bypass, ESM failures, invalid model IDs, alert flooding, SDK CLAUDECODE leak.</p>
+      </div>
+    </div>
+
+    <div class="phase-item">
+      <div class="phase-num active">2</div>
+      <div class="phase-content">
+        <div class="phase-label active">→ This Week</div>
+        <h3>First Live Loop on M1</h3>
+        <p>Add API credits → Fisher fires 9am standup → spawns one agent → agent completes task → Tim Buc archives → result visible in dashboard. Prove the full cycle on one machine before scaling.</p>
+      </div>
+    </div>
+
+    <div class="phase-item">
+      <div class="phase-num active">3</div>
+      <div class="phase-content">
+        <div class="phase-label active">→ This Week</div>
+        <h3>M2 Online + Cross-Machine Dispatch</h3>
+        <p>git pull on soda-monster-hunter → M2 comes online → Fisher schedules a task on M2 → M1 dispatches, M2 executes. First multi-machine moment. Bird Fountain + Ziggi become available.</p>
+      </div>
+    </div>
+
+    <div class="phase-item">
+      <div class="phase-num future">4</div>
+      <div class="phase-content">
+        <div class="phase-label future">Next</div>
+        <h3>Multi-Project Parallel Running</h3>
+        <p>Fisher manages 2 projects simultaneously — Project A on M2, Project B on M3. Each has its own calendar, cwd, agent assignments. The system runs while you sleep.</p>
+      </div>
+    </div>
+
+    <div class="phase-item">
+      <div class="phase-num future">5</div>
+      <div class="phase-content">
+        <div class="phase-label future">Soon After</div>
+        <h3>Creative Pipeline Live (Farcake → Andy → GumballCMS)</h3>
+        <p>Fisher triggers Farcake (research) → Andy (writing in your voice) → Ziggi review (score 8+) → GumballCMS publish. First fully autonomous content piece produced without you touching it.</p>
+      </div>
+    </div>
+
+    <div class="phase-item">
+      <div class="phase-num future">6</div>
+      <div class="phase-content">
+        <div class="phase-label future">Later</div>
+        <h3>Eliyahu Morning Briefings + Owl Memory</h3>
+        <p>6am email briefing every morning. Owl maintains task state across sessions. Eliyahu synthesises what happened overnight into a daily intelligence report.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Multi-model cost strategy -->
+  <div class="section-title">Cost Strategy — Using the Right AI for Each Job</div>
+  <div class="cost-grid">
+    <div class="cost-card">
+      <div class="cost-tier free">FREE</div>
+      <div class="cost-model">Ollama (Local GPU)</div>
+      <div class="cost-desc">Routing decisions, simple classification, internal summaries. Runs on your hardware. Zero API cost.</div>
+    </div>
+    <div class="cost-card">
+      <div class="cost-tier cheap">CHEAP ~$0.001</div>
+      <div class="cost-model">Claude Haiku 4.5</div>
+      <div class="cost-desc">Quick tasks, status updates, short summaries, Doctor decisions, Tim Buc filing. Fast + cheap.</div>
+    </div>
+    <div class="cost-card">
+      <div class="cost-tier medium">MEDIUM ~$0.01</div>
+      <div class="cost-model">Claude Sonnet 4.6</div>
+      <div class="cost-desc">Real work — coding, research, writing, analysis. Default model for most agent tasks.</div>
+    </div>
+    <div class="cost-card">
+      <div class="cost-tier expensive">PREMIUM ~$0.10</div>
+      <div class="cost-model">Claude Opus 4.6</div>
+      <div class="cost-desc">Architecture decisions, complex strategy, Fisher's most important planning sessions. Use sparingly.</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    PIA System · Built Feb 20–22, 2026 · M1 Izzit7 running · 12 souls loaded · Waiting for credits
+  </div>
+
+</body>
+</html>

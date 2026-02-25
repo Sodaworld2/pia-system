@@ -90,23 +90,28 @@ async function startHub(): Promise<void> {
   seedDefaultSouls();
 
   // Start Fisher Service (cron-based agent scheduling — Fisher2050, Ziggi, Eliyahu)
+  // Budget: PIA_MAX_BUDGET_PER_JOB env var (default $0.50 — overrides soul preferred_model cost)
+  // Set PIA_CRON_MODEL env var to force a cheaper model for ALL cron jobs (e.g. claude-sonnet-4-6)
   logger.info('Starting Fisher Service...');
   const { initFisherService } = await import('./services/fisher-service.js');
-  const fisherService = initFisherService();
+  const fisherService = initFisherService({
+    maxBudgetPerJob: parseFloat(process.env.PIA_MAX_BUDGET_PER_JOB || '0.50'),
+    model: process.env.PIA_CRON_MODEL || undefined,  // undefined = each soul uses its preferred_model
+  });
   fisherService.start();
   logger.info('FisherService started');
-
-  // Start Calendar Spawn Service (fires agents from calendar_events table every minute)
-  logger.info('Starting Calendar Spawn Service...');
-  const { getCalendarSpawnService } = await import('./services/calendar-spawn.js');
-  getCalendarSpawnService().start();
-  logger.info('CalendarSpawnService started');
 
   // Start Tim Buc — Session Archivist (fires on every agent session complete)
   logger.info('Starting Tim Buc archivist...');
   const { startTimBuc } = await import('./services/tim-buc-service.js');
   startTimBuc();
   logger.info('Tim Buc started — watching for session completions');
+
+  // Start Calendar Spawn Service — the automation engine
+  logger.info('Starting Calendar Spawn Service...');
+  const { startCalendarSpawn } = await import('./services/calendar-spawn-service.js');
+  startCalendarSpawn();
+  logger.info('CalendarSpawnService started — polling calendar_events every 60s');
 
   // Start The Cortex — Fleet Intelligence Brain
   logger.info('Starting The Cortex...');
@@ -211,7 +216,7 @@ async function shutdown(): Promise<void> {
 
   // Stop Calendar Spawn Service
   try {
-    const { getCalendarSpawnService } = await import('./services/calendar-spawn.js');
+    const { getCalendarSpawnService } = await import('./services/calendar-spawn-service.js');
     getCalendarSpawnService().stop();
   } catch { /* may not be initialized */ }
 

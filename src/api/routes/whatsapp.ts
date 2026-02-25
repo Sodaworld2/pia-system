@@ -10,7 +10,7 @@
 
 import { Router, Request, Response } from 'express';
 import { getWhatsAppBot, createWhatsAppBot } from '../../comms/whatsapp-bot.js';
-import { getOrchestrator } from '../../comms/orchestrator.js';
+import { handleWhatsAppCommand } from '../../services/whatsapp-command-bridge.js';
 import { createLogger } from '../../utils/logger.js';
 
 const router = Router();
@@ -76,12 +76,10 @@ router.post('/start', async (_req: Request, res: Response) => {
     if (!bot) {
       bot = createWhatsAppBot();
 
-      // Wire to orchestrator
-      const orchestrator = getOrchestrator();
+      // Wire to SDK agent system via WhatsApp Command Bridge
       bot.onMessage(async (message, userId, respond) => {
         logger.info(`WhatsApp message from ${userId}: ${message.substring(0, 50)}...`);
-        const response = await orchestrator.handleHumanMessage(message);
-        await respond(response);
+        await handleWhatsAppCommand(message, userId, respond);
       });
     }
 

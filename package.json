@@ -8,7 +8,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "vitest",
+    "test": "vitest run",
     "test:e2e": "vitest run --config vitest.e2e.config.ts",
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit",
@@ -22,7 +22,9 @@
     "pm2:stop": "pm2 stop pia-hub",
     "pm2:restart": "pm2 restart pia-hub",
     "pm2:logs": "pm2 logs pia-hub",
-    "pm2:status": "pm2 status"
+    "pm2:status": "pm2 status",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "keywords": [
     "ai",
@@ -76,6 +78,7 @@
     "@types/express": "^5.0.0",
     "@types/node": "^22.10.7",
     "@types/ws": "^8.5.13",
+    "@vitest/coverage-v8": "^4.0.18",
     "electron": "^40.4.0",
     "electron-builder": "^26.7.0",
     "eslint": "^9.18.0",

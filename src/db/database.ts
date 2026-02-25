@@ -69,7 +69,17 @@ function runMigrations(db: Database.Database): void {
   for (const migration of migrations) {
     if (!applied.has(migration.name)) {
       logger.info(`Applying migration: ${migration.name}`);
-      db.exec(migration.sql);
+      try {
+        db.exec(migration.sql);
+      } catch (err) {
+        const msg = String(err);
+        // ALTER TABLE ADD COLUMN fails if column already exists — treat as idempotent
+        if (msg.includes('duplicate column name')) {
+          logger.warn(`Migration ${migration.name}: column already exists — skipping (idempotent)`);
+        } else {
+          throw err;
+        }
+      }
       db.prepare('INSERT INTO migrations (name) VALUES (?)').run(migration.name);
     }
   }
@@ -815,12 +825,15 @@ function getMigrations(): Migration[] {
           agent TEXT NOT NULL,
           project TEXT,
           machine TEXT,
+          machine_id TEXT,
+          task_summary TEXT,
           started_at INTEGER,
           ended_at INTEGER,
           duration_seconds INTEGER,
           cost_usd REAL DEFAULT 0,
           tokens_in INTEGER DEFAULT 0,
           tokens_out INTEGER DEFAULT 0,
+          tool_calls INTEGER DEFAULT 0,
           summary TEXT,
           produced_files TEXT DEFAULT '[]',
           consumed_files TEXT DEFAULT '[]',
@@ -834,6 +847,44 @@ function getMigrations(): Migration[] {
         CREATE INDEX IF NOT EXISTS idx_records_project ON agent_records(project);
         CREATE INDEX IF NOT EXISTS idx_records_created ON agent_records(created_at);
         CREATE INDEX IF NOT EXISTS idx_records_session ON agent_records(session_id);
+      `,
+    },
+    {
+      name: '048_agent_records_machine_id',
+      sql: `ALTER TABLE agent_records ADD COLUMN machine_id TEXT`,
+    },
+    {
+      name: '049_agent_records_task_summary',
+      sql: `ALTER TABLE agent_records ADD COLUMN task_summary TEXT`,
+    },
+    {
+      name: '050_agent_records_tool_calls',
+      sql: `ALTER TABLE agent_records ADD COLUMN tool_calls INTEGER DEFAULT 0`,
+    },
+    {
+      // Track how many times a task has been re-done due to Ziggi score < threshold
+      // Prevents infinite re-do loops when an agent consistently underperforms
+      name: '051_calendar_events_redo_count',
+      sql: `ALTER TABLE calendar_events ADD COLUMN redo_count INTEGER DEFAULT 0`,
+    },
+    {
+      name: '052_voice_notes',
+      sql: `
+        CREATE TABLE IF NOT EXISTS voice_notes (
+          id TEXT PRIMARY KEY,
+          transcript TEXT NOT NULL,
+          duration_seconds REAL NOT NULL,
+          audio_size_bytes INTEGER NOT NULL,
+          language TEXT DEFAULT 'en',
+          source TEXT DEFAULT 'dashboard',
+          model TEXT DEFAULT 'whisper-1',
+          cost_usd REAL DEFAULT 0,
+          agent_id TEXT,
+          metadata TEXT DEFAULT '{}',
+          created_at INTEGER DEFAULT (unixepoch())
+        );
+        CREATE INDEX IF NOT EXISTS idx_voice_notes_created ON voice_notes(created_at);
+        CREATE INDEX IF NOT EXISTS idx_voice_notes_source ON voice_notes(source);
       `,
     },
   ];

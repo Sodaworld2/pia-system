@@ -662,10 +662,14 @@ function healthRing(score) {
   </svg>`;
 }
 
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+const API_TOKEN = 'pia-local-dev-token-2024';
+const API_HEADERS = { 'x-api-token': API_TOKEN };
+
 // ─── Load Souls ──────────────────────────────────────────────────────────────
 async function loadSouls() {
   try {
-    const res = await fetch('/api/souls');
+    const res = await fetch('/api/souls', { headers: API_HEADERS });
     souls = await res.json();
     renderRoster();
     updateHeaderStats();
@@ -890,7 +894,7 @@ async function saveSoul() {
   try {
     const res = await fetch('/api/souls/' + currentSoulId, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...API_HEADERS },
       body: JSON.stringify(updates),
     });
     if (!res.ok) throw new Error(await res.text());
@@ -917,7 +921,7 @@ async function loadPromptPreview() {
   const stats = document.getElementById('previewStats');
   preview.textContent = 'Loading...';
   try {
-    const res = await fetch('/api/souls/' + currentSoulId + '/prompt');
+    const res = await fetch('/api/souls/' + currentSoulId + '/prompt', { headers: API_HEADERS });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     const text = data.prompt || data.systemPrompt || JSON.stringify(data, null, 2);
@@ -943,7 +947,7 @@ async function copyPrompt() {
 // ─── Memories ────────────────────────────────────────────────────────────────
 async function loadMemories(soulId) {
   try {
-    const res = await fetch('/api/souls/' + soulId + '/memories?limit=50');
+    const res = await fetch('/api/souls/' + soulId + '/memories?limit=50', { headers: API_HEADERS });
     const mems = await res.json();
     const label = document.getElementById('memCountLabel');
     label.textContent = '(' + mems.length + ')';
@@ -986,7 +990,7 @@ async function saveMemory() {
   try {
     const res = await fetch('/api/souls/' + currentSoulId + '/memories', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...API_HEADERS },
       body: JSON.stringify(body),
     });
     if (!res.ok) throw new Error(await res.text());

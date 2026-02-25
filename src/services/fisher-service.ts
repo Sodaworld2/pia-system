@@ -9,6 +9,13 @@
  *   0 18 * * 1-5 — Evening summary (weekdays 6pm)
  *   0 2 * * *    — Ziggi overnight quality audit (daily 2am)
  *   0 6 * * *    — Eliyahu morning briefing prep (daily 6am)
+ *   0 3 * * 0    — Weekly memory summarisation + TTL cleanup (Sundays)
+ *
+ * Intelligence loop (as of B10+):
+ *   Eliyahu runs at 6am → writes pattern analysis to Fisher2050's agent_messages inbox
+ *   Fisher2050 standup/summary → reads unread inbox before building prompt → marks read
+ *   Eliyahu spawn → injects last 5 soul memories as extraContext (longitudinal memory)
+ *   buildEliyahuPrompt → includes 7-day Ziggi quality trends, not just last 24h records
  */
 
 import cron, { ScheduledTask } from 'node-cron';
@@ -33,7 +40,7 @@ export interface FisherServiceConfig {
   memoryCron: string;       // default: '0 3 * * 0'    (3am Sundays — weekly memory prune)
   timezone: string;         // default: 'Asia/Jerusalem'
   maxBudgetPerJob: number;  // default: 1.0
-  model: string;            // default: 'claude-sonnet-4-6'
+  model?: string;           // override model — if unset, each soul uses its preferred_model
 }
 
 // ---------------------------------------------------------------------------
@@ -54,7 +61,7 @@ export class FisherService {
       memoryCron:    config?.memoryCron    ?? '0 3 * * 0',
       timezone:      config?.timezone      ?? 'Asia/Jerusalem',
       maxBudgetPerJob: config?.maxBudgetPerJob ?? 1.0,
-      model:         config?.model         ?? 'claude-sonnet-4-6',
+      model:         config?.model,
     };
   }
 
@@ -97,11 +104,51 @@ export class FisherService {
       'eliyahu',
       () => this.buildEliyahuPrompt(),
       async (result) => {
-        // After Eliyahu runs, email the briefing to Mic
-        const to = process.env.EMAIL_MIC || 'mic@sodalabs.ai';
         const dateStr = new Date().toISOString().split('T')[0];
+
+        // 1. Email the briefing to Mic
+        const to = process.env.EMAIL_MIC || 'mic@sodalabs.ai';
         const html = `<pre style="font-family:sans-serif;white-space:pre-wrap">${result.summary}</pre>`;
         await getEmailService().sendBriefing(to, `☀️ Eliyahu Morning Briefing — ${dateStr}`, html);
+
+        // 2. Write Eliyahu's pattern analysis to Fisher2050's agent_messages inbox
+        //    Fisher2050 will read this at the 9am standup
+        try {
+          const { getDatabase } = await import('../db/database.js');
+          const db = getDatabase();
+          const body = result.summary
+            ? result.summary.substring(0, 3000)
+            : '(Eliyahu ran but produced no summary)';
+
+          db.prepare(`
+            INSERT INTO agent_messages (id, to_agent, from_agent, subject, body, read, expires_at, created_at)
+            VALUES (?, 'fisher2050', 'eliyahu', ?, ?, 0, unixepoch('now', '+2 days'), unixepoch())
+          `).run(
+            nanoid(),
+            `Daily Pattern Analysis — ${dateStr}`,
+            body,
+          );
+          logger.info(`[FisherService] Eliyahu → Fisher2050 inbox: pattern analysis filed for ${dateStr}`);
+        } catch (err) {
+          logger.error(`[FisherService] Failed to write Eliyahu analysis to Fisher2050 inbox: ${err}`);
+        }
+
+        // 3. Save key insight as Eliyahu soul memory for longitudinal continuity
+        try {
+          const { getSoulEngine } = await import('../souls/soul-engine.js');
+          const summarySnippet = result.summary
+            ? result.summary.substring(0, 500)
+            : 'No summary produced';
+          getSoulEngine().getMemoryManager().addMemory({
+            soul_id: 'eliyahu',
+            content: `Morning briefing ${dateStr}: ${summarySnippet}`,
+            category: 'experience',
+            importance: 6,
+          });
+          logger.info(`[FisherService] Eliyahu memory saved for ${dateStr}`);
+        } catch (err) {
+          logger.warn(`[FisherService] Could not save Eliyahu memory: ${err}`);
+        }
       },
     );
 
@@ -135,6 +182,32 @@ export class FisherService {
           }
         } catch (err) {
           logger.error(`[FisherService] TTL cleanup failed: ${err}`);
+        }
+
+        // Inbox size limit: keep only the 200 newest messages per agent (prevents runaway growth)
+        try {
+          const { getDatabase } = await import('../db/database.js');
+          const db = getDatabase();
+          const MAX_PER_AGENT = 200;
+          const agents = db.prepare(
+            `SELECT DISTINCT to_agent FROM agent_messages`,
+          ).all() as Array<{ to_agent: string }>;
+          let trimmed = 0;
+          for (const { to_agent } of agents) {
+            const r = db.prepare(`
+              DELETE FROM agent_messages
+              WHERE to_agent = ? AND id NOT IN (
+                SELECT id FROM agent_messages WHERE to_agent = ?
+                ORDER BY created_at DESC LIMIT ?
+              )
+            `).run(to_agent, to_agent, MAX_PER_AGENT);
+            trimmed += r.changes;
+          }
+          if (trimmed > 0) {
+            logger.info(`[FisherService] Inbox size trim: removed ${trimmed} oldest messages (limit ${MAX_PER_AGENT}/agent)`);
+          }
+        } catch (err) {
+          logger.error(`[FisherService] Inbox size trim failed: ${err}`);
         }
       },
       { timezone: this.config.timezone },
@@ -189,7 +262,7 @@ export class FisherService {
     try {
       await runAutonomousTask({
         id: nanoid(),
-        description: this.buildStandupPrompt(),
+        description: await this.buildStandupPrompt(),
         soulId: 'fisher2050',
         model: this.config.model,
         maxBudgetUsd: this.config.maxBudgetPerJob,
@@ -208,7 +281,7 @@ export class FisherService {
     try {
       await runAutonomousTask({
         id: nanoid(),
-        description: this.buildSummaryPrompt(),
+        description: await this.buildSummaryPrompt(),
         soulId: 'fisher2050',
         model: this.config.model,
         maxBudgetUsd: this.config.maxBudgetPerJob,
@@ -321,7 +394,7 @@ export class FisherService {
   // Prompt builders — read live DB state to produce context-rich prompts
   // ---------------------------------------------------------------------------
 
-  private buildStandupPrompt(): string {
+  private async buildStandupPrompt(): Promise<string> {
     const queue = getTaskQueue();
     const pending = queue.getPending();
     const inProgress = queue.getAll('in_progress');
@@ -329,7 +402,65 @@ export class FisherService {
     const overdue = pending.filter(t => (t as any).due_date && (t as any).due_date < now);
     const dateStr = new Date().toISOString().split('T')[0];
 
+    // Read Fisher2050's unread agent_messages inbox (Eliyahu analysis, external emails, etc.)
+    let inboxSection = '';
+    try {
+      const { getDatabase } = await import('../db/database.js');
+      const db = getDatabase();
+      const unread = db.prepare(`
+        SELECT from_agent, subject, body, created_at
+        FROM agent_messages
+        WHERE to_agent = 'fisher2050' AND (read = 0 OR read IS NULL)
+        ORDER BY created_at DESC
+        LIMIT 10
+      `).all() as Array<{ from_agent: string; subject: string; body: string; created_at: number }>;
+
+      if (unread.length > 0) {
+        inboxSection = `\n## 📬 Unread Messages (${unread.length})\n` +
+          unread.map(m => `**From ${m.from_agent}** — ${m.subject}\n${m.body}`).join('\n\n---\n\n') +
+          '\n';
+        // Mark as read
+        db.prepare(`
+          UPDATE agent_messages SET read = 1
+          WHERE to_agent = 'fisher2050' AND (read = 0 OR read IS NULL)
+        `).run();
+        logger.info(`[FisherService] Fisher2050 standup: read ${unread.length} inbox messages`);
+      }
+    } catch (err) {
+      logger.warn(`[FisherService] Could not read Fisher2050 inbox: ${err}`);
+    }
+
+    // Cost-per-agent weekly summary (7-day rolling window from agent_records)
+    let costSection = '';
+    try {
+      const { getDatabase } = await import('../db/database.js');
+      const db = getDatabase();
+      const sevenDaysAgo = Math.floor(Date.now() / 1000) - 7 * 86400;
+      const costRows = db.prepare(`
+        SELECT agent,
+               COUNT(*)           AS runs,
+               ROUND(SUM(cost_usd), 4)  AS total_cost,
+               ROUND(AVG(cost_usd), 4)  AS avg_cost,
+               ROUND(AVG(CASE WHEN quality_score IS NOT NULL THEN quality_score END), 1) AS avg_quality
+        FROM agent_records
+        WHERE created_at > ?
+        GROUP BY agent
+        ORDER BY total_cost DESC
+        LIMIT 10
+      `).all(sevenDaysAgo) as Array<{ agent: string; runs: number; total_cost: number; avg_cost: number; avg_quality: number | null }>;
+
+      if (costRows.length > 0) {
+        const rows = costRows.map(r =>
+          `  ${r.agent.padEnd(20)} ${String(r.runs).padStart(4)} runs  $${r.total_cost.toFixed(4)} total  $${r.avg_cost.toFixed(4)}/run  quality=${r.avg_quality ?? 'n/a'}`,
+        ).join('\n');
+        costSection = `\n## 💰 7-Day Agent Cost Summary\n\`\`\`\n${'Agent'.padEnd(20)} Runs  Total Cost  Avg/Run  Quality\n${'-'.repeat(72)}\n${rows}\n\`\`\`\n`;
+      }
+    } catch (err) {
+      logger.warn(`[FisherService] Could not build cost summary: ${err}`);
+    }
+
     return `FISHER2050 MORNING STANDUP — ${dateStr}
+${inboxSection}${costSection}
 
 Current task queue snapshot:
 - Pending: ${pending.length} tasks
@@ -355,7 +486,7 @@ Format your standup as:
 Stay in character as Fisher2050. Be concise. Use bullet points.`;
   }
 
-  private buildSummaryPrompt(): string {
+  private async buildSummaryPrompt(): Promise<string> {
     const queue = getTaskQueue();
     const completed = queue.getAll('completed');
     const dayAgo = Math.floor(Date.now() / 1000) - 86400;
@@ -363,7 +494,34 @@ Stay in character as Fisher2050. Be concise. Use bullet points.`;
     const pending = queue.getPending();
     const dateStr = new Date().toISOString().split('T')[0];
 
+    // Read Fisher2050's unread agent_messages inbox (anything that arrived since morning standup)
+    let inboxSection = '';
+    try {
+      const { getDatabase } = await import('../db/database.js');
+      const db = getDatabase();
+      const unread = db.prepare(`
+        SELECT from_agent, subject, body, created_at
+        FROM agent_messages
+        WHERE to_agent = 'fisher2050' AND (read = 0 OR read IS NULL)
+        ORDER BY created_at DESC
+        LIMIT 10
+      `).all() as Array<{ from_agent: string; subject: string; body: string; created_at: number }>;
+
+      if (unread.length > 0) {
+        inboxSection = `\n## 📬 Unread Messages Since This Morning (${unread.length})\n` +
+          unread.map(m => `**From ${m.from_agent}** — ${m.subject}\n${m.body}`).join('\n\n---\n\n') +
+          '\n';
+        db.prepare(`
+          UPDATE agent_messages SET read = 1
+          WHERE to_agent = 'fisher2050' AND (read = 0 OR read IS NULL)
+        `).run();
+      }
+    } catch (err) {
+      logger.warn(`[FisherService] Could not read Fisher2050 inbox for evening summary: ${err}`);
+    }
+
     return `FISHER2050 EVENING SUMMARY — ${dateStr}
+${inboxSection}
 
 Today's stats:
 - Tasks completed today: ${completedToday.length}
@@ -407,13 +565,17 @@ End with your signature: "Ziggi's Verdict: [PASS/CONCERN/FAIL] — [one sentence
   private async buildEliyahuPrompt(): Promise<string> {
     const dateStr = new Date().toISOString().split('T')[0];
     const yesterday = Math.floor((Date.now() - 86400000) / 1000);
+    const sevenDaysAgo = Math.floor((Date.now() - 7 * 86400000) / 1000);
 
-    // Pull last 24h agent_records from Tim Buc's archive (sync — DB already initialized)
-    let recentRecords: string = '(no records yet — Tim Buc may not have filed any sessions)';
+    let recentRecords = '(no records yet — Tim Buc may not have filed any sessions)';
+    let qualityTrends = '(no quality data yet — Ziggi has not reviewed any sessions)';
+    let eliyahuMemories = '';
+
     try {
-      // Note: getDatabase() is sync — use direct import at module level to avoid require() in ESM
       const { getDatabase } = await import('../db/database.js');
       const db = getDatabase();
+
+      // Last 24h session records
       const rows = db.prepare(`
         SELECT agent, project, task_summary, cost_usd, tool_calls,
                quality_verdict, quality_score, summary, created_at
@@ -424,28 +586,70 @@ End with your signature: "Ziggi's Verdict: [PASS/CONCERN/FAIL] — [one sentence
       `).all(yesterday) as Array<Record<string, unknown>>;
 
       if (rows.length > 0) {
-        recentRecords = rows.map((r) =>
+        recentRecords = rows.map(r =>
           `- [${r.project}/${r.agent}] ${r.task_summary} | verdict=${r.quality_verdict} score=${r.quality_score} cost=$${Number(r.cost_usd).toFixed(4)}`,
         ).join('\n');
       }
+
+      // 7-day Ziggi quality trends — agent pass rates and average scores
+      const trends = db.prepare(`
+        SELECT agent,
+               COUNT(*) as total_sessions,
+               SUM(CASE WHEN quality_verdict = 'PASS' THEN 1 ELSE 0 END) as passed,
+               SUM(CASE WHEN quality_verdict = 'FAIL' THEN 1 ELSE 0 END) as failed,
+               ROUND(AVG(CAST(quality_score AS REAL)), 1) as avg_score,
+               ROUND(SUM(cost_usd), 4) as total_cost
+        FROM agent_records
+        WHERE created_at >= ? AND quality_score IS NOT NULL
+        GROUP BY agent
+        ORDER BY total_sessions DESC
+      `).all(sevenDaysAgo) as Array<Record<string, unknown>>;
+
+      if (trends.length > 0) {
+        qualityTrends = trends.map(t => {
+          const passRate = t.total_sessions ? Math.round((Number(t.passed) / Number(t.total_sessions)) * 100) : 0;
+          return `- ${t.agent}: ${t.total_sessions} sessions | pass rate ${passRate}% | avg score ${t.avg_score}/100 | cost $${t.total_cost}`;
+        }).join('\n');
+      }
     } catch {
-      // DB may not be ready — use placeholder
+      // DB not ready — use placeholders
+    }
+
+    // Eliyahu's own soul memories — longitudinal context across days
+    try {
+      const { getSoulEngine } = await import('../souls/soul-engine.js');
+      const memories = getSoulEngine().getMemoryManager().getRecentMemories('eliyahu', 5);
+      if (memories.length > 0) {
+        eliyahuMemories = '\n## Your Recent Memory (from previous briefings)\n' +
+          memories.map(m => `- [${m.category}] ${m.content}`).join('\n') + '\n';
+      }
+    } catch {
+      // Soul engine not ready
     }
 
     return `ELIYAHU MORNING BRIEFING — ${dateStr} 06:00
 
 You are Eliyahu, the Knowledge Manager and Intelligence Synthesiser for Mic (Soda World / SodaLabs, Johannesburg).
-
+${eliyahuMemories}
 ## Yesterday's Session Records (from Tim Buc's archive)
 ${recentRecords}
 
+## 7-Day Agent Quality Trends (Ziggi verdicts)
+${qualityTrends}
+
 ## Your Task
-Read the records above and synthesise a morning briefing for Mic.
+Synthesise a morning briefing for Mic AND write a pattern analysis message to Fisher2050's inbox.
 - 3 key insights max (never more)
 - Surface anything time-sensitive or at risk FIRST
 - Connect dots across projects/agents — patterns Mic would miss
+- Flag any agent with a declining quality trend or pass rate below 70%
 - Be direct, no filler, no sycophancy
 - Sign off with your total filed count
+
+After writing the briefing, use write_file to append a summary of your key pattern analysis to:
+  /tmp/eliyahu-fisher-handoff.json
+Format: {"date":"${dateStr}","insights":["..."],"qualityAlerts":["..."],"recommendedActions":["..."]}
+Fisher2050 will read this at the 9am standup.
 
 ## Output Format
 ## ☀️ Eliyahu Morning Briefing — ${dateStr}

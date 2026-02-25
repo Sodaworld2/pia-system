@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIA — Owner's Reference Guide</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 11pt;
+    line-height: 1.6;
+    color: #1a1a1a;
+    background: #fff;
+    max-width: 210mm;
+    margin: 0 auto;
+    padding: 20mm 20mm 20mm 20mm;
+  }
+
+  /* Print styles */
+  @media print {
+    body { padding: 15mm; font-size: 10pt; }
+    .no-print { display: none; }
+    .page-break { page-break-before: always; }
+    h1 { page-break-after: avoid; }
+    h2 { page-break-after: avoid; }
+    table { page-break-inside: avoid; }
+    .agent-block { page-break-inside: avoid; }
+  }
+
+  /* Header */
+  .cover {
+    text-align: center;
+    padding: 30px 0 40px;
+    border-bottom: 3px solid #1a1a1a;
+    margin-bottom: 40px;
+  }
+  .cover h1 {
+    font-size: 28pt;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .cover .subtitle {
+    font-size: 13pt;
+    font-style: italic;
+    color: #555;
+    margin-bottom: 16px;
+  }
+  .cover .meta {
+    font-size: 9pt;
+    color: #888;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+  }
+
+  /* Table of contents */
+  .toc {
+    background: #f8f8f8;
+    border: 1px solid #ddd;
+    padding: 20px 24px;
+    margin-bottom: 40px;
+  }
+  .toc h3 {
+    font-size: 10pt;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+    color: #555;
+  }
+  .toc ol {
+    padding-left: 20px;
+  }
+  .toc li {
+    padding: 2px 0;
+    font-size: 10pt;
+  }
+
+  /* Section headings */
+  h2 {
+    font-size: 15pt;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    border-bottom: 2px solid #1a1a1a;
+    padding-bottom: 6px;
+    margin: 40px 0 20px;
+  }
+  h3 {
+    font-size: 12pt;
+    margin: 24px 0 10px;
+    font-style: italic;
+  }
+
+  /* Print button */
+  .print-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #1a1a1a;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 11pt;
+    cursor: pointer;
+    font-family: inherit;
+    letter-spacing: 1px;
+  }
+  .print-btn:hover { background: #333; }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 10pt;
+  }
+  th {
+    background: #1a1a1a;
+    color: white;
+    text-align: left;
+    padding: 7px 10px;
+    font-size: 9pt;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: normal;
+  }
+  td {
+    padding: 7px 10px;
+    border-bottom: 1px solid #e0e0e0;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: #fafafa; }
+
+  /* Agent blocks */
+  .agent-block {
+    border: 1px solid #ddd;
+    margin-bottom: 20px;
+    padding: 16px 18px;
+  }
+  .agent-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+  .agent-name {
+    font-size: 14pt;
+    font-weight: bold;
+    letter-spacing: 1px;
+  }
+  .agent-role {
+    font-size: 9pt;
+    color: #666;
+    font-style: italic;
+    margin-top: 2px;
+  }
+  .agent-status {
+    font-size: 8pt;
+    padding: 3px 8px;
+    border: 1px solid;
+    font-family: 'Courier New', monospace;
+    white-space: nowrap;
+    margin-top: 4px;
+  }
+  .status-ready { border-color: #2ea043; color: #2ea043; }
+  .status-partial { border-color: #f59e0b; color: #f59e0b; }
+  .status-planned { border-color: #888; color: #888; }
+
+  .agent-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 10px;
+    font-size: 10pt;
+  }
+  .agent-col-label {
+    font-size: 8pt;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #888;
+    margin-bottom: 4px;
+  }
+  .agent-col p, .agent-col li {
+    margin-bottom: 3px;
+  }
+  .agent-col ul { padding-left: 14px; }
+  .agent-detail {
+    font-size: 9pt;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed #ddd;
+    color: #444;
+    font-style: italic;
+  }
+
+  /* Callout boxes */
+  .callout {
+    border-left: 4px solid #1a1a1a;
+    padding: 12px 16px;
+    margin: 20px 0;
+    background: #f8f8f8;
+  }
+  .callout.urgent { border-left-color: #c00; background: #fff5f5; }
+  .callout.info { border-left-color: #0066cc; background: #f0f6ff; }
+  .callout strong { display: block; margin-bottom: 4px; font-size: 9pt; text-transform: uppercase; letter-spacing: 1px; }
+
+  /* Flow diagram */
+  .flow {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin: 16px 0;
+    font-size: 9pt;
+    font-family: 'Courier New', monospace;
+  }
+  .flow-step {
+    background: #1a1a1a;
+    color: white;
+    padding: 4px 10px;
+  }
+  .flow-arrow { color: #888; font-size: 12pt; }
+
+  /* Status dots */
+  .dot-green::before { content: "● "; color: #2ea043; }
+  .dot-amber::before { content: "● "; color: #f59e0b; }
+  .dot-grey::before { content: "○ "; color: #888; }
+
+  p { margin-bottom: 10px; }
+  ul, ol { padding-left: 20px; margin-bottom: 10px; }
+  li { margin-bottom: 4px; }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 16px 0;
+  }
+  .two-col > div { font-size: 10pt; }
+
+  .mono { font-family: 'Courier New', monospace; font-size: 9pt; background: #f0f0f0; padding: 1px 4px; }
+</style>
+</head>
+<body>
+
+<button class="print-btn no-print" onclick="window.print()">⎙ Print / Save PDF</button>
+
+<!-- Cover -->
+<div class="cover">
+  <h1>PIA</h1>
+  <div class="subtitle">Personal Intelligence Agent — Owner's Reference Guide</div>
+  <div class="meta">SODАЛABS · JOHANNESBURG · UPDATED FEBRUARY 2026</div>
+</div>
+
+<!-- Table of Contents -->
+<div class="toc">
+  <h3>Contents</h3>
+  <ol>
+    <li>What Is PIA?</li>
+    <li>The Three Machines</li>
+    <li>The Agents — Who They Are & What They Do</li>
+    <li>How a Day Works (The Loop)</li>
+    <li>What's Running Right Now</li>
+    <li>What Still Needs to Be Turned On</li>
+    <li>Cost Model</li>
+    <li>Daily Operations (Quick Reference)</li>
+    <li>Troubleshooting</li>
+  </ol>
+</div>
+
+
+<!-- SECTION 1 -->
+<h2>1. What Is PIA?</h2>
+
+<p>PIA is your personal AI operations platform. It runs on the computers in your studio and manages a team of AI agents on your behalf — each agent has a name, a personality, a defined job, and a schedule. You direct strategy. The agents handle execution.</p>
+
+<p>Think of it as hiring a staff of specialists who never sleep, never forget, and never need managing — except when you want to give them new direction.</p>
+
+<div class="callout info">
+  <strong>The One-Line Version</strong>
+  You tell Fisher2050 what matters this week. Fisher assigns tasks to the right agents. Agents do the work. Tim Buc files everything. Eliyahu reads it all and briefs you every morning at 6am.
+</div>
+
+<p>PIA is not a chatbot. It is infrastructure — like a server rack that runs your business logic. The difference is the logic is intelligent and the workers are AI agents.</p>
+
+
+<!-- SECTION 2 -->
+<h2>2. The Three Machines</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Machine</th>
+      <th>Nickname</th>
+      <th>Role</th>
+      <th>What It Runs</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>M1</strong></td>
+      <td>Izzit7</td>
+      <td>Hub — the brain</td>
+      <td>Dashboard, database, Fisher2050, Eliyahu, Tim Buc, all cron jobs, PIA control centre</td>
+      <td class="dot-green">Online</td>
+    </tr>
+    <tr>
+      <td><strong>M2</strong></td>
+      <td>soda-monster-hunter</td>
+      <td>Worker — execution</td>
+      <td>Runs agents dispatched by M1 (Ziggi, Bird Fountain). Connects back to M1 as its worker.</td>
+      <td class="dot-green">Online — synced Feb 22</td>
+    </tr>
+    <tr>
+      <td><strong>M3</strong></td>
+      <td>soda-yeti</td>
+      <td>Worker — execution</td>
+      <td>Runs agents dispatched by M1 (Farcake, Andy, Wingspan). Reachable via Tailscale.</td>
+      <td class="dot-amber">Reachable — SSH key pending</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>All three machines talk to each other over <strong>Tailscale</strong> — a private encrypted network that connects them wherever they are, as if they're on the same desk. M1 is the controller. M2 and M3 receive instructions from M1 and report results back.</p>
+
+<div class="callout">
+  <strong>Important</strong>
+  M1 must always be running first. M2 and M3 connect to M1 — if M1 is off, the workers have no hub to connect to.
+</div>
+
+
+<!-- SECTION 3 -->
+<div class="page-break"></div>
+<h2>3. The Agents</h2>
+
+<p>PIA has 13 named agents. Each one is a Claude AI session with a custom personality, set of goals, and defined job. They are stored in the database and re-used across every session — same agent every time, building memory over months.</p>
+
+<h3>Strategic Tier — M1 (Hub Machine)</h3>
+
+<div class="agent-block">
+  <div class="agent-header">
+    <div>
+      <div class="agent-name">Fisher2050</div>
+      <div class="agent-role">Project Manager &amp; Scheduler</div>
+    </div>
+    <span class="agent-status status-partial">◉ Partial — needs API credits</span>
+  </div>
+  <div class="agent-body">
+    <div class="agent-col">
+      <div class="agent-col-label">What it does</div>
+      <p>Runs at 9am and 6pm every day. Reviews what's on the task list, assigns work to the right agent on the right machine, and manages capacity across the fleet. The CEO of the agent team.</p>
+    </div>
+    <div class="agent-col">
+      <div class="agent-col-label">Triggers &amp; outputs</div>
+      <ul>
+        <li>9am: Morning standup — plan the day</li>
+        <li>6pm: Evening summary — what got done</li>
+        <li>On demand: you can press "Standup" in the dashboard</li>
+        <li>Output: task assignments, scheduled runs</li>
+      </ul>
+    </div>
+  </div>
+  <div class="agent-detail">Named after the Fisher2050 concept — a forward-thinking planner. Email: fisher2050@sodalabs.ai</div>
+</div>
+
+<div class="agent-block">
+  <div class="agent-header">
+    <div>
+      <div class="agent-name">Eliyahu</div>
+      <div class="agent-role">Knowledge Analyst &amp; Morning Briefer</div>
+    </div>
+    <span class="agent-status status-partial">◉ Partial — needs API credits + SendGrid</span>
+  </div>
+  <div class="agent-body">
+    <div class="agent-col">
+      <div class="agent-col-label">What it does</div>
+      <p>Wakes at 6am every morning. Reads everything Tim Buc filed overnight. Synthesises it into a briefing — what agents did yesterday, what's ready, what's blocked, what you need to know. Sends it to your email.</p>
+    </div>
+    <div class="agent-col">
+      <div class="agent-col-label">Triggers &amp; outputs</div>
+      <ul>
+        <li>6am daily: reads agent records, writes briefing</li>
+        <li>Output: email to you before you start your day</li>
+        <li>Also: answers deep questions about any project</li>
+      </ul>
+    </div>
+  </div>
+  <div class="agent-detail">Named after Eliyahu M. Goldratt (The Goal). The strategist who spots the constraint. Email: eliyahu@sodalabs.ai</div>
+</div>
+
+<div class="agent-block">
+  <div class="agent-header">
+    <div>
+      <div class="agent-name">Itai</div>
+      <div class="agent-role">Finance Intelligence &amp; Cost Tracking</div>
+    </div>
+    <span class="agent-status status-planned">○ Planned</span>
+  </div>
+  <div class="agent-body">
+    <div class="agent-col">
+      <div class="agent-col-label">What it does</div>
+      <p>Tracks API costs, billing, revenue, and financial forecasting for the SodaLabs ecosystem. Alerts you when spend thresholds are hit. Produces daily cost reports.</p>
+    </div>
+    <div class="agent-col">
+      <div class="agent-col-label">Triggers &amp; outputs</div>
+      <ul>
+        <li>Scheduled daily + on spend threshold</li>
+        <li>Output: cost summaries, budget alerts</li>
+        <li>Email: itai@sodalabs.ai (to be set up)</li>
+      </ul>
+    </div>
+  </div>
+  <div class="agent-detail">Noted Feb 22. Soul not yet written. Next: define scope and write soul file.</div>
+</div>
+
+<div class="agent-block">
+  <div class="agent-header">
+    <div>
+      <div class="agent-name">Controller</div>
+      <div class="agent-role">Strategic Gateway &amp; Voice Interface</div>
+    </div>
+    <span class="agent-status status-planned">○ Planned</span>
+  </div>
+  <div class="agent-body">
+    <div class="agent-col">
+      <div class="agent-col-label">What it does</div>
+      <p>The front door to PIA. You speak or type a high-level instruction. Controller interprets it, decides which agent should handle it, and routes the task correctly. Low priority until core loop is proven.</p>
+    </div>
+    <div class="agent-col">
+      <div class="agent-col-label">Triggers &amp; outputs</div>
+      <ul>
+        <li>On demand, voice triggered (future)</li>
+        <li>Output: routed tasks to the right agent</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<h3>Quality &amp; Memory Tier — M1</h3>
+
+<div class="agent-block">
+  <div class="agent-header">
+    <div>
+      <div class="agent-name">Ziggi</div>
+      <div class="agent-role">Quality Auditor &amp; Devil's Advocate</div>
+    </div>
+    <span class="agent-status status-partial">◉ Soul built — needs wiring</span>
+  </div>
+  <div class="agent-body">
+    <div class="agent-col">
+      <div class="agent-col-label">What it does</div>
+      <p>Reviews every piece of work before it ships. Gives a 1–10 score. Plays devil's advocate — argues against the idea, finds the weak points, forces better thinking. Runs at 2am after every build day.</p>
+    </div>
+    <div class="agent-col">
+      <div class="agent-col-label">Triggers &amp; outputs</div>
+      <ul>
+        <li>2am: reviews completed work from the day</li>
+        <li>On task completion: quality gate</li>
+        <li>Output: score, critique, recommended revisions</li>
+      </ul>
+    </div>
+  </div>
+  <div class="agent-detail">Machine: M2. The honest friend who tells you the truth before the world does. Email: ziggi@sodalabs.ai</div>
+</div>
+
+<div class="agent-block">
+  <div class="agent-header">
+    <div>
+      <div class="agent-name">Tim Buc</div>
+      <div class="agent-role">Archivist &amp; Intelligence Filer</div>
+    </div>
+    <span class="agent-status status-ready">✓ Running</span>
+  </div>
+  <div class="agent-body">
+    <div class="agent-col">
+      <div class="agent-col-label">What it does</div>
+      <p>Every time any agent finishes a session, Tim Buc wakes up automatically. It reads the full session log — every tool call, every decision, every output — and files a structured summary to the Records database. Eliyahu reads these records every morning.</p>
+    </div>
+    <div class="agent-col">
+      <div class="agent-col-label">Triggers &amp; outputs</div>
+      <ul>
+        <li>Fires on every agent session end</li>
+        <li>Output: structured record in agent_records table</li>
+        <li>What gets filed: agent name, task, files changed, decisions made, duration, cost</li>
+      </ul>
+    </div>
+  </div>
+  <div class="agent-detail">The institutional memory of the whole fleet. Without Tim Buc, every session is forgotten. With Tim Buc, every session builds knowledge. Email: timbuc@sodalabs.ai</div>
+</div>
+
+<div class="agent-block">
+  <div class="agent-header">
+    <div>
+      <div class="agent-name">Owl</div>
+      <div class="agent-role">Persistent Memory &amp; Session Continuity</div>
+    </div>
+    <span class="agent-status status-partial">◉ Soul built — memory tables ready</span>
+  </div>
+  <div class="agent-body">
+    <div class="agent-col">
+      <div class="agent-col-label">What it does</div>
+      <p>Maintains a persistent task list and context that survives across all sessions. When an agent starts a new session, Owl injects the relevant memory so it doesn't start from scratch.</p>
+    </div>
+    <div class="agent-col">
+      <div class="agent-col-label">Triggers &amp; outputs</div>
+      <ul>
+        <li>Session start: injects memory into agent context</li>
+        <li>Session end: updates memory with new learnings</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<h3>Execution Tier — M2 &amp; M3</h3>
+
+<div class="agent-block">
+  <div class="agent-header">
+    <div>
+      <div class="agent-name">Farcake</div>
+      <div class="agent-role">Deep Research Agent</div>
+    </div>
+    <span class="agent-status status-partial">◉ Soul built — needs wiring + M3</span>
+  </div>
+  <div class="agent-body">
+    <div class="agent-col">
+      <div class="agent-col-label">What it does</div>
+      <p>Given a research brief, searches the web deeply, cross-references multiple sources, finds influencers, studies, data, and references. Produces a structured research report. Runs on M3.</p>
+    </div>
+    <div class="agent-col">
+      <div class="agent-col-label">Triggers &amp; outputs</div>
+      <ul>
+        <li>Dispatched by Fisher2050 via job queue</li>
+        <li>Output: research report, source list, key findings</li>
+        <li>Feeds into: Andy (content), Ziggi (review)</li>
+      </ul>
+    </div>
+  </div>
+  <div class="agent-detail">Machine: M3. Email: farcake@sodalabs.ai</div>
+</div>
+
+<div class="agent-block">
+  <div class="agent-header">
+    <div>
+      <div class="agent-name">Andy</div>
+      <div class="agent-role">Editorial &amp; Content Writer</div>
+    </div>
+    <span class="agent-status status-partial">◉ Soul built — needs wiring + M3 + voice samples</span>
+  </div>
+  <div class="agent-body">
+    <div class="agent-col">
+      <div class="agent-col-label">What it does</div>
+      <p>Takes Farcake's research and writes in Mic's voice. Articles, captions, scripts, copy — anything editorial. Has been trained on Mic's writing style. Output goes to GumballCMS for publishing.</p>
+    </div>
+    <div class="agent-col">
+      <div class="agent-col-label">Triggers &amp; outputs</div>
+      <ul>
+        <li>Dispatched after Farcake delivers research</li>
+        <li>Output: finished copy, ready for review or auto-publish</li>
+        <li>Feeds into: GumballCMS, Videohoho</li>
+      </ul>
+    </div>
+  </div>
+  <div class="agent-detail">Machine: M3. Needs Mic's voice samples to calibrate writing style. Email: andy@sodalabs.ai</div>
+</div>
+
+<div class="agent-block">
+  <div class="agent-header">
+    <div>
+      <div class="agent-name">Bird Fountain</div>
+      <div class="agent-role">Image &amp; Visual Asset Production</div>
+    </div>
+    <span class="agent-status status-partial">◉ Soul built — needs wiring</span>
+  </div>
+  <div class="agent-body">
+    <div class="agent-col">
+      <div class="agent-col-label">What it does</div>
+      <p>Produces images and visual assets. Takes a brief, generates options, delivers finished assets. Pipes output to Videohoho for video editing or GumballCMS for publishing.</p>
+    </div>
+    <div class="agent-col">
+      <div class="agent-col-label">Triggers &amp; outputs</div>
+      <ul>
+        <li>Dispatched by Fisher2050 via job queue</li>
+        <li>Output: image files, asset packages</li>
+        <li>Feeds into: Videohoho, GumballCMS</li>
+      </ul>
+    </div>
+  </div>
+  <div class="agent-detail">Machine: M2. Email: birdfountain@sodalabs.ai</div>
+</div>
+
+<div class="agent-block">
+  <div class="agent-header">
+    <div>
+      <div class="agent-name">Wingspan</div>
+      <div class="agent-role">Presentations &amp; Deck Tracking</div>
+    </div>
+    <span class="agent-status status-partial">◉ Soul built — needs wiring + M3</span>
+  </div>
+  <div class="agent-body">
+    <div class="agent-col">
+      <div class="agent-col-label">What it does</div>
+      <p>Builds presentations and tracks decks across projects. Takes a brief and a content package and produces slides. Keeps a registry of all active decks and their revision status.</p>
+    </div>
+    <div class="agent-col">
+      <div class="agent-col-label">Triggers &amp; outputs</div>
+      <ul>
+        <li>Dispatched by Fisher2050</li>
+        <li>Output: presentation files, deck registry</li>
+      </ul>
+    </div>
+  </div>
+  <div class="agent-detail">Machine: M3. Email: wingspan@sodalabs.ai</div>
+</div>
+
+<div class="agent-block">
+  <div class="agent-header">
+    <div>
+      <div class="agent-name">Coder Machine</div>
+      <div class="agent-role">Dedicated Build Agent</div>
+    </div>
+    <span class="agent-status status-partial">◉ Soul built — hardware not assigned</span>
+  </div>
+  <div class="agent-body">
+    <div class="agent-col">
+      <div class="agent-col-label">What it does</div>
+      <p>Pure execution. Receives a code specification, implements it in an isolated branch, and submits a pull request. Makes no decisions beyond the code. Runs on a dedicated machine from the job queue.</p>
+    </div>
+    <div class="agent-col">
+      <div class="agent-col-label">Triggers &amp; outputs</div>
+      <ul>
+        <li>Job queue consumer — picks up coding tasks</li>
+        <li>Output: working code, pull request</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="agent-block">
+  <div class="agent-header">
+    <div>
+      <div class="agent-name">Monitor</div>
+      <div class="agent-role">System Status Broadcaster</div>
+    </div>
+    <span class="agent-status status-partial">◉ Soul built — infrastructure agent</span>
+  </div>
+  <div class="agent-body">
+    <div class="agent-col">
+      <div class="agent-col-label">What it does</div>
+      <p>Watches all machines and agents continuously. Broadcasts health status updates to the dashboard. Raises alerts when something goes offline or behaves unexpectedly.</p>
+    </div>
+    <div class="agent-col">
+      <div class="agent-col-label">Triggers &amp; outputs</div>
+      <ul>
+        <li>Continuous background process on M1</li>
+        <li>Output: real-time status to dashboard</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+
+<!-- SECTION 4 -->
+<div class="page-break"></div>
+<h2>4. How a Day Works</h2>
+
+<p>When fully running, this is what happens in a 24-hour cycle with no input from you:</p>
+
+<table>
+  <thead>
+    <tr><th>Time</th><th>Who</th><th>What Happens</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>6:00am</strong></td><td>Eliyahu</td><td>Reads Tim Buc's records from yesterday. Writes your morning briefing. Sends it to your email before you wake up.</td></tr>
+    <tr><td><strong>9:00am</strong></td><td>Fisher2050</td><td>Reviews the task list. Assigns work to available agents. Schedules runs for the day. Posts a standup summary.</td></tr>
+    <tr><td><strong>During day</strong></td><td>Farcake, Andy, Bird Fountain, Wingspan, Coder Machine</td><td>Consume jobs from the queue. Research, write, build, create. Report results back to M1.</td></tr>
+    <tr><td><strong>On completion</strong></td><td>Tim Buc</td><td>Every time any agent finishes, Tim Buc wakes and files the session log to the Records database.</td></tr>
+    <tr><td><strong>2:00am</strong></td><td>Ziggi</td><td>Reviews everything completed during the day. Scores quality. Flags anything that needs revision.</td></tr>
+    <tr><td><strong>6:00am</strong></td><td>Eliyahu</td><td>Reads Ziggi's reviews + agent records. Writes the next morning briefing. Cycle continues.</td></tr>
+  </tbody>
+</table>
+
+<p>You step in when: you want to redirect strategy, review something Ziggi flagged, or approve a piece of work before it ships. The rest runs without you.</p>
+
+<div class="flow">
+  <span class="flow-step">Mic (strategy)</span>
+  <span class="flow-arrow">→</span>
+  <span class="flow-step">Fisher2050 (plan)</span>
+  <span class="flow-arrow">→</span>
+  <span class="flow-step">Farcake / Andy / Bird Fountain (execute)</span>
+  <span class="flow-arrow">→</span>
+  <span class="flow-step">Ziggi (review)</span>
+  <span class="flow-arrow">→</span>
+  <span class="flow-step">GumballCMS (publish)</span>
+  <span class="flow-arrow">→</span>
+  <span class="flow-step">Tim Buc (archive)</span>
+  <span class="flow-arrow">→</span>
+  <span class="flow-step">Eliyahu (brief)</span>
+</div>
+
+
+<!-- SECTION 5 -->
+<h2>5. What Is Running Right Now</h2>
+
+<div class="two-col">
+  <div>
+    <h3>Working Today</h3>
+    <ul>
+      <li class="dot-green">PIA dashboard at <span class="mono">localhost:3000</span></li>
+      <li class="dot-green">M1 running + stable</li>
+      <li class="dot-green">M2 connected to hub (synced Feb 22)</li>
+      <li class="dot-green">M3 reachable via Tailscale</li>
+      <li class="dot-green">All 12 agent souls written and stored</li>
+      <li class="dot-green">Fisher2050 cron jobs scheduled (9am, 6pm, 2am, 6am)</li>
+      <li class="dot-green">Tim Buc auto-archives on session end</li>
+      <li class="dot-green">WebSocket live updates to dashboard</li>
+      <li class="dot-green">SSH key deployed to M2 — M1 can control M2 remotely</li>
+      <li class="dot-green">Job queue + task execution engine</li>
+    </ul>
+  </div>
+  <div>
+    <h3>Built But Not Yet Firing</h3>
+    <ul>
+      <li class="dot-amber">Agent souls not yet injected into spawns (20-line fix)</li>
+      <li class="dot-amber">Fisher's crons need API credits to run</li>
+      <li class="dot-amber">Eliyahu email needs SendGrid key</li>
+      <li class="dot-amber">M3 SSH key not yet set up</li>
+      <li class="dot-amber">Soul wiring to spawn system</li>
+    </ul>
+  </div>
+</div>
+
+
+<!-- SECTION 6 -->
+<h2>6. What Still Needs to Be Turned On</h2>
+
+<p>These are the three actions that unlock autonomous operation. Everything is built. These are the keys.</p>
+
+<table>
+  <thead>
+    <tr><th>#</th><th>Action</th><th>Who Does It</th><th>What It Unlocks</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>1</strong></td>
+      <td>Add Anthropic API credits</td>
+      <td>Mic → <span class="mono">console.anthropic.com/settings/billing</span></td>
+      <td>ALL autonomous agent spawns. Fisher, Eliyahu, Ziggi, every SDK agent. This is the master switch.</td>
+    </tr>
+    <tr>
+      <td><strong>2</strong></td>
+      <td>Add SendGrid API key to .env</td>
+      <td>Mic → add <span class="mono">SENDGRID_API_KEY</span> to M1's .env file</td>
+      <td>Eliyahu's morning briefing email delivered to your inbox every day.</td>
+    </tr>
+    <tr>
+      <td><strong>3</strong></td>
+      <td>Set up M3 SSH key (30 seconds on soda-yeti)</td>
+      <td>Mic opens PowerShell on soda-yeti, pastes one command from ops/PLAYBOOK.md</td>
+      <td>M1 can remotely manage M3 — deploy code, restart services, monitor logs, dispatch agents.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout urgent">
+  <strong>The Single Most Important Action</strong>
+  Adding API credits to the Anthropic account unlocks everything above it. Without it, no agent can run autonomously. URL: console.anthropic.com/settings/billing
+</div>
+
+
+<!-- SECTION 7 -->
+<div class="page-break"></div>
+<h2>7. Cost Model</h2>
+
+<p>PIA is designed to use the cheapest AI model capable of doing the job. This is the waterfall:</p>
+
+<table>
+  <thead>
+    <tr><th>Tier</th><th>Model</th><th>Cost</th><th>Used For</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Free</strong></td>
+      <td>Ollama (local)</td>
+      <td>$0.00</td>
+      <td>Routing decisions, simple summaries, internal agent-to-agent messages. Runs on your own hardware.</td>
+    </tr>
+    <tr>
+      <td><strong>Cheap</strong></td>
+      <td>Claude Haiku</td>
+      <td>~$0.001 per task</td>
+      <td>Tim Buc archiving, Monitor alerts, short research tasks, anything that doesn't need deep reasoning.</td>
+    </tr>
+    <tr>
+      <td><strong>Standard</strong></td>
+      <td>Claude Sonnet</td>
+      <td>~$0.01–0.05 per task</td>
+      <td>Fisher2050 planning, Andy writing, Farcake research, Ziggi quality reviews.</td>
+    </tr>
+    <tr>
+      <td><strong>Premium</strong></td>
+      <td>Claude Opus</td>
+      <td>~$0.10–0.50 per task</td>
+      <td>Complex architectural decisions, Eliyahu's deep synthesis, Coder Machine on hard problems only.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The AI router (<span class="mono">src/ai/ai-router.ts</span>) is already built and decides which tier to use based on task complexity. Itai will monitor actual spend and alert when it exceeds budgets.</p>
+
+
+<!-- SECTION 8 -->
+<h2>8. Daily Operations — Quick Reference</h2>
+
+<h3>Checking Everything is Running</h3>
+<p>Open your browser on M1: <span class="mono">http://localhost:3000/mission-control.html</span></p>
+<p>You should see: 2–3 machines listed (green dot = online), all services showing active.</p>
+
+<h3>Restarting PIA on M1</h3>
+<p>Open a terminal on M1 and run:</p>
+<p><span class="mono">pm2 restart ecosystem.config.cjs --update-env</span></p>
+
+<h3>Restarting M2 (remotely from M1)</h3>
+<p>Open a terminal on M1 and run:</p>
+<p><span class="mono">ssh user@100.127.165.12 "cd C:/Users/User/Documents/GitHub/pia-system && npx pm2 restart ecosystem.config.cjs --update-env"</span></p>
+
+<h3>Running Fisher Manually</h3>
+<p>In the dashboard (<span class="mono">localhost:3000/mission-control.html</span>), find the Fisher2050 Scheduler panel (bottom right). Click <strong>Standup</strong> or <strong>Summary</strong>.</p>
+
+<h3>Viewing Agent Session Logs</h3>
+<p>Dashboard → click any agent → Session Log panel shows real-time output.</p>
+
+<h3>Viewing All Filed Records (Tim Buc's archive)</h3>
+<p>Dashboard → Tim Buc Records panel (bottom right) → click Refresh.</p>
+
+<h3>Full Operations Manual</h3>
+<p>All commands, SSH setup, M3 activation, troubleshooting: <span class="mono">ops/PLAYBOOK.md</span></p>
+
+
+<!-- SECTION 9 -->
+<h2>9. Troubleshooting</h2>
+
+<table>
+  <thead>
+    <tr><th>Problem</th><th>Most Likely Cause</th><th>Fix</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Agent spawns but does nothing / exits immediately</td>
+      <td>No API credits in Anthropic account</td>
+      <td>Add credits at console.anthropic.com/settings/billing</td>
+    </tr>
+    <tr>
+      <td>M2 or M3 not showing in dashboard</td>
+      <td>Worker is offline or not connected to Tailscale</td>
+      <td>Check Tailscale on that machine. Restart PIA: <span class="mono">npx pm2 restart ecosystem.config.cjs --update-env</span></td>
+    </tr>
+    <tr>
+      <td>Eliyahu emails not arriving</td>
+      <td>SendGrid key missing from .env</td>
+      <td>Add SENDGRID_API_KEY to M1's .env file</td>
+    </tr>
+    <tr>
+      <td>Fisher crons not firing at scheduled time</td>
+      <td>API credits or agent spawn error</td>
+      <td>Check PM2 logs: <span class="mono">pm2 logs pia-hub --lines 50</span></td>
+    </tr>
+    <tr>
+      <td>Dashboard shows "Disconnected"</td>
+      <td>PIA server is not running on M1</td>
+      <td>Run on M1: <span class="mono">pm2 restart ecosystem.config.cjs --update-env</span></td>
+    </tr>
+    <tr>
+      <td>Agent seems to ignore its personality / acts generic</td>
+      <td>Soul wiring gap — souls are stored but not injected into spawns yet</td>
+      <td>This is the next code fix planned. See SOUL_ENRICHMENT_SPEC.md.</td>
+    </tr>
+    <tr>
+      <td>M1 running slow</td>
+      <td>Too many PM2 processes or memory pressure</td>
+      <td>Run <span class="mono">pm2 status</span> to see all processes. Restart if uptime is very long.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div style="margin-top:50px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 9pt; color: #888; text-align: center;">
+  PIA — Personal Intelligence Agent &nbsp;·&nbsp; SodaLabs &nbsp;·&nbsp; Johannesburg &nbsp;·&nbsp; 2026<br>
+  Generated from: <span class="mono">public/pia-reference.html</span> &nbsp;·&nbsp; View online: <span class="mono">localhost:3000/pia-reference.html</span>
+</div>
+
+</body>
+</html>
